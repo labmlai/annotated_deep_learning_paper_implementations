@@ -9,9 +9,9 @@ from labml.helpers.pytorch.module import Module
 
 
 class PrepareForMultiHeadAttention(Module):
-    def __init__(self, d_model: int, heads: int, d_k: int):
+    def __init__(self, d_model: int, heads: int, d_k: int, bias: bool):
         super().__init__()
-        self.linear = nn.Linear(d_model, heads * d_k)
+        self.linear = nn.Linear(d_model, heads * d_k, bias=bias)
         self.heads = heads
         self.d_k = d_k
 
@@ -25,21 +25,19 @@ class PrepareForMultiHeadAttention(Module):
 
 
 class MultiHeadAttention(Module):
-    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias=True):
         super().__init__()
-        # We assume d_v always equals d_k
         self.d_k = d_model // heads
         self.heads = heads
-        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k)
-        self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k)
-        self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k)
+        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
+        self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
+        self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
         self.output = nn.Linear(d_model, d_model)
         self.attn = None
         self.dropout = nn.Dropout(dropout_prob)
         self.scale = 1 / math.sqrt(self.d_k)
 
-    def get_scores(self, query: torch.Tensor,
-                   key: torch.Tensor, ):
+    def get_scores(self, query: torch.Tensor, key: torch.Tensor, ):
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
 
     def __call__(self, *,
