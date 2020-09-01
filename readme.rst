@@ -8,10 +8,13 @@ LabML Neural Networks
 
 This is a collection of simple PyTorch implementation of various neural network architectures and layers. We will keep adding to this.
 
-`Transformers <https://github.com/lab-ml/labml_nn/tree/master/labml_nn/transformers>`_
--------------
+Transformers
+------------
 
-This module contatins implementations for `multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/mha.py>`_ and `relative multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/relative_mha.py>`_
+`Transformers module  <https://github.com/lab-ml/labml_nn/tree/master/labml_nn/transformers>`_ contains implementations for
+`multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/mha.py>`_
+and
+`relative multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/relative_mha.py>`_.
 
 
 Installation
