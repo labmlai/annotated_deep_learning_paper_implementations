@@ -2,7 +2,7 @@ import copy
 
 from torch import nn
 
-from labml.helpers.pytorch.module import Module
+from labml_helpers.module import Module
 
 
 def clone_module_list(module: Module, n: int):

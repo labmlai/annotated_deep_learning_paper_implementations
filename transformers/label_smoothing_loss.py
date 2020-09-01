@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from labml.helpers.pytorch.module import Module
+from labml_helpers.module import Module
 
 
 class LabelSmoothingLoss(Module):

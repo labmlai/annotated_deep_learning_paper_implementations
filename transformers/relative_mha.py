@@ -6,7 +6,7 @@ https://arxiv.org/abs/1901.02860
 import torch
 from torch import nn
 
-from labml.helpers.pytorch.module import Module
+from labml_helpers.module import Module
 from labml.logger import inspect
 from transformers.mha import MultiHeadAttention
 

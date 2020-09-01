@@ -5,7 +5,7 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from labml.helpers.pytorch.module import Module
+from labml_helpers.module import Module
 
 
 class PrepareForMultiHeadAttention(Module):

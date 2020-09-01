@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from labml.configs import BaseConfigs, option, calculate
-from labml.helpers.pytorch.module import Module
+from labml_helpers.module import Module
 from transformers.mha import MultiHeadAttention
 from transformers.positional_encoding import PositionalEncoding, get_positional_encoding
 from transformers.utils import clone_module_list
