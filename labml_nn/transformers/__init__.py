@@ -7,9 +7,9 @@ import torch.nn.functional as F
 
 from labml.configs import BaseConfigs, option, calculate
 from labml_helpers.module import Module
-from transformers.mha import MultiHeadAttention
-from transformers.positional_encoding import PositionalEncoding, get_positional_encoding
-from transformers.utils import clone_module_list
+from labml_nn.utils import clone_module_list
+from .mha import MultiHeadAttention
+from .positional_encoding import PositionalEncoding, get_positional_encoding
 
 
 class EmbeddingsWithPositionalEncoding(Module):
@@ -197,7 +197,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'mha', _mha)
 
 ### Relative MHA
 def _relative_mha(c: TransformerConfigs):
-    from transformers.relative_mha import RelativeMultiHeadAttention
+    from .relative_mha import RelativeMultiHeadAttention
     return RelativeMultiHeadAttention(c.n_heads, c.d_model)
 
 
