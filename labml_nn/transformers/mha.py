@@ -2,6 +2,7 @@ import math
 from typing import Optional
 
 import torch
+from labml import tracker
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -65,6 +66,7 @@ class MultiHeadAttention(Module):
             assert mask.shape[0] == 1 or mask.shape[0] == mask.shape[1]
             scores = scores.masked_fill(mask == 0, -1e9)
         attn = F.softmax(scores, dim=1)
+        tracker.debug('attn', attn)
         attn = self.dropout(attn)
 
         x = torch.einsum("ijbh,jbhd->ibhd", attn, value)

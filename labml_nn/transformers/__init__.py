@@ -86,9 +86,6 @@ class TransformerLayer(Module):
         ff = self.feed_forward(z)
         x = x + self.dropout(ff)
 
-        # guard(x.shape, attn_self.shape, attn_src.shape, ff.shape,
-        #       '_batch_size', '_seq_len', 'd_model')
-
         return x
 
 
