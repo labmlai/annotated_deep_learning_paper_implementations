@@ -11,10 +11,10 @@ This is a collection of simple PyTorch implementation of various neural network 
 Transformers
 ------------
 
-`Transformers module  <https://github.com/lab-ml/labml_nn/tree/master/labml_nn/transformers>`_ contains implementations for
-`multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/mha.py>`_
+`Transformers module  <http://lab-ml.com/labml_nn/transformers/__init__>`_ contains implementations for
+`multi-headed attention <http://lab-ml.com/labml_nn/transformers/mha.html>`_
 and
-`relative multi-headed attention <https://github.com/lab-ml/labml_nn/blob/master/labml_nn/transformers/relative_mha.py>`_.
+`relative multi-headed attention <http://lab-ml.com/labml_nn/transformers/relative_mha.html>`_.
 
 
 Installation
