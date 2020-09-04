@@ -26,19 +26,36 @@ class PrepareForMultiHeadAttention(Module):
 
 
 class MultiHeadAttention(Module):
-    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias=True):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias: bool=True):
+        """
+        ### Multi-Head Attention
+
+        This computes multi-headed attention for given `query`, `key` and `value` vectors.
+        `heads` is the number of heads.
+        `d_model` is the number of features in the `query`, `key` and `value` vectors.
+        """
+
         super().__init__()
         self.d_k = d_model // heads
         self.heads = heads
+
+        # These transformer the `query`, `key` and `value` vectors for multi-headed attention/
         self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
         self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
         self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
+
+        # Output layer
         self.output = nn.Linear(d_model, d_model)
-        self.attn = None
         self.dropout = nn.Dropout(dropout_prob)
         self.scale = 1 / math.sqrt(self.d_k)
 
-    def get_scores(self, query: torch.Tensor, key: torch.Tensor, ):
+        # We store attentions so that it can used for logging, or other computations if needed
+        self.attn = None
+
+    def get_scores(self, query: torch.Tensor, key: torch.Tensor):
+        """
+        ### Calculate scores between queries and keys
+        """
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
 
     def __call__(self, *,
@@ -46,33 +63,51 @@ class MultiHeadAttention(Module):
                  key: torch.Tensor,
                  value: torch.Tensor,
                  mask: Optional[torch.Tensor] = None):
-        seq_len, batch_size, *_ = query.shape
+        # `query`, `key` and `value`  have shape `[seq_len, batch_size, d_model]`
+        seq_len, batch_size, _ = query.shape
 
         if mask is not None:
-            # mask = ijb
+            # `mask` has shape `[seq_len, seq_len, batch_size]`,
+            # where first dimension is the query dimension.
+            # If the query dimension is equal to $`$ it will be broadcasted to match
             assert mask.shape[0] == 1 or mask.shape[0] == mask.shape[1]
-            # Same mask applied to all h heads.
+
+            # Same mask applied to all `h` heads.
             mask = mask.unsqueeze(-1)
 
+        # Prepare `query`, `key` and `value` for attention computation
+        # These will then have shape `[seq_len, batch_size, heads, d_k]`
         query = self.query(query)
         key = self.key(key)
         value = self.value(value)
 
+        # Compute attention scores
         scores = self.get_scores(query, key)
 
+        # Scale scores
         scores *= self.scale
+
+        # Apply mask
         if mask is not None:
-            # mask = ijbh
-            assert mask.shape[0] == 1 or mask.shape[0] == mask.shape[1]
             scores = scores.masked_fill(mask == 0, -1e9)
+
+        # $softmax$ attention
         attn = F.softmax(scores, dim=1)
+
+        # Save attentions if debugging
         tracker.debug('attn', attn)
+
+        # Apply dropout
         attn = self.dropout(attn)
 
+        # Calculate the attention results
         x = torch.einsum("ijbh,jbhd->ibhd", attn, value)
 
+        # Save attentions for any other calculations 
         self.attn = attn.detach()
 
+        # Concatenate multiple heads
         x = x.reshape(seq_len, batch_size, -1)
 
+        # Output layer
         return self.output(x)
