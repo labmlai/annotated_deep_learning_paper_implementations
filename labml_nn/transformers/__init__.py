@@ -1,4 +1,6 @@
 """
+<a class="github-button" href="https://github.com/lab-ml/labml_nn" data-size="large" data-show-count="true" aria-label="Star lab-ml/labml_nn on GitHub">Star</a>
+
 # Transformers
 
 * [Multi-head attention](mha.html)
