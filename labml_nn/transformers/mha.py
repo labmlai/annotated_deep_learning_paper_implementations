@@ -1,6 +1,4 @@
 """
-<a class="github-button" href="https://github.com/lab-ml/labml_nn" data-size="large" data-show-count="true" aria-label="Star lab-ml/labml_nn on GitHub">Star</a>
-
 # Multi-Headed Attention
 
 The implementation is inspired from [Annotated Transformer](https://nlp.seas.harvard.edu/2018/04/03/attention.html)
