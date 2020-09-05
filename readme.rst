@@ -3,8 +3,8 @@
 .. image:: https://pepy.tech/badge/labml-nn
     :target: https://pepy.tech/project/labml-nn
 
-LabML Neural Networks
-=====================
+`LabML Neural Networks <http://lab-ml.com/labml_nn/index.html>`_
+================================================================
 
 This is a collection of simple PyTorch implementation of various neural network architectures and layers. We will keep adding to this.
 
