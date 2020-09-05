@@ -16,6 +16,13 @@ Transformers
 and
 `relative multi-headed attention <http://lab-ml.com/labml_nn/transformers/relative_mha.html>`_.
 
+✅ TODO
+-------
+
+* Recurrent Highway Networks
+* LSTMs
+
+Please create a Github issue if there's something you'ld like to see implemented here.
 
 Installation
 ------------
