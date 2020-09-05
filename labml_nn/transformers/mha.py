@@ -9,10 +9,9 @@ from typing import Optional
 
 import torch
 from labml import tracker
+from labml_helpers.module import Module
 from torch import nn as nn
 from torch.nn import functional as F
-
-from labml_helpers.module import Module
 
 
 class PrepareForMultiHeadAttention(Module):
@@ -20,6 +19,7 @@ class PrepareForMultiHeadAttention(Module):
     This module does a linear transformation and splits the vector into given
     number of heads for multi-head attention.
     """
+
     def __init__(self, d_model: int, heads: int, d_k: int, bias: bool):
         super().__init__()
         self.linear = nn.Linear(d_model, heads * d_k, bias=bias)
@@ -38,7 +38,7 @@ class PrepareForMultiHeadAttention(Module):
 
 
 class MultiHeadAttention(Module):
-    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias: bool=True):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias: bool = True):
         """
         ## Multi-Head Attention Module
 

@@ -12,7 +12,7 @@ from .positional_encoding import get_positional_encoding
 
 class EmbeddingsWithPositionalEncoding(Module):
     """
-    ## Embed tokenas and add [fixed positional encoding](positional_encoding.html)
+    ## Embed tokens and add [fixed positional encoding](positional_encoding.html)
     """
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
         super().__init__()
@@ -27,13 +27,13 @@ class EmbeddingsWithPositionalEncoding(Module):
 
 class EmbeddingsWithLearnedPositionalEncoding(Module):
     """
-    ## Embed tokenas and add parameterized positional encodings
+    ## Embed tokens and add parameterized positional encodings
     """
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
         super().__init__()
         self.linear = nn.Embedding(n_vocab, d_model)
         self.d_model = d_model
-        self.positional_encodings = nn.Parameter(torch.zeros(max_len, 1, d_model))
+        self.positional_encodings = nn.Parameter(torch.zeros(max_len, 1, d_model), requires_grad=True)
 
     def __call__(self, x: torch.Tensor):
         pe = self.positional_encodings[:x.shape[0]]
@@ -67,7 +67,7 @@ class TransformerLayer(Module):
     in where the layer-normalization is done.
     Here we do a layer normalization before attention and feed-forward networks,
     and add the original residual vectors.
-    Alternative is to do a layer normalzation after adding the residuals.
+    Alternative is to do a layer normalization after adding the residuals.
     But we found this to be less stable when training.
     We found a detailed discussion about this in paper
      [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745).
@@ -162,7 +162,7 @@ class Generator(Module):
     """
     ## Generator
 
-    This predicts the tokens and gives the lof softmaxes of those.
+    This predicts the tokens and gives the lof softmax of those.
     You don't need this if you are using `nn.CrossEntropyLoss`.
     """
     def __init__(self, n_vocab: int, d_model: int):

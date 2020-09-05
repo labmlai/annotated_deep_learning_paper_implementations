@@ -9,8 +9,8 @@ PE_{p,2i} &= sin\Bigg(\frac{p}{10000^{\frac{2i}{d_{model}}}}\Bigg) \\
 PE_{p,2i + 1} &= cos\Bigg(\frac{p}{10000^{\frac{2i}{d_{model}}}}\Bigg)
 \end{align}
 
-Where $1 \leq 2i, 2i + 1 \leq d_{model}$ are the feature indexes in the encoding,
-and $p$ is the position.
+Where $1 \leq 2i, 2i + 1 \leq d_{model}$
+ are the feature indexes in the encoding, and $p$ is the position.
 """
 
 import math
