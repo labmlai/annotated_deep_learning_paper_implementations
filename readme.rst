@@ -16,13 +16,18 @@ Transformers
 and
 `relative multi-headed attention <http://lab-ml.com/labml_nn/transformers/relative_mha.html>`_.
 
-✅ TODO
--------
+Recurrent Highway Networks
+--------------------------
 
-* Recurrent Highway Networks
-* LSTMs
+This is the implementation for `Recurrent Highway Networks <http://lab-ml.com/labml_nn/recurrent_highway_networks>`_.
 
-Please create a Github issue if there's something you'ld like to see implemented here.
+
+LSTM
+----
+
+This is the implementation for `LSTMs <http://lab-ml.com/labml_nn/lstm>`_.
+
+✅ Please create a Github issue if there's something you'ld like to see implemented here.
 
 Installation
 ------------
