@@ -15,12 +15,12 @@ class RHNCell(Module):
 
     This implements equations $(6) - (9)$.
 
-    $s_d^t = h_d^t . g_d^t + s_{d - 1}^t . c_d^t$
+    $s_d^t = h_d^t \odot g_d^t + s_{d - 1}^t \odot c_d^t$
 
     where
 
     \begin{align}
-    h_0^t &= tanh(lin_{hx}(x) + lin_{hs}(s_D^{t-1})) \\
+    h_0^t &= \tanh(lin_{hx}(x) + lin_{hs}(s_D^{t-1})) \\
     g_0^t &= \sigma(lin_{gx}(x) + lin_{gs}^1(s_D^{t-1})) \\
     c_0^t &= \sigma(lin_{cx}(x) + lin_{cs}^1(s_D^{t-1}))
     \end{align}
@@ -28,10 +28,12 @@ class RHNCell(Module):
     and for $0 < d < D$
 
     \begin{align}
-    h_d^t &= tanh(lin_{hs}^d(s_d^t)) \\
+    h_d^t &= \tanh(lin_{hs}^d(s_d^t)) \\
     g_d^t &= \sigma(lin_{gs}^d(s_d^t)) \\
     c_d^t &= \sigma(lin_{cs}^d(s_d^t))
     \end{align}
+
+    $\odot$ stands for element-wise multiplication.
 
     Here we have made a couple of changes to notations from the paper.
     To avoid confusion with time, the gate is represented with $g$,
@@ -80,8 +82,8 @@ class RHNCell(Module):
 
             # Use the first half of `hg` to get $h_d^t$
             # \begin{align}
-            # h_0^t &= tanh(lin_{hx}(x) + lin_{hs}(s_D^{t-1})) \\
-            # h_d^t &= tanh(lin_{hs}^d(s_d^t))
+            # h_0^t &= \tanh(lin_{hx}(x) + lin_{hs}(s_D^{t-1})) \\
+            # h_d^t &= \tanh(lin_{hs}^d(s_d^t))
             # \end{align}
             h = torch.tanh(hg[:, :self.hidden_size])
             # Use the second half of `hg` to get $g_d^t$
@@ -98,7 +100,7 @@ class RHNCell(Module):
 
 class RHN(Module):
     """
-    ### Multilayer Recurrent Highway Network
+    ## Multilayer Recurrent Highway Network
     """
 
     def __init__(self, input_size: int, hidden_size: int, depth: int, n_layers: int):
@@ -117,7 +119,7 @@ class RHN(Module):
     def __call__(self, x: torch.Tensor, state: Optional[torch.Tensor] = None):
         """
         `x` has shape `[seq_len, batch_size, input_size]` and
-        `s` has shape `[batch_size, hidden_size]`.
+        `state` has shape `[batch_size, hidden_size]`.
         """
         time_steps, batch_size = x.shape[:2]
 
@@ -138,7 +140,7 @@ class RHN(Module):
             inp = x[t]
             # Loop through the layers
             for layer in range(self.n_layers):
-                # Get the state of the first layer
+                # Get the state of the layer
                 s[layer] = self.cells[layer](inp, s[layer])
                 # Input to the next layer is the state of this layer
                 inp = s[layer]
@@ -148,4 +150,5 @@ class RHN(Module):
         # Stack the outputs and states
         out = torch.stack(out)
         s = torch.stack(s)
+        
         return out, s

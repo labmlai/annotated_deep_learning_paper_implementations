@@ -21,8 +21,11 @@ install:  ## Install from repo
 uninstall: ## Uninstall
 	pip uninstall labml_nn
 
+docs: ## Render annotated HTML
+	python ../../pylit/pylit.py -t ../../pylit/template_docs.html -d html -w labml_nn
+
 help: ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-.PHONY: clean build check upload help
+.PHONY: clean build check upload help docs
 .DEFAULT_GOAL := help
