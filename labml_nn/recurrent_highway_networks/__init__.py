@@ -150,5 +150,5 @@ class RHN(Module):
         # Stack the outputs and states
         out = torch.stack(out)
         s = torch.stack(s)
-        
+
         return out, s
