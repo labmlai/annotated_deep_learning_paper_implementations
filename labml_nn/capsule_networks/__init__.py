@@ -6,6 +6,9 @@ it is difficult to understand some of the concepts with just the modules.
 [This is the annotated code for a model that use capsules to classify MNIST dataset](mnist.html)
 
 This file holds the implementations of the core modules of Capsule Networks.
+
+I used [jindongwang/Pytorch-CapsuleNet](https://github.com/jindongwang/Pytorch-CapsuleNet) to clarify some
+confusions I had with the paper.
 """
 
 import torch.nn as nn

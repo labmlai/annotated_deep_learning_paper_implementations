@@ -19,7 +19,6 @@ class MNISTCapsuleNetworkModel(Module):
         self.conv2 = nn.Conv2d(in_channels=256, out_channels=32 * 8, kernel_size=9, stride=2, padding=0)
         self.squash = Squash()
 
-        # self.digit_capsules = DigitCaps()
         self.digit_capsules = Router(32 * 6 * 6, 10, 8, 16, 3)
         self.reconstruct = nn.Sequential(
             nn.Linear(16 * 10, 512),
