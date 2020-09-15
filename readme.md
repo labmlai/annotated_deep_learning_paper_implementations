@@ -1,4 +1,3 @@
-"""
 [![PiPy Version](https://badge.fury.io/py/labml-nn.svg)](https://badge.fury.io/py/labml-nn)
 [![PiPy Downloads](https://pepy.tech/badge/labml-nn)](https://pepy.tech/project/labml-nn)
 
@@ -11,11 +10,9 @@ We will keep adding to this.
 **If you have any suggestions for other new implementations,
 please create a [Github Issue](https://github.com/lab-ml/labml_nn/issues).**
 
-## Modules
+#### [✨ Transformers](http://lab-ml.com/labml_nn/transformers) 
 
-#### [✨ Transformers](http://lab-ml.com/labml_nn/transformers)
-
-[Transformers module](http://lab-ml.com/labml_nn/transformers)
+[Transformers module](http://lab-ml.com/labml_nn/transformers) 
 contains implementations for
 [multi-headed attention](http://lab-ml.com/labml_nn/transformers/mha.html)
 and
@@ -56,4 +53,3 @@ If you use LabML for academic research, please cite the library using the follow
  url = {https://lab-ml.com/},
 }
 ```
-"""
