@@ -25,7 +25,7 @@ and
 
 #### [✨ LSTM](http://lab-ml.com/labml_nn/lstm)
 
-#### [✨ Capsule Networks]()
+#### [✨ Capsule Networks](http://lab-ml.com/labml_nn/capsule_networks/)
 
 ### Installation
 
