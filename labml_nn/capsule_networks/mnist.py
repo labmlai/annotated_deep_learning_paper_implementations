@@ -133,9 +133,6 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     epochs: int = 10
     model = 'capsule_network_model'
 
-    loss_func = None
-    accuracy_func = None
-
 
 @option(Configs.model)
 def capsule_network_model(c: Configs):
