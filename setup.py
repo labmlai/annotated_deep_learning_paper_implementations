@@ -1,6 +1,6 @@
 import setuptools
 
-with open("readme.rst", "r") as f:
+with open("readme.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
@@ -10,7 +10,7 @@ setuptools.setup(
     author_email="vpjayasiri@gmail.com, hnipun@gmail.com",
     description="A collection of PyTorch implementations of neural network architectures and layers.",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     url="https://github.com/lab-ml/labml_nn",
     project_urls={
         'Documentation': 'https://lab-ml.com/'
