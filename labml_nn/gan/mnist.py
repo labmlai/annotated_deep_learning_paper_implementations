@@ -171,8 +171,8 @@ def _discriminator_optimizer(c: Configs):
     opt_conf = OptimizerConfigs()
     opt_conf.optimizer = 'Adam'
     opt_conf.parameters = c.discriminator.parameters()
-    opt_conf.learning_rate = 2.5e-5
-    # opt_conf.betas = (0.5, 0.999)
+    opt_conf.learning_rate = 2.5e-4
+    opt_conf.betas = (0.5, 0.999)
     return opt_conf
 
 
@@ -181,8 +181,8 @@ def _generator_optimizer(c: Configs):
     opt_conf = OptimizerConfigs()
     opt_conf.optimizer = 'Adam'
     opt_conf.parameters = c.generator.parameters()
-    opt_conf.learning_rate = 2.5e-5
-    # opt_conf.betas = (0.5, 0.999)
+    opt_conf.learning_rate = 2.5e-4
+    opt_conf.betas = (0.5, 0.999)
     return opt_conf
 
 
