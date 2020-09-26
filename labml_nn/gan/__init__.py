@@ -12,7 +12,7 @@ class DiscriminatorLogitsLoss(Module):
         self.loss_true = nn.BCEWithLogitsLoss()
         self.loss_false = nn.BCEWithLogitsLoss()
         self.register_buffer('labels_true', torch.ones(256, 1, requires_grad=False), False)
-        self.register_buffer('labels_false', torch.ones(256, 1, requires_grad=False), False)
+        self.register_buffer('labels_false', torch.zeros(256, 1, requires_grad=False), False)
 
     def __call__(self, logits_true: torch.Tensor, logits_false: torch.Tensor):
         if len(logits_true) > len(self.labels_true):
@@ -20,12 +20,10 @@ class DiscriminatorLogitsLoss(Module):
                                  self.labels_true.new_ones(len(logits_true), 1, requires_grad=False), False)
         if len(logits_false) > len(self.labels_false):
             self.register_buffer("labels_false",
-                                 self.labels_false.new_ones(len(logits_false), 1, requires_grad=False), False)
+                                 self.labels_false.new_zeros(len(logits_false), 1, requires_grad=False), False)
 
-        loss = (self.loss_true(logits_true, self.labels_true[:len(logits_true)]) +
-                self.loss_false(logits_false, self.labels_false[:len(logits_false)]))
-
-        return loss
+        return self.loss_true(logits_true, self.labels_true[:len(logits_true)]), \
+               self.loss_false(logits_false, self.labels_false[:len(logits_false)])
 
 
 class GeneratorLogitsLoss(Module):
