@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.utils.data
+from torchvision import transforms
 
 from labml import tracker, monit, experiment
 from labml.configs import option, calculate
@@ -72,7 +73,7 @@ class GANBatchStep(BatchStepProtocol):
         self.discriminator_optimizer = discriminator_optimizer
         tracker.set_scalar("loss.generator.*", True)
         tracker.set_scalar("loss.discriminator.*", True)
-        tracker.set_image("generated", True)
+        tracker.set_image("generated", True, 1 / 100)
 
     def prepare_for_iteration(self):
         if MODE_STATE.is_train:
@@ -92,7 +93,7 @@ class GANBatchStep(BatchStepProtocol):
             if MODE_STATE.is_train:
                 self.generator_optimizer.zero_grad()
             generated_images = self.generator(latent)
-            # tracker.add('generated', generated_images[0:1])
+            tracker.add('generated', generated_images[0:5])
             logits = self.discriminator(generated_images)
             loss = self.generator_loss(logits)
             tracker.add("loss.generator.", loss)
@@ -127,9 +128,18 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     generator: Module
     generator_optimizer: torch.optim.Adam
     discriminator_optimizer: torch.optim.Adam
-    discriminator_loss = DiscriminatorLogitsLoss()
-    generator_loss = GeneratorLogitsLoss()
+    generator_loss: GeneratorLogitsLoss
+    discriminator_loss: DiscriminatorLogitsLoss
     batch_step = 'gan_batch_step'
+    label_smoothing: float = 0.2
+
+
+@option(Configs.dataset_transforms)
+def mnist_transforms():
+    return transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
 
 
 @option(Configs.batch_step)
@@ -144,6 +154,8 @@ def gan_batch_step(c: Configs):
 
 calculate(Configs.generator, lambda c: Generator().to(c.device))
 calculate(Configs.discriminator, lambda c: Discriminator().to(c.device))
+calculate(Configs.generator_loss, lambda c: GeneratorLogitsLoss(c.label_smoothing).to(c.device))
+calculate(Configs.discriminator_loss, lambda c: DiscriminatorLogitsLoss(c.label_smoothing).to(c.device))
 
 
 @option(Configs.discriminator_optimizer)
@@ -166,8 +178,12 @@ def main():
     experiment.configs(conf,
                        {'generator_optimizer.learning_rate': 2.5e-4,
                         'generator_optimizer.optimizer': 'Adam',
+                        'generator_optimizer.betas': (0.5, 0.999),
                         'discriminator_optimizer.learning_rate': 2.5e-4,
-                        'discriminator_optimizer.optimizer': 'Adam'},
+                        'discriminator_optimizer.optimizer': 'Adam',
+                        'discriminator_optimizer.betas': (0.5, 0.999),
+                        'label_smoothing': 0.01
+                        },
                        'run')
     with experiment.start():
         conf.run()
