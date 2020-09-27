@@ -28,7 +28,7 @@ class PositionalEncoding(Module):
         super().__init__()
         self.dropout = nn.Dropout(dropout_prob)
 
-        self.register_buffer('positional_encodings', get_positional_encoding(d_model, max_len))
+        self.register_buffer('positional_encodings', get_positional_encoding(d_model, max_len), False)
 
     def __call__(self, x: torch.Tensor):
         pe = self.positional_encodings[:x.shape[0]].detach().requires_grad_(False)
