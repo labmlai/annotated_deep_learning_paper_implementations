@@ -13,7 +13,7 @@ please create a [Github Issue](https://github.com/lab-ml/labml_nn/issues).**
 
 ## Modules
 
-#### [✨ Transformers](http://lab-ml.com/labml_nn/transformers)
+#### ✨ [Transformers](http://lab-ml.com/labml_nn/transformers)
 
 [Transformers module](http://lab-ml.com/labml_nn/transformers)
 contains implementations for
@@ -21,11 +21,13 @@ contains implementations for
 and
 [relative multi-headed attention](http://lab-ml.com/labml_nn/transformers/relative_mha.html>).
 
-#### [✨ Recurrent Highway Networks](http://lab-ml.com/labml_nn/recurrent_highway_networks)
+#### ✨ [Recurrent Highway Networks](http://lab-ml.com/labml_nn/recurrent_highway_networks)
 
-#### [✨ LSTM](http://lab-ml.com/labml_nn/lstm)
+#### ✨ [LSTM](http://lab-ml.com/labml_nn/lstm)
 
-#### [✨ Capsule Networks](http://lab-ml.com/labml_nn/capsule_networks/)
+#### ✨ [Capsule Networks](http://lab-ml.com/labml_nn/capsule_networks/)
+
+#### ✨ [Generative Adversarial Networks](http://lab-ml.com/labml_nn/gan/)
 
 ### Installation
 

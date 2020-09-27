@@ -1,6 +1,5 @@
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.utils.data
@@ -13,17 +12,20 @@ from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
-from labml_helpers.train_valid import MODE_STATE, BatchStepProtocol, TrainValidConfigs, hook_model_outputs, Mode
+from labml_helpers.train_valid import MODE_STATE, BatchStepProtocol, TrainValidConfigs, hook_model_outputs
 from labml_nn.gan import DiscriminatorLogitsLoss, GeneratorLogitsLoss
-
-plt.rcParams['image.interpolation'] = 'nearest'
-plt.rcParams['image.cmap'] = 'gray'
 
 
 class Generator(Module):
-    def __init__(self):
-        super(Generator, self).__init__()
+    """
+    ### Simple MLP Generator
 
+    This has three linear layers of increasing size with `LeakyReLU` activations.
+    The final layer has a $tanh$ activation.
+    """
+
+    def __init__(self):
+        super().__init__()
         layer_sizes = [256, 512, 1024]
         layers = []
         d_prev = 100
@@ -34,17 +36,21 @@ class Generator(Module):
         self.layers = nn.Sequential(*layers, nn.Linear(d_prev, 28 * 28), nn.Tanh())
 
     def forward(self, x):
-        x = self.layers(x)
-        x = x.view(x.shape[0], 1, 28, 28)
-
-        return x
+        return self.layers(x).view(x.shape[0], 1, 28, 28)
 
 
 class Discriminator(Module):
-    def __init__(self):
-        super(Discriminator, self).__init__()
+    """
+    ### Simple MLP Discriminator
 
-        layer_sizes = [512, 256]
+    This has three  linear layers of decreasing size with `LeakyReLU` activations.
+    The final layer has a single output that gives the logit of whether input
+    is real or fake. You can get the probability by calculating the sigmoid of it.
+    """
+
+    def __init__(self):
+        super().__init__()
+        layer_sizes = [1024, 512, 256]
         layers = []
         d_prev = 28 * 28
         for size in layer_sizes:
@@ -92,21 +98,7 @@ class GANBatchStep(BatchStepProtocol):
         data, target = batch
         data, target = data.to(device), target.to(device)
 
-        with monit.section("generator"):
-            latent = torch.randn(data.shape[0], 100, device=device)
-            if MODE_STATE.is_train:
-                self.generator_optimizer.zero_grad()
-            generated_images = self.generator(latent)
-            tracker.add('generated', generated_images[0:5])
-            logits = self.discriminator(generated_images)
-            loss = self.generator_loss(logits)
-            tracker.add("loss.generator.", loss)
-            if MODE_STATE.is_train:
-                loss.backward()
-                if MODE_STATE.is_log_parameters:
-                    pytorch_utils.store_model_indicators(self.generator, 'generator')
-                self.generator_optimizer.step()
-
+        # Train the discriminator
         with monit.section("discriminator"):
             latent = torch.randn(data.shape[0], 100, device=device)
             if MODE_STATE.is_train:
@@ -115,14 +107,38 @@ class GANBatchStep(BatchStepProtocol):
             logits_false = self.discriminator(self.generator(latent).detach())
             loss_true, loss_false = self.discriminator_loss(logits_true, logits_false)
             loss = loss_true + loss_false
+
+            # Log stuff
             tracker.add("loss.discriminator.true.", loss_true)
             tracker.add("loss.discriminator.false.", loss_false)
             tracker.add("loss.discriminator.", loss)
+
+            # Train
             if MODE_STATE.is_train:
                 loss.backward()
                 if MODE_STATE.is_log_parameters:
                     pytorch_utils.store_model_indicators(self.discriminator, 'discriminator')
                 self.discriminator_optimizer.step()
+
+        # Train the generator
+        with monit.section("generator"):
+            latent = torch.randn(data.shape[0], 100, device=device)
+            if MODE_STATE.is_train:
+                self.generator_optimizer.zero_grad()
+            generated_images = self.generator(latent)
+            logits = self.discriminator(generated_images)
+            loss = self.generator_loss(logits)
+
+            # Log stuff
+            tracker.add('generated', generated_images[0:5])
+            tracker.add("loss.generator.", loss)
+
+            # Train
+            if MODE_STATE.is_train:
+                loss.backward()
+                if MODE_STATE.is_log_parameters:
+                    pytorch_utils.store_model_indicators(self.generator, 'generator')
+                self.generator_optimizer.step()
 
         return {'samples': len(data)}, None
 
@@ -172,6 +188,9 @@ def _discriminator_optimizer(c: Configs):
     opt_conf.optimizer = 'Adam'
     opt_conf.parameters = c.discriminator.parameters()
     opt_conf.learning_rate = 2.5e-4
+    # Setting exponent decay rate for first moment of gradient,
+    # $\beta_`$ to `0.5` is important.
+    # Default of `0.9` fails.
     opt_conf.betas = (0.5, 0.999)
     return opt_conf
 
@@ -182,6 +201,9 @@ def _generator_optimizer(c: Configs):
     opt_conf.optimizer = 'Adam'
     opt_conf.parameters = c.generator.parameters()
     opt_conf.learning_rate = 2.5e-4
+    # Setting exponent decay rate for first moment of gradient,
+    # $\beta_`$ to `0.5` is important.
+    # Default of `0.9` fails.
     opt_conf.betas = (0.5, 0.999)
     return opt_conf
 
