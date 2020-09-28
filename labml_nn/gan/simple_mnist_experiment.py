@@ -16,6 +16,15 @@ from labml_helpers.train_valid import MODE_STATE, BatchStepProtocol, TrainValidC
 from labml_nn.gan import DiscriminatorLogitsLoss, GeneratorLogitsLoss
 
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        nn.init.normal_(m.weight.data, 1.0, 0.02)
+        nn.init.constant_(m.bias.data, 0)
+
+
 class Generator(Module):
     """
     ### Simple MLP Generator
@@ -34,6 +43,8 @@ class Generator(Module):
             d_prev = size
 
         self.layers = nn.Sequential(*layers, nn.Linear(d_prev, 28 * 28), nn.Tanh())
+
+        self.apply(weights_init)
 
     def forward(self, x):
         return self.layers(x).view(x.shape[0], 1, 28, 28)
@@ -58,6 +69,7 @@ class Discriminator(Module):
             d_prev = size
 
         self.layers = nn.Sequential(*layers, nn.Linear(d_prev, 1))
+        self.apply(weights_init)
 
     def forward(self, x):
         return self.layers(x.view(x.shape[0], -1))
@@ -70,8 +82,10 @@ class GANBatchStep(BatchStepProtocol):
                  discriminator_optimizer: Optional[torch.optim.Adam],
                  generator_optimizer: Optional[torch.optim.Adam],
                  discriminator_loss: DiscriminatorLogitsLoss,
-                 generator_loss: GeneratorLogitsLoss):
+                 generator_loss: GeneratorLogitsLoss,
+                 discriminator_k: int):
 
+        self.discriminator_k = discriminator_k
         self.generator = generator
         self.discriminator = discriminator
         self.generator_loss = generator_loss
@@ -100,25 +114,26 @@ class GANBatchStep(BatchStepProtocol):
 
         # Train the discriminator
         with monit.section("discriminator"):
-            latent = torch.randn(data.shape[0], 100, device=device)
-            if MODE_STATE.is_train:
-                self.discriminator_optimizer.zero_grad()
-            logits_true = self.discriminator(data)
-            logits_false = self.discriminator(self.generator(latent).detach())
-            loss_true, loss_false = self.discriminator_loss(logits_true, logits_false)
-            loss = loss_true + loss_false
+            for _ in range(self.discriminator_k):
+                latent = torch.randn(data.shape[0], 100, device=device)
+                if MODE_STATE.is_train:
+                    self.discriminator_optimizer.zero_grad()
+                logits_true = self.discriminator(data)
+                logits_false = self.discriminator(self.generator(latent).detach())
+                loss_true, loss_false = self.discriminator_loss(logits_true, logits_false)
+                loss = loss_true + loss_false
 
-            # Log stuff
-            tracker.add("loss.discriminator.true.", loss_true)
-            tracker.add("loss.discriminator.false.", loss_false)
-            tracker.add("loss.discriminator.", loss)
+                # Log stuff
+                tracker.add("loss.discriminator.true.", loss_true)
+                tracker.add("loss.discriminator.false.", loss_false)
+                tracker.add("loss.discriminator.", loss)
 
-            # Train
-            if MODE_STATE.is_train:
-                loss.backward()
-                if MODE_STATE.is_log_parameters:
-                    pytorch_utils.store_model_indicators(self.discriminator, 'discriminator')
-                self.discriminator_optimizer.step()
+                # Train
+                if MODE_STATE.is_train:
+                    loss.backward()
+                    if MODE_STATE.is_log_parameters:
+                        pytorch_utils.store_model_indicators(self.discriminator, 'discriminator')
+                    self.discriminator_optimizer.step()
 
         # Train the generator
         with monit.section("generator"):
@@ -156,6 +171,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     discriminator_loss: DiscriminatorLogitsLoss
     batch_step = 'gan_batch_step'
     label_smoothing: float = 0.2
+    discriminator_k: int = 1
 
 
 @option(Configs.dataset_transforms)
@@ -173,11 +189,12 @@ def gan_batch_step(c: Configs):
                         discriminator_optimizer=c.discriminator_optimizer,
                         generator_optimizer=c.generator_optimizer,
                         discriminator_loss=c.discriminator_loss,
-                        generator_loss=c.generator_loss)
+                        generator_loss=c.generator_loss,
+                        discriminator_k=c.discriminator_k)
 
 
-calculate(Configs.generator, lambda c: Generator().to(c.device))
-calculate(Configs.discriminator, lambda c: Discriminator().to(c.device))
+calculate(Configs.generator, 'mlp', lambda c: Generator().to(c.device))
+calculate(Configs.discriminator, 'mlp', lambda c: Discriminator().to(c.device))
 calculate(Configs.generator_loss, lambda c: GeneratorLogitsLoss(c.label_smoothing).to(c.device))
 calculate(Configs.discriminator_loss, lambda c: DiscriminatorLogitsLoss(c.label_smoothing).to(c.device))
 
