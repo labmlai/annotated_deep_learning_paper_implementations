@@ -28,6 +28,8 @@ and
 #### ✨ [Capsule Networks](http://lab-ml.com/labml_nn/capsule_networks/)
 
 #### ✨ [Generative Adversarial Networks](http://lab-ml.com/labml_nn/gan/)
+* [GAN with a multi-layer perceptron](http://lab-ml.com/labml_nn/gan/simple_mnist_experiment.html)
+* [GAN with deep convolutional network](http://lab-ml.com/labml_nn/gan/dcgan.html)
 
 ### Installation
 
