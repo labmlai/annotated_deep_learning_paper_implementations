@@ -30,19 +30,20 @@ class ReplayBuffer:
         self.data = []
 
     def push_and_pop(self, data):
-        to_return = []
+        data = data.detach()
+        res = []
         for element in data:
             if len(self.data) < self.max_size:
                 self.data.append(element)
-                to_return.append(element)
+                res.append(element)
             else:
                 if random.uniform(0, 1) > 0.5:
                     i = random.randint(0, self.max_size - 1)
-                    to_return.append(self.data[i].clone())
+                    res.append(self.data[i].clone())
                     self.data[i] = element
                 else:
-                    to_return.append(element)
-        return torch.stack(to_return)
+                    res.append(element)
+        return torch.stack(res)
 
 
 def load_image(path: str):
@@ -206,6 +207,7 @@ def sample_images(n, dataset_name, valid_dataloader, generator_ab, generator_ba)
 class Configs(TrainingLoopConfigs):
     device: torch.device = DeviceConfigs()
     loop_count: int = 200
+    loop_step = None
     dataset_name: str = 'monet2photo'
     batch_size: int = 1
 
@@ -231,7 +233,7 @@ class Configs(TrainingLoopConfigs):
     cyclic_loss_coefficient = 10.0
     identity_loss_coefficient = 5.
 
-    sample_interval = 100
+    sample_interval = 500
 
     def run(self):
         images_path = lab.get_data_path() / 'cycle_gan' / self.dataset_name
@@ -324,9 +326,9 @@ class Configs(TrainingLoopConfigs):
                 fake_a_replay = fake_a_buffer.push_and_pop(fake_a)
                 fake_b_replay = fake_b_buffer.push_and_pop(fake_b)
                 loss_discriminator = self.gan_loss(discriminator_a(real_a), valid) + \
-                                     self.gan_loss(discriminator_a(fake_a_replay.detach()), fake) + \
+                                     self.gan_loss(discriminator_a(fake_a_replay), fake) + \
                                      self.gan_loss(discriminator_b(real_b), valid) + \
-                                     self.gan_loss(discriminator_b(fake_b_replay.detach()), fake)
+                                     self.gan_loss(discriminator_b(fake_b_replay), fake)
 
                 discriminator_optimizer.zero_grad()
                 loss_discriminator.backward()
