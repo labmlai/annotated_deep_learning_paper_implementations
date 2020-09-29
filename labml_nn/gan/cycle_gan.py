@@ -18,10 +18,10 @@ from torch.utils.data import Dataset
 from torchvision.utils import make_grid
 from torchvision.utils import save_image
 
-from labml import lab, tracker, experiment
+from labml import lab, tracker, experiment, monit, configs
+from labml.configs import BaseConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
-from labml_helpers.training_loop import TrainingLoopConfigs
 
 
 class ReplayBuffer:
@@ -183,31 +183,9 @@ class Discriminator(Module):
         return self.model(img)
 
 
-def sample_images(n, dataset_name, valid_dataloader, generator_ab, generator_ba):
-    """Saves a generated sample from the test set"""
-    batch = next(iter(valid_dataloader))
-    generator_ab.eval()
-    generator_ba.eval()
-    with torch.no_grad():
-        real_a, real_b = batch['a'].to(generator_ab.device), batch['b'].to(generator_ba.device)
-        fake_b = generator_ab(real_a)
-        fake_a = generator_ba(real_b)
-
-        # Arange images along x-axis
-        real_a = make_grid(real_a, nrow=5, normalize=True)
-        real_b = make_grid(real_b, nrow=5, normalize=True)
-        fake_a = make_grid(fake_a, nrow=5, normalize=True)
-        fake_b = make_grid(fake_b, nrow=5, normalize=True)
-
-        # arange images along y-axis
-        image_grid = torch.cat((real_a, fake_b, real_b, fake_a), 1)
-    save_image(image_grid, "images/%s/%s.png" % (dataset_name, n), normalize=False)
-
-
-class Configs(TrainingLoopConfigs):
+class Configs(BaseConfigs):
     device: torch.device = DeviceConfigs()
-    loop_count: int = 200
-    loop_step = None
+    epochs: int = 200
     dataset_name: str = 'monet2photo'
     batch_size: int = 1
 
@@ -235,104 +213,93 @@ class Configs(TrainingLoopConfigs):
 
     sample_interval = 500
 
+    generator_ab: GeneratorResNet
+    generator_ba: GeneratorResNet
+    discriminator_a: Discriminator
+    discriminator_b: Discriminator
+
+    generator_optimizer: torch.optim.Adam
+    discriminator_optimizer: torch.optim.Adam
+
+    generator_lr_scheduler: torch.optim.lr_scheduler.LambdaLR
+    discriminator_lr_scheduler: torch.optim.lr_scheduler.LambdaLR
+
+    dataloader: DataLoader
+    valid_dataloader: DataLoader
+
+    def sample_images(self, n: int):
+        """Saves a generated sample from the test set"""
+        batch = next(iter(self.valid_dataloader))
+        self.generator_ab.eval()
+        self.generator_ba.eval()
+        with torch.no_grad():
+            real_a, real_b = batch['a'].to(self.generator_ab.device), batch['b'].to(self.generator_ba.device)
+            fake_b = self.generator_ab(real_a)
+            fake_a = self.generator_ba(real_b)
+
+            # Arange images along x-axis
+            real_a = make_grid(real_a, nrow=5, normalize=True)
+            real_b = make_grid(real_b, nrow=5, normalize=True)
+            fake_a = make_grid(fake_a, nrow=5, normalize=True)
+            fake_b = make_grid(fake_b, nrow=5, normalize=True)
+
+            # arange images along y-axis
+            image_grid = torch.cat((real_a, fake_b, real_b, fake_a), 1)
+        save_image(image_grid, f"images/{self.dataset_name}/{n}.png", normalize=False)
+
     def run(self):
-        images_path = lab.get_data_path() / 'cycle_gan' / self.dataset_name
-
-        input_shape = (self.img_channels, self.img_height, self.img_width)
-        generator_ab = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
-        generator_ba = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
-        discriminator_a = Discriminator(input_shape).to(self.device)
-        discriminator_b = Discriminator(input_shape).to(self.device)
-
-        generator_optimizer = torch.optim.Adam(
-            itertools.chain(generator_ab.parameters(), generator_ba.parameters()),
-            lr=self.learning_rate, betas=self.adam_betas)
-        discriminator_optimizer = torch.optim.Adam(
-            itertools.chain(discriminator_a.parameters(), discriminator_b.parameters()),
-            lr=self.learning_rate, betas=self.adam_betas)
-
-        decay_epochs = self.loop_count - self.decay_start
-        generator_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-            generator_optimizer, lr_lambda=lambda e: 1.0 - max(0, e - self.decay_start) / decay_epochs)
-        discriminator_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-            discriminator_optimizer, lr_lambda=lambda e: 1.0 - max(0, e - self.decay_start) / decay_epochs)
-
-        # Image transformations
-        transforms_ = [
-            transforms.Resize(int(self.img_height * 1.12), Image.BICUBIC),
-            transforms.RandomCrop((self.img_height, self.img_width)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-
-        # Training data loader
-        dataloader = DataLoader(
-            ImageDataset(images_path, transforms_, True, 'train'),
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.data_loader_workers,
-        )
-        # Test data loader
-        valid_dataloader = DataLoader(
-            ImageDataset(images_path, transforms_, True, "test"),
-            batch_size=5,
-            shuffle=True,
-            num_workers=self.data_loader_workers,
-        )
-
         # Buffers of previously generated samples
         fake_a_buffer = ReplayBuffer()
         fake_b_buffer = ReplayBuffer()
 
-        for epoch in self.training_loop:
-            for i, batch in enumerate(dataloader):
+        for epoch in monit.loop(self.epochs):
+            for i, batch in enumerate(self.dataloader):
                 # Set model input
                 real_a, real_b = batch['a'].to(self.device), batch['b'].to(self.device)
 
                 # adversarial ground truths
-                valid = torch.ones(real_a.size(0), *discriminator_a.output_shape,
+                valid = torch.ones(real_a.size(0), *self.discriminator_a.output_shape,
                                    device=self.device, requires_grad=False)
-                fake = torch.zeros(real_a.size(0), *discriminator_a.output_shape,
+                fake = torch.zeros(real_a.size(0), *self.discriminator_a.output_shape,
                                    device=self.device, requires_grad=False)
 
                 #  Train generators
-                generator_ab.train()
-                generator_ba.train()
+                self.generator_ab.train()
+                self.generator_ba.train()
 
                 # Identity loss
-                loss_identity = self.identity_loss(generator_ba(real_a), real_a) + \
-                                self.identity_loss(generator_ab(real_b), real_b)
+                loss_identity = self.identity_loss(self.generator_ba(real_a), real_a) + \
+                                self.identity_loss(self.generator_ab(real_b), real_b)
 
                 # GAN loss
-                fake_b = generator_ab(real_a)
-                fake_a = generator_ba(real_b)
+                fake_b = self.generator_ab(real_a)
+                fake_a = self.generator_ba(real_b)
 
-                loss_gan = self.gan_loss(discriminator_b(fake_b), valid) + \
-                           self.gan_loss(discriminator_a(fake_a), valid)
+                loss_gan = self.gan_loss(self.discriminator_b(fake_b), valid) + \
+                           self.gan_loss(self.discriminator_a(fake_a), valid)
 
-                loss_cycle = self.cycle_loss(generator_ba(fake_b), real_a) + \
-                             self.cycle_loss(generator_ab(fake_a), real_b)
+                loss_cycle = self.cycle_loss(self.generator_ba(fake_b), real_a) + \
+                             self.cycle_loss(self.generator_ab(fake_a), real_b)
 
                 # Total loss
                 loss_generator = (loss_gan + self.cyclic_loss_coefficient * loss_cycle
                                   + self.identity_loss_coefficient * loss_identity)
 
-                generator_optimizer.zero_grad()
+                self.generator_optimizer.zero_grad()
                 loss_generator.backward()
-                generator_optimizer.step()
+                self.generator_optimizer.step()
 
                 #  Train discriminators
                 fake_a_replay = fake_a_buffer.push_and_pop(fake_a)
                 fake_b_replay = fake_b_buffer.push_and_pop(fake_b)
-                loss_discriminator = self.gan_loss(discriminator_a(real_a), valid) + \
-                                     self.gan_loss(discriminator_a(fake_a_replay), fake) + \
-                                     self.gan_loss(discriminator_b(real_b), valid) + \
-                                     self.gan_loss(discriminator_b(fake_b_replay), fake)
+                loss_discriminator = self.gan_loss(self.discriminator_a(real_a), valid) + \
+                                     self.gan_loss(self.discriminator_a(fake_a_replay), fake) + \
+                                     self.gan_loss(self.discriminator_b(real_b), valid) + \
+                                     self.gan_loss(self.discriminator_b(fake_b_replay), fake)
 
-                discriminator_optimizer.zero_grad()
+                self.discriminator_optimizer.zero_grad()
                 loss_discriminator.backward()
-                discriminator_optimizer.step()
+                self.discriminator_optimizer.step()
 
                 tracker.save({'loss.generator': loss_generator,
                               'loss.discriminator': loss_discriminator,
@@ -341,15 +308,67 @@ class Configs(TrainingLoopConfigs):
                               'loss.generator.identity': loss_identity})
 
                 # If at sample interval save image
-                batches_done = epoch * len(dataloader) + i
+                batches_done = epoch * len(self.dataloader) + i
                 if batches_done % self.sample_interval == 0:
-                    sample_images(batches_done, self.dataset_name, valid_dataloader, generator_ab, generator_ba)
+                    self.sample_images(batches_done)
 
                 tracker.add_global_step(max(len(real_a), len(real_b)))
 
             # Update learning rates
-            generator_lr_scheduler.step()
-            discriminator_lr_scheduler.step()
+            self.generator_lr_scheduler.step()
+            self.discriminator_lr_scheduler.step()
+
+
+@configs.setup([Configs.generator_ab, Configs.generator_ba, Configs.discriminator_a, Configs.discriminator_b,
+                Configs.generator_optimizer, Configs.discriminator_optimizer,
+                Configs.generator_lr_scheduler, Configs.discriminator_lr_scheduler])
+def setup_models(self: Configs):
+    input_shape = (self.img_channels, self.img_height, self.img_width)
+    self.generator_ab = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
+    self.generator_ba = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
+    self.discriminator_a = Discriminator(input_shape).to(self.device)
+    self.discriminator_b = Discriminator(input_shape).to(self.device)
+
+    self.generator_optimizer = torch.optim.Adam(
+        itertools.chain(self.generator_ab.parameters(), self.generator_ba.parameters()),
+        lr=self.learning_rate, betas=self.adam_betas)
+    self.discriminator_optimizer = torch.optim.Adam(
+        itertools.chain(self.discriminator_a.parameters(), self.discriminator_b.parameters()),
+        lr=self.learning_rate, betas=self.adam_betas)
+
+    decay_epochs = self.epochs - self.decay_start
+    self.generator_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
+        self.generator_optimizer, lr_lambda=lambda e: 1.0 - max(0, e - self.decay_start) / decay_epochs)
+    self.discriminator_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
+        self.discriminator_optimizer, lr_lambda=lambda e: 1.0 - max(0, e - self.decay_start) / decay_epochs)
+
+
+@configs.setup([Configs.dataloader, Configs.valid_dataloader])
+def setup_dataloader(self: Configs):
+    images_path = lab.get_data_path() / 'cycle_gan' / self.dataset_name
+    # Image transformations
+    transforms_ = [
+        transforms.Resize(int(self.img_height * 1.12), Image.BICUBIC),
+        transforms.RandomCrop((self.img_height, self.img_width)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]
+
+    # Training data loader
+    self.dataloader = DataLoader(
+        ImageDataset(images_path, transforms_, True, 'train'),
+        batch_size=self.batch_size,
+        shuffle=True,
+        num_workers=self.data_loader_workers,
+    )
+    # Test data loader
+    self.valid_dataloader = DataLoader(
+        ImageDataset(images_path, transforms_, True, "test"),
+        batch_size=5,
+        shuffle=True,
+        num_workers=self.data_loader_workers,
+    )
 
 
 def main():

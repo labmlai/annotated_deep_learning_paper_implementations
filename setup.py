@@ -17,7 +17,7 @@ setuptools.setup(
     },
     packages=setuptools.find_packages(exclude=('test',
                                                'test.*')),
-    install_requires=['labml>=0.4.40',
+    install_requires=['labml>=0.4.41',
                       'labml_helpers',
                       'torch'],
     classifiers=[
