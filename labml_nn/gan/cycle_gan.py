@@ -1,13 +1,23 @@
 """
-Download datasets from https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/[DATASET NAME].zip
-and extract them into labml_nn/data/cycle_gan/[DATASET NAME]
+# Cycle GAN
+This is an implementation of paper
+[Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593).
 
-I've taken pieces of code from https://github.com/eriklindernoren/PyTorch-GAN
+### Running the experiment
+To train the model you need to download datasets from
+`https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/[DATASET NAME].zip`
+and extract them into folder `labml_nn/data/cycle_gan/[DATASET NAME]`.
+You will also have to `dataset_name` configuration to `[DATASET NAME]`.
+This defaults to `monet2photo`.
+
+I've taken pieces of code from [https://github.com/eriklindernoren/PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).
+It is a very good resource if you want to checkout other GAN variations too.
 """
 
 import itertools
 import random
 from pathlib import PurePath, Path
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -24,7 +34,193 @@ from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
 
 
+class GeneratorResNet(Module):
+    """
+    The generator is a residual network.
+    """
+
+    def __init__(self, input_shape: Tuple[int, int, int], n_residual_blocks: int):
+        super().__init__()
+        # The number of channels in the input image, which is 3 for RGB images.
+        channels = input_shape[0]
+
+        # This first block runs a $7\times7$ convolution and maps the image to
+        # a feature map.
+        # The output feature map has same height and width because we have
+        # a padding of $3$.
+        # Reflection padding is used because it gives better image quality at edges.
+        #
+        # `inplace=True` in `ReLU` saves a little bit of memory.
+        out_features = 64
+        layers = [
+            nn.Conv2d(channels, out_features, kernel_size=7, padding=3, padding_mode='reflection'),
+            nn.InstanceNorm2d(out_features),
+            nn.ReLU(inplace=True),
+        ]
+        in_features = out_features
+
+        # We down-sample with two $3 \times 3$ convolutions
+        # with stride of 2
+        for _ in range(2):
+            out_features *= 2
+            layers += [
+                nn.Conv2d(in_features, out_features, kernel_size=3, stride=2, padding=1),
+                nn.InstanceNorm2d(out_features),
+                nn.ReLU(inplace=True),
+            ]
+            in_features = out_features
+
+        # We take this through `n_residual_blocks`.
+        # This module is defined below.
+        for _ in range(n_residual_blocks):
+            layers += [ResidualBlock(out_features)]
+
+        # Then the resulting feature map is up-sampled
+        # to match the original image height and width.
+        for _ in range(2):
+            out_features //= 2
+            layers += [
+                nn.ConvTranspose2d(in_features, out_features, kernel_size=3, stride=2, padding=1),
+                nn.InstanceNorm2d(out_features),
+                nn.ReLU(inplace=True),
+            ]
+            in_features = out_features
+
+        # Finally we map the feature map to an RGB image
+        layers += [nn.Conv2d(out_features, channels, 7, padding=3, padding_mode='reflection'), nn.Tanh()]
+
+        # Create a sequential module with the layers
+        self.layers = nn.Sequential(*layers)
+
+        # Initialize weights to $\mathcal{N}(0, 0.2)$
+        self.apply(weights_init_normal)
+
+    def __call__(self, x):
+        return self.layers(x)
+
+
+class ResidualBlock(Module):
+    """
+    This is the residual block, with two convolution layers.
+    """
+
+    def __init__(self, in_features: int):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(in_features, in_features, kernel_size=3, padding=1, padding_mode='reflection'),
+            nn.InstanceNorm2d(in_features),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_features, in_features, kernel_size=3, padding=1, padding_mode='reflection'),
+            nn.InstanceNorm2d(in_features),
+            nn.ReLU(inplace=True),
+        )
+
+    def __call__(self, x: torch.Tensor):
+        return x + self.block(x)
+
+
+class Discriminator(Module):
+    """
+    This is the discriminator.
+    """
+
+    def __init__(self, input_shape: Tuple[int, int, int]):
+        super().__init__()
+        channels, height, width = input_shape
+
+        # Output of the discriminator is also map of probabilities*
+        # whether each region of the image is real or generated
+        self.output_shape = (1, height // 2 ** 4, width // 2 ** 4)
+
+        self.layers = nn.Sequential(
+            # Each of these blocks will shrink the height and width by a factor of 2
+            DiscriminatorBlock(channels, 64, normalize=False),
+            DiscriminatorBlock(64, 128),
+            DiscriminatorBlock(128, 256),
+            DiscriminatorBlock(256, 512),
+            # Zero pad on top and left to keep the output height and width same
+            # with the $4 \times 4$ kernel
+            nn.ZeroPad2d((1, 0, 1, 0)),
+            nn.Conv2d(512, 1, kernel_size=4, padding=1)
+        )
+
+        # Initialize weights to $\mathcal{N}(0, 0.2)$
+        self.apply(weights_init_normal)
+
+    def forward(self, img):
+        return self.layers(img)
+
+
+class DiscriminatorBlock(Module):
+    """
+    This is the discriminator block module.
+    It does a convolution, an optional normalization, and a leaky relu.
+
+    It shrinks the height and width of the input feature map by half.
+    """
+    def __init__(self, in_filters: int, out_filters: int, normalize: bool = True):
+        super().__init__()
+        layers = [nn.Conv2d(in_filters, out_filters, kernel_size=4, stride=2, padding=1)]
+        if normalize:
+            layers.append(nn.InstanceNorm2d(out_filters))
+        layers.append(nn.LeakyReLU(0.2, inplace=True))
+        self.layers = nn.Sequential(*layers)
+
+    def __call__(self, x: torch.Tensor):
+        return self.layers(x)
+
+
+def weights_init_normal(m):
+    """
+    Initialize convolution layer weights to $\mathcal{N}(0, 0.2)$
+    """
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+
+
+def load_image(path: str):
+    """
+    Loads an image and change to RGB if in grey-scale.
+    """
+    image = Image.open(path)
+    if image.mode != 'RGB':
+        image = Image.new("RGB", image.size).paste(image)
+
+    return image
+
+
+class ImageDataset(Dataset):
+    """
+    Dataset to load images
+    """
+    def __init__(self, root: PurePath, transforms_, unaligned: bool, mode: str):
+        root = Path(root)
+        self.transform = transforms.Compose(transforms_)
+        self.unaligned = unaligned
+
+        self.files_A = sorted(str(f) for f in (root / f'{mode}A').iterdir())
+        self.files_B = sorted(str(f) for f in (root / f'{mode}B').iterdir())
+
+    def __getitem__(self, index):
+        return {"a": self.transform(load_image(self.files_A[index % len(self.files_A)])),
+                "b": self.transform(load_image(self.files_B[index % len(self.files_B)]))}
+
+    def __len__(self):
+        return max(len(self.files_A), len(self.files_B))
+
+
 class ReplayBuffer:
+    """
+    Replay buffer is used to train the discriminator.
+    Generated images are added to the replay buffer and sampled from it.
+
+    The replay buffer returns the newly added image with a probability of $0.5$.
+    Otherwise it sends an older generated image and and replaces the older image
+    with the new generated image.
+
+    This is done to reduce model oscillation.
+    """
     def __init__(self, max_size: int = 50):
         self.max_size = max_size
         self.data = []
@@ -46,144 +242,8 @@ class ReplayBuffer:
         return torch.stack(res)
 
 
-def load_image(path: str):
-    image = Image.open(path)
-    if image.mode != 'RGB':
-        image = Image.new("RGB", image.size).pase(image)
-
-    return image
-
-
-class ImageDataset(Dataset):
-    def __init__(self, root: PurePath, transforms_, unaligned: bool, mode: str):
-        root = Path(root)
-        self.transform = transforms.Compose(transforms_)
-        self.unaligned = unaligned
-
-        self.files_A = sorted(str(f) for f in (root / f'{mode}A').iterdir())
-        self.files_B = sorted(str(f) for f in (root / f'{mode}B').iterdir())
-
-    def __getitem__(self, index):
-        return {"a": self.transform(load_image(self.files_A[index % len(self.files_A)])),
-                "b": self.transform(load_image(self.files_B[index % len(self.files_B)]))}
-
-    def __len__(self):
-        return max(len(self.files_A), len(self.files_B))
-
-
-def weights_init_normal(m):
-    classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find("BatchNorm2d") != -1:
-        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
-
-
-class ResidualBlock(Module):
-    def __init__(self, in_features: int):
-        super().__init__()
-        self.block = nn.Sequential(
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(in_features, in_features, 3),
-            nn.InstanceNorm2d(in_features),
-            nn.ReLU(inplace=True),
-            nn.ReflectionPad2d(1),
-            nn.Conv2d(in_features, in_features, 3),
-            nn.InstanceNorm2d(in_features),
-        )
-
-    def __call__(self, x: torch.Tensor):
-        return x + self.block(x)
-
-
-class GeneratorResNet(Module):
-    def __init__(self, input_shape, num_residual_blocks):
-        super().__init__()
-        channels = input_shape[0]
-
-        # Initial convolution block
-        out_features = 64
-        layers = [
-            nn.ReflectionPad2d(channels),
-            nn.Conv2d(channels, out_features, 7),
-            nn.InstanceNorm2d(out_features),
-            nn.ReLU(inplace=True),
-        ]
-        in_features = out_features
-
-        # Downsampling
-        for _ in range(2):
-            out_features *= 2
-            layers += [
-                nn.Conv2d(in_features, out_features, 3, stride=2, padding=1),
-                nn.InstanceNorm2d(out_features),
-                nn.ReLU(inplace=True),
-            ]
-            in_features = out_features
-
-        # Residual blocks
-        for _ in range(num_residual_blocks):
-            layers += [ResidualBlock(out_features)]
-
-        # Upsampling
-        for _ in range(2):
-            out_features //= 2
-            layers += [
-                nn.Upsample(scale_factor=2),
-                nn.Conv2d(in_features, out_features, 3, stride=1, padding=1),
-                nn.InstanceNorm2d(out_features),
-                nn.ReLU(inplace=True),
-            ]
-            in_features = out_features
-
-        # Output layer
-        layers += [nn.ReflectionPad2d(channels), nn.Conv2d(out_features, channels, 7), nn.Tanh()]
-
-        self.layers = nn.Sequential(*layers)
-
-        self.apply(weights_init_normal)
-
-    def __call__(self, x):
-        return self.layers(x)
-
-
-class DiscriminatorBlock(Module):
-    def __init__(self, in_filters, out_filters, normalize=True):
-        super().__init__()
-        layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
-        if normalize:
-            layers.append(nn.InstanceNorm2d(out_filters))
-        layers.append(nn.LeakyReLU(0.2, inplace=True))
-        self.layers = nn.Sequential(*layers)
-
-    def __call__(self, x: torch.Tensor):
-        return self.layers(x)
-
-
-class Discriminator(Module):
-    def __init__(self, input_shape):
-        super().__init__()
-        channels, height, width = input_shape
-
-        # Calculate output shape of image discriminator (PatchGAN)
-        self.output_shape = (1, height // 2 ** 4, width // 2 ** 4)
-
-        self.model = nn.Sequential(
-            DiscriminatorBlock(channels, 64, normalize=False),
-            DiscriminatorBlock(64, 128),
-            DiscriminatorBlock(128, 256),
-            DiscriminatorBlock(256, 512),
-            nn.ZeroPad2d((1, 0, 1, 0)),
-            nn.Conv2d(512, 1, 4, padding=1)
-        )
-
-        self.apply(weights_init_normal)
-
-    def forward(self, img):
-        return self.model(img)
-
-
 class Configs(BaseConfigs):
+    """This is the configurations for the experiment"""
     device: torch.device = DeviceConfigs()
     epochs: int = 200
     dataset_name: str = 'monet2photo'
@@ -196,9 +256,13 @@ class Configs(BaseConfigs):
     adam_betas = (0.5, 0.999)
     decay_start = 100
 
-    identity_loss = torch.nn.L1Loss()
-    cycle_loss = torch.nn.L1Loss()
+    # The paper suggests using a least-squares loss instead of
+    # negative log-likelihood, at it is found to be more stable.
     gan_loss = torch.nn.MSELoss()
+
+    # L1 loss is used for cycle loss and identity loss
+    cycle_loss = torch.nn.L1Loss()
+    identity_loss = torch.nn.L1Loss()
 
     batch_step = 'cycle_gan_batch_step'
 
@@ -228,7 +292,7 @@ class Configs(BaseConfigs):
     valid_dataloader: DataLoader
 
     def sample_images(self, n: int):
-        """Saves a generated sample from the test set"""
+        """Generate samples from test set and save them"""
         batch = next(iter(self.valid_dataloader))
         self.generator_ab.eval()
         self.generator_ba.eval()
@@ -248,18 +312,19 @@ class Configs(BaseConfigs):
         save_image(image_grid, f"images/{self.dataset_name}/{n}.png", normalize=False)
 
     def run(self):
-        # Buffers of previously generated samples
+        # Replay buffers to keep generated samples
         fake_a_buffer = ReplayBuffer()
         fake_b_buffer = ReplayBuffer()
 
         for epoch in monit.loop(self.epochs):
             for i, batch in enumerate(self.dataloader):
-                # Set model input
+                # Move images to the device
                 real_a, real_b = batch['a'].to(self.device), batch['b'].to(self.device)
 
-                # adversarial ground truths
+                # valid labels equal to $1$
                 valid = torch.ones(real_a.size(0), *self.discriminator_a.output_shape,
                                    device=self.device, requires_grad=False)
+                # fake labels equal to $0$
                 fake = torch.zeros(real_a.size(0), *self.discriminator_a.output_shape,
                                    device=self.device, requires_grad=False)
 
