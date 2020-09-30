@@ -123,7 +123,7 @@ class MarginLoss(Module):
     The length of each output capsule is the probability that class is present in the input.
 
     Loss for each output capsule or class $k$ is,
-    $$L_k = T_k \max(0, m^{+} - \lVert\mathbf{v}_k\rVert)^2 +
+    $$\mathcal{L}_k = T_k \max(0, m^{+} - \lVert\mathbf{v}_k\rVert)^2 +
     \lambda (1 - T_k) \max(0, \lVert\mathbf{v}_k\rVert - m^{-})^2$$
 
     $T_k$ is $1$ if the class $k$ is present and $0$ otherwise.
@@ -153,16 +153,16 @@ class MarginLoss(Module):
         # $$\lVert \mathbf{v}_j \rVert$$
         v_norm = torch.sqrt((v ** 2).sum(dim=-1))
 
-        # $$L$$
+        # $$\mathcal{L}$$
         # `labels` is one-hot encoded labels of shape `[batch_size, n_labels]`
         labels = torch.eye(self.n_labels, device=labels.device)[labels]
 
-        # $$L_k = T_k \max(0, m^{+} - \lVert\mathbf{v}_k\rVert)^2 +
+        # $$\mathcal{L}_k = T_k \max(0, m^{+} - \lVert\mathbf{v}_k\rVert)^2 +
         # \lambda (1 - T_k) \max(0, \lVert\mathbf{v}_k\rVert - m^{-})^2$$
         # `loss` has shape `[batch_size, n_labels]`. We have parallelized the computation
-        # of $L_k$ for for all $k$.
+        # of $\mathcal{L}_k$ for for all $k$.
         loss = labels * F.relu(self.m_positive - v_norm) + \
                self.lambda_ * (1.0 - labels) * F.relu(v_norm - self.m_negative)
 
-        # $$\sum_k L_k$$
+        # $$\sum_k \mathcal{L}_k$$
         return loss.sum(dim=-1).mean()

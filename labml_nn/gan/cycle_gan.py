@@ -202,15 +202,15 @@ class ImageDataset(Dataset):
         self.transform = transforms.Compose(transforms_)
         self.unaligned = unaligned
 
-        self.files_A = sorted(str(f) for f in (root / f'{mode}A').iterdir())
-        self.files_B = sorted(str(f) for f in (root / f'{mode}B').iterdir())
+        self.files_a = sorted(str(f) for f in (root / f'{mode}A').iterdir())
+        self.files_b = sorted(str(f) for f in (root / f'{mode}B').iterdir())
 
     def __getitem__(self, index):
-        return {"a": self.transform(load_image(self.files_A[index % len(self.files_A)])),
-                "b": self.transform(load_image(self.files_B[index % len(self.files_B)]))}
+        return {"x": self.transform(load_image(self.files_a[index % len(self.files_a)])),
+                "y": self.transform(load_image(self.files_b[index % len(self.files_b)]))}
 
     def __len__(self):
-        return max(len(self.files_A), len(self.files_B))
+        return max(len(self.files_a), len(self.files_b))
 
 
 class ReplayBuffer:
@@ -253,7 +253,7 @@ class Configs(BaseConfigs):
     dataset_name: str = 'monet2photo'
     batch_size: int = 1
 
-    data_loader_workers = 0
+    data_loader_workers = 8
     is_save_models = True
 
     learning_rate = 0.0002
@@ -281,10 +281,10 @@ class Configs(BaseConfigs):
 
     sample_interval = 500
 
-    generator_ab: GeneratorResNet
-    generator_ba: GeneratorResNet
-    discriminator_a: Discriminator
-    discriminator_b: Discriminator
+    generator_xy: GeneratorResNet
+    generator_yx: GeneratorResNet
+    discriminator_x: Discriminator
+    discriminator_y: Discriminator
 
     generator_optimizer: torch.optim.Adam
     discriminator_optimizer: torch.optim.Adam
@@ -298,131 +298,258 @@ class Configs(BaseConfigs):
     def sample_images(self, n: int):
         """Generate samples from test set and save them"""
         batch = next(iter(self.valid_dataloader))
-        self.generator_ab.eval()
-        self.generator_ba.eval()
+        self.generator_xy.eval()
+        self.generator_yx.eval()
         with torch.no_grad():
-            real_a, real_b = batch['a'].to(self.generator_ab.device), batch['b'].to(self.generator_ba.device)
-            fake_b = self.generator_ab(real_a)
-            fake_a = self.generator_ba(real_b)
+            data_x, data_y = batch['x'].to(self.generator_xy.device), batch['y'].to(self.generator_yx.device)
+            gen_y = self.generator_xy(data_x)
+            gen_x = self.generator_yx(data_y)
 
-            # Arange images along x-axis
-            real_a = make_grid(real_a, nrow=5, normalize=True)
-            real_b = make_grid(real_b, nrow=5, normalize=True)
-            fake_a = make_grid(fake_a, nrow=5, normalize=True)
-            fake_b = make_grid(fake_b, nrow=5, normalize=True)
+            # Arrange images along x-axis
+            data_x = make_grid(data_x, nrow=5, normalize=True)
+            data_y = make_grid(data_y, nrow=5, normalize=True)
+            gen_x = make_grid(gen_x, nrow=5, normalize=True)
+            gen_y = make_grid(gen_y, nrow=5, normalize=True)
 
             # arange images along y-axis
-            image_grid = torch.cat((real_a, fake_b, real_b, fake_a), 1)
+            image_grid = torch.cat((data_x, gen_y, data_y, gen_x), 1)
         save_image(image_grid, f"images/{self.dataset_name}/{n}.png", normalize=False)
 
-    def optimize_generators(self, real_a: torch.Tensor, real_b: torch.Tensor, true_labels: torch.Tensor):
+    def run(self):
+        """
+        We aim to solve:
+        $$G^{*}, F^{*} = \arg \min_{G,F} \max_{D_X, D_Y} \mathcal{L}(G, F, D_X, D_Y)$$
+
+        where,
+        \begin{align}
+        \mathcal{L}(G, F, D_X, D_Y)
+            &= \mathcal{L}_{GAN}(G, D_Y, X, Y) \\
+            &+ \mathcal{L}_{GAN}(F, D_X, Y, X) \\
+            &+ \lambda_1 \mathcal{L}_{cyc}(G, F) \\
+            &+ \lambda_2 \mathcal{L}_{identity}(G, F) \\
+        \\
+        \mathcal{L}_{GAN}(G, F, D_Y, X, Y)
+            &= \mathbb{E}_{y \sim p_{data}(y)} \Big[log D_Y(y)\Big] \\
+            &+ \mathbb{E}_{x \sim p_{data}(x)} \bigg[log\Big(1 - D_Y(G(x))\Big)\bigg] \\
+            &+ \mathbb{E}_{x \sim p_{data}(x)} \Big[log D_X(x)\Big] \\
+            &+ \mathbb{E}_{y \sim p_{data}(y)} \bigg[log\Big(1 - D_X(F(y))\Big)\bigg] \\
+        \\
+        \mathcal{L}_{cyc}(G, F)
+            &= \mathbb{E}_{x \sim p_{data}(x)} \Big[\lVert F(G(x)) - x \lVert_1\Big] \\
+            &+ \mathbb{E}_{y \sim p_{data}(y)} \Big[\lVert G(F(y)) - y \rVert_1\Big] \\
+        \\
+        \mathcal{L}_{identity}(G, F)
+            &= \mathbb{E}_{x \sim p_{data}(x)} \Big[\lVert F(x) - x \lVert_1\Big] \\
+            &+ \mathbb{E}_{y \sim p_{data}(y)} \Big[\lVert G(y) - y \rVert_1\Big] \\
+        \end{align}
+
+        $\mathcal{L}_{GAN}$ is the generative adversarial loss from the original
+        GAN paper.
+
+        $\mathcal{L}_{cyc}$ is the cyclic loss, where we try to get $F(G(x))$ to be similar to $x$,
+        and $G(F(y))$ to be similar to $y$.
+        Basically if the two generators (transformations) are applied in series it should give back the
+        original image.
+        This is the main contribution of this paper.
+        It train the generators to generate an image of the other distribution that is similar to
+        the original image.
+        Without this loss $G(x)$ could generate anything that's from the distribution of $Y$.
+        Now it needs to generate something from the distribution of $Y$ but still have properties of $x$,
+        so that $F(G(x)$ can re-generate something like $x$.
+
+        $\mathcal{L}_{cyc}$ is the identity loss.
+        This was used to encourage the mapping to preserve color composition between
+        the input and the output.
+
+        To solve $G^{\*}, F^{\*}$,
+        discriminators $D_X$ and $D_Y$ should **ascend** on the gradient,
+        \begin{align}
+        \nabla_{\theta_{D_X, D_Y}} \frac{1}{m} \sum_{i=1}^m
+        &\Bigg[
+        \log D_Y\Big(y^{(i)}\Big) \\
+        &+ \log \Big(1 - D_Y\Big(G\Big(x^{(i)}\Big)\Big)\Big) \\
+        &+ \log D_X\Big(x^{(i)}\Big) \\
+        & +\log\Big(1 - D_X\Big(F\Big(y^{(i)}\Big)\Big)\Big)
+        \Bigg]
+        \end{align}
+        That is descend on *negative* log-likelihood loss.
+
+        In order to stabilize the training the negative log- likelihood objective
+        was replaced by a least-squared loss -
+        the least-squared error of discriminator labelling real images with 1,
+        and generated images with 0.
+        So we want to descend on the gradient,
+        \begin{align}
+        \nabla_{\theta_{D_X, D_Y}} \frac{1}{m} \sum_{i=1}^m
+        &\Bigg[
+            \bigg(D_Y\Big(y^{(i)}\Big) - 1\bigg)^2 \\
+            &+ D_Y\Big(G\Big(x^{(i)}\Big)\Big)^2 \\
+            &+ \bigg(D_X\Big(x^{(i)}\Big) - 1\bigg)^2 \\
+            &+ D_X\Big(F\Big(y^{(i)}\Big)\Big)^2
+        \Bigg]
+        \end{align}
+
+        We use least-squares for generators also.
+        The generators should *descend* on the gradient,
+        \begin{align}
+        \nabla_{\theta_{F, G}} \frac{1}{m} \sum_{i=1}^m
+        &\Bigg[
+            \bigg(D_Y\Big(G\Big(x^{(i)}\Big)\Big) - 1\bigg)^2 \\
+            &+ \bigg(D_X\Big(F\Big(y^{(i)}\Big)\Big) - 1\bigg)^2 \\
+            &+ \mathcal{L}_{cyc}(G, F)
+            + \mathcal{L}_{identity}(G, F)
+        \Bigg]
+        \end{align}
+
+        We use `generator_xy` for $G$ and `generator_yx$ for $F$.
+        We use `discriminator_x$ for $D_X$ and `discriminator_y` for $D_Y$.
+        """
+
+        # Replay buffers to keep generated samples
+        gen_x_buffer = ReplayBuffer()
+        gen_y_buffer = ReplayBuffer()
+
+        # Loop through epochs
+        for epoch in monit.loop(self.epochs):
+            # Loop through the dataset
+            for i, batch in enumerate(self.dataloader):
+                # Move images to the device
+                data_x, data_y = batch['x'].to(self.device), batch['y'].to(self.device)
+
+                # true labels equal to $1$
+                true_labels = torch.ones(data_x.size(0), *self.discriminator_x.output_shape,
+                                         device=self.device, requires_grad=False)
+                # false labels equal to $0$
+                false_labels = torch.zeros(data_x.size(0), *self.discriminator_x.output_shape,
+                                           device=self.device, requires_grad=False)
+
+                # Train the generators.
+                # This returns the generated images.
+                gen_x, gen_y = self.optimize_generators(data_x, data_y, true_labels)
+
+                #  Train discriminators
+                self.optimize_discriminator(data_x, data_y,
+                                            gen_x_buffer.push_and_pop(gen_x), gen_y_buffer.push_and_pop(gen_y),
+                                            true_labels, false_labels)
+
+                # Save training statistics and increment the global step counter
+                tracker.save()
+                tracker.add_global_step(max(len(data_x), len(data_y)))
+
+                # Save images at intervals
+                batches_done = epoch * len(self.dataloader) + i
+                if batches_done % self.sample_interval == 0:
+                    self.sample_images(batches_done)
+
+            # Update learning rates
+            self.generator_lr_scheduler.step()
+            self.discriminator_lr_scheduler.step()
+
+    def optimize_generators(self, data_x: torch.Tensor, data_y: torch.Tensor, true_labels: torch.Tensor):
+        """
+        Optimize the generators with identity, gan and cycle losses.
+        """
+
         #  Change to training mode
-        self.generator_ab.train()
-        self.generator_ba.train()
+        self.generator_xy.train()
+        self.generator_yx.train()
 
         # Identity loss
-        loss_identity = (self.identity_loss(self.generator_ba(real_a), real_a) +
-                         self.identity_loss(self.generator_ab(real_b), real_b))
+        # $$\lVert F(G(x^{(i)})) - x^{(i)} \lVert_1\
+        #   \lVert G(F(y^{(i)})) - y^{(i)} \rVert_1$$
+        loss_identity = (self.identity_loss(self.generator_yx(data_x), data_x) +
+                         self.identity_loss(self.generator_xy(data_y), data_y))
 
-        # Generate images
-        fake_b = self.generator_ab(real_a)
-        fake_a = self.generator_ba(real_b)
+        # Generate images $G(x)$ and $F(y)$
+        gen_y = self.generator_xy(data_x)
+        gen_x = self.generator_yx(data_y)
 
         # GAN loss
-        loss_gan = (self.gan_loss(self.discriminator_b(fake_b), true_labels) +
-                    self.gan_loss(self.discriminator_a(fake_a), true_labels))
+        # $$\bigg(D_Y\Big(G\Big(x^{(i)}\Big)\Big) - 1\bigg)^2
+        #  + \bigg(D_X\Big(F\Big(y^{(i)}\Big)\Big) - 1\bigg)^2$$
+        loss_gan = (self.gan_loss(self.discriminator_y(gen_y), true_labels) +
+                    self.gan_loss(self.discriminator_x(gen_x), true_labels))
 
         # Cycle loss
-        loss_cycle = (self.cycle_loss(self.generator_ba(fake_b), real_a) +
-                      self.cycle_loss(self.generator_ab(fake_a), real_b))
+        # $$
+        # \lVert F(G(x^{(i)})) - x^{(i)} \lVert_1 +
+        # \lVert G(F(y^{(i)})) - y^{(i)} \rVert_1
+        # $$
+        loss_cycle = (self.cycle_loss(self.generator_yx(gen_y), data_x) +
+                      self.cycle_loss(self.generator_xy(gen_x), data_y))
 
         # Total loss
         loss_generator = (loss_gan +
                           self.cyclic_loss_coefficient * loss_cycle +
                           self.identity_loss_coefficient * loss_identity)
 
+        # Take a step in the optimizer
         self.generator_optimizer.zero_grad()
         loss_generator.backward()
         self.generator_optimizer.step()
 
+        # Log losses
         tracker.add({'loss.generator': loss_generator,
                      'loss.generator.cycle': loss_cycle,
                      'loss.generator.gan': loss_gan,
                      'loss.generator.identity': loss_identity})
 
-        return fake_a, fake_b
+        # Return generated images
+        return gen_x, gen_y
 
-    def optimize_discriminator(self, real_a: torch.Tensor, real_b: torch.Tensor,
-                               fake_a: torch.Tensor, fake_b: torch.Tensor,
+    def optimize_discriminator(self, data_x: torch.Tensor, data_y: torch.Tensor,
+                               gen_x: torch.Tensor, gen_y: torch.Tensor,
                                true_labels: torch.Tensor, false_labels: torch.Tensor):
-        loss_discriminator = (self.gan_loss(self.discriminator_a(real_a), true_labels) +
-                              self.gan_loss(self.discriminator_a(fake_a), false_labels) +
-                              self.gan_loss(self.discriminator_b(real_b), true_labels) +
-                              self.gan_loss(self.discriminator_b(fake_b), false_labels))
+        """
+        Optimize the discriminators with gan loss.
+        """
+        # GAN Loss
+        # \begin{align}
+        # \bigg(D_Y\Big(y ^ {(i)}\Big) - 1\bigg) ^ 2
+        # + D_Y\Big(G\Big(x ^ {(i)}\Big)\Big) ^ 2 + \\
+        # \bigg(D_X\Big(x ^ {(i)}\Big) - 1\bigg) ^ 2
+        # + D_X\Big(F\Big(y ^ {(i)}\Big)\Big) ^ 2
+        # \end{align}
+        loss_discriminator = (self.gan_loss(self.discriminator_x(data_x), true_labels) +
+                              self.gan_loss(self.discriminator_x(gen_x), false_labels) +
+                              self.gan_loss(self.discriminator_y(data_y), true_labels) +
+                              self.gan_loss(self.discriminator_y(gen_y), false_labels))
 
+        # Take a step in the optimizer
         self.discriminator_optimizer.zero_grad()
         loss_discriminator.backward()
         self.discriminator_optimizer.step()
 
+        # Log losses
         tracker.add({'loss.discriminator': loss_discriminator})
 
-    def run(self):
-        # Replay buffers to keep generated samples
-        fake_a_buffer = ReplayBuffer()
-        fake_b_buffer = ReplayBuffer()
 
-        for epoch in monit.loop(self.epochs):
-            for i, batch in enumerate(self.dataloader):
-                # Move images to the device
-                real_a, real_b = batch['a'].to(self.device), batch['b'].to(self.device)
-
-                # true labels equal to $1$
-                true_labels = torch.ones(real_a.size(0), *self.discriminator_a.output_shape,
-                                         device=self.device, requires_grad=False)
-                # false labels equal to $0$
-                false_labels = torch.zeros(real_a.size(0), *self.discriminator_a.output_shape,
-                                           device=self.device, requires_grad=False)
-
-                # Train the generators
-                fake_a, fake_b = self.optimize_generators(real_a, real_b, true_labels)
-
-                #  Train discriminators
-                self.optimize_discriminator(real_a, real_b,
-                                            fake_a_buffer.push_and_pop(fake_a), fake_b_buffer.push_and_pop(fake_b),
-                                            true_labels, false_labels)
-
-                # Save training statistics
-                tracker.save()
-
-                # If at sample interval save image
-                batches_done = epoch * len(self.dataloader) + i
-                if batches_done % self.sample_interval == 0:
-                    self.sample_images(batches_done)
-
-                tracker.add_global_step(max(len(real_a), len(real_b)))
-
-            # Update learning rates
-            self.generator_lr_scheduler.step()
-            self.discriminator_lr_scheduler.step()
-
-
-@configs.setup([Configs.generator_ab, Configs.generator_ba, Configs.discriminator_a, Configs.discriminator_b,
+@configs.setup([Configs.generator_xy, Configs.generator_yx, Configs.discriminator_x, Configs.discriminator_y,
                 Configs.generator_optimizer, Configs.discriminator_optimizer,
                 Configs.generator_lr_scheduler, Configs.discriminator_lr_scheduler])
 def setup_models(self: Configs):
+    """
+    This method setup the models
+    """
     input_shape = (self.img_channels, self.img_height, self.img_width)
-    self.generator_ab = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
-    self.generator_ba = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
-    self.discriminator_a = Discriminator(input_shape).to(self.device)
-    self.discriminator_b = Discriminator(input_shape).to(self.device)
 
+    # Create the models
+    self.generator_xy = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
+    self.generator_yx = GeneratorResNet(input_shape, self.n_residual_blocks).to(self.device)
+    self.discriminator_x = Discriminator(input_shape).to(self.device)
+    self.discriminator_y = Discriminator(input_shape).to(self.device)
+
+    # Create the optmizers
     self.generator_optimizer = torch.optim.Adam(
-        itertools.chain(self.generator_ab.parameters(), self.generator_ba.parameters()),
+        itertools.chain(self.generator_xy.parameters(), self.generator_yx.parameters()),
         lr=self.learning_rate, betas=self.adam_betas)
     self.discriminator_optimizer = torch.optim.Adam(
-        itertools.chain(self.discriminator_a.parameters(), self.discriminator_b.parameters()),
+        itertools.chain(self.discriminator_x.parameters(), self.discriminator_y.parameters()),
         lr=self.learning_rate, betas=self.adam_betas)
 
+    # Create the learning rate schedules.
+    # The learning rate stars flat until `decay_start` epochs,
+    # and then linearly reduces to $0$ at end of training.
     decay_epochs = self.epochs - self.decay_start
     self.generator_lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
         self.generator_optimizer, lr_lambda=lambda e: 1.0 - max(0, e - self.decay_start) / decay_epochs)
@@ -432,7 +559,13 @@ def setup_models(self: Configs):
 
 @configs.setup([Configs.dataloader, Configs.valid_dataloader])
 def setup_dataloader(self: Configs):
+    """
+    This method setup the data loaders
+    """
+
+    # Location of the dataset
     images_path = lab.get_data_path() / 'cycle_gan' / self.dataset_name
+
     # Image transformations
     transforms_ = [
         transforms.Resize(int(self.img_height * 1.12), Image.BICUBIC),
@@ -449,7 +582,8 @@ def setup_dataloader(self: Configs):
         shuffle=True,
         num_workers=self.data_loader_workers,
     )
-    # Test data loader
+
+    # Validation data loader
     self.valid_dataloader = DataLoader(
         ImageDataset(images_path, transforms_, True, "test"),
         batch_size=5,
