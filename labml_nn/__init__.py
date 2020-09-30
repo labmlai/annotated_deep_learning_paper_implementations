@@ -30,6 +30,7 @@ and
 #### ✨ [Generative Adversarial Networks](http://lab-ml.com/labml_nn/gan/)
 * [GAN with a multi-layer perceptron](http://lab-ml.com/labml_nn/gan/simple_mnist_experiment.html)
 * [GAN with deep convolutional network](http://lab-ml.com/labml_nn/gan/dcgan.html)
+* [Cycle GAN](http://lab-ml.com/labml_nn/gan/cycle_gan.html)
 
 ### Installation
 
