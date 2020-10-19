@@ -141,12 +141,12 @@ class DecoderRNN(Module):
             hidden, cell = torch.split(torch.tanh(self.init_state(z)), self.dec_hidden_size, 1)
             state = (hidden.unsqueeze(0).contiguous(), cell.unsqueeze(0).contiguous())
 
-        _, (hidden, cell) = self.lstm(x, state)
+        outputs, (hidden, cell) = self.lstm(x, state)
 
-        q_logits = self.q_log_softmax(self.q_head(hidden))
+        q_logits = self.q_log_softmax(self.q_head(outputs))
 
         pi_logits, mu_x, mu_y, sigma_x, sigma_y, rho_xy = \
-            torch.split(self.mixtures(hidden), self.n_mixtures, 2)
+            torch.split(self.mixtures(outputs), self.n_mixtures, 2)
 
         dist = BivariateGaussianMixture(pi_logits, mu_x, mu_y,
                                         torch.exp(sigma_x), torch.exp(sigma_y), torch.tanh(rho_xy))
@@ -189,7 +189,6 @@ class Sampler:
                 s = self._sample_step(dist, q_logits, temperature)
                 seq.append(s)
                 if s[4] == 1:
-                    print(i)
                     break
 
         seq = torch.stack(seq)
@@ -304,10 +303,8 @@ class StrokesBatchStep(BatchStepProtocol):
             self.encoder.train()
             self.decoder.train()
         else:
-            self.encoder.train()
-            self.decoder.train()
-            # self.encoder.eval()
-            # self.decoder.eval()
+            self.encoder.eval()
+            self.decoder.eval()
 
     def process(self, batch: any, state: any):
         device = self.encoder.device
