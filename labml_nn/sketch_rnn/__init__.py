@@ -429,12 +429,16 @@ class BivariateGaussianMixture:
         self.sigma_y *= math.sqrt(temperature)
 
     def get_distribution(self):
+        sigma_x = torch.clamp_min(self.sigma_x, 1e-9)
+        sigma_y = torch.clamp_max(self.sigma_y, 1e-9)
+        rho_xy = torch.clamp(self.rho_xy, -1 + 1e-9, 1 - 1e-9)
+
         mean = torch.stack([self.mu_x, self.mu_y], -1)
         cov = torch.stack([
-            self.sigma_x * self.sigma_x + 1e-6, self.rho_xy * self.sigma_x * self.sigma_y,
-            self.rho_xy * self.sigma_x * self.sigma_y, self.sigma_y * self.sigma_y + 1e-6
+            sigma_x * sigma_x, rho_xy * sigma_x * sigma_y,
+            rho_xy * sigma_x * sigma_y, sigma_y * self.sigma_y
         ], -1)
-        cov = cov.view(*self.sigma_y.shape, 2, 2)
+        cov = cov.view(*sigma_y.shape, 2, 2)
 
         multi_dist = torch.distributions.MultivariateNormal(mean, covariance_matrix=cov)
         cat_dist = torch.distributions.Categorical(logits=self.pi_logits)
