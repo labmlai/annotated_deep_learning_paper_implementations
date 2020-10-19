@@ -193,7 +193,7 @@ class DecoderRNN(Module):
             h, c = torch.split(torch.tanh(self.init_state(z)), self.dec_hidden_size, 1)
             # `h` and `c` have shapes `[batch_size, lstm_size]`. We want to make them
             # to shape `[1, batch_size, lstm_size]` because that's the shape used in LSTM.
-            state = (h.unsqueeze(0), c.unsqueeze(0))
+            state = (h.unsqueeze(0).contiguous(), c.unsqueeze(0).contiguous())
 
         # Run the LSTM
         outputs, state = self.lstm(x, state)
@@ -429,14 +429,14 @@ class BivariateGaussianMixture:
         self.sigma_y *= math.sqrt(temperature)
 
     def get_distribution(self):
-        sigma_x = torch.clamp_min(self.sigma_x, 1e-9)
-        sigma_y = torch.clamp_max(self.sigma_y, 1e-9)
-        rho_xy = torch.clamp(self.rho_xy, -1 + 1e-9, 1 - 1e-9)
+        sigma_x = torch.clamp_min(self.sigma_x, 1e-5)
+        sigma_y = torch.clamp_min(self.sigma_y, 1e-5)
+        rho_xy = torch.clamp(self.rho_xy, -1 + 1e-5, 1 - 1e-5)
 
         mean = torch.stack([self.mu_x, self.mu_y], -1)
         cov = torch.stack([
             sigma_x * sigma_x, rho_xy * sigma_x * sigma_y,
-            rho_xy * sigma_x * sigma_y, sigma_y * self.sigma_y
+            rho_xy * sigma_x * sigma_y, sigma_y * sigma_y
         ], -1)
         cov = cov.view(*sigma_y.shape, 2, 2)
 
