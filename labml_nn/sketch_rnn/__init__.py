@@ -357,7 +357,7 @@ class StrokesBatchStep(BatchStepProtocol):
 
         hook_model_outputs(self.encoder, 'encoder')
         hook_model_outputs(self.decoder, 'decoder')
-        tracker.set_scalar("loss.*", True)
+        tracker.set_scalar("loss.total.*", True)
 
     def prepare_for_iteration(self):
         if MODE_STATE.is_train:
