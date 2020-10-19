@@ -1,8 +1,16 @@
 """
-Download data from https://github.com/googlecreativelab/quickdraw-dataset
+This is an annotated implementation of the paper
+[A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).
 
-**Acknowledgement**
-* Took help from https://github.com/alexis-jacq/Pytorch-Sketch-RNN
+Download data from [Quick, Draw! Dataset](https://github.com/googlecreativelab/quickdraw-dataset).
+There is a link to download `npz` files in *Sketch-RNN QuickDraw Dataset* section of the readme.
+Place the downloaded `npz` file(s) in `data/sketch` folder.
+This code is configured to use `bycle` dataset.
+You can change this in configurations.
+
+### Acknowledgements
+Took help from [PyTorch Sketch RNN)(https://github.com/alexis-jacq/Pytorch-Sketch-RNN) project by
+[Alexis David Jacq](https://github.com/alexis-jacq)
 """
 
 import math
@@ -27,23 +35,54 @@ from labml_helpers.train_valid import TrainValidConfigs, BatchStepProtocol, hook
 
 
 class StrokesDataset(Dataset):
+    """
+    ## Dataset
+
+    This class load and pre-process the data.
+    """
+
     def __init__(self, dataset_name: str, max_seq_length):
+        # `npz` file path is `data/sketch/[DATASET NAME].npz`
         path = lab.get_data_path() / 'sketch' / f'{dataset_name}.npz'
+        # Load the numpy file.
         dataset = np.load(str(path), encoding='latin1', allow_pickle=True)
+
+        # Filter and convert training sequences to floats.
         data = []
+        # `dataset['train']` is a list of numpy arrays of shape [seq_len, 3].
+        # It is a sequence of strokes, and each stroke is represented by
+        # 3 integers.
+        # First two are the displacements along x and y ($\Delta x$, $\Delta y$)
+        # And the last integer represents the state of the pen - 1 if it's touching
+        # the paper and 0 otherwise, and 2 if it's end of sequence.
+        #
+        # We iterate through each of the sequences
         for seq in dataset['train']:
-            if seq.shape[0] <= max_seq_length and seq.shape[0] > 10:
+            # Filter if the length of the the sequence of strokes is within our range
+            if 10 < len(seq) <= max_seq_length:
+                # Clamp $\Delta x$, $\Delta y$ to $[-1000, 1000]$
                 seq = np.minimum(seq, 1000)
                 seq = np.maximum(seq, -1000)
+                # Convert to a floating point array and add to `data`
                 seq = np.array(seq, dtype=np.float32)
                 data.append(seq)
+
+        # We then normalize all ($\Delta x$, $\Delta y$) by their standard deviation.
+        # This calculates the standard deviations for ($\Delta x$, $\Delta y$) combined.
+        # Paper notes that the mean is not adjusted for simplicity since the mean is anyway close to $0$.
         std = np.std(np.concatenate([np.ravel(s[:, 0:2]) for s in data]))
         for s in data:
+            # Adjust by standard deviation
             s[:, 0:2] /= std
+
+        # Get the longest sequence length among all sequences
         longest_seq_len = max([len(seq) for seq in data])
 
+        # Initialize PyTorch data array
         self.data = torch.zeros(len(data), longest_seq_len, 5, dtype=torch.float)
-        mask = torch.zeros(len(data), longest_seq_len + 1)
+        # Initialize mask array. Mask has an extra step because the model predicts
+        # end of sequence at the end.
+        self.mask = torch.zeros(len(data), longest_seq_len + 1)
 
         for i, seq in enumerate(data):
             seq = torch.from_numpy(seq)
@@ -54,11 +93,10 @@ class StrokesDataset(Dataset):
             self.data[i, :len_seq - 1, 2] = 1 - seq[:-1, 2]
             self.data[i, :len_seq - 1, 3] = seq[:-1, 2]
             self.data[i, len_seq - 1:, 4] = 1
-            mask[i, :len_seq] = 1
+            self.mask[i, :len_seq] = 1
 
         eos = torch.zeros(len(data), 1, 5)
         self.target = torch.cat([self.data, eos], 1)
-        self.mask = mask
 
     def __len__(self):
         return len(self.data)
@@ -199,7 +237,7 @@ class Configs(TrainValidConfigs):
     optimizer: optim.Adam = 'setup_all'
     sampler: Sampler
 
-    dataset_name = 'bicycle'
+    dataset_name: str
     dataset: StrokesDataset = 'setup_all'
     train_loader = 'setup_all'
 
@@ -356,7 +394,8 @@ def main():
     experiment.create(name="sketch_rnn")
     experiment.configs(configs, {
         'optimizer.optimizer': 'Adam',
-        'optimizer.learning_rate': 1e-3
+        'optimizer.learning_rate': 1e-3,
+        'dataset_name': 'bicycle'
     }, 'run')
     experiment.start()
 
