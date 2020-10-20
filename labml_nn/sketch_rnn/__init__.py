@@ -563,11 +563,13 @@ class Configs(TrainValidConfigs):
     train_dataset: StrokesDataset
     valid_dataset: StrokesDataset
 
+    batch_step = 'strokes_batch_step'
+
+    # Encoder and decoder sizes
     enc_hidden_size = 256
     dec_hidden_size = 512
 
-    batch_step = 'strokes_batch_step'
-
+    # Batch size
     batch_size = 100
 
     # Number of features in $z$
