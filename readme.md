@@ -29,6 +29,9 @@ and
 * [GAN with deep convolutional network](http://lab-ml.com/labml_nn/gan/dcgan.html)
 * [Cycle GAN](http://lab-ml.com/labml_nn/gan/cycle_gan.html)
 
+#### ✨ [Sketch RNN](http://lab-ml.com/labml_nn/sketch_rnn/)
+
+
 ### Installation
 
 ```bash
