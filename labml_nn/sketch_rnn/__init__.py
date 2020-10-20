@@ -116,12 +116,80 @@ class StrokesDataset(Dataset):
         return self.data[idx], self.mask[idx]
 
 
+class BivariateGaussianMixture:
+    """
+    ## Bi-variate Gaussian mixture
+
+    The mixture is represented by $\Pi$ and
+    $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$.
+    This class adjust temperatures and creates the categorical and gaussian
+    distributions from the parameters.
+    """
+    def __init__(self, pi_logits: torch.Tensor, mu_x: torch.Tensor, mu_y: torch.Tensor,
+                 sigma_x: torch.Tensor, sigma_y: torch.Tensor, rho_xy: torch.Tensor):
+        self.pi_logits = pi_logits
+        self.mu_x = mu_x
+        self.mu_y = mu_y
+        self.sigma_x = sigma_x
+        self.sigma_y = sigma_y
+        self.rho_xy = rho_xy
+
+    @property
+    def n_distributions(self):
+        """Number of distributions in the mixture, $M$"""
+        return self.pi_logits.shape[-1]
+
+    def set_temperature(self, temperature: float):
+        """
+        Adjust by temperature $\tau$
+        """
+        # $$\hat{\Pi_k} \leftarrow \frac{\hat{\Pi_k}}{\tau}$$
+        self.pi_logits /= temperature
+        # $$\sigma^2_x \leftarrow \sigma^2_x \tau$$
+        self.sigma_x *= math.sqrt(temperature)
+        # $$\sigma^2_y \leftarrow \sigma^2_y \tau$$
+        self.sigma_y *= math.sqrt(temperature)
+
+    def get_distribution(self):
+        # Clamp $\sigma_x$, $\sigma_y$ and $\rho_{xy}$ to avoid getting `NaN`s
+        sigma_x = torch.clamp_min(self.sigma_x, 1e-5)
+        sigma_y = torch.clamp_min(self.sigma_y, 1e-5)
+        rho_xy = torch.clamp(self.rho_xy, -1 + 1e-5, 1 - 1e-5)
+
+        # Get means
+        mean = torch.stack([self.mu_x, self.mu_y], -1)
+        # Get covariance matrix
+        cov = torch.stack([
+            sigma_x * sigma_x, rho_xy * sigma_x * sigma_y,
+            rho_xy * sigma_x * sigma_y, sigma_y * sigma_y
+        ], -1)
+        cov = cov.view(*sigma_y.shape, 2, 2)
+
+        # Create bi-variate normal distribution.
+        #
+        # 📝 It would be efficient to `scale_tril` matrix as `[[a, 0], [b, c]]`
+        # where
+        # $$a = \sigma_x, b = \rho_{xy} \sigma_y, c = \sigma_y \sqrt{1 - \rho^2_{xy}}$$.
+        # But for simplicity we use co-variance matrix.
+        # [This is a good resource](https://www2.stat.duke.edu/courses/Spring12/sta104.1/Lectures/Lec22.pdf)
+        # if you want to read up more about bi-variate distributions, their co-variance matrix,
+        # and probability density function.
+        multi_dist = torch.distributions.MultivariateNormal(mean, covariance_matrix=cov)
+
+        # Create categorical distribution $\Pi$ from logits
+        cat_dist = torch.distributions.Categorical(logits=self.pi_logits)
+
+        #
+        return cat_dist, multi_dist
+
+
 class EncoderRNN(Module):
     """
     ## Encoder module
 
     This consists of a bidirectional LSTM
     """
+
     def __init__(self, d_z: int, enc_hidden_size: int):
         super().__init__()
         # Create a bidirectional LSTM takes a sequence of
@@ -166,6 +234,7 @@ class DecoderRNN(Module):
 
     This consists of a LSTM
     """
+
     def __init__(self, d_z: int, dec_hidden_size: int, n_distributions: int):
         super().__init__()
         # LSTM takes $[(\Delta x, \Delta y, p_1, p_2, p_3); z]$ as input
@@ -234,6 +303,7 @@ class ReconstructionLoss(Module):
     """
     ## Reconstruction Loss
     """
+
     def __call__(self, mask: torch.Tensor, target: torch.Tensor,
                  dist: 'BivariateGaussianMixture', q_logits: torch.Tensor):
         # Get $\Pi$ and $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
@@ -264,7 +334,7 @@ class ReconstructionLoss(Module):
         # $$L_p = - \frac{1}{N_{max}} \sum_{i=1}^{N_{max}} \sum_{k=1}^{3} p_{k,i} \log(q_{k,i})$$
         loss_pen = -torch.mean(target[:, :, 2:] * q_logits)
 
-        #
+        # $$L_R = L_s + L_p$$
         return loss_stroke + loss_pen
 
 
@@ -286,6 +356,7 @@ class Sampler:
 
     This samples a sketch from the decoder and plots it
     """
+
     def __init__(self, encoder: EncoderRNN, decoder: DecoderRNN):
         self.decoder = decoder
         self.encoder = encoder
@@ -374,8 +445,113 @@ class Sampler:
         plt.show()
 
 
+class StrokesBatchStep(BatchStepProtocol):
+    """
+    ## Train/Validation modules
+    """
+
+    def __init__(self, encoder: EncoderRNN, decoder: DecoderRNN,
+                 optimizer: Optional[torch.optim.Adam],
+                 kl_div_loss_weight: float, grad_clip: float):
+        self.grad_clip = grad_clip
+        self.kl_div_loss_weight = kl_div_loss_weight
+        self.encoder = encoder
+        self.decoder = decoder
+        self.optimizer = optimizer
+        self.kl_div_loss = KLDivLoss()
+        self.reconstruction_loss = ReconstructionLoss()
+
+        # Add hooks to monitor layer outputs on Tensorboard
+        hook_model_outputs(self.encoder, 'encoder')
+        hook_model_outputs(self.decoder, 'decoder')
+
+        # Configure the tracker to print the total train/validation loss
+        tracker.set_scalar("loss.total.*", True)
+
+    def prepare_for_iteration(self):
+        """
+        Set models for training/evaluation
+        """
+        if MODE_STATE.is_train:
+            self.encoder.train()
+            self.decoder.train()
+        else:
+            self.encoder.eval()
+            self.decoder.eval()
+
+    def process(self, batch: any, state: any):
+        """
+        Process a batch
+        """
+        data, mask = batch
+
+        # Get model device
+        device = self.encoder.device
+        # Move `data` and `mask` to device and swap the sequence and batch dimensions.
+        # `data` will have shape `[seq_len, batch_size, 5]` and
+        # `mask` will have shape `[seq_len, batch_size]`.
+        data = data.to(device).transpose(0, 1)
+        mask = mask.to(device).transpose(0, 1)
+
+        # Encode the sequence of strokes
+        with monit.section("encoder"):
+            # Get $z$, $\mu$, and $\hat{\sigma}$
+            z, mu, sigma_hat = self.encoder(data)
+
+        # Decode the mixture of distributions and $\hat{q}$
+        with monit.section("decoder"):
+            # Concatenate $[(\Delta x, \Delta y, p_1, p_2, p_3); z]$
+            z_stack = z.unsqueeze(0).expand(data.shape[0] - 1, -1, -1)
+            inputs = torch.cat([data[:-1], z_stack], 2)
+            # Get mixture of distributions and $\hat{q}$
+            dist, q_logits, _ = self.decoder(inputs, z, None)
+
+        # Compute the loss
+        with monit.section('loss'):
+            # $L_{KL}$
+            kl_loss = self.kl_div_loss(sigma_hat, mu)
+            # $L_R$
+            reconstruction_loss = self.reconstruction_loss(mask, data[1:], dist, q_logits)
+            # $Loss = L_R + w_{KL} L_{KL}$
+            loss = reconstruction_loss + self.kl_div_loss_weight * kl_loss
+
+            # Track losses
+            tracker.add("loss.kl.", kl_loss)
+            tracker.add("loss.reconstruction.", reconstruction_loss)
+            tracker.add("loss.total.", loss)
+
+        # Run optimizer
+        with monit.section('optimize'):
+            # Only if we are in training state
+            if MODE_STATE.is_train:
+                # Set `grad` to zero
+                self.optimizer.zero_grad()
+                # Compute gradients
+                loss.backward()
+                # Log model parameters and gradients
+                if MODE_STATE.is_log_parameters:
+                    pytorch_utils.store_model_indicators(self.encoder, 'encoder')
+                    pytorch_utils.store_model_indicators(self.decoder, 'decoder')
+                # Clip gradients
+                nn.utils.clip_grad_norm_(self.encoder.parameters(), self.grad_clip)
+                nn.utils.clip_grad_norm_(self.decoder.parameters(), self.grad_clip)
+                # Optimize
+                self.optimizer.step()
+
+        #
+        return {'samples': len(data)}, None
+
+
 class Configs(TrainValidConfigs):
+    """
+    ## Configurations
+
+    These are default configurations which can be later adjusted by passing a `dict`.
+    """
+
+    # Device configurations to pick the device to run the experiment
     device: torch.device = DeviceConfigs()
+    #
     encoder: EncoderRNN
     decoder: DecoderRNN
     optimizer: optim.Adam = 'setup_all'
@@ -394,19 +570,29 @@ class Configs(TrainValidConfigs):
 
     batch_size = 100
 
+    # Number of features in $z$
     d_z = 128
+    # Number of distributions in the mixture, $M$
     n_distributions = 20
 
+    # Weight of KL divergence loss, $w_{KL}$
     kl_div_loss_weight = 0.5
+    # Gradient clipping
     grad_clip = 1.
+    # Temperature $\tau$ for sampling
     temperature = 0.4
+
+    # Filter out stroke sequences longer than $200$
     max_seq_length = 200
 
     epochs = 100
 
     def sample(self):
-        data, *_ = self.train_dataset[np.random.choice(len(self.train_dataset))]
+        # Randomly pick a sample from validation dataset to encoder
+        data, *_ = self.valid_dataset[np.random.choice(len(self.valid_dataset))]
+        # Add batch dimension and move it to device
         data = data.unsqueeze(1).to(self.device)
+        # Sample
         self.sampler.sample(data, self.temperature)
 
 
@@ -414,139 +600,57 @@ class Configs(TrainValidConfigs):
         Configs.train_dataset, Configs.train_loader,
         Configs.valid_dataset, Configs.valid_loader])
 def setup_all(self: Configs):
+    # Initialize encoder & decoder
     self.encoder = EncoderRNN(self.d_z, self.enc_hidden_size).to(self.device)
     self.decoder = DecoderRNN(self.d_z, self.dec_hidden_size, self.n_distributions).to(self.device)
 
+    # Set optimizer, things like type of optimizer and learning rate are configurable
     self.optimizer = OptimizerConfigs()
     self.optimizer.parameters = list(self.encoder.parameters()) + list(self.decoder.parameters())
 
+    # Create sampler
     self.sampler = Sampler(self.encoder, self.decoder)
+
     # `npz` file path is `data/sketch/[DATASET NAME].npz`
     path = lab.get_data_path() / 'sketch' / f'{self.dataset_name}.npz'
     # Load the numpy file.
     dataset = np.load(str(path), encoding='latin1', allow_pickle=True)
 
+    # Create training dataset
     self.train_dataset = StrokesDataset(dataset['train'], self.max_seq_length)
+    # Create validation dataset
     self.valid_dataset = StrokesDataset(dataset['valid'], self.max_seq_length, self.train_dataset.scale)
 
+    # Create training data loader
     self.train_loader = DataLoader(self.train_dataset, self.batch_size, shuffle=True)
-    self.valid_loader = DataLoader(self.valid_dataset, self.batch_size, shuffle=True)
-
-
-class StrokesBatchStep(BatchStepProtocol):
-    def __init__(self, encoder: EncoderRNN, decoder: DecoderRNN,
-                 optimizer: Optional[torch.optim.Adam],
-                 kl_div_loss_weight: float, grad_clip: float):
-        self.grad_clip = grad_clip
-        self.kl_div_loss_weight = kl_div_loss_weight
-        self.encoder = encoder
-        self.decoder = decoder
-        self.optimizer = optimizer
-        self.kl_div_loss = KLDivLoss()
-        self.reconstruction_loss = ReconstructionLoss()
-
-        hook_model_outputs(self.encoder, 'encoder')
-        hook_model_outputs(self.decoder, 'decoder')
-        tracker.set_scalar("loss.total.*", True)
-
-    def prepare_for_iteration(self):
-        if MODE_STATE.is_train:
-            self.encoder.train()
-            self.decoder.train()
-        else:
-            self.encoder.eval()
-            self.decoder.eval()
-
-    def process(self, batch: any, state: any):
-        device = self.encoder.device
-        data, mask = batch
-        data = data.to(device).transpose(0, 1)
-        mask = mask.to(device).transpose(0, 1)
-
-        with monit.section("encoder"):
-            z, mu, sigma = self.encoder(data)
-
-        with monit.section("decoder"):
-            z_stack = z.unsqueeze(0).expand(data.shape[0] - 1, -1, -1)
-            inputs = torch.cat([data[:-1], z_stack], 2)
-            dist, q_logits, _ = self.decoder(inputs, z, None)
-
-        with monit.section('loss'):
-            kl_loss = self.kl_div_loss(sigma, mu)
-            reconstruction_loss = self.reconstruction_loss(mask, data[1:], dist, q_logits)
-            loss = self.kl_div_loss_weight * kl_loss + reconstruction_loss
-
-            tracker.add("loss.kl.", kl_loss)
-            tracker.add("loss.reconstruction.", reconstruction_loss)
-            tracker.add("loss.total.", loss)
-
-        with monit.section('optimize'):
-            if MODE_STATE.is_train:
-                self.optimizer.zero_grad()
-                loss.backward()
-                if MODE_STATE.is_log_parameters:
-                    pytorch_utils.store_model_indicators(self.encoder, 'encoder')
-                    pytorch_utils.store_model_indicators(self.decoder, 'decoder')
-                nn.utils.clip_grad_norm_(self.encoder.parameters(), self.grad_clip)
-                nn.utils.clip_grad_norm_(self.decoder.parameters(), self.grad_clip)
-                self.optimizer.step()
-
-        return {'samples': len(data)}, None
+    # Create validation data loader
+    self.valid_loader = DataLoader(self.valid_dataset, self.batch_size)
 
 
 @option(Configs.batch_step)
 def strokes_batch_step(c: Configs):
+    """Set Strokes Training and Validation module"""
     return StrokesBatchStep(c.encoder, c.decoder, c.optimizer, c.kl_div_loss_weight, c.grad_clip)
-
-
-class BivariateGaussianMixture:
-    def __init__(self, pi_logits: torch.Tensor, mu_x: torch.Tensor, mu_y: torch.Tensor,
-                 sigma_x: torch.Tensor, sigma_y: torch.Tensor, rho_xy: torch.Tensor):
-        self.pi_logits = pi_logits
-        self.mu_x = mu_x
-        self.mu_y = mu_y
-        self.sigma_x = sigma_x
-        self.sigma_y = sigma_y
-        self.rho_xy = rho_xy
-
-    @property
-    def n_distributions(self):
-        return self.pi_logits.shape[-1]
-
-    def set_temperature(self, temperature: float):
-        self.pi_logits /= temperature
-        self.sigma_x *= math.sqrt(temperature)
-        self.sigma_y *= math.sqrt(temperature)
-
-    def get_distribution(self):
-        sigma_x = torch.clamp_min(self.sigma_x, 1e-5)
-        sigma_y = torch.clamp_min(self.sigma_y, 1e-5)
-        rho_xy = torch.clamp(self.rho_xy, -1 + 1e-5, 1 - 1e-5)
-
-        mean = torch.stack([self.mu_x, self.mu_y], -1)
-        cov = torch.stack([
-            sigma_x * sigma_x, rho_xy * sigma_x * sigma_y,
-            rho_xy * sigma_x * sigma_y, sigma_y * sigma_y
-        ], -1)
-        cov = cov.view(*sigma_y.shape, 2, 2)
-
-        multi_dist = torch.distributions.MultivariateNormal(mean, covariance_matrix=cov)
-        cat_dist = torch.distributions.Categorical(logits=self.pi_logits)
-
-        return cat_dist, multi_dist
 
 
 def main():
     configs = Configs()
     experiment.create(name="sketch_rnn")
+
+    # Pass a dictionary of configurations
     experiment.configs(configs, {
         'optimizer.optimizer': 'Adam',
+        # We use a learning rate of `1e-3` because we can see results faster.
+        # Paper had suggested `1e-4`.
         'optimizer.learning_rate': 1e-3,
+        # Name of the dataset
         'dataset_name': 'bicycle',
+        # Number of inner iterations within an epoch to switch between training, validation and sampling.
         'inner_iterations': 10
     }, 'run')
     experiment.start()
 
+    # Run the experiment
     configs.run()
 
 
