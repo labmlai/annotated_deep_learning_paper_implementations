@@ -168,7 +168,7 @@ class DecoderRNN(Module):
     """
     def __init__(self, d_z: int, dec_hidden_size: int, n_distributions: int):
         super().__init__()
-        # LSTM takes $[z; (\Delta x, \Delta y, p_1, p_2, p_3)$ as input
+        # LSTM takes $[(\Delta x, \Delta y, p_1, p_2, p_3); z]$ as input
         self.lstm = nn.LSTM(d_z + 5, dec_hidden_size)
 
         # Initial state of the LSTM is $[h_0; c_0] = \tanh(W_{z}z + b_z)$.
@@ -269,61 +269,109 @@ class ReconstructionLoss(Module):
 
 
 class KLDivLoss(Module):
+    """
+    ## KL-Divergence loss
+
+    This calculates the KL divergence between a given normal distribution and $\mathcal{N}(0, 1)$
+    """
+
     def __call__(self, sigma_hat: torch.Tensor, mu: torch.Tensor):
+        # $$L_{KL} = - \frac{1}{2 N_z} \bigg( 1 + \hat{\sigma} - \mu^2 - \exp(\hat{\sigma}) \bigg)$$
         return -0.5 * torch.mean(1 + sigma_hat - mu ** 2 - torch.exp(sigma_hat))
 
 
 class Sampler:
+    """
+    ## Sampler
+
+    This samples a sketch from the decoder and plots it
+    """
     def __init__(self, encoder: EncoderRNN, decoder: DecoderRNN):
         self.decoder = decoder
         self.encoder = encoder
 
     def sample(self, data: torch.Tensor, temperature: float):
+        # $N_{max}$
+        longest_seq_len = len(data)
+
+        # Get $z$ from the encoder
         z, _, _ = self.encoder(data)
-        sos = data.new_tensor([0, 0, 1, 0, 0])
-        seq_len = len(data)
-        s = sos
+
+        # Start-of-sequence stroke is $(0, 0, 1, 0, 0)$
+        s = data.new_tensor([0, 0, 1, 0, 0])
         seq = [s]
+        # Initial decoder is `None`.
+        # The decoder will initialize it to $[h_0; c_0] = \tanh(W_{z}z + b_z)$
         state = None
+
+        # We don't need gradients
         with torch.no_grad():
-            for i in range(seq_len):
+            # Sample $N_{max}$ strokes
+            for i in range(longest_seq_len):
+                # $[(\Delta x, \Delta y, p_1, p_2, p_3); z] is the input to the decoder$
                 data = torch.cat([s.view(1, 1, -1), z.unsqueeze(0)], 2)
+                # Get $\Pi$, $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$,
+                # $q$ and the next state from the decoder
                 dist, q_logits, state = self.decoder(data, z, state)
+                # Sample a stroke
                 s = self._sample_step(dist, q_logits, temperature)
+                # Add the new stroke to the sequence of strokes
                 seq.append(s)
+                # Stop sampling if $p_3 = 1$. This indicates that sketching has stopped
                 if s[4] == 1:
                     break
 
+        # Create a PyTorch tensor of the sequence of strokes
         seq = torch.stack(seq)
 
+        # Plot the sequence of strokes
         self.plot(seq)
 
     @staticmethod
-    def plot(seq: torch.Tensor):
-        seq[:, 0:2] = torch.cumsum(seq[:, 0:2], dim=0)
-        seq[:, 2] = seq[:, 3] == 1
-        seq = seq[:, 0:3].detach().cpu().numpy()
-
-        strokes = np.split(seq, np.where(seq[:, 2] > 0)[0] + 1)
-        for s in strokes:
-            plt.plot(s[:, 0], -s[:, 1])
-        plt.axis('off')
-        plt.show()
-
-    @staticmethod
     def _sample_step(dist: 'BivariateGaussianMixture', q_logits: torch.Tensor, temperature: float):
+        # Set temperature $\tau$ for sampling. This is implemented in class `BivariateGaussianMixture`.
         dist.set_temperature(temperature)
+        # Get temperature adjusted $\Pi$ and $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
         pi, mix = dist.get_distribution()
+        # Sample from $\Pi$ the index of the distribution to use from the mixture
         idx = pi.sample()[0, 0]
 
+        # Create categorical distribution $q$ with log-probabilities `q_logits` or $\hat{q}$
         q = torch.distributions.Categorical(logits=q_logits / temperature)
+        # Sample from $q$
         q_idx = q.sample()[0, 0]
 
+        # Sample from the normal distributions in the mixture and pick the one indexed by `idx`
         xy = mix.sample()[0, 0, idx]
-        next_pos = q_logits.new_zeros(5)
-        next_pos[:2] = xy
-        next_pos[q_idx + 2] = 1
-        return next_pos
+
+        # Create an empty stroke $(\Delta x, \Delta y, q_1, q_2, q_3)$
+        stroke = q_logits.new_zeros(5)
+        # Set $\Delta x, \Delta y$
+        stroke[:2] = xy
+        # Set $q_1, q_2, q_3$
+        stroke[q_idx + 2] = 1
+        #
+        return stroke
+
+    @staticmethod
+    def plot(seq: torch.Tensor):
+        # Take the cumulative sums of $(\Delta x, \Delta y)$ to get $$x, y)$
+        seq[:, 0:2] = torch.cumsum(seq[:, 0:2], dim=0)
+        # Create a new numpy array of the form $(x, y, q_2)$
+        seq[:, 2] = seq[:, 3]
+        seq = seq[:, 0:3].detach().cpu().numpy()
+
+        # Split the array at points where $q_2$ is $1$.
+        # That is split the array of strokes at the points where the pen is lifted from the paper.
+        # This gives a list of sequence of strokes.
+        strokes = np.split(seq, np.where(seq[:, 2] > 0)[0] + 1)
+        # Plot each sequence of strokes
+        for s in strokes:
+            plt.plot(s[:, 0], -s[:, 1])
+        # Don't show axes
+        plt.axis('off')
+        # Show the plot
+        plt.show()
 
 
 class Configs(TrainValidConfigs):
