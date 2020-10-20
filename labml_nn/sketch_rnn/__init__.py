@@ -1,7 +1,10 @@
 """
+# SketchRNN
+
 This is an annotated implementation of the paper
 [A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).
 
+### Getting data
 Download data from [Quick, Draw! Dataset](https://github.com/googlecreativelab/quickdraw-dataset).
 There is a link to download `npz` files in *Sketch-RNN QuickDraw Dataset* section of the readme.
 Place the downloaded `npz` file(s) in `data/sketch` folder.
@@ -153,6 +156,7 @@ class EncoderRNN(Module):
         # Sample $z = \mu + \sigma \cdot \mathcal{N}(0, I)$
         z = mu + sigma * torch.normal(mu.new_zeros(mu.shape), mu.new_ones(mu.shape))
 
+        #
         return z, mu, sigma_hat
 
 
@@ -179,7 +183,7 @@ class DecoderRNN(Module):
         # This head is for the logits $(\hat{q_1}, \hat{q_2}, \hat{q_3})$
         self.q_head = nn.Linear(dec_hidden_size, 3)
         # This is to calculate $\log(q_k)$ where
-        # $$q_k = \frac{\exp(\hat{q_k}}{\sum_{j = 1}^3 \exp(\hat{q_j}}$$
+        # $$q_k = \operatorname{softmax}(\hat{q})_k = \frac{\exp(\hat{q_k})}{\sum_{j = 1}^3 \exp(\hat{q_j})}$$
         self.q_log_softmax = nn.LogSoftmax(-1)
 
         # These parameters are stored for future reference
@@ -201,28 +205,66 @@ class DecoderRNN(Module):
         # Get $\log(q)$
         q_logits = self.q_log_softmax(self.q_head(outputs))
 
-        # Get $(\hat{\Pi_i}, \mu_{x_i}, \mu_{y_i}, \hat{\sigma_{x_i}},
-        # \hat{\sigma_{y_i}} \hat{\rho_{xy_i}})$.
+        # Get $(\hat{\Pi_i}, \mu_{x,i}, \mu_{y,i}, \hat{\sigma_{x,i}},
+        # \hat{\sigma_{y,i}} \hat{\rho_{xy,i}})$.
         # `torch.split` splits the output into 6 tensors of size `self.n_distribution`
         # across dimension `2`.
         pi_logits, mu_x, mu_y, sigma_x, sigma_y, rho_xy = \
             torch.split(self.mixtures(outputs), self.n_distributions, 2)
 
-        # Create a bivariate gaussian mixture
+        # Create a bi-variate gaussian mixture
+        # $\Pi$ and 
+        # $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
+        # where
+        # $$\sigma_{x,i} = \exp(\hat{\sigma_{x,i}}), \sigma_{y,i} = \exp(\hat{\sigma_{y,i}}),
+        # \rho_{xy,i} = \tanh(\hat{\rho_{xy,i}})$$
+        # and
+        # $$\Pi_i = \operatorname{softmax}(\hat{\Pi})_i = \frac{\exp(\hat{\Pi_i})}{\sum_{j = 1}^3 \exp(\hat{\Pi_j})}$$
+        #
+        # $\Pi$ is the categorical probabilities of choosing the distribution out of the mixture
+        # $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$.
         dist = BivariateGaussianMixture(pi_logits, mu_x, mu_y,
                                         torch.exp(sigma_x), torch.exp(sigma_y), torch.tanh(rho_xy))
 
+        #
         return dist, q_logits, state
 
 
 class ReconstructionLoss(Module):
+    """
+    ## Reconstruction Loss
+    """
     def __call__(self, mask: torch.Tensor, target: torch.Tensor,
                  dist: 'BivariateGaussianMixture', q_logits: torch.Tensor):
+        # Get $\Pi$ and $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
         pi, mix = dist.get_distribution()
+        # `target` has shape `[seq_len, batch_size, 5]` where the last dimension is the features
+        # $(\Delta x, \Delta y, p_1, p_2, p_3)$.
+        # We want to get $\Delta x, \Delta$ and get the probabilities from each of the distributions
+        # in the mixture $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$.
+        #
+        # `xy` will have shape `[seq_len, batch_size, n_distributions, 2]`
         xy = target[:, :, 0:2].unsqueeze(-2).expand(-1, -1, dist.n_distributions, -1)
+        # Calculate the probabilities
+        # $$p(\Delta x, \Delta y) =
+        # \sum_{j=1}^M \Pi_j \mathcal{N} \big( \Delta x, \Delta y \vert
+        # \mu_{x,j}, \mu_{y,j}, \sigma_{x,j}, \sigma_{y,j}, \rho_{xy,j}
+        # \big)$$
         probs = torch.sum(pi.probs * torch.exp(mix.log_prob(xy)), 2)
+
+        # $$L_s = - \frac{1}{N_{max}} \sum_{i=1}^{N_s} \log \big (p(\Delta x, \Delta y) \big)$$
+        # Although `probs` has $N_{max}$ (`longest_seq_len`) elements the sum is only taken
+        # upto $N_s$ because the rest are masked out.
+        #
+        # It might feel like we should be taking the sum and dividing by $N_s$ and not $N_{max}$,
+        # but this will give higher weight for individual predictions in shorter sequences.
+        # We give equal weight to each prediction $p(\Delta x, \Delta y)$ when we divide by $N_{max}$
         loss_stroke = -torch.mean(mask * torch.log(1e-5 + probs))
+
+        # $$L_p = - \frac{1}{N_{max}} \sum_{i=1}^{N_{max}} \sum_{k=1}^{3} p_{k,i} \log(q_{k,i})$$
         loss_pen = -torch.mean(target[:, :, 2:] * q_logits)
+
+        #
         return loss_stroke + loss_pen
 
 
