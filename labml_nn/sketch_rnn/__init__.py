@@ -4,6 +4,12 @@
 This is an annotated implementation of the paper
 [A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).
 
+Sketch RNN is a sequence-to-sequence variational auto-encoder.
+Both encoder and decoder are recurrent neural network models.
+It learns to reconstruct stroke based simple drawings, by predicting
+a series of strokes.
+Decoder predicts each stroke as a mixture of Gaussian's.
+
 ### Getting data
 Download data from [Quick, Draw! Dataset](https://github.com/googlecreativelab/quickdraw-dataset).
 There is a link to download `npz` files in *Sketch-RNN QuickDraw Dataset* section of the readme.
