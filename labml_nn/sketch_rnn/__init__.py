@@ -12,7 +12,7 @@ This code is configured to use `bicycle` dataset.
 You can change this in configurations.
 
 ### Acknowledgements
-Took help from [PyTorch Sketch RNN)(https://github.com/alexis-jacq/Pytorch-Sketch-RNN) project by
+Took help from [PyTorch Sketch RNN](https://github.com/alexis-jacq/Pytorch-Sketch-RNN) project by
 [Alexis David Jacq](https://github.com/alexis-jacq)
 """
 
