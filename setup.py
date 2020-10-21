@@ -19,7 +19,9 @@ setuptools.setup(
                                                'test.*')),
     install_requires=['labml>=0.4.41',
                       'labml_helpers',
-                      'torch'],
+                      'torch',
+                      'einops',
+                      'numpy'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
