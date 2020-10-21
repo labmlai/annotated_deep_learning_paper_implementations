@@ -90,7 +90,7 @@ class StrokesDataset(Dataset):
         # They represent *pen down*, *pen up* and *end-of-sequence* in that order.
         # $p_1$ is $1$ if the pen touches the paper in the next step.
         # $p_2$ is $1$ if the pen doesn't touch the paper in the next step.
-        # $p_2$ is $1$ if it is the end of the drawing.
+        # $p_3$ is $1$ if it is the end of the drawing.
         self.data = torch.zeros(len(data), longest_seq_len + 2, 5, dtype=torch.float)
         # The mask array is needs only one extra-step since it is for the outputs of the
         # decoder, which takes in `data[:-1]` and predicts next step.
