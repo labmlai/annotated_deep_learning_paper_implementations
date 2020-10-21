@@ -239,7 +239,7 @@ class Trainer:
         """
         ### Calculate total loss
         """
-        
+
         # $R_t$ returns sampled from $\pi_{\theta_{OLD}}$
         sampled_return = samples['values'] + samples['advantages']
 
