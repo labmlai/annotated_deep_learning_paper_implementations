@@ -7,6 +7,7 @@ from torch import optim
 from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
+from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
 from labml_nn.rl.ppo.gae import GAE
 from labml_nn.rl.ppo.game import Worker
 
@@ -108,6 +109,12 @@ class Main:
 
         # GAE
         self.gae = GAE(self.n_workers, self.worker_steps, 0.99, 0.95)
+
+        # PPO Loss
+        self.ppo_loss = ClippedPPOLoss()
+
+        # Value Loss
+        self.value_loss = ClippedValueFunctionLoss()
 
     def sample(self) -> (Dict[str, np.ndarray], List):
         """### Sample data with current policy"""
@@ -216,104 +223,6 @@ class Main:
         return (adv - adv.mean()) / (adv.std() + 1e-8)
 
     def _calc_loss(self, samples: Dict[str, torch.Tensor], clip_range: float) -> torch.Tensor:
-        """
-        ## PPO Loss
-
-        We want to maximize policy reward
-         $$\max_\theta J(\pi_\theta) =
-           \mathop{\mathbb{E}}_{\tau \sim \pi_\theta}\Biggl[\sum_{t=0}^\infty \gamma^t r_t \Biggr]$$
-         where $r$ is the reward, $\pi$ is the policy, $\tau$ is a trajectory sampled from policy,
-         and $\gamma$ is the discount factor between $[0, 1]$.
-
-        \begin{align}
-        \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-         \sum_{t=0}^\infty \gamma^t A^{\pi_{OLD}}(s_t, a_t)
-        \Biggr] &=
-        \\
-        \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-          \sum_{t=0}^\infty \gamma^t \Bigl(
-           Q^{\pi_{OLD}}(s_t, a_t) - V^{\pi_{OLD}}(s_t)
-          \Bigr)
-         \Biggr] &=
-        \\
-        \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-          \sum_{t=0}^\infty \gamma^t \Bigl(
-           r_t + V^{\pi_{OLD}}(s_{t+1}) - V^{\pi_{OLD}}(s_t)
-          \Bigr)
-         \Biggr] &=
-        \\
-        \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-          \sum_{t=0}^\infty \gamma^t \Bigl(
-           r_t
-          \Bigr)
-         \Biggr]
-         - \mathbb{E}_{\tau \sim \pi_\theta}
-            \Biggl[V^{\pi_{OLD}}(s_0)\Biggr] &=
-        J(\pi_\theta) - J(\pi_{\theta_{OLD}})
-        \end{align}
-
-        So,
-         $$\max_\theta J(\pi_\theta) =
-           \max_\theta \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-              \sum_{t=0}^\infty \gamma^t A^{\pi_{OLD}}(s_t, a_t)
-           \Biggr]$$
-
-        Define discounted-future state distribution,
-         $$d^\pi(s) = (1 - \gamma) \sum_{t=0}^\infty \gamma^t P(s_t = s | \pi)$$
-
-        Then,
-        \begin{align}
-        J(\pi_\theta) - J(\pi_{\theta_{OLD}})
-        &= \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[
-         \sum_{t=0}^\infty \gamma^t A^{\pi_{OLD}}(s_t, a_t)
-        \Biggr]
-        \\
-        &= \frac{1}{1 - \gamma}
-         \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_\theta} \Bigl[
-          A^{\pi_{OLD}}(s, a)
-         \Bigr]
-        \end{align}
-
-        Importance sampling $a$ from $\pi_{\theta_{OLD}}$,
-
-        \begin{align}
-        J(\pi_\theta) - J(\pi_{\theta_{OLD}})
-        &= \frac{1}{1 - \gamma}
-         \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_\theta} \Bigl[
-          A^{\pi_{OLD}}(s, a)
-         \Bigr]
-        \\
-        &= \frac{1}{1 - \gamma}
-         \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_{\theta_{OLD}}} \Biggl[
-          \frac{\pi_\theta(a|s)}{\pi_{\theta_{OLD}}(a|s)} A^{\pi_{OLD}}(s, a)
-         \Biggr]
-        \end{align}
-
-        Then we assume $d^\pi_\theta(s)$ and  $d^\pi_{\theta_{OLD}}(s)$ are similar.
-        The error we introduce to $J(\pi_\theta) - J(\pi_{\theta_{OLD}})$
-         by this assumtion is bound by the KL divergence between
-         $\pi_\theta$ and $\pi_{\theta_{OLD}}$.
-        [Constrained Policy Optimization](https://arxiv.org/abs/1705.10528)
-         shows the proof of this. I haven't read it.
-
-
-        \begin{align}
-        J(\pi_\theta) - J(\pi_{\theta_{OLD}})
-        &= \frac{1}{1 - \gamma}
-         \mathop{\mathbb{E}}_{s \sim d^{\pi_\theta} \atop a \sim \pi_{\theta_{OLD}}} \Biggl[
-          \frac{\pi_\theta(a|s)}{\pi_{\theta_{OLD}}(a|s)} A^{\pi_{OLD}}(s, a)
-         \Biggr]
-        \\
-        &\approx \frac{1}{1 - \gamma}
-         \mathop{\mathbb{E}}_{\color{orange}{s \sim d^{\pi_{\theta_{OLD}}}}
-         \atop a \sim \pi_{\theta_{OLD}}} \Biggl[
-          \frac{\pi_\theta(a|s)}{\pi_{\theta_{OLD}}(a|s)} A^{\pi_{OLD}}(s, a)
-         \Biggr]
-        \\
-        &= \frac{1}{1 - \gamma} \mathcal{L}^{CPI}
-        \end{align}
-        """
-
         # $R_t$ returns sampled from $\pi_{\theta_{OLD}}$
         sampled_return = samples['values'] + samples['advantages']
 
@@ -327,72 +236,21 @@ class Main:
         #  we are treating observations as state
         pi, value = self.model(samples['obs'])
 
-        # #### Policy
-
         # $-\log \pi_\theta (a_t|s_t)$, $a_t$ are actions sampled from $\pi_{\theta_{OLD}}$
         log_pi = pi.log_prob(samples['actions'])
 
-        # ratio $r_t(\theta) = \frac{\pi_\theta (a_t|s_t)}{\pi_{\theta_{OLD}} (a_t|s_t)}$;
-        # *this is different from rewards* $r_t$.
-        ratio = torch.exp(log_pi - samples['log_pis'])
+        # Calculate policy loss
+        policy_loss = self.ppo_loss(log_pi, samples['log_pis'], sampled_normalized_advantage, clip_range)
 
-        # \begin{align}
-        # \mathcal{L}^{CLIP}(\theta) =
-        #  \mathbb{E}_{a_t, s_t \sim \pi_{\theta{OLD}}} \biggl[
-        #    min \Bigl(r_t(\theta) \bar{A_t},
-        #              clip \bigl(
-        #               r_t(\theta), 1 - \epsilon, 1 + \epsilon
-        #              \bigr) \bar{A_t}
-        #    \Bigr)
-        #  \biggr]
-        # \end{align}
+        # Calculate Entropy Bonus
         #
-        # The ratio is clipped to be close to 1.
-        # We take the minimum so that the gradient will only pull
-        # $\pi_\theta$ towards $\pi_{\theta_{OLD}}$ if the ratio is
-        # not between $1 - \epsilon$ and $1 + \epsilon$.
-        # This keeps the KL divergence between $\pi_\theta$
-        #  and $\pi_{\theta_{OLD}}$ constrained.
-        # Large deviation can cause performance collapse;
-        #  where the policy performance drops and doesn't recover because
-        #  we are sampling from a bad policy.
-        #
-        # Using the normalized advantage
-        #  $\bar{A_t} = \frac{\hat{A_t} - \mu(\hat{A_t})}{\sigma(\hat{A_t})}$
-        #  introduces a bias to the policy gradient estimator,
-        #  but it reduces variance a lot.
-        clipped_ratio = ratio.clamp(min=1.0 - clip_range,
-                                    max=1.0 + clip_range)
-        policy_reward = torch.min(ratio * sampled_normalized_advantage,
-                                  clipped_ratio * sampled_normalized_advantage)
-        policy_reward = policy_reward.mean()
-
-        # #### Entropy Bonus
-
         # $\mathcal{L}^{EB}(\theta) =
         #  \mathbb{E}\Bigl[ S\bigl[\pi_\theta\bigr] (s_t) \Bigr]$
         entropy_bonus = pi.entropy()
         entropy_bonus = entropy_bonus.mean()
 
-        # #### Value
-
-        # \begin{align}
-        # V^{\pi_\theta}_{CLIP}(s_t)
-        #  &= clip\Bigl(V^{\pi_\theta}(s_t) - \hat{V_t}, -\epsilon, +\epsilon\Bigr)
-        # \\
-        # \mathcal{L}^{VF}(\theta)
-        #  &= \frac{1}{2} \mathbb{E} \biggl[
-        #   max\Bigl(\bigl(V^{\pi_\theta}(s_t) - R_t\bigr)^2,
-        #       \bigl(V^{\pi_\theta}_{CLIP}(s_t) - R_t\bigr)^2\Bigr)
-        #  \biggr]
-        # \end{align}
-        #
-        # Clipping makes sure the value function $V_\theta$ doesn't deviate
-        #  significantly from $V_{\theta_{OLD}}$.
-        clipped_value = samples['values'] + (value - samples['values']).clamp(min=-clip_range,
-                                                                              max=clip_range)
-        vf_loss = torch.max((value - sampled_return) ** 2, (clipped_value - sampled_return) ** 2)
-        vf_loss = 0.5 * vf_loss.mean()
+        # Calculate value function loss
+        value_loss = self.value_loss(value, samples['values'], sampled_return, clip_range)
 
         # $\mathcal{L}^{CLIP+VF+EB} (\theta) =
         #  \mathcal{L}^{CLIP} (\theta) -
@@ -400,17 +258,16 @@ class Main:
 
         # we want to maximize $\mathcal{L}^{CLIP+VF+EB}(\theta)$
         # so we take the negative of it as the loss
-        loss = -(policy_reward - 0.5 * vf_loss + 0.01 * entropy_bonus)
+        loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_bonus
 
         # for monitoring
         approx_kl_divergence = .5 * ((samples['log_pis'] - log_pi) ** 2).mean()
-        clip_fraction = (abs((ratio - 1.0)) > clip_range).to(torch.float).mean()
 
-        tracker.add({'policy_reward': policy_reward,
-                     'vf_loss': vf_loss,
+        tracker.add({'policy_reward': -policy_loss,
+                     'value_loss': value_loss,
                      'entropy_bonus': entropy_bonus,
                      'kl_div': approx_kl_divergence,
-                     'clip_fraction': clip_fraction})
+                     'clip_fraction': self.ppo_loss.clip_fraction})
 
         return loss
 
