@@ -156,20 +156,25 @@ class ClippedPPOLoss(Module):
 
 
 class ClippedValueFunctionLoss(Module):
+    """
+    ## Clipped Value Function Loss
+
+    \begin{align}
+    V^{\pi_\theta}_{CLIP}(s_t)
+     &= clip\Bigl(V^{\pi_\theta}(s_t) - \hat{V_t}, -\epsilon, +\epsilon\Bigr)
+    \\
+    \mathcal{L}^{VF}(\theta)
+     &= \frac{1}{2} \mathbb{E} \biggl[
+      max\Bigl(\bigl(V^{\pi_\theta}(s_t) - R_t\bigr)^2,
+          \bigl(V^{\pi_\theta}_{CLIP}(s_t) - R_t\bigr)^2\Bigr)
+     \biggr]
+    \end{align}
+
+    Clipping makes sure the value function $V_\theta$ doesn't deviate
+     significantly from $V_{\theta_{OLD}}$.
+
+    """
     def __call__(self, value: torch.Tensor, sampled_value: torch.Tensor, sampled_return: torch.Tensor, clip: float):
-        # \begin{align}
-        # V^{\pi_\theta}_{CLIP}(s_t)
-        #  &= clip\Bigl(V^{\pi_\theta}(s_t) - \hat{V_t}, -\epsilon, +\epsilon\Bigr)
-        # \\
-        # \mathcal{L}^{VF}(\theta)
-        #  &= \frac{1}{2} \mathbb{E} \biggl[
-        #   max\Bigl(\bigl(V^{\pi_\theta}(s_t) - R_t\bigr)^2,
-        #       \bigl(V^{\pi_\theta}_{CLIP}(s_t) - R_t\bigr)^2\Bigr)
-        #  \biggr]
-        # \end{align}
-        #
-        # Clipping makes sure the value function $V_\theta$ doesn't deviate
-        #  significantly from $V_{\theta_{OLD}}$.
         clipped_value = sampled_value + (value - sampled_value).clamp(min=-clip, max=clip)
         vf_loss = torch.max((value - sampled_return) ** 2, (clipped_value - sampled_return) ** 2)
         return 0.5 * vf_loss.mean()

@@ -53,6 +53,7 @@ class Model(nn.Module):
         # A fully connected layer to get value function
         self.value = nn.Linear(in_features=512, out_features=1)
 
+        #
         self.activation = nn.ReLU()
 
     def forward(self, obs: torch.Tensor):
@@ -70,11 +71,14 @@ class Model(nn.Module):
 
 
 def obs_to_torch(obs: np.ndarray) -> torch.Tensor:
-    # scale to `[0, 1]`
+    """Scale observations from `[0, 255]` to `[0, 1]`"""
     return torch.tensor(obs, dtype=torch.float32, device=device) / 255.
 
 
-class Main:
+class Trainer:
+    """
+    ## Trainer
+    """
     def __init__(self):
         # #### Configurations
 
@@ -106,13 +110,13 @@ class Main:
         for i, worker in enumerate(self.workers):
             self.obs[i] = worker.child.recv()
 
-        # model for sampling
+        # model
         self.model = Model().to(device)
 
         # optimizer
         self.optimizer = optim.Adam(self.model.parameters(), lr=2.5e-4)
 
-        # GAE
+        # GAE with $\gamma = 0.99$ and $\lambda = 0.95$
         self.gae = GAE(self.n_workers, self.worker_steps, 0.99, 0.95)
 
         # PPO Loss
@@ -122,7 +126,9 @@ class Main:
         self.value_loss = ClippedValueFunctionLoss()
 
     def sample(self) -> (Dict[str, np.ndarray], List):
-        """### Sample data with current policy"""
+        """
+        ### Sample data with current policy
+        """
 
         rewards = np.zeros((self.n_workers, self.worker_steps), dtype=np.float32)
         actions = np.zeros((self.n_workers, self.worker_steps), dtype=np.int32)
@@ -167,6 +173,8 @@ class Main:
 
         # calculate advantages
         advantages = self.gae(done, rewards, values)
+
+        #
         samples = {
             'obs': obs,
             'actions': actions,
@@ -175,8 +183,8 @@ class Main:
             'advantages': advantages
         }
 
-        # samples are currently in [workers, time] table,
-        #  we should flatten it
+        # samples are currently in `[workers, time_step]` table,
+        # we should flatten it for training
         samples_flat = {}
         for k, v in samples.items():
             v = v.reshape(v.shape[0] * v.shape[1], *v.shape[2:])
@@ -228,6 +236,10 @@ class Main:
         return (adv - adv.mean()) / (adv.std() + 1e-8)
 
     def _calc_loss(self, samples: Dict[str, torch.Tensor], clip_range: float) -> torch.Tensor:
+        """
+        ### Calculate total loss
+        """
+        
         # $R_t$ returns sampled from $\pi_{\theta_{OLD}}$
         sampled_return = samples['values'] + samples['advantages']
 
@@ -258,16 +270,14 @@ class Main:
         value_loss = self.value_loss(value, samples['values'], sampled_return, clip_range)
 
         # $\mathcal{L}^{CLIP+VF+EB} (\theta) =
-        #  \mathcal{L}^{CLIP} (\theta) -
-        #  c_1 \mathcal{L}^{VF} (\theta) + c_2 \mathcal{L}^{EB}(\theta)$
-
-        # we want to maximize $\mathcal{L}^{CLIP+VF+EB}(\theta)$
-        # so we take the negative of it as the loss
+        #  \mathcal{L}^{CLIP} (\theta) +
+        #  c_1 \mathcal{L}^{VF} (\theta) - c_2 \mathcal{L}^{EB}(\theta)$
         loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_bonus
 
         # for monitoring
         approx_kl_divergence = .5 * ((samples['log_pis'] - log_pi) ** 2).mean()
 
+        # Add to tracker
         tracker.add({'policy_reward': -policy_loss,
                      'value_loss': value_loss,
                      'entropy_bonus': entropy_bonus,
@@ -315,7 +325,7 @@ class Main:
 # ## Run it
 if __name__ == "__main__":
     experiment.create(name='ppo')
-    m = Main()
+    m = Trainer()
     experiment.start()
     m.run_training_loop()
     m.destroy()
