@@ -34,6 +34,7 @@ and
 
 #### ✨ [Sketch RNN](http://lab-ml.com/labml_nn/sketch_rnn/)
 
+#### ✨ [Reinforcement Learning](http://lab-ml.com/labml_nn/rl/)
 
 ### Installation
 

@@ -1,3 +1,8 @@
+"""
+This experiment runs PPO  Atari Breakout game on OpenAI Gym.
+It runs the [game environments on multiple processes](game.html) to sample efficiently.
+"""
+
 from typing import Dict, List
 
 import numpy as np
