@@ -236,7 +236,7 @@ class EncoderRNN(Module):
 
 class DecoderRNN(Module):
     """
-    ## Encoder module
+    ## Decoder module
 
     This consists of a LSTM
     """

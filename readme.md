@@ -7,8 +7,7 @@ This is a collection of simple PyTorch implementation of various
 neural network architectures and layers.
 We will keep adding to this.
 
-**If you have any suggestions for other new implementations,
-please create a [Github Issue](https://github.com/lab-ml/labml_nn/issues).**
+## Modules
 
 #### ✨ [Transformers](http://lab-ml.com/labml_nn/transformers)
 
@@ -32,23 +31,13 @@ and
 #### ✨ [Sketch RNN](http://lab-ml.com/labml_nn/sketch_rnn/)
 
 #### ✨ [Reinforcement Learning](http://lab-ml.com/labml_nn/rl/)
+* [Proximal Policy Optimization](http://lab-ml.com/labml_nn/rl/ppo/)
 
 ### Installation
 
 ```bash
 pip install labml_nn
 ```
-
-### Links
-
-[💬 Slack workspace for discussions](https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/)_
-
-[📗 Documentation](http://lab-ml.com)
-
-[📑 Articles & Tutorials](https://medium.com/@labml/)
-
-[👨‍🏫 Samples](https://github.com/lab-ml/samples)
-
 
 ### Citing LabML
 
