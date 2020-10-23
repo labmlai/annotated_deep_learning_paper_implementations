@@ -1,4 +1,6 @@
 """
+# Capsule Networks
+
 This is an implementation of [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
 
 Unlike in other implementations of models, we've included a sample, because

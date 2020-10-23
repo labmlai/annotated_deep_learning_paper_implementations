@@ -1,3 +1,6 @@
+"""
+# Configurable Transformer Components
+"""
 import copy
 
 import torch.nn as nn

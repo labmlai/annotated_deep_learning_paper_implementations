@@ -1,3 +1,6 @@
+"""
+# Atari wrapper with multi-processing
+"""
 import multiprocessing
 import multiprocessing.connection
 

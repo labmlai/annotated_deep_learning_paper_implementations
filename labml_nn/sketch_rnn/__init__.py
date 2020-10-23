@@ -1,5 +1,5 @@
 """
-# SketchRNN
+# Sketch RNN
 
 This is an annotated implementation of the paper
 [A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).

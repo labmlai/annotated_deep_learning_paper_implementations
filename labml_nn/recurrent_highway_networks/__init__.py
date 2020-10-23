@@ -1,4 +1,6 @@
 """
+# Recurrent Highway Networks
+
 This is an implementation of [Recurrent Highway Networks](https://arxiv.org/abs/1607.03474).
 """
 from typing import Optional

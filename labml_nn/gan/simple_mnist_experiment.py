@@ -1,3 +1,7 @@
+"""
+# Generative Adversarial Networks experiment with MNIST
+"""
+
 from typing import Optional
 
 import torch
