@@ -32,7 +32,8 @@ and
 #### ✨ [Sketch RNN](http://lab-ml.com/labml_nn/sketch_rnn/)
 
 #### ✨ [Reinforcement Learning](http://lab-ml.com/labml_nn/rl/)
-* [Proximal Policy Optimization](http://lab-ml.com/labml_nn/rl/ppo/)
+* [Proximal Policy Optimization](http://lab-ml.com/labml_nn/rl/ppo/) with
+ [Generalized Advantage Estimation](http://lab-ml.com/labml_nn/rl/ppo/gae.html)
 
 ### Installation
 
