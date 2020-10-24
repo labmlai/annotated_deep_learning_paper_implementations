@@ -128,7 +128,7 @@ class Trainer:
         # Value Loss
         self.value_loss = ClippedValueFunctionLoss()
 
-    def sample(self) -> (Dict[str, np.ndarray], List):
+    def sample(self) -> Dict[str, torch.Tensor]:
         """
         ### Sample data with current policy
         """
