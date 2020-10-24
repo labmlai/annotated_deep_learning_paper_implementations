@@ -656,10 +656,10 @@ def main():
         # Number of inner iterations within an epoch to switch between training, validation and sampling.
         'inner_iterations': 10
     }, 'run')
-    experiment.start()
 
-    # Run the experiment
-    configs.run()
+    with experiment.start():
+        # Run the experiment
+        configs.run()
 
 
 if __name__ == "__main__":
