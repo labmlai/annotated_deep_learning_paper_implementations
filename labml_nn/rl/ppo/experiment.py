@@ -14,17 +14,18 @@ from torch import optim
 from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
+from labml_helpers.module import Module
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
 from labml_nn.rl.ppo.gae import GAE
-from labml_nn.rl.ppo.game import Worker
+from labml_nn.rl.game import Worker
 
 if torch.cuda.is_available():
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:0")
 else:
     device = torch.device("cpu")
 
 
-class Model(nn.Module):
+class Model(Module):
     """
     ## Model
     """
@@ -58,7 +59,7 @@ class Model(nn.Module):
         #
         self.activation = nn.ReLU()
 
-    def forward(self, obs: torch.Tensor):
+    def __call__(self, obs: torch.Tensor):
         h = self.activation(self.conv1(obs))
         h = self.activation(self.conv2(h))
         h = self.activation(self.conv3(h))

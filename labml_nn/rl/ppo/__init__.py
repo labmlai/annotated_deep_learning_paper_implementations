@@ -11,7 +11,6 @@ import torch
 
 from labml_helpers.module import Module
 from labml_nn.rl.ppo.gae import GAE
-from labml_nn.rl.ppo.game import Worker
 
 
 class ClippedPPOLoss(Module):
