@@ -1,3 +1,10 @@
+"""
+# Prioritized Experience Replace Buffer
+
+This implements paper [Prioritized experience replay](https://arxiv.org/abs/1511.05952),
+using a binary segment tree.
+"""
+
 import numpy as np
 import random
 
@@ -5,9 +12,10 @@ import random
 class ReplayBuffer:
     """
     ## Buffer for Prioritized Experience Replay
+
     [Prioritized experience replay](https://arxiv.org/abs/1511.05952)
      samples important transitions more frequently.
-    The transitions are prioritized by the Temporal Difference error.
+    The transitions are prioritized by the Temporal Difference error (td error).
 
     We sample transition $i$ with probability,
     $$P(i) = \frac{p_i^\alpha}{\sum_k p_k^\alpha}$$
@@ -21,16 +29,16 @@ class ReplayBuffer:
      importance-sampling (IS) weights
     $$w_i = \bigg(\frac{1}{N} \frac{1}{P(i)}\bigg)^\beta$$
     that fully compensates for when $\beta = 1$.
-    We normalize weights by $1/\max_i w_i$ for stability.
+    We normalize weights by $\frac{1}{\max_i w_i}$ for stability.
     Unbiased nature is most important towards the convergence at end of training.
     Therefore we increase $\beta$ towards end of training.
 
-    ### Binary Segment Trees
-    We use binary segment trees to efficiently calculate
+    ### Binary Segment Tree
+    We use a binary segment tree to efficiently calculate
     $\sum_k^i p_k^\alpha$, the cumulative probability,
     which is needed to sample.
     We also use a binary segment tree to find $\min p_i^\alpha$,
-    which is needed for $1/\max_i w_i$.
+    which is needed for $\frac{1}{\max_i w_i}$.
     We can also use a min-heap for this.
 
     This is how a binary segment tree works for sum;
@@ -54,14 +62,16 @@ class ReplayBuffer:
     $$N_i = \left\lceil{\frac{N}{D - i + i}} \right\rceil$$
     This is equal to the sum of nodes in all rows above $i$.
     So we can use a single array $a$ to store the tree, where,
-    $$b_{i,j} = a_{N_1 + j}$$
+    $$b_{i,j} \rightarrow a_{N_i + j}$$
 
     Then child nodes of $a_i$ are $a_{2i}$ and $a_{2i + 1}$.
     That is,
     $$a_i = a_{2i} + a_{2i + 1}$$
 
     This way of maintaining binary trees is very easy to program.
-    *Note that we are indexing from 1*.
+    *Note that we are indexing starting from 1*.
+
+    We using the same structure to compute the minimum.
     """
 
     def __init__(self, capacity, alpha):
@@ -206,7 +216,7 @@ class ReplayBuffer:
             # $w_i = \bigg(\frac{1}{N} \frac{1}{P(i)}\bigg)^\beta$
             weight = (prob * self.size) ** (-beta)
             # normalize by $\frac{1}{\max_i w_i}$,
-            #  which also cancels off the $\frac{1}/{N}$ term
+            #  which also cancels off the $\frac{1}{N}$ term
             samples['weights'][i] = weight / max_weight
 
         # get samples data
@@ -230,7 +240,5 @@ class ReplayBuffer:
     def is_full(self):
         """
         ### Is the buffer full
-
-        We only start sampling afte the buffer is full.
         """
         return self.capacity == self.size
