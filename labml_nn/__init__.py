@@ -34,6 +34,10 @@ and
 #### ✨ [Reinforcement Learning](http://lab-ml.com/labml_nn/rl/)
 * [Proximal Policy Optimization](http://lab-ml.com/labml_nn/rl/ppo/) with
  [Generalized Advantage Estimation](http://lab-ml.com/labml_nn/rl/ppo/gae.html)
+* [Deep Q Netowrks](http://lab-ml.com/labml_nn/rl/dqn/) with
+ with [Dueling Network](http://lab-ml.com/labml_nn/rl/dqn/model.html),
+ [Prioritized Replay](http://lab-ml.com/labml_nn/rl/dqn/replay_buffer.html)
+ and Double Q Network.
 
 ### Installation
 
