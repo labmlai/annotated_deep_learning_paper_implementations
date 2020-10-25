@@ -1,11 +1,11 @@
 """
 # PPO Experiment with Atari Breakout
 
-This experiment runs PPO  Atari Breakout game on OpenAI Gym.
-It runs the [game environments on multiple processes](game.html) to sample efficiently.
+This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.
+It runs the [game environments on multiple processes](../game.html) to sample efficiently.
 """
 
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 import torch
@@ -15,10 +15,11 @@ from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
 from labml_helpers.module import Module
+from labml_nn.rl.game import Worker
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
 from labml_nn.rl.ppo.gae import GAE
-from labml_nn.rl.game import Worker
 
+# Select device
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
 else:
@@ -82,6 +83,7 @@ class Trainer:
     """
     ## Trainer
     """
+
     def __init__(self):
         # #### Configurations
 
@@ -165,7 +167,6 @@ class Trainer:
                     # collect episode info, which is available if an episode finished;
                     #  this includes total reward and length of the episode -
                     #  look at `Game` to see how it works.
-                    # We also add a game frame to it for monitoring.
                     if info:
                         tracker.add('reward', info['reward'])
                         tracker.add('length', info['length'])
@@ -225,12 +226,16 @@ class Trainer:
                 loss = self._calc_loss(clip_range=clip_range,
                                        samples=mini_batch)
 
-                # compute gradients
+                # Set learning rate
                 for pg in self.optimizer.param_groups:
                     pg['lr'] = learning_rate
+                # Zero out the previously calculated gradients
                 self.optimizer.zero_grad()
+                # Calculate gradients
                 loss.backward()
+                # Clip gradients
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
+                # Update parameters based on gradients
                 self.optimizer.step()
 
     @staticmethod
@@ -311,8 +316,9 @@ class Trainer:
             # train the model
             self.train(samples, learning_rate, clip_range)
 
-            # write summary info to the writer, and log to the screen
+            # Save tracked indicators.
             tracker.save()
+            # Add a new line to the screen periodically
             if (update + 1) % 1_000 == 0:
                 logger.log()
 
@@ -325,10 +331,18 @@ class Trainer:
             worker.child.send(("close", None))
 
 
-# ## Run it
-if __name__ == "__main__":
+def main():
+    # Create the experiment
     experiment.create(name='ppo')
+    # Initialize the trainer
     m = Trainer()
+    # Run and monitor the experiment
     with experiment.start():
         m.run_training_loop()
+    # Stop the workers
     m.destroy()
+
+
+# ## Run it
+if __name__ == "__main__":
+    main()

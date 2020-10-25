@@ -1,13 +1,12 @@
 """
 # Deep Q Networks
 
-This is a Deep Q Learning implementation that uses:
+This is an implementation of paper
+ [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
+ along with [Dueling Network](model.html), [Prioritized Replay](replay_buffer.html)
+ and Double Q Network.
 
-* [Dueling Network](model.html)
-* [Prioritized Replay](replay_buffer.html)
-* Double Q Network
-
-Here's the [experiment](experiment.html) and [model](model.html).
+Here are the [experiment](experiment.html) and [model](model.html) implementation.
 
 \(
    \def\green#1{{\color{yellowgreen}{#1}}}
