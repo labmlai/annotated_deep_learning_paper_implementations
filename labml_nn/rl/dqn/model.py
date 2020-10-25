@@ -1,5 +1,5 @@
 """
-# Neural Network Model for Deep Q Network (DQN)
+# Deep Q Network (DQN) Model
 """
 
 import torch
