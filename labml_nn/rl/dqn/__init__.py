@@ -1,5 +1,5 @@
 """
-# Deep Q Networks
+# Deep Q Networks (DQN)
 
 This is an implementation of paper
  [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)

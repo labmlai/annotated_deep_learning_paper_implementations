@@ -65,7 +65,7 @@ class Trainer:
                 (self.updates, 1)
             ], outside_value=1)
 
-        # replay buffer with $\alpha = 0.6$
+        # Replay buffer with $\alpha = 0.6$. Capacity of the replay buffer must be a power of 2.
         self.replay_buffer = ReplayBuffer(2 ** 14, 0.6)
 
         # Model for sampling and training
