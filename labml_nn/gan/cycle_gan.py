@@ -24,10 +24,8 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
-from torchvision.utils import make_grid
-from torchvision.utils import save_image
+from torch.utils.data import DataLoader, Dataset
+from torchvision.utils import make_grid, save_image
 
 from labml import lab, tracker, experiment, monit, configs
 from labml.configs import BaseConfigs
