@@ -91,6 +91,8 @@ class TransformerLayer(Module):
         if self.src_attn is not None:
             self.norm_src_attn = nn.LayerNorm([d_model])
         self.norm_ff = nn.LayerNorm([d_model])
+        # Whether to save input to the feed forward layer
+        self.is_save_ff_input = False
 
     def __call__(self, *,
                  x: torch.Tensor,
@@ -117,6 +119,9 @@ class TransformerLayer(Module):
 
         # Normalize for feed-forward
         z = self.norm_ff(x)
+        # Save the input to the feed forward layer if specified
+        if self.is_save_ff_input:
+            self.ff_input = z.clone()
         # Pass through the feed-forward network
         ff = self.feed_forward(z)
         # Add the feed-forward results back
