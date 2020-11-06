@@ -16,7 +16,7 @@ We will keep adding to this.
 contains implementations for
 [multi-headed attention](http://lab-ml.com/labml_nn/transformers/mha.html)
 and
-[relative multi-headed attention](http://lab-ml.com/labml_nn/transformers/relative_mha.html>).
+[relative multi-headed attention](http://lab-ml.com/labml_nn/transformers/relative_mha.html).
 
 #### ✨ [Recurrent Highway Networks](http://lab-ml.com/labml_nn/recurrent_highway_networks)
 

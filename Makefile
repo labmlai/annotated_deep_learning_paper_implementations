@@ -22,11 +22,11 @@ uninstall: ## Uninstall
 	pip uninstall labml_nn
 
 docs: ## Render annotated HTML
-	python ../../pylit/pylit.py --remove_empty_sections --title_md -s ../../pylit/pylit_docs.css -t ../../pylit/template_docs.html -d html -w labml_nn
+	pylit --remove_empty_sections --title_md -t ../../pylit/templates/nn -d html -w labml_nn
 
 pages: ## Copy to lab-ml site
-	@cd ../lab-ml.github.io; git pull
-	cp -r html/* ../lab-ml.github.io/
+	@cd ../pages; git pull
+	cp -r html/* ../pages/
 
 help: ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
