@@ -1,5 +1,5 @@
 """
-# Train  Autoregressive Transformer
+# Train Autoregressive Transformer
 
 This trains a simple [transformer](../../) model for auto-regression.
 """

@@ -1,5 +1,5 @@
 """
-# $k$NN-LM
+# k-Nearest Neighbor Language Models
 
 This is an implementation of the paper
  [Generalization through Memorization: Nearest Neighbor Language Models](https://arxiv.org/abs/1911.00172).
@@ -14,6 +14,8 @@ This paper, improves  $p(w_t, c_t)$ using a k-nearest neighbor search
  Here $f(\color{yellowgreen}{c_t})$ is an embedding of the context $c_t$.
  The paper (and this implementation) uses the *input* to the feed-forward layer of the
  final layer of the transformer as $f(\color{yellowgreen}{c_t})$.
+
+We use [FAISS](https://github.com/facebookresearch/faiss) to index $f(c_i)$.
 
 So to run $k$NN-LM we need to:
 

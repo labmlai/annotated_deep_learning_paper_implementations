@@ -1,6 +1,7 @@
 """
-# Index $$\big(f(c_i), w_i\big)$
+# Build index for k-NN search
 
+We want to build the index of $\big(f(c_i), w_i\big)$.
 We store $f(c_i)$ and $w_i$ in memory mapped numpy arrays.
 We find $f(c_i)$ nearest to $f(c_t)$ using [FAISS](https://github.com/facebookresearch/faiss).
 FAISS indexes $\big(f(c_i), i\big)$ and we query it with $f(c_t)$.
@@ -134,7 +135,8 @@ def build_index(conf: Configs, n_centeroids: int = 2048, code_size: int = 64, n_
 
 
 def main():
-    # Load the experiment
+    # Load the experiment. Replace the run uuid with you run uuid from
+    # [training the model](train_model.html).
     conf = load_experiment('4984b85c20bf11eb877a69c1a03717cd')
     # Set model to evaluation mode
     conf.model.eval()
