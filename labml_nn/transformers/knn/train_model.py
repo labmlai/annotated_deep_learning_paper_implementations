@@ -251,6 +251,8 @@ def character():
 def tiny_shakespeare(c: Configs):
     """
     Initialize/load tiny shakespeare dataset
+
+    This dataset is from Andrej Karpathy's [char-rnn](https://github.com/karpathy/char-rnn) project.
     """
     return TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt', c.tokenizer,

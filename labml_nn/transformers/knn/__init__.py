@@ -21,4 +21,9 @@ So to run $k$NN-LM we need to:
 * [Build an index](build_index.html) of $\big(f(c_i), w_i\big)$
 * [Evaluate kNN-ML](eval_knn.html) using $k$NN seach on $\big(f(c_i), w_i\big)$
 with  $f(c_t)$
+
+This experiment uses a small dataset so that we can run this without using up a few hundred giga-bytes
+of disk space for the index.
+
+The official implementation of $k$NN-LM can be found [here](https://github.com/urvashik/knnlm).
 """
