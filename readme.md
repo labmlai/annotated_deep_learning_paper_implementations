@@ -17,6 +17,8 @@ contains implementations for
 and
 [relative multi-headed attention](http://lab-ml.com/labml_nn/transformers/relative_mha.html).
 
+* [kNN-LM: Generalization through Memorization](http://lab-ml.com/labml_nn/transformers/knn)
+
 #### ✨ [Recurrent Highway Networks](http://lab-ml.com/labml_nn/recurrent_highway_networks)
 
 #### ✨ [LSTM](http://lab-ml.com/labml_nn/lstm)
