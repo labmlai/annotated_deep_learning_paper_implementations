@@ -2,6 +2,7 @@ clean: ## Clean
 	rm -rf dist
 	rm -rf build
 	rm -rf *.egg-info
+	rm -rf html
 
 build: clean ## Build PIPy Package
 	python setup.py sdist bdist_wheel
