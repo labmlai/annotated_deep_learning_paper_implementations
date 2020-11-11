@@ -92,7 +92,7 @@ def build_index(conf: Configs, n_centeroids: int = 2048, code_size: int = 64, n_
 
     [Getting started](https://github.com/facebookresearch/faiss/wiki/Getting-started),
     [faster search](https://github.com/facebookresearch/faiss/wiki/Faster-search),
-    and [lower memory footprint)(https://github.com/facebookresearch/faiss/wiki/Lower-memory-footprint)
+    and [lower memory footprint](https://github.com/facebookresearch/faiss/wiki/Lower-memory-footprint)
     tutorials on FAISS will help you learn more about FAISS usage.
     """
     # Dimensions of $f(c_i)$
