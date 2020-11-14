@@ -153,8 +153,7 @@ def main():
     conf = Configs()
     experiment.create(name='mnist_latest')
     experiment.configs(conf, {'optimizer.optimizer': 'Adam',
-                              'device.cuda_device': 1},
-                       'run')
+                              'device.cuda_device': 1})
     with experiment.start():
         conf.run()
 

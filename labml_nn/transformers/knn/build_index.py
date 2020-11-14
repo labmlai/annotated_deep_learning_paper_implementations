@@ -33,7 +33,7 @@ def load_experiment(run_uuid: str, checkpoint: Optional[int] = None):
     # This experiment is just an evaluation; i.e. nothing is tracked or saved
     experiment.evaluate()
     # Initialize configurations
-    experiment.configs(conf, conf_dict, 'run')
+    experiment.configs(conf, conf_dict)
     # Set models for saving/loading
     experiment.add_pytorch_models(get_modules(conf))
     # Specify the experiment to load from

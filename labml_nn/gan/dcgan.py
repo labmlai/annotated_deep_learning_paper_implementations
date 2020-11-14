@@ -106,8 +106,7 @@ def main():
     experiment.configs(conf,
                        {'discriminator': 'cnn',
                         'generator': 'cnn',
-                        'label_smoothing': 0.01},
-                       'run')
+                        'label_smoothing': 0.01})
     with experiment.start():
         conf.run()
 

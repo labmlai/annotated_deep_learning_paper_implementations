@@ -233,8 +233,7 @@ def main():
     conf = Configs()
     experiment.create(name='mnist_gan', comment='test')
     experiment.configs(conf,
-                       {'label_smoothing': 0.01},
-                       'run')
+                       {'label_smoothing': 0.01})
     with experiment.start():
         conf.run()
 

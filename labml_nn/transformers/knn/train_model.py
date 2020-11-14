@@ -331,10 +331,7 @@ def main():
                         'transformer.d_model': 256,
                         'transformer.d_ff': 1024,
                         'transformer.n_heads': 8,
-                        'transformer.n_layers': 6},
-                       # We need to load the function `TrainValidConfigs.run` and
-                       # everything that it's dependent on
-                       'run')
+                        'transformer.n_layers': 6})
 
     # Set models for saving and loading
     experiment.add_pytorch_models(get_modules(conf))
