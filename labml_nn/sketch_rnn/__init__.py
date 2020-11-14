@@ -131,6 +131,7 @@ class BivariateGaussianMixture:
     This class adjust temperatures and creates the categorical and gaussian
     distributions from the parameters.
     """
+
     def __init__(self, pi_logits: torch.Tensor, mu_x: torch.Tensor, mu_y: torch.Tensor,
                  sigma_x: torch.Tensor, sigma_y: torch.Tensor, rho_xy: torch.Tensor):
         self.pi_logits = pi_logits
@@ -595,6 +596,34 @@ class Configs(TrainValidConfigs):
 
     epochs = 100
 
+    def initialize(self):
+        # Initialize encoder & decoder
+        self.encoder = EncoderRNN(self.d_z, self.enc_hidden_size).to(self.device)
+        self.decoder = DecoderRNN(self.d_z, self.dec_hidden_size, self.n_distributions).to(self.device)
+
+        # Set optimizer, things like type of optimizer and learning rate are configurable
+        optimizer = OptimizerConfigs()
+        optimizer.parameters = list(self.encoder.parameters()) + list(self.decoder.parameters())
+        self.optimizer = optimizer
+
+        # Create sampler
+        self.sampler = Sampler(self.encoder, self.decoder)
+
+        # `npz` file path is `data/sketch/[DATASET NAME].npz`
+        path = lab.get_data_path() / 'sketch' / f'{self.dataset_name}.npz'
+        # Load the numpy file.
+        dataset = np.load(str(path), encoding='latin1', allow_pickle=True)
+
+        # Create training dataset
+        self.train_dataset = StrokesDataset(dataset['train'], self.max_seq_length)
+        # Create validation dataset
+        self.valid_dataset = StrokesDataset(dataset['valid'], self.max_seq_length, self.train_dataset.scale)
+
+        # Create training data loader
+        self.train_loader = DataLoader(self.train_dataset, self.batch_size, shuffle=True)
+        # Create validation data loader
+        self.valid_loader = DataLoader(self.valid_dataset, self.batch_size)
+
     def sample(self):
         # Randomly pick a sample from validation dataset to encoder
         data, *_ = self.valid_dataset[np.random.choice(len(self.valid_dataset))]
@@ -602,37 +631,6 @@ class Configs(TrainValidConfigs):
         data = data.unsqueeze(1).to(self.device)
         # Sample
         self.sampler.sample(data, self.temperature)
-
-
-@setup([Configs.encoder, Configs.decoder, Configs.optimizer, Configs.sampler,
-        Configs.train_dataset, Configs.train_loader,
-        Configs.valid_dataset, Configs.valid_loader])
-def setup_all(self: Configs):
-    # Initialize encoder & decoder
-    self.encoder = EncoderRNN(self.d_z, self.enc_hidden_size).to(self.device)
-    self.decoder = DecoderRNN(self.d_z, self.dec_hidden_size, self.n_distributions).to(self.device)
-
-    # Set optimizer, things like type of optimizer and learning rate are configurable
-    self.optimizer = OptimizerConfigs()
-    self.optimizer.parameters = list(self.encoder.parameters()) + list(self.decoder.parameters())
-
-    # Create sampler
-    self.sampler = Sampler(self.encoder, self.decoder)
-
-    # `npz` file path is `data/sketch/[DATASET NAME].npz`
-    path = lab.get_data_path() / 'sketch' / f'{self.dataset_name}.npz'
-    # Load the numpy file.
-    dataset = np.load(str(path), encoding='latin1', allow_pickle=True)
-
-    # Create training dataset
-    self.train_dataset = StrokesDataset(dataset['train'], self.max_seq_length)
-    # Create validation dataset
-    self.valid_dataset = StrokesDataset(dataset['valid'], self.max_seq_length, self.train_dataset.scale)
-
-    # Create training data loader
-    self.train_loader = DataLoader(self.train_dataset, self.batch_size, shuffle=True)
-    # Create validation data loader
-    self.valid_loader = DataLoader(self.valid_dataset, self.batch_size)
 
 
 @option(Configs.batch_step)
@@ -655,7 +653,9 @@ def main():
         'dataset_name': 'bicycle',
         # Number of inner iterations within an epoch to switch between training, validation and sampling.
         'inner_iterations': 10
-    }, 'run')
+    })
+
+    configs.initialize()
 
     with experiment.start():
         # Run the experiment
