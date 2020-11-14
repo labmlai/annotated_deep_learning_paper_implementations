@@ -25,7 +25,6 @@ Took help from [PyTorch Sketch RNN](https://github.com/alexis-jacq/Pytorch-Sketc
 import math
 from typing import Optional, Tuple
 
-import einops
 import numpy as np
 import torch
 import torch.nn as nn
@@ -33,8 +32,9 @@ from matplotlib import pyplot as plt
 from torch import optim
 from torch.utils.data import Dataset, DataLoader
 
+import einops
 from labml import lab, experiment, tracker, monit
-from labml.configs import setup, option
+from labml.configs import option
 from labml.utils import pytorch as pytorch_utils
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
