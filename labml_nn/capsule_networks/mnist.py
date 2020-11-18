@@ -124,8 +124,7 @@ class Configs(MNISTConfigs, SimpleTrainValidConfigs):
             tracker.add_global_step(len(data))
 
         # Whether to log activations
-        is_log_activations = batch_idx.is_interval(self.log_activations_batches)
-        with self.mode.update(is_log_activations=is_log_activations):
+        with self.mode.update(is_log_activations=batch_idx.is_last):
             # Run the model
             caps, reconstructions, pred = self.model(data)
 
@@ -141,7 +140,7 @@ class Configs(MNISTConfigs, SimpleTrainValidConfigs):
 
             self.optimizer.step()
             # Log parameters and gradients
-            if batch_idx.is_interval(self.log_params_updates):
+            if batch_idx.is_last:
                 pytorch_utils.store_model_indicators(self.model)
             self.optimizer.zero_grad()
 
