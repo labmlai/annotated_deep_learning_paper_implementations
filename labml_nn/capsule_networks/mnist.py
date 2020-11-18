@@ -4,18 +4,19 @@
 This paper implements the experiment described in paper
 [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
 """
+from typing import Any
 
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 
+import labml.utils.pytorch as pytorch_utils
 from labml import experiment, tracker
 from labml.configs import option
-from labml.utils.pytorch import get_device
 from labml_helpers.datasets.mnist import MNISTConfigs
-from labml_helpers.device import DeviceConfigs
+from labml_helpers.metrics.accuracy import Accuracy
 from labml_helpers.module import Module
-from labml_helpers.train_valid import TrainValidConfigs, BatchStep
+from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.capsule_networks import Squash, Router, MarginLoss
 
 
@@ -23,6 +24,7 @@ class MNISTCapsuleNetworkModel(Module):
     """
     ## Model for classifying MNIST digits
     """
+
     def __init__(self):
         super().__init__()
         # First convolution layer has $256$, $9 \times 9$ convolution kernels
@@ -89,61 +91,67 @@ class MNISTCapsuleNetworkModel(Module):
         return caps, reconstructions, pred
 
 
-class CapsuleNetworkBatchStep(BatchStep):
-    """
-    ## Training step
-    """
-    def __init__(self, *, model, optimizer):
-        super().__init__(model=model, optimizer=optimizer, loss_func=None, accuracy_func=None)
-        self.reconstruction_loss = nn.MSELoss()
-        self.margin_loss = MarginLoss(n_labels=10)
-
-    def calculate_loss(self, batch: any, state: any):
-        """
-        This method gets called by the trainer
-        """
-        device = get_device(self.model)
-
-        # Get the images and labels and move them to the model's device
-        data, target = batch
-        data, target = data.to(device), target.to(device)
-
-        # Collect statistics for logging
-        stats = {'samples': len(data)}
-
-        # Run the model
-        caps, reconstructions, pred = self.model(data)
-
-        # Calculate the total loss
-        loss = self.margin_loss(caps, target) + 0.0005 * self.reconstruction_loss(reconstructions, data)
-
-        stats['correct'] = pred.eq(target).sum().item()
-        stats['loss'] = loss.detach().item() * stats['samples']
-        tracker.add("loss.", loss)
-
-        return loss, stats, None
-
-
-class Configs(MNISTConfigs, TrainValidConfigs):
+class Configs(MNISTConfigs, SimpleTrainValidConfigs):
     """
     Configurations with MNIST data and Train & Validation setup
     """
-    batch_step = 'capsule_network_batch_step'
-    device: torch.device = DeviceConfigs()
     epochs: int = 10
-    model = 'capsule_network_model'
+    model: nn.Module = 'capsule_network_model'
+    reconstruction_loss = nn.MSELoss()
+    margin_loss = MarginLoss(n_labels=10)
+    accuracy = Accuracy()
+
+    def init(self):
+        # Print losses and accuracy to screen
+        tracker.set_scalar('loss.*', True)
+        tracker.set_scalar('accuracy.*', True)
+
+        # We need to set the metrics calculate them for the epoch for training and validation
+        self.state_modules = [self.accuracy]
+
+    def step(self, batch: Any, batch_idx: BatchIndex):
+        """
+        This method gets called by the trainer
+        """
+        # Set the model mode
+        self.model.train(self.mode.is_train)
+
+        # Get the images and labels and move them to the model's device
+        data, target = batch[0].to(self.device), batch[1].to(self.device)
+
+        # Increment step in training mode
+        if self.mode.is_train:
+            tracker.add_global_step(len(data))
+
+        # Whether to log activations
+        is_log_activations = batch_idx.is_interval(self.log_activations_batches)
+        with self.mode.update(is_log_activations=is_log_activations):
+            # Run the model
+            caps, reconstructions, pred = self.model(data)
+
+        # Calculate the total loss
+        loss = self.margin_loss(caps, target) + 0.0005 * self.reconstruction_loss(reconstructions, data)
+        tracker.add("loss.", loss)
+
+        # Call accuracy metric
+        self.accuracy(pred, target)
+
+        if self.mode.is_train:
+            loss.backward()
+
+            self.optimizer.step()
+            # Log parameters and gradients
+            if batch_idx.is_interval(self.log_params_updates):
+                pytorch_utils.store_model_indicators(self.model)
+            self.optimizer.zero_grad()
+
+            tracker.save()
 
 
 @option(Configs.model)
 def capsule_network_model(c: Configs):
-    """Configure the model"""
+    """Set the model"""
     return MNISTCapsuleNetworkModel().to(c.device)
-
-
-@option(Configs.batch_step)
-def capsule_network_batch_step(c: TrainValidConfigs):
-    """Configure the training step"""
-    return CapsuleNetworkBatchStep(model=c.model, optimizer=c.optimizer)
 
 
 def main():
@@ -151,8 +159,9 @@ def main():
     Run the experiment
     """
     conf = Configs()
-    experiment.create(name='mnist_latest')
+    experiment.create(name='capsule_network_mnist')
     experiment.configs(conf, {'optimizer.optimizer': 'Adam',
+                              'optimizer.learning_rate': 1e-3,
                               'device.cuda_device': 1})
     with experiment.start():
         conf.run()
