@@ -93,8 +93,6 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     label_smoothing: float = 0.2
     discriminator_k: int = 1
 
-    log_params_updates: int = 2 ** 32  # 0 if not
-
     def init(self):
         self.state_modules = []
         self.generator = Generator().to(self.device)
@@ -136,7 +134,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
                 if self.mode.is_train:
                     self.discriminator_optimizer.zero_grad()
                     loss.backward()
-                    if batch_idx.is_interval(self.log_params_updates):
+                    if batch_idx.is_last:
                         pytorch_utils.store_model_indicators(self.discriminator, 'discriminator')
                     self.discriminator_optimizer.step()
 
@@ -155,7 +153,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
             if self.mode.is_train:
                 self.generator_optimizer.zero_grad()
                 loss.backward()
-                if batch_idx.is_interval(self.log_params_updates):
+                if batch_idx.is_last:
                     pytorch_utils.store_model_indicators(self.generator, 'generator')
                 self.generator_optimizer.step()
 
