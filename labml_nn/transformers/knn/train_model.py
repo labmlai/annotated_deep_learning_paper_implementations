@@ -4,21 +4,22 @@
 This trains a simple [transformer](../../) model for auto-regression.
 """
 
-from typing import Callable
+from typing import Callable, Any
 
 import torch
 import torch.nn as nn
 from torchtext.data.utils import get_tokenizer
 
+import labml.utils.pytorch as pytorch_utils
 from labml import lab, experiment, monit, tracker, logger
 from labml.configs import option
 from labml.logger import Text
 from labml.utils.pytorch import get_modules
 from labml_helpers.datasets.text import TextDataset, SequentialDataLoader, TextFileDataset
-from labml_helpers.device import DeviceConfigs
+from labml_helpers.metrics.accuracy import Accuracy
 from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
-from labml_helpers.train_valid import TrainValidConfigs, BatchStep, MODE_STATE
+from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.transformers import Encoder, Generator, TransformerConfigs
 from labml_nn.transformers.utils import subsequent_mask
 
@@ -62,7 +63,20 @@ class AutoregressiveModel(Module):
         return self.generator(res)
 
 
-class Configs(TrainValidConfigs):
+class CrossEntropyLoss(Module):
+    """
+    Cross entropy loss
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.loss = nn.CrossEntropyLoss()
+
+    def __call__(self, outputs, targets):
+        return self.loss(outputs.view(-1, outputs.shape[-1]), targets.view(-1))
+
+
+class Configs(SimpleTrainValidConfigs):
     """
     ## Configurations
 
@@ -71,7 +85,6 @@ class Configs(TrainValidConfigs):
 
     transformer: TransformerConfigs
     model: AutoregressiveModel
-    device: torch.device = DeviceConfigs()
     text: TextDataset
     batch_size: int = 20
     seq_len: int = 32
@@ -85,7 +98,31 @@ class Configs(TrainValidConfigs):
     is_save_ff_input = False
     optimizer: torch.optim.Adam = 'transformer_optimizer'
 
-    batch_step = 'auto_regression_batch_step'
+    accuracy = Accuracy()
+    loss_func = CrossEntropyLoss()
+
+    def init(self):
+        # Create a configurable optimizer.
+        # Parameters like learning rate can be changed by passing a dictionary when starting the experiment.
+        optimizer = OptimizerConfigs()
+        optimizer.parameters = self.model.parameters()
+        optimizer.d_model = self.transformer.d_model
+        optimizer.optimizer = 'Noam'
+        self.optimizer = optimizer
+
+        # Create a sequential data loader for training
+        self.train_loader = SequentialDataLoader(text=self.text.train,
+                                                 dataset=self.text,
+                                                 batch_size=self.batch_size,
+                                                 seq_len=self.seq_len)
+
+        # Create a sequential data loader for validation
+        self.train_loader = SequentialDataLoader(text=self.text.valid,
+                                                 dataset=self.text,
+                                                 batch_size=self.batch_size,
+                                                 seq_len=self.seq_len)
+
+        self.state_modules = [self.accuracy]
 
     def sample(self):
         """
@@ -109,21 +146,17 @@ class Configs(TrainValidConfigs):
 
         logger.log(log)
 
-
-class AutoRegressionBatchStep(BatchStep):
-    """
-    This batch step class gets called by the trainer and validator
-    """
-
-    def process(self, batch: any, state: any):
+    def step(self, batch: Any, batch_idx: BatchIndex):
         """
         This method is called for each batch
         """
+        self.model.train(self.mode.is_train)
+
         # Get data and target labels
         data, target = batch[0].to(self.model.device), batch[1].to(self.model.device)
-        # Statistics for logging, and updating the global step.
-        # Number of samples equal to the number of tokens per sequence times the batch size.
-        stats = {'samples': data.shape[0] * data.shape[1]}
+
+        if self.mode.is_train:
+            tracker.add_global_step(data.shape[0] * data.shape[1])
 
         # Run the model
         output = self.model(data)
@@ -131,90 +164,20 @@ class AutoRegressionBatchStep(BatchStep):
         # Calculate loss
         loss = self.loss_func(output, target)
         # Calculate accuracy
-        stats['correct'] = self.accuracy_func(output, target)
+        self.accuracy(output, target)
 
         # Log the loss
         tracker.add("loss.", loss)
 
         #  If we are in training mode, calculate the gradients
-        if MODE_STATE.is_train:
+        if self.mode.is_train:
             loss.backward()
+            self.optimizer.step()
+            if batch_idx.is_last:
+                pytorch_utils.store_model_indicators(self.model)
+            self.optimizer.zero_grad()
 
-        # Returns stats, (and state if this was a recurrent net)
-        return stats, None
-
-
-@option(Configs.batch_step)
-def auto_regression_batch_step(c: Configs):
-    """
-    AutoRegression batch step initializer for configs
-    """
-    return AutoRegressionBatchStep(model=c.model,
-                                   optimizer=c.optimizer,
-                                   loss_func=c.loss_func,
-                                   accuracy_func=c.accuracy_func)
-
-
-class SimpleAccuracyFunc(Module):
-    """
-    Calculate the accuracy
-    """
-
-    def __call__(self, output: torch.Tensor, target: torch.Tensor) -> int:
-        pred = output.argmax(dim=-1)
-        return pred.eq(target).sum().item()
-
-
-@option(Configs.accuracy_func)
-def simple_accuracy():
-    """
-    Initialize accuracy metric for configs
-    """
-    return SimpleAccuracyFunc()
-
-
-@option(Configs.optimizer)
-def transformer_optimizer(c: Configs):
-    """
-    Create a configurable optimizer.
-
-    Parameters like learning rate can be changed by passing a dictionary when starting the experiment.
-    """
-    optimizer = OptimizerConfigs()
-    optimizer.parameters = c.model.parameters()
-    optimizer.d_model = c.transformer.d_model
-    optimizer.optimizer = 'Noam'
-
-    return optimizer
-
-
-class CrossEntropyLoss(Module):
-    """
-    Cross entropy loss
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.loss = nn.CrossEntropyLoss()
-
-    def __call__(self, outputs, targets):
-        return self.loss(outputs.view(-1, outputs.shape[-1]), targets.view(-1))
-
-
-@option(Configs.loss_func)
-def _loss_func():
-    """
-    Initialize the loss function
-    """
-    return CrossEntropyLoss()
-
-
-@option(Configs.n_tokens)
-def _n_tokens(c: Configs):
-    """
-    Set number of token in configs
-    """
-    return c.text.n_tokens
+        tracker.save()
 
 
 @option(Configs.tokenizer)
@@ -259,28 +222,6 @@ def tiny_shakespeare(c: Configs):
         url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
 
 
-@option(Configs.train_loader)
-def train_loader(c: Configs):
-    """
-    Create a sequential data loader for training
-    """
-    return SequentialDataLoader(text=c.text.train,
-                                dataset=c.text,
-                                batch_size=c.batch_size,
-                                seq_len=c.seq_len)
-
-
-@option(Configs.valid_loader)
-def valid_loader(c: Configs):
-    """
-    Create a sequential data loader for validation
-    """
-    return SequentialDataLoader(text=c.text.valid,
-                                dataset=c.text,
-                                batch_size=c.batch_size,
-                                seq_len=c.seq_len)
-
-
 @option(Configs.model)
 def autoregressive_model(c: Configs):
     """
@@ -311,7 +252,7 @@ def transformer_c(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name="knn_lm", comment='', writers={'tensorboard', 'sqlite'})
+    experiment.create(name="knn_lm", comment='', writers={'tensorboard', 'sqlite', 'screen'})
     # Create configs
     conf = Configs()
     # Load configurations
@@ -332,6 +273,9 @@ def main():
                         'transformer.d_ff': 1024,
                         'transformer.n_heads': 8,
                         'transformer.n_layers': 6})
+
+    # This is needed to initialize models
+    conf.n_tokens = conf.text.n_tokens
 
     # Set models for saving and loading
     experiment.add_pytorch_models(get_modules(conf))
