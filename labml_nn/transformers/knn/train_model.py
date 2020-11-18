@@ -117,7 +117,7 @@ class Configs(SimpleTrainValidConfigs):
                                                  seq_len=self.seq_len)
 
         # Create a sequential data loader for validation
-        self.train_loader = SequentialDataLoader(text=self.text.valid,
+        self.valid_loader = SequentialDataLoader(text=self.text.valid,
                                                  dataset=self.text,
                                                  batch_size=self.batch_size,
                                                  seq_len=self.seq_len)
