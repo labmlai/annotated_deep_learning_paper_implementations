@@ -34,7 +34,6 @@ from torch.utils.data import Dataset, DataLoader
 
 import einops
 from labml import lab, experiment, tracker, monit
-from labml.utils import pytorch as pytorch_utils
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
@@ -586,8 +585,7 @@ class Configs(TrainValidConfigs):
                 loss.backward()
                 # Log model parameters and gradients
                 if batch_idx.is_last:
-                    pytorch_utils.store_model_indicators(self.encoder, 'encoder')
-                    pytorch_utils.store_model_indicators(self.decoder, 'decoder')
+                    tracker.add(encoder=self.encoder, decoder=self.decoder)
                 # Clip gradients
                 nn.utils.clip_grad_norm_(self.encoder.parameters(), self.grad_clip)
                 nn.utils.clip_grad_norm_(self.decoder.parameters(), self.grad_clip)

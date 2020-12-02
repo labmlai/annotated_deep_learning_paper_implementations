@@ -10,11 +10,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 
-import labml.utils.pytorch as pytorch_utils
 from labml import experiment, tracker
 from labml.configs import option
 from labml_helpers.datasets.mnist import MNISTConfigs
-from labml_helpers.metrics.accuracy import Accuracy, AccuracyDirect
+from labml_helpers.metrics.accuracy import AccuracyDirect
 from labml_helpers.module import Module
 from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.capsule_networks import Squash, Router, MarginLoss
@@ -141,7 +140,7 @@ class Configs(MNISTConfigs, SimpleTrainValidConfigs):
             self.optimizer.step()
             # Log parameters and gradients
             if batch_idx.is_last:
-                pytorch_utils.store_model_indicators(self.model)
+                tracker.add('model', self.model)
             self.optimizer.zero_grad()
 
             tracker.save()

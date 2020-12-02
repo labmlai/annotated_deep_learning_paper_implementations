@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 from torchtext.data.utils import get_tokenizer
 
-import labml.utils.pytorch as pytorch_utils
 from labml import lab, experiment, monit, tracker, logger
 from labml.configs import option
 from labml.logger import Text
@@ -174,7 +173,7 @@ class Configs(SimpleTrainValidConfigs):
             loss.backward()
             self.optimizer.step()
             if batch_idx.is_last:
-                pytorch_utils.store_model_indicators(self.model)
+                tracker.add('model', self.model)
             self.optimizer.zero_grad()
 
         tracker.save()

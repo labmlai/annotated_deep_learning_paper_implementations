@@ -9,9 +9,8 @@ import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
 
-import labml.utils.pytorch as pytorch_utils
 from labml import tracker, monit, experiment
-from labml.configs import option, calculate
+from labml.configs import option
 from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
@@ -135,7 +134,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
                     self.discriminator_optimizer.zero_grad()
                     loss.backward()
                     if batch_idx.is_last:
-                        pytorch_utils.store_model_indicators(self.discriminator, 'discriminator')
+                        tracker.add('discriminator', self.discriminator)
                     self.discriminator_optimizer.step()
 
         # Train the generator
@@ -154,7 +153,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
                 self.generator_optimizer.zero_grad()
                 loss.backward()
                 if batch_idx.is_last:
-                    pytorch_utils.store_model_indicators(self.generator, 'generator')
+                    tracker.add('generator', self.generator)
                 self.generator_optimizer.step()
 
         tracker.save()
