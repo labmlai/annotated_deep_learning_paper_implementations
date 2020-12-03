@@ -82,9 +82,21 @@ def model(c: Configs):
 
 
 @option(OptimizerConfigs.optimizer, 'AdaBelief')
-def ada_belief(c: OptimizerConfigs):
-    from labml_nn.optimizers.ada_belief_buffer import AdaBelief
+def _ada_belief(c: OptimizerConfigs):
+    from labml_nn.optimizers.ada_belief import AdaBelief
     return AdaBelief(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
+
+
+@option(OptimizerConfigs.optimizer, 'Adam')
+def _adam(c: OptimizerConfigs):
+    from labml_nn.optimizers.adam import Adam
+    return Adam(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
+
+
+@option(OptimizerConfigs.optimizer, 'AdamWarmup')
+def _adam_warmup(c: OptimizerConfigs):
+    from labml_nn.optimizers.adam_warmup import AdamWarmup
+    return AdamWarmup(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
 
 
 @option(Configs.optimizer)

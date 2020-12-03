@@ -6,7 +6,7 @@ from torch.optim.optimizer import Optimizer
 
 
 class GenericAdaptiveOptimizer(Optimizer):
-    def __init__(self, params, defaults, lr: float, betas: Tuple[float, float], eps: float, ):
+    def __init__(self, params, defaults, lr: float, betas: Tuple[float, float], eps: float):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if not 0.0 <= eps:
