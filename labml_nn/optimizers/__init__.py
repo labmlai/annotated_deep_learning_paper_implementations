@@ -51,8 +51,8 @@ class GenericAdaptiveOptimizer(Optimizer):
 
 
 class WeightDecay:
-    def __init__(self, weight_decay: float = 0., weight_decouple=True, fixed_decay=False):
-        self.fixed_decay = fixed_decay
+    def __init__(self, weight_decay: float = 0., weight_decouple=True, absolute=False):
+        self.absolute = absolute
         self.weight_decouple = weight_decouple
         self.weight_decay = weight_decay
         if not 0.0 <= weight_decay:
@@ -65,7 +65,7 @@ class WeightDecay:
         grad = param.grad.data
 
         if self.weight_decouple:
-            if not self.fixed_decay:
+            if not self.absolute:
                 param.data.mul_(1.0 - group['lr'] * group['weight_decay'])
             else:
                 param.data.mul_(1.0 - group['weight_decay'])

@@ -8,9 +8,9 @@ from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.metrics.accuracy import Accuracy
 from labml_helpers.module import Module
-from labml_helpers.optimizer import OptimizerConfigs
 from labml_helpers.seed import SeedConfigs
 from labml_helpers.train_valid import TrainValidConfigs, BatchIndex, hook_model_outputs
+from labml_nn.optimizers.configs import OptimizerConfigs
 
 
 class Net(Module):
@@ -81,24 +81,6 @@ def model(c: Configs):
     return Net().to(c.device)
 
 
-@option(OptimizerConfigs.optimizer, 'AdaBelief')
-def _ada_belief(c: OptimizerConfigs):
-    from labml_nn.optimizers.ada_belief import AdaBelief
-    return AdaBelief(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
-
-
-@option(OptimizerConfigs.optimizer, 'Adam')
-def _adam(c: OptimizerConfigs):
-    from labml_nn.optimizers.adam import Adam
-    return Adam(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
-
-
-@option(OptimizerConfigs.optimizer, 'AdamWarmup')
-def _adam_warmup(c: OptimizerConfigs):
-    from labml_nn.optimizers.adam_warmup import AdamWarmup
-    return AdamWarmup(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
-
-
 @option(Configs.optimizer)
 def _optimizer(c: Configs):
     opt_conf = OptimizerConfigs()
@@ -111,7 +93,7 @@ def main():
     conf.inner_iterations = 10
     experiment.create(name='mnist_ada_belief')
     experiment.configs(conf, {'inner_iterations': 10,
-                              'optimizer.optimizer': 'AdaBelief',
+                              'optimizer.optimizer': 'RAdam',
                               'optimizer.learning_rate': 1.5e-4})
     conf.set_seed.set()
     experiment.add_pytorch_models(dict(model=conf.model))
