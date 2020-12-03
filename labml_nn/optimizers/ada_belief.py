@@ -52,14 +52,8 @@ class AdaBelief(Optimizer):
         if not 0.0 <= weight_decay:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        if isinstance(params, (list, tuple)) and len(params) > 0 and isinstance(params[0], dict):
-            for param in params:
-                if 'betas' in param and (param['betas'][0] != betas[0] or param['betas'][1] != betas[1]):
-                    param['buffer'] = [[None, None, None] for _ in range(10)]
-
         defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        buffer=[[None, None, None] for _ in range(10)])
+                        weight_decay=weight_decay, amsgrad=amsgrad)
         super().__init__(params, defaults)
 
         self.degenerated_to_sgd = degenerated_to_sgd
@@ -127,7 +121,8 @@ class AdaBelief(Optimizer):
                     # Use the max. for normalizing running avg. of gradient
                     denom = ((max_exp_avg_var + group['eps']).sqrt_() / math.sqrt(bias_correction2)).add_(group['eps'])
                 else:
-                    denom = (exp_avg_var.add_(group['eps']).sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
+                    # denom = (exp_avg_var.add_(group['eps']).sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
+                    denom = (exp_avg_var.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
 
                 # perform weight decay, check if decoupled weight decay
                 if self.weight_decouple:
@@ -145,26 +140,19 @@ class AdaBelief(Optimizer):
                     step_size = group['lr'] / bias_correction1
                     p.data.addcdiv_(exp_avg, denom, value=-step_size)
                 else:  # Rectified update, forked from RAdam
-                    buffered = group['buffer'][int(state['step'] % 10)]
-                    if state['step'] == buffered[0]:
-                        N_sma, step_size = buffered[1], buffered[2]
-                    else:
-                        buffered[0] = state['step']
-                        beta2_t = beta2 ** state['step']
-                        N_sma_max = 2 / (1 - beta2) - 1
-                        N_sma = N_sma_max - 2 * state['step'] * beta2_t / (1 - beta2_t)
-                        buffered[1] = N_sma
+                    beta2_t = beta2 ** state['step']
+                    N_sma_max = 2 / (1 - beta2) - 1
+                    N_sma = N_sma_max - 2 * state['step'] * beta2_t / (1 - beta2_t)
 
-                        # more conservative since it's an approximated value
-                        if N_sma >= 5:
-                            step_size = math.sqrt(
-                                (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
-                                        N_sma_max - 2)) / (1 - beta1 ** state['step'])
-                        elif self.degenerated_to_sgd:
-                            step_size = 1.0 / (1 - beta1 ** state['step'])
-                        else:
-                            step_size = -1
-                        buffered[2] = step_size
+                    # more conservative since it's an approximated value
+                    if N_sma >= 5:
+                        step_size = math.sqrt(
+                            (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
+                                    N_sma_max - 2)) / (1 - beta1 ** state['step'])
+                    elif self.degenerated_to_sgd:
+                        step_size = 1.0 / (1 - beta1 ** state['step'])
+                    else:
+                        step_size = -1
 
                     if N_sma >= 5:
                         denom = exp_avg_var.sqrt().add_(group['eps'])

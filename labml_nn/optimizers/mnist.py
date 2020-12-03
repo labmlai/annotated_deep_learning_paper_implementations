@@ -83,7 +83,7 @@ def model(c: Configs):
 
 @option(OptimizerConfigs.optimizer, 'AdaBelief')
 def ada_belief(c: OptimizerConfigs):
-    from labml_nn.optimizers.ada_belief import AdaBelief
+    from labml_nn.optimizers.ada_belief_buffer import AdaBelief
     return AdaBelief(c.parameters, lr=c.learning_rate, betas=c.betas, eps=c.eps)
 
 
