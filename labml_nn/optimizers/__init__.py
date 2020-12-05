@@ -1,3 +1,9 @@
+"""
+# Optimizers
+
+* [Adam](adam.html)
+"""
+
 from typing import Dict, Tuple
 
 import torch
@@ -21,7 +27,7 @@ class GenericAdaptiveOptimizer(Optimizer):
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
         pass
 
-    def calculate(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.Tensor):
+    def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.Tensor):
         pass
 
     @torch.no_grad()
@@ -45,7 +51,7 @@ class GenericAdaptiveOptimizer(Optimizer):
                 if len(state) == 0:
                     self.init_state(state, group, p)
 
-                self.calculate(state, group, grad, p)
+                self.step_param(state, group, grad, p)
 
         return loss
 

@@ -18,7 +18,7 @@ class RAdam(AMSGrad):
         self.degenerated_to_sgd = degenerated_to_sgd
         super().__init__(params, lr, betas, eps, weight_decay, amsgrad, defaults)
 
-    def calculate(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
+    def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
         self.weight_decay(param, group)
 
         m, v = self.get_mv(state, group, grad)

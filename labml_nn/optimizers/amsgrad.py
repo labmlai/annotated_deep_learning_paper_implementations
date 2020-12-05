@@ -15,11 +15,11 @@ class AMSGrad(Adam):
 
         super().__init__(params, lr, betas, eps, weight_decay, defaults)
 
-    def init_state(self, state: Dict[str, any], group: Dict[str, any], p: nn.Parameter):
-        super().init_state(state, group, p)
+    def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
+        super().init_state(state, group, param)
         # Maintains max of all exp. moving avg. of sq. grad. values
         if group['amsgrad']:
-            state['max_exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+            state['max_exp_avg_sq'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def get_mv(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor):
         m, v = super().get_mv(state, group, grad)

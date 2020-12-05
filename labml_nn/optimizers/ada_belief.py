@@ -50,16 +50,16 @@ class AdaBelief(RAdam):
         super().__init__(params, lr, betas, eps, weight_decay, amsgrad, degenerated_to_sgd, defaults)
         self.rectify = rectify
 
-    def init_state(self, state: Dict[str, any], group: Dict[str, any], p: nn.Parameter):
+    def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
         state['step'] = 0
         # Exponential moving average of gradient values
-        state['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+        state['exp_avg'] = torch.zeros_like(param, memory_format=torch.preserve_format)
         # Exponential moving average of squared gradient values
-        state['exp_avg_var'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+        state['exp_avg_var'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
         if group['amsgrad']:
             # Maintains max of all exp. moving avg. of sq. grad. values
-            state['max_exp_avg_var'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+            state['max_exp_avg_var'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def get_mv(self, state: Dict[str, Any], group: Dict[str, Any], grad: torch.Tensor):
         beta1, beta2 = group['betas']
@@ -80,7 +80,7 @@ class AdaBelief(RAdam):
         else:
             return m, v
 
-    def calculate(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
+    def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
         self.weight_decay(param, group)
         m, v = self.get_mv(state, group, grad)
         state['step'] += 1
