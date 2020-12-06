@@ -67,14 +67,13 @@ class WeightDecay:
     def defaults(self):
         return dict(weight_decay=self.weight_decay)
 
-    def __call__(self, param: torch.nn.Parameter, group: Dict[str, any]):
-        grad = param.grad.data
-
+    def __call__(self, param: torch.nn.Parameter, grad: torch.Tensor, group: Dict[str, any]):
         if self.weight_decouple:
             if not self.absolute:
                 param.data.mul_(1.0 - group['lr'] * group['weight_decay'])
             else:
                 param.data.mul_(1.0 - group['weight_decay'])
+            return grad
         else:
             if group['weight_decay'] != 0:
-                grad.add_(param.data, alpha=group['weight_decay'])
+                return grad.add(param.data, alpha=group['weight_decay'])

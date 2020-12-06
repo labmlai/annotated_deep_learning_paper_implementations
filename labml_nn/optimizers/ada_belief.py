@@ -81,7 +81,7 @@ class AdaBelief(RAdam):
             return m, v
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        self.weight_decay(param, group)
+        grad = self.weight_decay(param, grad, group)
         m, v = self.get_mv(state, group, grad)
         state['step'] += 1
 
