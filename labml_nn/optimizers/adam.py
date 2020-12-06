@@ -12,8 +12,8 @@ to implement the Adam optimizer.
 \begin{align}
 m_t &\leftarrow \beta_1 m_{t-1} + (1 - \beta_1) \cdot g_t \\
 v_t &\leftarrow \beta_2 v_{t-1} + (1 - \beta_2) \cdot g_t^2 \\
-\hat{m}_t &\leftarrow \frac{m_t}/{1-\beta_1^t} \\
-\hat{v}_t &\leftarrow \frac{v_t}/{1-\beta_2^t} \\
+\hat{m}_t &\leftarrow \frac{m_t}{1-\beta_1^t} \\
+\hat{v}_t &\leftarrow \frac{v_t}{1-\beta_2^t} \\
 \theta_t &\leftarrow \theta_{t-1} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
 \end{align}
 
