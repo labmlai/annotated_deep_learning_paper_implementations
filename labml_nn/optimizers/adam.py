@@ -45,6 +45,9 @@ from labml_nn.optimizers import GenericAdaptiveOptimizer, WeightDecay
 
 
 class Adam(GenericAdaptiveOptimizer):
+    """
+    ## Adam Optimizer
+    """
     def __init__(self, params,
                  lr: float = 1e-3, betas: Tuple[float, float] = (0.9, 0.999), eps: float = 1e-16,
                  weight_decay: WeightDecay = WeightDecay(),
@@ -165,7 +168,7 @@ class Adam(GenericAdaptiveOptimizer):
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
         """
-        ### Take an update step for a given paramter tensor
+        ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)
         * `group` stores optimizer attributes of the parameter group
