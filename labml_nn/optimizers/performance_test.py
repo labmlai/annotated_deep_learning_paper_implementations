@@ -7,6 +7,8 @@ TorchAdam...[DONE]	1,356.01ms
 MyAdam warmup...[DONE]	119.15ms
 MyAdam...[DONE]	1,192.89ms
 ```
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ngowaAsADj8VdZfBifu_6L6rtjGoEeoR?usp=sharing)
 """
 
 import torch
