@@ -3,6 +3,7 @@
 
 ## Optimizer Implementations
 * [Adam Optimizer](adam.html)
+* [AMSGrad Optimizer](amsgrad.html)
 
 This [MNIST example](mnist_experiment.html) uses these optimizers.
 
