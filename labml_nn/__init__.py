@@ -41,6 +41,10 @@ and
  [Prioritized Replay](https://lab-ml.com/labml_nn/rl/dqn/replay_buffer.html)
  and Double Q Network.
 
+#### ✨ [Optimizers](https://lab-ml.com/labml_nn/optimizers/)
+* [Adam](https://lab-ml.com/labml_nn/optimizers/adam.html)
+* [AMSGrad](https://lab-ml.com/labml_nn/optimizers/amsgrad.html)
+
 ### Installation
 
 ```bash

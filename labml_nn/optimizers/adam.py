@@ -4,9 +4,6 @@
 This is an implementation of popular optimizer *Adam* from paper
  [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980v9).
 
-We extend the class `GenericAdaptiveOptimizer` defined in [__init__.py](index.html)
-to implement the Adam optimizer.
-
 *Adam* update is,
 
 \begin{align}
@@ -47,6 +44,9 @@ from labml_nn.optimizers import GenericAdaptiveOptimizer, WeightDecay
 class Adam(GenericAdaptiveOptimizer):
     """
     ## Adam Optimizer
+
+    We extend the class `GenericAdaptiveOptimizer` defined in [`__init__.py`](index.html)
+    to implement the Adam optimizer.
     """
     def __init__(self, params,
                  lr: float = 1e-3, betas: Tuple[float, float] = (0.9, 0.999), eps: float = 1e-16,
@@ -56,10 +56,10 @@ class Adam(GenericAdaptiveOptimizer):
         ### Initialize the optimizer
 
         * `params` is the list of parameters
-        * 'lr' is the learning rate $\alpha$
+        * `lr` is the learning rate $\alpha$
         * `betas` is a tuple of ($\beta_1$, $\beta_2$)
         * `eps` is $\hat{\epsilon}$
-        * `weight_decay` is an instance of class `WeightDecay` defined in [__init__.py](index.html)
+        * `weight_decay` is an instance of class `WeightDecay` defined in [`__init__.py`](index.html)
         * `defaults` is a dictionary of default for group values.
          This is useful when you want to extend the class `Adam`.
         """
