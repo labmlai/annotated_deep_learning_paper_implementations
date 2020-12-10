@@ -1,5 +1,10 @@
 """
-# Build index for k-NN search
+---
+title: Build FAISS index for k-NN search
+summary: This builds the FAISS index with the transformer embeddings.
+---
+
+# Build FAISS index for k-NN search
 
 We want to build the index of $\big(f(c_i), w_i\big)$.
 We store $f(c_i)$ and $w_i$ in memory mapped numpy arrays.

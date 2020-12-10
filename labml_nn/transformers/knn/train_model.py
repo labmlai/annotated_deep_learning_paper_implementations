@@ -1,4 +1,9 @@
 """
+---
+title: Train Autoregressive Transformer
+summary: This is training code with notes for a basic auto-regressive transformer.
+---
+
 # Train Autoregressive Transformer
 
 This trains a simple [transformer](../../) model for auto-regression.

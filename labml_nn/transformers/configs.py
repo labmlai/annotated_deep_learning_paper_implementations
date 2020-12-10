@@ -1,4 +1,9 @@
 """
+---
+title: Configurable Transformer Components
+summary: These are configurable components that can be re-used quite easily.
+---
+
 # Configurable Transformer Components
 """
 import copy

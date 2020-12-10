@@ -1,11 +1,18 @@
 """
+---
+title: Transformers
+summary: >
+  This is a collection of PyTorch implementations/tutorials of
+  transformers and related techniques.
+---
+
 # Transformers
 
 ## Transformer Building Blocks
 
 * [Multi-head attention](mha.html)
 * [Relative multi-head attention](relative_mha.html)
-* [Transformer models](models.html)
+* [Transformer Encoder and Decoder Models](models.html)
 * [Fixed positional encoding](positional_encoding.html)
 
 ## [kNN-LM](knn)

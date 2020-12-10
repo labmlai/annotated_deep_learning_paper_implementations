@@ -1,4 +1,11 @@
 """
+---
+title: Fixed Positional Encodings
+summary: >
+  Implementation with explanation of fixed positional encodings as
+  described in paper Attention is All You Need.
+---
+
 # Fixed Positional Encodings
 
 The positional encoding encodes the position along the sequence into

@@ -1,5 +1,12 @@
 """
-# Transformer Models
+---
+title: Transformer Encoder and Decoder Models
+summary: >
+  These are PyTorch implementations of Transformer based encoder and decoder models,
+  as well as other related modules.
+---
+
+# Transformer Encoder and Decoder Models
 """
 import math
 

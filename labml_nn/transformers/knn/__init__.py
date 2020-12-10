@@ -1,4 +1,14 @@
 """
+---
+title: k-Nearest Neighbor Language Models
+summary: >
+  This is a simple PyTorch implementation/tutorial of the paper
+  Generalization through Memorization: Nearest Neighbor Language Models using FAISS.
+  It runs a kNN model on the final transformer layer embeddings to improve the
+  loss of transformer based language models.
+  It's also great for domain adaptation without pre-training.
+---
+
 # k-Nearest Neighbor Language Models
 
 This is an implementation of the paper

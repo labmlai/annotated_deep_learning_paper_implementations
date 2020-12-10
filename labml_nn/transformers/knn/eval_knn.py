@@ -1,4 +1,11 @@
 """
+---
+title: Evaluate k-nearest neighbor language model
+summary: >
+  This runs the kNN model and merges the kNN results with transformer output to
+  achieve better results than just using the transformer.
+---
+
 # Evaluate k-nearest neighbor language model
 """
 from typing import Optional, List

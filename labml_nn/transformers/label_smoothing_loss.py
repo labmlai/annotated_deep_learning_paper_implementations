@@ -1,4 +1,11 @@
 """
+---
+title: Label Smoothing Loss
+summary: >
+  This is an implementation of label smoothing loss, that can be used as
+  an alternative to cross entropy loss for improved accuracy.
+---
+
 # Label Smoothing Loss
 """
 import matplotlib.pyplot as plt
@@ -20,7 +27,7 @@ class LabelSmoothingLoss(Module):
         self.true_dist = None
 
     def __call__(self, x: torch.Tensor, target: torch.Tensor):
-        assert x.size(1) == self.size
+        assert x.shape[1] == self.size
         true_dist = x.clone()
         true_dist.fill_(self.smoothing / (self.size - 2))
         true_dist.scatter_(1, target.unsqueeze(1), self.confidence)
