@@ -33,7 +33,9 @@ class AMSGrad(Adam):
     defined in [`__init__.py`](index.html).
     """
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-16,
-                 weight_decay: WeightDecay = WeightDecay(), amsgrad=True, defaults=None):
+                 weight_decay: WeightDecay = WeightDecay(),
+                 optimized_update: bool = True,
+                 amsgrad=True, defaults=None):
         """
         ### Initialize the optimizer
 
@@ -49,7 +51,7 @@ class AMSGrad(Adam):
         defaults = {} if defaults is None else defaults
         defaults.update(dict(amsgrad=amsgrad))
 
-        super().__init__(params, lr, betas, eps, weight_decay, defaults)
+        super().__init__(params, lr, betas, eps, weight_decay, optimized_update, defaults)
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
         """

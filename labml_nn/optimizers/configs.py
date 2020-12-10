@@ -20,6 +20,7 @@ class OptimizerConfigs(BaseConfigs):
     weight_decouple: bool = True
     weight_decay: float = 0.0
     weight_decay_absolute: bool = False
+    optimized_adam_update: bool = True
 
     parameters: any
 
@@ -58,11 +59,13 @@ def _adam_optimizer(c: OptimizerConfigs):
         from labml_nn.optimizers.amsgrad import AMSGrad
         return AMSGrad(c.parameters,
                        lr=c.learning_rate, betas=c.betas, eps=c.eps,
+                       optimized_update=c.optimized_adam_update,
                        weight_decay=c.weight_decay_obj, amsgrad=c.amsgrad)
     else:
         from labml_nn.optimizers.adam import Adam
         return Adam(c.parameters,
                     lr=c.learning_rate, betas=c.betas, eps=c.eps,
+                    optimized_update=c.optimized_adam_update,
                     weight_decay=c.weight_decay_obj)
 
 

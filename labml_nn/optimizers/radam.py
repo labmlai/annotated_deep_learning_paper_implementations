@@ -1,10 +1,28 @@
 """
 ---
-title: RAdam optimizer
+title: Rectified Adam (RAdam) optimizer
 summary: A simple PyTorch implementation/tutorial of RAdam optimizer.
 ---
 
-Based on https://github.com/LiyuanLucasLiu/RAdam
+# Rectified Adam (RAdam) optimizer
+
+This implementation is based on
+[the official implementation](https://github.com/LiyuanLucasLiu/RAdam)
+of the paper
+[On the Variance of the Adaptive Learning Rate and Beyond](https://arxiv.org/abs/1908.03265).
+
+We have implemented it as an extension to [our AMSGrad implementation](amsgrad.html)
+thus requiring only the modifications to be implemented.
+
+Adam optimizer sometimes converges to a bad local optima during the initial stages of the training;
+especially when training transformers.
+Researches use warmups to counter this; for the the initial training steps (warm-up stage)
+they use a low learning rate.
+This paper identifies the problem to be the high variance of adaptive learning rate
+during initial stages of training, and counters it using a new rectification term to
+reduce variance.
+
+
 """
 
 import math
@@ -21,7 +39,7 @@ class RAdam(AMSGrad):
                  weight_decay: WeightDecay = WeightDecay(), amsgrad=False,
                  degenerated_to_sgd=True, defaults=None):
         self.degenerated_to_sgd = degenerated_to_sgd
-        super().__init__(params, lr, betas, eps, weight_decay, amsgrad, defaults)
+        super().__init__(params, lr, betas, eps, weight_decay, False, amsgrad, defaults)
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
         grad = self.weight_decay(param, grad, group)
