@@ -1,4 +1,9 @@
 """
+---
+title: Prioritized Experience Replay Buffer
+summary: Annotated implementation of prioritized experience replay using a binary segment tree.
+---
+
 # Prioritized Experience Replay Buffer
 
 This implements paper [Prioritized experience replay](https://arxiv.org/abs/1511.05952),

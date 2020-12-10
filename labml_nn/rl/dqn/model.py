@@ -1,4 +1,9 @@
 """
+---
+title: Deep Q Network (DQN) Model
+summary: Implementation of neural network model for Deep Q Network (DQN).
+---
+
 # Deep Q Network (DQN) Model
 """
 

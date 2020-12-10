@@ -1,3 +1,10 @@
+"""
+---
+title: Configurable optimizer module
+summary: This implements a configurable module for optimizers.
+---
+"""
+
 from typing import Tuple
 
 import torch

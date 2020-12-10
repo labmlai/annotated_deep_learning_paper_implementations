@@ -1,4 +1,11 @@
 """
+---
+title: Sketch RNN
+summary: >
+  This is an annotated PyTorch implementation of the Sketch RNN from paper A Neural Representation of Sketch Drawings.
+  Sketch RNN is a sequence-to-sequence model that generates sketches of objects such as bicycles, cats, etc.
+---
+
 # Sketch RNN
 
 This is an annotated implementation of the paper

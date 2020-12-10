@@ -1,4 +1,9 @@
 """
+---
+title: Generalized Advantage Estimation (GAE)
+summary: A PyTorch implementation/tutorial of Generalized Advantage Estimation (GAE).
+---
+
 # Generalized Advantage Estimation (GAE)
 
 This is an implementation of paper [Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438).

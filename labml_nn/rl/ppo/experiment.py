@@ -1,4 +1,9 @@
 """
+---
+title: PPO Experiment with Atari Breakout
+summary: Annotated implementation to train a PPO agent on Atari Breakout game.
+---
+
 # PPO Experiment with Atari Breakout
 
 This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.

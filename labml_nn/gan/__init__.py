@@ -1,4 +1,9 @@
 """
+---
+title: Generative Adversarial Networks (GAN)
+summary: A simple PyTorch implementation/tutorial of Generative Adversarial Networks (GAN) loss functions.
+---
+
 # Generative Adversarial Networks (GAN)
 
 This is an implementation of

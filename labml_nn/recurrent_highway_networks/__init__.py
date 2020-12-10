@@ -1,4 +1,9 @@
 """
+---
+title: Recurrent Highway Networks
+summary: A simple PyTorch implementation/tutorial of Recurrent Highway Networks.
+---
+
 # Recurrent Highway Networks
 
 This is an implementation of [Recurrent Highway Networks](https://arxiv.org/abs/1607.03474).

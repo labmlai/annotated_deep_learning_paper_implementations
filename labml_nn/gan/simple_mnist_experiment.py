@@ -1,4 +1,9 @@
 """
+---
+title: Generative Adversarial Networks experiment with MNIST
+summary: This experiment generates MNIST images using multi-layer perceptron.
+---
+
 # Generative Adversarial Networks experiment with MNIST
 """
 

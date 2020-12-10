@@ -1,3 +1,10 @@
+"""
+---
+title: Adam optimizer with warm-up
+summary: A simple PyTorch implementation/tutorial of Adam optimizer with warm-up.
+---
+"""
+
 from typing import Dict
 
 from labml_nn.optimizers import WeightDecay

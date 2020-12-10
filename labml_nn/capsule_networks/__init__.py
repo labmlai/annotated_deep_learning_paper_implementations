@@ -1,7 +1,18 @@
 """
+---
+title: Capsule Networks
+summary: >
+  PyTorch implementation/tutorial of Capsule Networks.
+  Capsule networks is neural network architecture that embeds features
+  as capsules and routes them with a voting mechanism to next layer of capsules.
+---
+
 # Capsule Networks
 
 This is an implementation of [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
+
+Capsule networks is neural network architecture that embeds features as capsules and routes them
+with a voting mechanism to next layer of capsules.
 
 Unlike in other implementations of models, we've included a sample, because
 it is difficult to understand some of the concepts with just the modules.

@@ -1,4 +1,9 @@
 """
+---
+title: Atari wrapper with multi-processing
+summary: This implements the Atari games with multi-processing.
+---
+
 # Atari wrapper with multi-processing
 """
 import multiprocessing

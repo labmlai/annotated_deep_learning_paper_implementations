@@ -1,4 +1,9 @@
 """
+---
+title: MNIST example to test the optimizers
+summary: This is a simple MNIST example with a CNN model to test the optimizers.
+---
+
 # MNIST example to test the optimizers
 """
 import torch.nn as nn

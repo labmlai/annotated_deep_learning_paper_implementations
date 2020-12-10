@@ -1,4 +1,9 @@
 """
+---
+title: DQN Experiment with Atari Breakout
+summary: Implementation of DQN experiment with Atari Breakout
+---
+
 # DQN Experiment with Atari Breakout
 
 This experiment trains a Deep Q Network (DQN) to play Atari Breakout game on OpenAI Gym.

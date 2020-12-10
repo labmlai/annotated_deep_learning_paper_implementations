@@ -1,5 +1,13 @@
 """
-# RL Algorithms
+---
+title: Reinforcement Learning Algorithms
+summary: >
+  This is a collection of PyTorch implementations/tutorials of reinforcement learning algorithms.
+  It currently includes Proximal Policy Optimization, Generalized Advantage Estimation, and
+  Deep Q Networks.
+---
+
+# Reinforcement Learning Algorithms
 
 * [Proximal Policy Optimization](ppo)
     * [This is an experiment](ppo/experiment.html) that runs a PPO agent on Atari Breakout.

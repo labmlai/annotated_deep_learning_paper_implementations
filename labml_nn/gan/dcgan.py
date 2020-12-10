@@ -1,4 +1,9 @@
 """
+---
+title: Deep Convolutional Generative Adversarial Networks (DCGAN)
+summary: A simple PyTorch implementation/tutorial of Deep Convolutional Generative Adversarial Networks (DCGAN).
+---
+
 # Deep Convolutional Generative Adversarial Networks (DCGAN)
 
 This is an implementation of paper

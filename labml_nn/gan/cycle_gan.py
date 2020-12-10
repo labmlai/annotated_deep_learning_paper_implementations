@@ -1,4 +1,11 @@
 """
+---
+title: Cycle GAN
+summary: >
+  A simple PyTorch implementation/tutorial of Cycle GAN introduced in paper
+  Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks.
+---
+
 # Cycle GAN
 
 This is an implementation of paper

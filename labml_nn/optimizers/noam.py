@@ -1,3 +1,11 @@
+"""
+---
+title: Noam optimizer from Attention is All You Need paper
+summary: >
+  This is a tutorial/implementation of Noam optimizer.
+  Noam optimizer has a warm-up period and then an exponentially decaying learning rate.
+---
+"""
 from typing import Dict
 
 from labml_nn.optimizers import WeightDecay

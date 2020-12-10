@@ -1,4 +1,9 @@
 """
+---
+title: Classify MNIST digits with Capsule Networks
+summary: Code for training Capsule Networks on MNIST dataset
+---
+
 # Classify MNIST digits with Capsule Networks
 
 This paper implements the experiment described in paper
