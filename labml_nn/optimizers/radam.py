@@ -126,7 +126,7 @@ r_t &= \sqrt{\frac{(\rho_t-2)(\rho_t-4)\rho_\infty}{(\rho_\infty-2)(\rho_\infty-
 """
 
 import math
-from typing import Dict
+from typing import Dict, Optional
 
 import torch
 
@@ -140,6 +140,7 @@ class RAdam(AMSGrad):
 
     This class extends from AMSAdam optimizer defined in [`amsadam.py`](amsadam.html).
     """
+
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
                  weight_decay: WeightDecay = WeightDecay(),
                  optimized_update: bool = True,
@@ -185,6 +186,28 @@ class RAdam(AMSGrad):
         # Perform *RAdam* update
         self.r_adam_update(state, group, param, m, v)
 
+    @staticmethod
+    def calc_rectification_term(beta2: float, step: int) -> Optional[float]:
+        """
+        ### Calculate rectification term $r_t$
+        """
+
+        # $\beta_2^t$
+        beta2_t = beta2 ** step
+        # $$\rho_\infty = \frac{2}{1 - \beta_2} - 1$$
+        rho_inf = 2 / (1 - beta2) - 1
+        # $$\rho_t = \frac{2}{1-\beta_2} - 1 - \frac{2 t \beta_2^t}{1-\beta_2^t}$$
+        rho = rho_inf - 2 * step * beta2_t / (1 - beta2_t)
+
+        # $r_t$ is tractable when $\rho_t >= 4$.
+        # We are being a little more conservative since it's an approximated value
+        if rho >= 5:
+            # $$r_t = \sqrt{\frac{(\rho_t-2)(\rho_t-4)\rho_\infty}{(\rho_\infty-2)(\rho_\infty-4)\rho_t}}$$
+            r2 = (rho - 4) / (rho_inf - 4) * (rho - 2) / rho * rho_inf / (rho_inf - 2)
+            return math.sqrt(r2)
+        else:
+            return None
+
     def r_adam_update(self, state: Dict[str, any], group: Dict[str, any], param: torch.nn.Parameter,
                       m: torch.Tensor, v: torch.Tensor):
         """
@@ -204,24 +227,16 @@ class RAdam(AMSGrad):
         # Bias correction term for $\hat{v}_t$, $1 - \beta_2^t$
         bias_correction2 = 1 - beta2 ** state['step']
 
-        # $\beta_2^t$
-        beta2_t = beta2 ** state['step']
-        # $$\rho_\infty = \frac{2}{1 - \beta_2} - 1$$
-        rho_inf = 2 / (1 - beta2) - 1
-        # $$\rho_t = \frac{2}{1-\beta_2} - 1 - \frac{2 t \beta_2^t}{1-\beta_2^t}$$
-        rho = rho_inf - 2 * state['step'] * beta2_t / (1 - beta2_t)
+        r = self.calc_rectification_term(beta2, state['step'])
 
-        # $r_t$ is tractable when $\rho_t >= 4$.
-        # We are being a little more conservative since it's an approximated value
-        if rho >= 5:
-            # $$r_t = \sqrt{\frac{(\rho_t-2)(\rho_t-4)\rho_\infty}{(\rho_\infty-2)(\rho_\infty-4)\rho_t}}$$
-            r2 = (rho - 4) / (rho_inf - 4) * (rho - 2) / rho * rho_inf / (rho_inf - 2)
+        # If $r_t$ is intractable
+        if r is not None:
             # Whether to optimize the computation by combining scalar computations
             if self.optimized_update:
                 # Denominator $\sqrt{v_t} + \hat{\epsilon}$
                 denominator = v.sqrt().add_(group['eps'])
                 # Step size $\alpha \sqrt{r_t} * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t}$
-                step_size = self.get_lr(state, group) * math.sqrt(bias_correction2) * math.sqrt(r2) / bias_correction1
+                step_size = self.get_lr(state, group) * math.sqrt(bias_correction2) * r / bias_correction1
                 # Update parameters $\theta_t \leftarrow \theta_{t-1} - \alpha \sqrt{r_t} \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \cdot
                 #  \frac{m_t}{\sqrt{v_t} + \hat{\epsilon}}$
                 param.data.addcdiv_(m, denominator, value=-step_size)
@@ -230,7 +245,7 @@ class RAdam(AMSGrad):
                 # Denominator  $\frac{\sqrt{v_t}}{\sqrt{1-\beta_2^t}} + \epsilon$
                 denominator = (v.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
                 # Step size $\frac{\alpha \sqrt{r_t}}{1-\beta_1^t}$
-                step_size = self.get_lr(state, group) * math.sqrt(r2) / bias_correction1
+                step_size = self.get_lr(state, group) * r / bias_correction1
                 # Update parameters $\theta_t \leftarrow \theta_{t-1} - \alpha \sqrt{r_t} \cdot
                 # \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
                 param.data.addcdiv_(m, denominator, value=-step_size)
@@ -242,3 +257,23 @@ class RAdam(AMSGrad):
             # Update parameters
             # $\theta_t \leftarrow \theta_{t-1} - \alpha \cdot \hat{m}_t$
             param.data.add_(m, alpha=-step_size)
+
+
+def _test_rectification_term():
+    """
+    ### Plot $r_t$ against $t$ for various $\beta_2$
+
+    ![Plot of r_t](radam_r_t.png)
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    beta2 = [0.9999, 0.999, 0.99, 0.9, 0.8, 0.6, 0.5]
+    plt.plot(np.arange(1, 5_000), [[RAdam.calc_rectification_term(b, i) for b in beta2] for i in range(1, 5_000)])
+    plt.legend(beta2)
+    plt.title("Optimizer")
+    plt.show()
+
+
+if __name__ == '__main__':
+    _test_rectification_term()
