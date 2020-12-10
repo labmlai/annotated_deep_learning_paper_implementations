@@ -44,6 +44,8 @@ class AMSGrad(Adam):
         * `betas` is a tuple of ($\beta_1$, $\beta_2$)
         * `eps` is $\hat{\epsilon}$
         * `weight_decay` is an instance of class `WeightDecay` defined in [`__init__.py`](index.html)
+        * 'optimized_update' is a flag whether to optimize the bias correction of the second moment
+          by doing it after adding $\epsilon$
         * `amsgrad` is a flag indicating whether to use AMSGrad or fallback to plain Adam
         * `defaults` is a dictionary of default for group values.
          This is useful when you want to extend the class `Adam`.
