@@ -14,7 +14,7 @@ summary: >
 * [Adam Optimizer with warmup](adam_warmup.html)
 * [Noam Optimizer](noam.html)
 * [Rectified Adam Optimizer](radam.html)
-* [AdaBelief Optimizer](adabelief.html)
+* [AdaBelief Optimizer](ada_belief.html)
 
 This [MNIST example](mnist_experiment.html) uses these optimizers.
 

@@ -53,7 +53,7 @@ and
 * [Adam Optimizer with warmup](https://lab-ml.com/labml_nn/optimizers/adam_warmup.html)
 * [Noam Optimizer](https://lab-ml.com/labml_nn/optimizers/noam.html)
 * [Rectified Adam Optimizer](https://lab-ml.com/labml_nn/optimizers/radam.html)
-* [AdaBelief Optimizer](https://lab-ml.com/labml_nn/optimizers/adabelief.html)
+* [AdaBelief Optimizer](https://lab-ml.com/labml_nn/optimizers/ada_belief.html)
 
 ### Installation
 
