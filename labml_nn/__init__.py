@@ -50,7 +50,10 @@ and
 #### ✨ [Optimizers](https://lab-ml.com/labml_nn/optimizers/)
 * [Adam](https://lab-ml.com/labml_nn/optimizers/adam.html)
 * [AMSGrad](https://lab-ml.com/labml_nn/optimizers/amsgrad.html)
+* [Adam Optimizer with warmup](https://lab-ml.com/labml_nn/optimizers/adam_warmup.html)
+* [Noam Optimizer](https://lab-ml.com/labml_nn/optimizers/noam.html)
 * [Rectified Adam Optimizer](https://lab-ml.com/labml_nn/optimizers/radam.html)
+* [AdaBelief Optimizer](https://lab-ml.com/labml_nn/optimizers/adabelief.html)
 
 ### Installation
 

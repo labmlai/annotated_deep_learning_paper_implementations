@@ -11,7 +11,10 @@ summary: >
 ## Optimizer Implementations
 * [Adam Optimizer](adam.html)
 * [AMSGrad Optimizer](amsgrad.html)
+* [Adam Optimizer with warmup](adam_warmup.html)
+* [Noam Optimizer](noam.html)
 * [Rectified Adam Optimizer](radam.html)
+* [AdaBelief Optimizer](adabelief.html)
 
 This [MNIST example](mnist_experiment.html) uses these optimizers.
 
