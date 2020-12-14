@@ -203,7 +203,7 @@ class Adam(GenericAdaptiveOptimizer):
         # Get $m_t$ and $v_t$
         m, v = self.get_mv(state, group, grad)
 
-        # Calculate $t$ the number of optimizer steps
+        # Increment $t$ the number of optimizer steps
         state['step'] += 1
 
         # Perform *Adam* update

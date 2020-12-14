@@ -4,9 +4,15 @@
 
 # [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
-This is a collection of simple PyTorch implementation of various
-neural network architectures and layers.
-We will keep adding to this.
+This is a collection of simple PyTorch implementations of
+neural networks and related algorithms.
+[These implementations](https://github.com/lab-ml/nn) are documented with explanations,
+and the [website](https://lab-ml.com/labml_nn/index.html)
+renders these as side-by-side formatted notes.
+We believe these would help you understand these algorithms better.
+
+We are actively maintaining this repo and adding new
+implementations.
 
 ## Modules
 

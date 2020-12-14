@@ -42,7 +42,7 @@ class AMSGrad(Adam):
         * `params` is the list of parameters
         * `lr` is the learning rate $\alpha$
         * `betas` is a tuple of ($\beta_1$, $\beta_2$)
-        * `eps` is $\hat{\epsilon}$
+        * `eps` is $\hat{\epsilon}$ or $\epsilon$ based on `optimized_update`
         * `weight_decay` is an instance of class `WeightDecay` defined in [`__init__.py`](index.html)
         * 'optimized_update' is a flag whether to optimize the bias correction of the second moment
           by doing it after adding $\epsilon$
@@ -74,7 +74,7 @@ class AMSGrad(Adam):
 
     def get_mv(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor):
         """
-        ### Calculate $m_t$ and and $v_t$ or $$
+        ### Calculate $m_t$ and and $v_t$ or $\max(v_1, v_2, ..., v_{t-1}, v_t)$
 
         * `state` is the optimizer state of the parameter (tensor)
         * `group` stores optimizer attributes of the parameter group
@@ -86,13 +86,13 @@ class AMSGrad(Adam):
 
         # If this parameter group is using `amsgrad`
         if group['amsgrad']:
-            # Get $\max(v_1, v_2, ..., v_t-1)$.
+            # Get $\max(v_1, v_2, ..., v_{t-1})$.
             #
             # 🗒 The paper uses the notation $\hat{v}_t$ for this, which we don't use
             # that here because it confuses with the Adam's usage of the same notation
             # for bias corrected exponential moving average.
             v_max = state['max_exp_avg_sq']
-            # Calculate $\max(v_1, v_2, ..., v_t-1)$.
+            # Calculate $\max(v_1, v_2, ..., v_{t-1}, v_t)$.
             #
             # 🤔 I feel you should be taking / maintaining the max of the bias corrected
             # second exponential average of squared gradient.

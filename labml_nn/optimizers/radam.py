@@ -152,14 +152,14 @@ class RAdam(AMSGrad):
         * `params` is the list of parameters
         * `lr` is the learning rate $\alpha$
         * `betas` is a tuple of ($\beta_1$, $\beta_2$)
-        * `eps` is $\hat{\epsilon}$
+        * `eps` is $\hat{\epsilon}$ or $\epsilon$ based on `optimized_update`
         * `weight_decay` is an instance of class `WeightDecay` defined in [`__init__.py`](index.html)
         * 'optimized_update' is a flag whether to optimize the bias correction of the second moment
           by doing it after adding $\epsilon$
         * `amsgrad` is a flag indicating whether to use AMSGrad or fallback to plain Adam
         * `degenerate_to_sgd` whether to use sgd when the rectification term $r_t is intractable.
         * `defaults` is a dictionary of default for group values.
-         This is useful when you want to extend the class `Adam`.
+         This is useful when you want to extend the class `RAdam`.
         """
         self.degenerated_to_sgd = degenerated_to_sgd
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, amsgrad, defaults)
