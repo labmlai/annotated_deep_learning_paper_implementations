@@ -122,7 +122,7 @@ class LSTM(Module):
             (h, c) = state
             # Reverse stack the tensors to get the states of each layer <br />
             # 📝 You can just work with the tensor itself but this is easier to debug
-            h, c = torch.unbind(h), torch.unbind(c)
+            h, c = list(torch.unbind(h)), list(torch.unbind(c))
 
         # Array to collect the outputs of the final layer at each time step.
         out = []
