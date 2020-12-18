@@ -8,7 +8,10 @@ summary: >
 
 # Transformers
 
-## Transformer Building Blocks
+This module contains [PyTorch](https://pytorch.org/)
+implementations and explanations of original transformer
+from paper [Attention Is All You Need](https://arxiv.org/abs/1706.03762),
+and derivatives and enhancements of it.
 
 * [Multi-head attention](mha.html)
 * [Relative multi-head attention](relative_mha.html)
