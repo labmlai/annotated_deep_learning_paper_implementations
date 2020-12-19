@@ -1,8 +1,5 @@
 """
-[![PiPy Version](https://badge.fury.io/py/labml-nn.svg)](https://badge.fury.io/py/labml-nn)
-[![PiPy Downloads](https://pepy.tech/badge/labml-nn)](https://pepy.tech/project/labml-nn)
-
-# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
+https://img.shields.io/github/stars/lab-ml/nn?style=social# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
