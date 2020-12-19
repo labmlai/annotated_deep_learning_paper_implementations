@@ -1,5 +1,5 @@
 """
-https://img.shields.io/github/stars/lab-ml/nn?style=social# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
+# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
