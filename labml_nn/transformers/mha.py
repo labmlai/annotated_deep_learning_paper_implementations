@@ -65,7 +65,7 @@ class MultiHeadAttention(Module):
 
         This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.
 
-        $$Attention(Q, K, V) = \underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
+        $$Attention(Q, K, V) = \\underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
 
         In simple terms, it finds keys that matches the query, and get the values of
          those keys.
