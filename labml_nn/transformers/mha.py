@@ -65,7 +65,7 @@ class MultiHeadAttention(Module):
 
         This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.
 
-        $$Attention(Q, K, V) = \\underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
+        $$\mathop{Attention}(Q, K, V) = \mathop{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
 
         In simple terms, it finds keys that matches the query, and get the values of
          those keys.
@@ -152,7 +152,7 @@ class MultiHeadAttention(Module):
             scores = scores.masked_fill(mask == 0, -1e9)
 
         # $softmax$ attention along the key sequence dimension
-        # $\underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)$$
+        # $\underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)$
         attn = F.softmax(scores, dim=1)
 
         # Save attentions if debugging
