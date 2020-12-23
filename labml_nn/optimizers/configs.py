@@ -30,7 +30,7 @@ class OptimizerConfigs(BaseConfigs):
 
     momentum: float = 0.5
     amsgrad: bool = False
-    warmup: int = 0
+    warmup: int = 2_000
     degenerated_to_sgd: bool = True
     rectify: bool = True
     d_model: int
