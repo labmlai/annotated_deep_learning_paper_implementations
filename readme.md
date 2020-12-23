@@ -1,6 +1,3 @@
-[![PiPy Version](https://badge.fury.io/py/labml-nn.svg)](https://badge.fury.io/py/labml-nn)
-[![PiPy Downloads](https://pepy.tech/badge/labml-nn)](https://pepy.tech/project/labml-nn)
-
 # [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
 ![Screenshot](https://github.com/lab-ml/nn/blob/master/images/dqn.png)
