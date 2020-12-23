@@ -75,11 +75,11 @@ def _test_noam_lr():
     from torch import nn
 
     model = nn.Linear(10, 10)
-    opts = [Noam(model.parameters(), d_model=512, warmup=4000),
-            Noam(model.parameters(), d_model=512, warmup=8000),
-            Noam(model.parameters(), d_model=2048, warmup=2000)]
+    opts = [Noam(model.parameters(), d_model=512, warmup=4000, lr=1),
+            Noam(model.parameters(), d_model=512, warmup=8000, lr=1),
+            Noam(model.parameters(), d_model=2048, warmup=2000, lr=1)]
     plt.plot(np.arange(1, 20000), [[opt.get_lr({'step': i}, opt.defaults) for opt in opts] for i in range(1, 20000)])
-    plt.legend(["512:4000", "512:8000", "256:4000"])
+    plt.legend(["512:4000", "512:8000", "2048:2000"])
     plt.title("Learning Rate")
     plt.show()
 
