@@ -186,6 +186,7 @@ def main():
                        # A dictionary of configurations to override
                        {'tokenizer': 'character',
                         'text': 'tiny_shakespeare',
+                        'optimizer.learning_rate': 1e-4,
 
                         'seq_len': 512,
                         'epochs': 128,
