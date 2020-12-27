@@ -44,13 +44,14 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 
     is_save_models = True
 
-    loss_func: CrossEntropyLoss()
+    loss_func = CrossEntropyLoss()
+    accuracy = Accuracy()
 
     def init(self):
         tracker.set_queue("loss.*", 20, True)
         tracker.set_scalar("accuracy.*", True)
         hook_model_outputs(self.mode, self.model, 'model')
-        self.state_modules = [Accuracy()]
+        self.state_modules = [self.accuracy]
 
     def step(self, batch: any, batch_idx: BatchIndex):
         data, target = batch[0].to(self.device), batch[1].to(self.device)
@@ -62,8 +63,8 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
             output, *_ = self.model(data)
 
         loss = self.loss_func(output, target)
-        self.accuracy_func(output, target)
-        self.accuracy_func.track()
+        self.accuracy(output, target)
+        self.accuracy.track()
         tracker.add("loss.", loss)
 
         if self.mode.is_train:
@@ -88,7 +89,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
             data = self.text.text_to_i(prompt).unsqueeze(-1)
             data = data.to(self.device)
             # Get the model output
-            output = self.model(data)
+            output, *_ = self.model(data)
             # Get the model prediction (greedy)
             output = output.argmax(dim=-1).squeeze()
             # Add the prediction to prompt
