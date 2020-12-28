@@ -7,6 +7,7 @@ from labml_helpers.module import Module
 
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.hypernetworks.hyper_lstm import HyperLSTM
+from labml_nn.lstm import LSTM
 
 
 class AutoregressiveModel(Module):
@@ -14,11 +15,11 @@ class AutoregressiveModel(Module):
     ## Auto regressive model
     """
 
-    def __init__(self, n_vocab: int, d_model: int, n_rhn, n_z):
+    def __init__(self, n_vocab: int, d_model: int, rnn_model: Module):
         super().__init__()
         # Token embedding module
-        self.src_embed = nn.Embedding(n_vocab, d_model, n_rhn, n_z)
-        self.lstm = HyperLSTM(d_model, d_model, n_rhn, n_z, 1)
+        self.src_embed = nn.Embedding(n_vocab, d_model)
+        self.lstm = rnn_model
         self.generator = nn.Linear(d_model, n_vocab)
 
     def __call__(self, x: torch.Tensor):
@@ -37,6 +38,11 @@ class Configs(NLPAutoRegressionConfigs):
     """
 
     model: AutoregressiveModel
+    rnn_model: Module
+
+    d_model: int = 512
+    n_rhn: int = 16
+    n_z: int = 16
 
 
 @option(Configs.model)
@@ -44,8 +50,18 @@ def autoregressive_model(c: Configs):
     """
     Initialize the auto-regressive model
     """
-    m = AutoregressiveModel(c.n_tokens, 512, 16, 16)
+    m = AutoregressiveModel(c.n_tokens, c.d_model, c.rnn_model)
     return m.to(c.device)
+
+
+@option(Configs.rnn_model)
+def hyper_lstm(c: Configs):
+    return HyperLSTM(c.d_model, c.d_model, c.n_rhn, c.n_z, 1)
+
+
+@option(Configs.rnn_model)
+def lstm(c: Configs):
+    return LSTM(c.d_model, c.d_model, 1)
 
 
 def main():
@@ -62,6 +78,8 @@ def main():
                         'optimizer.optimizer': 'Adam',
                         'prompt': 'It is',
                         'prompt_separator': '',
+
+                        'rnn_model': 'hyper_lstm',
 
                         'train_loader': 'shuffled_train_loader',
                         'valid_loader': 'shuffled_valid_loader',
