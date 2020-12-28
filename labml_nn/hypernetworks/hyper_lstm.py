@@ -31,6 +31,7 @@ class HyperLSTMCell(Module):
         self.w_x = nn.ParameterList([nn.Parameter(torch.zeros(hidden_size, input_size)) for _ in range(4)])
 
         self.layer_norm = nn.ModuleList([nn.LayerNorm(hidden_size) for _ in range(4)])
+        self.layer_norm_c = nn.LayerNorm(hidden_size)
 
     def __call__(self, x: torch.Tensor,
                  h: torch.Tensor, c: torch.Tensor,
@@ -69,7 +70,7 @@ class HyperLSTMCell(Module):
         c_next = f * c + i * g
 
         # $$h_t = o_t \odot \tanh(c_t)$$
-        h_next = o * torch.tanh(c_next)
+        h_next = o * torch.tanh(self.layer_norm_c(c_next))
 
         return h_next, c_next, rhn_h, rhn_c
 
