@@ -26,6 +26,7 @@ docs: ## Render annotated HTML
 	pylit --remove_empty_sections --title_md -t ../../pylit/templates/nn -d html -w labml_nn
 
 pages: ## Copy to lab-ml site
+	pylit --remove_empty_sections --title_md -t ../../pylit/templates/nn -d html labml_nn
 	@cd ../pages; git pull
 	cp -r html/* ../pages/
 
