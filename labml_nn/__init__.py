@@ -27,6 +27,8 @@ and
 
 #### ✨ [LSTM](https://lab-ml.com/labml_nn/lstm)
 
+#### ✨ [HyperNetworks - HyperLSTM](https://lab-ml.com/labml_nn/hypernetworks/hyper_lstm.html)
+
 #### ✨ [Capsule Networks](https://lab-ml.com/labml_nn/capsule_networks/)
 
 #### ✨ [Generative Adversarial Networks](https://lab-ml.com/labml_nn/gan/)
