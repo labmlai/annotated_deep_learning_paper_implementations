@@ -11,8 +11,11 @@ We have implemented HyperLSTM introduced in paper
 [This blog post](https://blog.otoro.net/2016/09/28/hyper-networks/)
 by David Ha gives a good explanation of HyperNetworks.
 
-🧪 We have an experiment that trains a HyperLSTM to predict text on Shakespear dataset.
-Here's the link to code [experiment.py](experiment.html).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
+
+We have an experiment that trains a HyperLSTM to predict text on Shakespear dataset.
+Here's the link to code: [experiment.py](experiment.html)
+
 This is the training results: [View Run](https://web.lab-ml.com/run?uuid=9e7f39e047e811ebbaff2b26e3148b3d).
 
 HyperNetworks uses a smaller network to generate weights of a larger network.
