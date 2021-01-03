@@ -50,6 +50,7 @@ To overcome this, we compute the weight parameters of the recurrent network by
 dynamically scaling each row of a matrix of same size.
 \begin{align}
 d(z) = W_{hz} z_h \\
+\\
 \color{cyan}{W_h} =
 \begin{pmatrix}
 d_0(z) W_{hd_0} \\
@@ -61,7 +62,8 @@ d_{N_h}(z) W_{hd_{N_h}} \\
 where $W_{hd}$ is a $N_h \times N_h$ parameter matrix.
 
 We can further optimize this when we compute $\color{cyan}{W_h} h$,
-as $$d(z) \odot (W_{hd} h)$$
+as
+$$\color{lightgreen}{d(z) \odot (W_{hd} h)}$$
 where $\odot$ stands for element-wise multiplication.
 """
 
@@ -173,8 +175,8 @@ class HyperLSTMCell(Module):
             d_x = self.d_x[i](z_x[i])
 
             # \begin{align}
-            # {i,f,g,o} = LN(&d_h^{i,f,g,o}(z_h) \odot W_h^{i,f,g,o} h_{t-1} \\
-            #              + &d_x^{i,f,g,o}(z_x) \odot W_h^{i,f,g,o} x_t \\
+            # {i,f,g,o} = LN(&\color{lightgreen}{d_h^{i,f,g,o}(z_h) \odot (W_h^{i,f,g,o} h_{t-1})} \\
+            #              + &\color{lightgreen}{d_x^{i,f,g,o}(z_x) \odot (W_h^{i,f,g,o} x_t)} \\
             #              + &d_b^{i,f,g,o}(z_b))
             # \end{align}
             y = d_h * torch.einsum('ij,bj->bi', self.w_h[i], h) + \
@@ -233,6 +235,7 @@ class HyperLSTM(Module):
             c = [x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)]
             h_hat = [x.new_zeros(batch_size, self.hyper_size) for _ in range(self.n_layers)]
             c_hat = [x.new_zeros(batch_size, self.hyper_size) for _ in range(self.n_layers)]
+        #
         else:
             (h, c, h_hat, c_hat) = state
             # Reverse stack the tensors to get the states of each layer
@@ -263,4 +266,5 @@ class HyperLSTM(Module):
         h_hat = torch.stack(h_hat)
         c_hat = torch.stack(c_hat)
 
+        #
         return out, (h, c, h_hat, c_hat)
