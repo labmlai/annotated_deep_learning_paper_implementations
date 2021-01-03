@@ -10,8 +10,9 @@ summary: A simple PyTorch implementation/tutorial of Long Short-Term Memory (LST
 from typing import Optional, Tuple
 
 import torch
-from labml_helpers.module import Module
 from torch import nn
+
+from labml_helpers.module import Module
 
 
 class LSTMCell(Module):
@@ -35,33 +36,46 @@ class LSTMCell(Module):
     Here's the update rule.
 
     \begin{align}
-    c_t = f_t \odot c_{t-1} + i_t \odot g_t \\
-    h_t = o_t \odot \tanh(c_t)
+    c_t &= \sigma(f_t) \odot c_{t-1} + \sigma(i_t) \odot \tanh(g_t) \\
+    h_t &= \sigma(o_t) \odot \tanh(c_t)
     \end{align}
 
     $\odot$ stands for element-wise multiplication.
 
-    Here's how input intermediate values and gates are computed.
+    Intermediate values and gates are computed as linear transformations of the hidden
+    state and input.
 
     \begin{align}
-    i_t &= \sigma\big(lin_{xi}(x_t) + lin_{hi}(h_{t-1})\big) \\
-    f_t &= \sigma\big(lin_{xf}(x_t) + lin_{hf}(h_{t-1})\big) \\
-    g_t &= \tanh\big(lin_{xg}(x_t) + lin_{hg}(h_{t-1})\big) \\
-    o_t &= \sigma\big(lin_{xo}(x_t) + lin_{ho}(h_{t-1})\big)
+    i_t &= lin_x^i(x_t) + lin_h^i(h_{t-1}) \\
+    f_t &= lin_x^f(x_t) + lin_h^f(h_{t-1}) \\
+    g_t &= lin_x^g(x_t) + lin_h^g(h_{t-1}) \\
+    o_t &= lin_x^o(x_t) + lin_h^o(h_{t-1})
     \end{align}
 
     """
 
-    def __init__(self, input_size: int, hidden_size: int):
+    def __init__(self, input_size: int, hidden_size: int, layer_norm: bool = False):
         super().__init__()
 
         # These are the linear layer to transform the `input` and `hidden` vectors.
         # One of them doesn't need a bias since we add the transformations.
 
-        # This combines $lin_{xi}$, $lin_{xf}$, $lin_{xg}$, and $lin_{xo}$ transformations.
+        # This combines $lin_x^i$, $lin_x^f$, $lin_x^g$, and $lin_x^o$ transformations.
         self.hidden_lin = nn.Linear(hidden_size, 4 * hidden_size)
-        # This combines $lin_{hi}$, $lin_{hf}$, $lin_{hg}$, and $lin_{ho}$ transformations.
+        # This combines $lin_h^i$, $lin_h^f$, $lin_h^g$, and $lin_h^o$ transformations.
         self.input_lin = nn.Linear(input_size, 4 * hidden_size, bias=False)
+
+        # Whether to apply layer normalizations.
+        #
+        # Applying layer normalization gives better results.
+        # $i$, $f$, $g$ and $o$ embeddings are normalized and $c_t$ is normalized in
+        # $h_t = o_t \odot \tanh(\mathop{LN}(c_t))$
+        if layer_norm:
+            self.layer_norm = nn.ModuleList([nn.LayerNorm(hidden_size) for _ in range(4)])
+            self.layer_norm_c = nn.LayerNorm(hidden_size)
+        else:
+            self.layer_norm = nn.ModuleList([nn.Identity() for _ in range(4)])
+            self.layer_norm_c = nn.Identity()
 
     def __call__(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor):
         # We compute the linear transformations for $i_t$, $f_t$, $g_t$ and $o_t$
@@ -70,20 +84,18 @@ class LSTMCell(Module):
         # Each layer produces an output of 4 times the `hidden_size` and we split them
         ifgo = ifgo.chunk(4, dim=-1)
 
-        # $$i_t = \sigma\big(lin_{xi}(x_t) + lin_{hi}(h_{t-1})\big)$$
-        i = torch.sigmoid(ifgo[0])
-        # $$f_t = \sigma\big(lin_{xf}(x_t) + lin_{hf}(h_{t-1})\big)$$
-        f = torch.sigmoid(ifgo[1])
-        # $$g_t = \tanh\big(lin_{xg}(x_t) + lin_{hg}(h_{t-1})\big)$$
-        g = torch.tanh(ifgo[2])
-        # $$o_t = \sigma\big(lin_{xo}(x_t) + lin_{ho}(h_{t-1})\big)$$
-        o = torch.sigmoid(ifgo[3])
+        # Apply layer normalization (not in original paper, but gives better results)
+        ifgo = [self.layer_norm[i](ifgo[i]) for i in range(4)]
 
-        # $$c_t = f_t \odot c_{t-1} + i_t \odot g_t$$
-        c_next = f * c + i * g
+        # $$i_t, f_t, g_t, o_t$$
+        i, f, g, o = ifgo
 
-        # $$h_t = o_t \odot \tanh(c_t)$$
-        h_next = o * torch.tanh(c_next)
+        # $$c_t = \sigma(f_t) \odot c_{t-1} + \sigma(i_t) \odot \tanh(g_t) $$
+        c_next = torch.sigmoid(f) * c + torch.sigmoid(i) * torch.tanh(g)
+
+        # $$h_t = \sigma(o_t) \odot \tanh(c_t)$$
+        # Optionally, apply layer norm to $c_t$
+        h_next = torch.sigmoid(o) * torch.tanh(self.layer_norm_c(c_next))
 
         return h_next, c_next
 
@@ -108,10 +120,10 @@ class LSTM(Module):
 
     def __call__(self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
         """
-        `x` has shape `[seq_len, batch_size, input_size]` and
+        `x` has shape `[n_steps, batch_size, input_size]` and
         `state` is a tuple of $h$ and $c$, each with a shape of `[batch_size, hidden_size]`.
         """
-        time_steps, batch_size = x.shape[:2]
+        n_steps, batch_size = x.shape[:2]
 
         # Initialize the state if `None`
         if state is None:
@@ -125,12 +137,12 @@ class LSTM(Module):
 
         # Array to collect the outputs of the final layer at each time step.
         out = []
-        for t in range(time_steps):
+        for t in range(n_steps):
             # Input to the first layer is the input itself
             inp = x[t]
             # Loop through the layers
             for layer in range(self.n_layers):
-                # Get the state of the first layer
+                # Get the state of the layer
                 h[layer], c[layer] = self.cells[layer](inp, h[layer], c[layer])
                 # Input to the next layer is the state of this layer
                 inp = h[layer]
