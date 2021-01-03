@@ -19,7 +19,7 @@ Here's the link to code: [`experiment.py`](experiment.html)
 
 HyperNetworks uses a smaller network to generate weights of a larger network.
 There are two variants: static hyper-networks and dynamic hyper-networks.
-Static HyperNetworks have smaller smaller network that generates weights (kernels)
+Static HyperNetworks have smaller network that generates weights (kernels)
 of a convolutional network. Dynamic HyperNetworks generate parameters of a
 recurrent neural network
 for each step. This is an implementation of the latter.
