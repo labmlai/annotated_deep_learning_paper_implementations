@@ -42,7 +42,7 @@ $z_h$ is usually a linear transformation of the output of the smaller recurrent 
 
 Large recurrent networks have large dynamically computed parameters.
 These are calculated using a linear transformation of feature vector $z$.
-And this transformation requires an even large weight tensor.
+And this transformation requires an even larger weight tensor.
 That is, when $\color{cyan}{W_h}$ has shape $N_h \times N_h$,
 $W_{hz}$ will be $N_h \times N_h \times N_z$.
 
