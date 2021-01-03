@@ -89,9 +89,6 @@ def main():
                         'batch_size': 2,
                         'inner_iterations': 25})
 
-    # This is needed to initialize models
-    conf.n_tokens = conf.text.n_tokens
-
     # Set models for saving and loading
     experiment.add_pytorch_models(get_modules(conf))
 
