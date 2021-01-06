@@ -46,6 +46,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 
     loss_func = CrossEntropyLoss()
     accuracy = Accuracy()
+    d_model: int = 512
 
     def init(self):
         tracker.set_queue("loss.*", 20, True)
@@ -105,6 +106,7 @@ def _optimizer(c: NLPAutoRegressionConfigs):
     optimizer = OptimizerConfigs()
     optimizer.parameters = c.model.parameters()
     optimizer.optimizer = 'Adam'
+    optimizer.d_model = c.d_model
 
     return optimizer
 
