@@ -49,8 +49,8 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     d_model: int = 512
 
     def init(self):
-        tracker.set_queue("loss.*", 20, True)
         tracker.set_scalar("accuracy.*", True)
+        tracker.set_scalar("loss.*", True)
         hook_model_outputs(self.mode, self.model, 'model')
         self.state_modules = [self.accuracy]
 

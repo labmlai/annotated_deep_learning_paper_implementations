@@ -22,7 +22,6 @@ Where $1 \leq 2i, 2i + 1 \leq d_{model}$
 
 import math
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -65,6 +64,8 @@ def get_positional_encoding(d_model: int, max_len: int = 5000):
 
 
 def _test_positional_encoding():
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=(15, 5))
     pe = get_positional_encoding(20, 100)
     plt.plot(np.arange(100), pe[:, 0, 4:8].numpy())
