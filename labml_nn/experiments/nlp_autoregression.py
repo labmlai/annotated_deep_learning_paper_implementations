@@ -58,7 +58,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         data, target = batch[0].to(self.device), batch[1].to(self.device)
 
         if self.mode.is_train:
-            tracker.add_global_step(len(data))
+            tracker.add_global_step(data.shape[0] * data.shape[1])
 
         with self.mode.update(is_log_activations=batch_idx.is_last):
             output, *_ = self.model(data)
