@@ -70,7 +70,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 
         if self.mode.is_train:
             loss.backward()
-
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.)
             self.optimizer.step()
             if batch_idx.is_last:
                 tracker.add('model', self.model)
