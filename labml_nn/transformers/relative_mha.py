@@ -10,6 +10,18 @@ summary: >
 
 This is an implementation of 
 [Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context](https://arxiv.org/abs/1901.02860).
+
+Transformer has a limited attention span,
+equal to the length of the sequence trained in parallel.
+All these positions have a fixed positional encoding.
+Transformer XL increases this attention span by letting
+each of the positions pay attention to precalculated past embeddings.
+For instance if the context length is $l$ it will keep the embeddings of
+all layers for previous batch of length $l$ and feed them to current step.
+If we use fixed-positional encodings these pre-calculated embeddings will have
+the same positions as the current context.
+They introduce relative positional encoding, where the positional encodings
+are introduced at the attention calculation.
 """
 
 import torch
@@ -86,7 +98,6 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         They reason out that the attention to a given key should be the same regardless of
         the position of query. Hence replace $\color{cyan}{V_i^T} \color{lightgreen}{K_j}$
         with a constant $\color{orange}{v^T} \color{lightgreen}{K_j}$.
-        🤔 May be worthwhile testing without this assumption.
 
         For the second and third terms relative positional encodings are introduced.
         So $\color{cyan}{Q_i^T} \color{lightgreen}{U_j}$ is
