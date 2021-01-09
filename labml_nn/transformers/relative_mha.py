@@ -51,56 +51,77 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         # The linear transformations doesn't need a bias since we take care of it when
         # calculating scores.
         # However having a bias for `value` might make sense.
-        super().__init__(heads, d_model, dropout_prob, False)
+        super().__init__(heads, d_model, dropout_prob, bias=False)
 
+        # Number of relative positions
         self.P = 2 ** 12
 
+        # Relative positional embeddings for key relative to the query.
+        # We need $2P$ embeddings because the keys can be before or after the query.
         self.key_pos_embeddings = nn.Parameter(torch.zeros((self.P * 2, heads, self.d_k)), requires_grad=True)
-        self.query_pos_bias = nn.Parameter(torch.zeros((heads, self.d_k)), requires_grad=True)
+        # Relative positional embedding bias for key relative to the query.
         self.key_pos_bias = nn.Parameter(torch.zeros((self.P * 2, heads)), requires_grad=True)
+        # Positional embeddings for the query is independent of the position of the query
+        self.query_pos_bias = nn.Parameter(torch.zeros((heads, self.d_k)), requires_grad=True)
 
     def get_scores(self, query: torch.Tensor, key: torch.Tensor):
-        """
+        r"""
+        ### Get relative attention scores
+
         With absolute attention
 
         \begin{align}
-        A^{abs}_{i,j} &= lin_q(X^q_i + P_i)^T lin_k(X^k_j + P_j) \\
-                      &= Q_i^T K_j + Q_i^T U_j + V_i^T K_j + V_i^T U_j
+        A^{abs}_{j} &= lin_q(\color{cyan}{X^q_i + P_i})^T lin_k(\color{lightgreen}{X^k_j + P_j}) \\
+                      &= \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
+                         \color{cyan}{Q_i^T} \color{lightgreen}{U_j} +
+                         \color{cyan}{V_i^T} \color{lightgreen}{K_j} +
+                         \color{cyan}{V_i^T} \color{lightgreen}{U_j}
         \end{align}
 
-        where $Q_i$, $K_j$, $V_i$, and $U_j$ are linear transformations of
-         orginal embeddings and positional encodings.
+        where $\color{cyan}{Q_i}, \color{lightgreen}{K_j}$, are linear transformations of
+         original embeddings $\color{cyan}{X^q_i}, \color{lightgreen}{X^k_j}$
+         and $\color{cyan}{V_i}, \color{lightgreen}{U_j}$ are linear transformations of
+         absolute positional encodings $\color{cyan}{P_i}, \color{lightgreen}{P_j}$.
 
-        They reason out that the attention to a given key should be the same regardless of 
-        the position of query. Hence replace $V_i^T K_j$ with a constant $v^T K_j$.
+        They reason out that the attention to a given key should be the same regardless of
+        the position of query. Hence replace $\color{cyan}{V_i^T} \color{lightgreen}{K_j}$
+        with a constant $\color{orange}{v^T} \color{lightgreen}{K_j}$.
         🤔 May be worthwhile testing without this assumption.
 
         For the second and third terms relative positional encodings are introduced.
-        So $Q_i^T U_j$ is replaced with $Q_i^T R_{i - j}$ and $V_i^T U_j$ with $S_{i-j}$.
+        So $\color{cyan}{Q_i^T} \color{lightgreen}{U_j}$ is
+        replaced with $\color{cyan}{Q_i^T} \color{orange}{R_{i - j}}$
+        and $\color{cyan}{V_i^T} \color{lightgreen}{U_j}$ with $\color{orange}{S_{i-j}}$.
 
         \begin{align}
-        A^{rel}_{i,j} &= Q_i^T K_j + Q_i^T R_{i - j} + v^T K_j + S_{i-j}
+        A^{rel}_{i,j} &= \underset{\mathbf{A}}{\color{cyan}{Q_i^T} \color{lightgreen}{K_j}} +
+                         \underset{\mathbf{B}}{\color{cyan}{Q_i^T} \color{orange}{R_{i - j}}} +
+                         \underset{\mathbf{C}}{\color{orange}{v^T} \color{lightgreen}{K_j}} +
+                         \underset{\mathbf{D}}{\color{orange}{S_{i-j}}}
         \end{align}
-
         """
 
-        # $R_{i-j}$ pre-shift
+        # $\color{orange}{R_k}$
         key_pos_emb = self.key_pos_embeddings[self.P - query.shape[0]:self.P + key.shape[0]]
-        # $S_{i-j}$ pre-shift
+        # $\color{orange}{S_k}$
         key_pos_bias = self.key_pos_bias[self.P - query.shape[0]:self.P + key.shape[0]]
-        # $v^T$
+        # $\color{orange}{v^T}$
         query_pos_bias = self.query_pos_bias[None, None, :, :]
 
-        # $Q_i^T K_j + v^T K_j$
+        # ${(\mathbf{A} + \mathbf{C})}_{i,j} = \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
+        # \color{orange}{v^T} \color{lightgreen}{K_j}$
         ac = torch.einsum('ibhd,jbhd->ijbh', query + query_pos_bias, key)
-        # $Q_i^T R_{i - j}$ pre-shift
+        # $\mathbf{B'}_{i,k} = \color{cyan}{Q_i^T} \color{orange}{R_k}$
         b = torch.einsum('ibhd,jhd->ijbh', query, key_pos_emb)
-        # $S_{i-j}$ pre-shift
+        # $\mathbf{D'}_{i,k} = \color{orange}{S_k}$
         d = key_pos_bias[None, :, None, :]
-        # $Q_i^T R_{i - j} + S_{i-j}$
+        # Shift the rows of $\mathbf{(B' + D')}_{i,k}$
+        # to get $$\mathbf{(B + D)}_{i,j} = \mathbf{(B' + D')}_{i,i - j}$$
         bd = shift_right(b + d)
+        # Remove extra positions
         bd = bd[:, -key.shape[0]:]
 
+        # Return the sum $\mathbf{(A + B + C + D)}_{i,j}$
         return ac + bd
 
 

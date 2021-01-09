@@ -18,10 +18,10 @@ import math
 from typing import Optional
 
 import torch
+from torch import nn as nn
+
 from labml import tracker
 from labml_helpers.module import Module
-from torch import nn as nn
-from torch.nn import functional as F
 
 
 class PrepareForMultiHeadAttention(Module):
@@ -43,49 +43,60 @@ class PrepareForMultiHeadAttention(Module):
         self.d_k = d_k
 
     def __call__(self, x: torch.Tensor):
-        # Input has shape `[seq_len, batch_size, d_model]`
-        seq_len, batch_size, _ = x.shape
+        # Input has shape `[seq_len, batch_size, d_model]` or `[batch_size, d_model]`.
+        # We apply the linear transformation of the last dimension and splits that into
+        # the heads
+        head_shape = x.shape[:-1]
 
         # Linear transform
         x = self.linear(x)
-        # Split into heads
-        x = x.view(seq_len, batch_size, self.heads, self.d_k)
 
-        # Output has shape `[seq_len, batch_size, heads, d_k]`
+        # Split last dimension into heads
+        x = x.view(*head_shape, self.heads, self.d_k)
+
+        # Output has shape `[seq_len, batch_size, heads, d_k]` or `[batch_size, d_model]`
         return x
 
 
 class MultiHeadAttention(Module):
+    r"""
+    ## Multi-Head Attention Module
+
+    This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.
+
+    $$\mathop{Attention}(Q, K, V) = \underset{seq}{\mathop{softmax}}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
+
+    In simple terms, it finds keys that matches the query, and get the values of
+     those keys.
+
+    It uses dot-product of query and key as the indicator of how matching they are.
+    Before taking the $softmax$ the dot-products are scaled by $\frac{1}{\sqrt{d_k}}$.
+    This is done to avoid large dot-product values causing softmax to
+    give very small gradients when $d_k$ is large.
+
+    Softmax is calculate along the axis of of the sequence (or time).
+    """
+
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, bias: bool = True):
         """
-        ## Multi-Head Attention Module
-
         * `heads` is the number of heads.
         * `d_model` is the number of features in the `query`, `key` and `value` vectors.
-
-        This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.
-
-        $$\mathop{Attention}(Q, K, V) = \mathop{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)V$$
-
-        In simple terms, it finds keys that matches the query, and get the values of
-         those keys.
-
-        It uses dot-product of query and key as the indicator of how matching they are.
-        Before taking the $softmax$ the dot-products are scaled by $\frac{1}{\sqrt{d_k}}$.
-        This is done to avoid large dot-product values causing softmax to
-        give very small gradients when $d_k$ is large.
-
-        Softmax is calculate along the axis of of the sequence (or time).
         """
 
         super().__init__()
+
+        # Number of features per head
         self.d_k = d_model // heads
+        # Number of heads
         self.heads = heads
 
         # These transform the `query`, `key` and `value` vectors for multi-headed attention.
         self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
         self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
         self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias)
+
+        # Softmax for attention along the time dimension of `key`
+        self.softmax = nn.Softmax(dim=1)
 
         # Output layer
         self.output = nn.Linear(d_model, d_model)
@@ -153,7 +164,7 @@ class MultiHeadAttention(Module):
 
         # $softmax$ attention along the key sequence dimension
         # $\underset{seq}{softmax}\Bigg(\frac{Q K^T}{\sqrt{d_k}}\Bigg)$
-        attn = F.softmax(scores, dim=1)
+        attn = self.softmax(scores)
 
         # Save attentions if debugging
         tracker.debug('attn', attn)

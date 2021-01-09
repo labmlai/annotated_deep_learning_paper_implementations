@@ -18,38 +18,17 @@ from labml_nn.transformers.models import FeedForward
 from labml_nn.utils import clone_module_list
 
 
-class PrepareQueryForMultiHeadAttention(Module):
-    """
-    ## Prepare query for multi-head attention
-
-    This module does a linear transformation and splits the vector into given
-    number of heads for multi-head attention.
-    This is used to transform **key**, **query**, and **value** vectors.
-    """
-
-    def __init__(self, d_model: int, heads: int, d_k: int, bias: bool):
-        super().__init__()
-        # Linear layer for linear transform
-        self.linear = nn.Linear(d_model, heads * d_k, bias=bias)
-        # Number of heads
-        self.heads = heads
-        # Number of dimensions in vectors in each head
-        self.d_k = d_k
-
-    def __call__(self, x: torch.Tensor):
-        # Input has shape `[seq_len, batch_size, d_model]`
-        batch_size, _ = x.shape
-
-        # Linear transform
-        x = self.linear(x)
-        # Split into heads
-        x = x.view(batch_size, self.heads, self.d_k)
-
-        # Output has shape `[seq_len, batch_size, heads, d_k]`
-        return x
-
-
 class FeedbackAttention(Module):
+    """
+    ## Feedback Attention
+
+    This is very similar to [Relative Multi-Head Attention](../relative_mha.html)
+    but with some modifications.
+
+    📝 Decided not to extend from [Relative Multi-Head Attention](../relative_mha.html)
+     or [Multi-Head Attention](../mha.html) to improve readability.
+    """
+
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
         super().__init__()
 
@@ -57,7 +36,7 @@ class FeedbackAttention(Module):
         self.heads = heads
 
         # These transform the `query`, `key` and `value` vectors for multi-headed attention.
-        self.query = PrepareQueryForMultiHeadAttention(d_model, heads, self.d_k, False)
+        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, False)
         self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, False)
         self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, False)
 
@@ -68,17 +47,60 @@ class FeedbackAttention(Module):
         # Scaling factor before the softmax
         self.scale = 1 / math.sqrt(self.d_k)
 
+        # Softmax for attention along the time dimension of `key`
+        self.softmax = nn.Softmax(dim=0)
+
+        # Number of relative positions
+        self.P = 2 ** 12
+
+        # Relative positional embeddings for key relative to the query.
+        self.key_pos_embeddings = nn.Parameter(torch.zeros((self.P, heads, self.d_k)), requires_grad=True)
+        # Relative positional embedding bias for key relative to the query.
+        self.key_pos_bias = nn.Parameter(torch.zeros((self.P, heads)), requires_grad=True)
+        # Positional embeddings for the query is independent of the position of the query
+        self.query_pos_bias = nn.Parameter(torch.zeros((heads, self.d_k)), requires_grad=True)
+
         # We store attentions so that it can used for logging, or other computations if needed
         self.attn = None
 
-        self.P = 2 ** 12
-
-        self.key_pos_embeddings = nn.Parameter(torch.zeros((self.P, heads, self.d_k)), requires_grad=True)
-        self.key_pos_bias = nn.Parameter(torch.zeros((self.P, heads)), requires_grad=True)
-        self.query_pos_bias = nn.Parameter(torch.zeros((heads, self.d_k)), requires_grad=True)
-        self.softmax = nn.Softmax(dim=0)
-
     def get_scores(self, query: torch.Tensor, key: torch.Tensor):
+        """
+        ### Get relative attention scores
+
+        With absolute attention
+
+        \begin{align}
+        A^{abs}_{j} &= lin_q(\color{cyan}{X^q_i + P_i})^T lin_k(\color{lightgreen}{X^k_j + P_j}) \\
+                      &= \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
+                         \color{cyan}{Q_i^T} \color{lightgreen}{U_j} +
+                         \color{cyan}{V_i^T} \color{lightgreen}{K_j} +
+                         \color{cyan}{V_i^T} \color{lightgreen}{U_j}
+        \end{align}
+
+        where $\color{cyan}{Q_i}, \color{lightgreen}{K_j}$, are linear transformations of
+         original embeddings $\color{cyan}{X^q_i}, \color{lightgreen}{X^k_j}$
+         and $\color{cyan}{V_i}, \color{lightgreen}{U_j}$ are linear transformations of
+         absolute positional encodings $\color{cyan}{P_i}, \color{lightgreen}{P_j}$.
+
+        They reason out that the attention to a given key should be the same regardless of
+        the position of query. Hence replace $\color{cyan}{V_i^T} \color{lightgreen}{K_j}$
+        with a constant $\color{orange}{v^T} \color{lightgreen}{K_j}$.
+        🤔 May be worthwhile testing without this assumption.
+
+        For the second and third terms relative positional encodings are introduced.
+        So $\color{cyan}{Q_i^T} \color{lightgreen}{U_j}$ is
+        replaced with $\color{cyan}{Q_i^T} \color{orange}{R_{i - j}}$
+        and $\color{cyan}{V_i^T} \color{lightgreen}{U_j}$ with $\color{orange}{S_{i-j}}$.
+
+        \begin{align}
+        A^{rel}_{i,j} &= \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
+                         \color{cyan}{Q_i^T} \color{orange}{R_{i - j}} +
+                         \color{orange}{v^T} \color{lightgreen}{K_j} +
+                         \color{orange}{S_{i-j}}
+        \end{align}
+        """
+
+        # $\color{orange}{R_{i - j}}$
         key_pos_emb = self.key_pos_embeddings[-key.shape[0]:]
         key_pos_bias = self.key_pos_bias[-key.shape[0]:]
         query_pos_bias = self.query_pos_bias[None, :, :]
