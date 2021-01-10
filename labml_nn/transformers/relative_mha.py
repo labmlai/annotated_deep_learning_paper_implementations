@@ -83,32 +83,34 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         With absolute attention
 
         \begin{align}
-        A^{abs}_{j} &= lin_q(\color{cyan}{X^q_i + P_i})^T lin_k(\color{lightgreen}{X^k_j + P_j}) \\
-                      &= \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
-                         \color{cyan}{Q_i^T} \color{lightgreen}{U_j} +
-                         \color{cyan}{V_i^T} \color{lightgreen}{K_j} +
-                         \color{cyan}{V_i^T} \color{lightgreen}{U_j}
+        A^{abs}_{j} &= lin_q(X^q_i + P_i)^\top lin_k(X^k_j + P_j) \\
+                      &= \underset{\color{lightgreen}{A}}{Q_i^\top K_j} +
+                         \underset{\color{lightgreen}{B}}{Q_i^\top U^K_j} +
+                         \underset{\color{lightgreen}{C}}{{U^Q_i}^\top K_j} +
+                         \underset{\color{lightgreen}{D}}{{U^Q_i}^\top U^K_j}
         \end{align}
 
-        where $\color{cyan}{Q_i}, \color{lightgreen}{K_j}$, are linear transformations of
-         original embeddings $\color{cyan}{X^q_i}, \color{lightgreen}{X^k_j}$
-         and $\color{cyan}{V_i}, \color{lightgreen}{U_j}$ are linear transformations of
-         absolute positional encodings $\color{cyan}{P_i}, \color{lightgreen}{P_j}$.
+        where $Q_i, K_j$, are linear transformations of
+         original embeddings $X^q_i, X^k_j$
+         and $U^Q_i, U^K_j$ are linear transformations of
+         absolute positional encodings $P_i, P_j$.
 
         They reason out that the attention to a given key should be the same regardless of
-        the position of query. Hence replace $\color{cyan}{V_i^T} \color{lightgreen}{K_j}$
-        with a constant $\color{orange}{v^T} \color{lightgreen}{K_j}$.
+        the position of query.
+        Hence replace $\underset{\color{lightgreen}{C}}{{U^Q_i}^\top K_j}$
+        with a constant $\underset{\color{lightgreen}{C}}{\color{orange}{v^\top} K_j}$.
 
         For the second and third terms relative positional encodings are introduced.
-        So $\color{cyan}{Q_i^T} \color{lightgreen}{U_j}$ is
-        replaced with $\color{cyan}{Q_i^T} \color{orange}{R_{i - j}}$
-        and $\color{cyan}{V_i^T} \color{lightgreen}{U_j}$ with $\color{orange}{S_{i-j}}$.
+        So $\underset{\color{lightgreen}{B}}{Q_i^\top U^K_j}$ is
+        replaced with $\underset{\color{lightgreen}{B}}{Q_i^T \color{orange}{R_{i - j}}}$
+        and $\underset{\color{lightgreen}{D}}{{U^Q_i}^\top U^K_j}$
+        with $\underset{\color{lightgreen}{D}}{\color{orange}{S_{i-j}}}$.
 
         \begin{align}
-        A^{rel}_{i,j} &= \underset{\mathbf{A}}{\color{cyan}{Q_i^T} \color{lightgreen}{K_j}} +
-                         \underset{\mathbf{B}}{\color{cyan}{Q_i^T} \color{orange}{R_{i - j}}} +
-                         \underset{\mathbf{C}}{\color{orange}{v^T} \color{lightgreen}{K_j}} +
-                         \underset{\mathbf{D}}{\color{orange}{S_{i-j}}}
+        A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^T K_j} +
+                         \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^T \color{orange}{R_{i - j}}} +
+                         \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^T} K_j} +
+                         \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
         \end{align}
         """
 
@@ -119,20 +121,26 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         # $\color{orange}{v^T}$
         query_pos_bias = self.query_pos_bias[None, None, :, :]
 
-        # ${(\mathbf{A} + \mathbf{C})}_{i,j} = \color{cyan}{Q_i^T} \color{lightgreen}{K_j} +
-        # \color{orange}{v^T} \color{lightgreen}{K_j}$
+        # ${(\color{lightgreen}{\mathbf{A + C}})}_{i,j} =
+        # Q_i^T K_j +
+        # \color{orange}{v^T} K_jZ$
         ac = torch.einsum('ibhd,jbhd->ijbh', query + query_pos_bias, key)
-        # $\mathbf{B'}_{i,k} = \color{cyan}{Q_i^T} \color{orange}{R_k}$
+        # $\color{lightgreen}{\mathbf{B'}_{i,k}} = \color{cyan}{Q_i^T} \color{orange}{R_k}$
         b = torch.einsum('ibhd,jhd->ijbh', query, key_pos_emb)
-        # $\mathbf{D'}_{i,k} = \color{orange}{S_k}$
+        # $\color{lightgreen}{\mathbf{D'}_{i,k}} = \color{orange}{S_k}$
         d = key_pos_bias[None, :, None, :]
-        # Shift the rows of $\mathbf{(B' + D')}_{i,k}$
-        # to get $$\mathbf{(B + D)}_{i,j} = \mathbf{(B' + D')}_{i,i - j}$$
+        # Shift the rows of $\color{lightgreen}{\mathbf{(B' + D')}_{i,k}}$
+        # to get $$\color{lightgreen}{\mathbf{(B + D)}_{i,j} = \mathbf{(B' + D')}_{i,i - j}}$$
         bd = shift_right(b + d)
         # Remove extra positions
         bd = bd[:, -key.shape[0]:]
 
-        # Return the sum $\mathbf{(A + B + C + D)}_{i,j}$
+        # Return the sum $$
+        # \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^T K_j} +
+        # \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^T \color{orange}{R_{i - j}}} +
+        # \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^T} K_j} +
+        # \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
+        # $$
         return ac + bd
 
 

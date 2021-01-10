@@ -2,8 +2,33 @@
 ---
 title: Feedback Transformer
 summary: >
-  This implements the Feedback Transformer in PyTorch with explainations.
+  This is an annotated implementation/tutorial the Feedback Transformer in PyTorch.
 ---
+
+# Feedback Transformer
+
+This is an implementation of the paper
+[Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
+
+Normal transformers process tokens in parallel and each transformer layer pays attention
+to the outputs of the previous layer.
+Feedback transformer pays attention to the output of all layers in previous steps.
+So this adds recurrence and we need to process token-by-token.
+This slows down the training significantly (about 5X - 10X depending on the sequence length).
+However when predicting Feedback Transformer is faster because you can predict the next token
+if you cache the memory vectors.
+
+In order to speed up the training the paper discusses starting with a short sequence length and
+gradually increasing it.
+They also discuss using a pretrained parallel transformer as the starting point.
+
+The feedback transformer doesn't keep the outputs of all layers.
+Instead it keeps weighted sum of the output of all layers.
+This reduces the memory used for caching during prediction.
+
+Here's a notebook for training a feedback transformer on Tiny Shakespeare dataset.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
 """
 
 import math
@@ -19,7 +44,7 @@ from labml_nn.utils import clone_module_list
 
 
 class FeedbackAttention(Module):
-    """
+    r"""
     ## Feedback Attention
 
 
