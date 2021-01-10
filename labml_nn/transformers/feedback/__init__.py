@@ -28,7 +28,8 @@ This reduces the memory used for caching during prediction.
 
 Here's a notebook for training a feedback transformer on Tiny Shakespeare dataset.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/feedback/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=d8eb9416530a11eb8fb50242ac1c0002)
 """
 
 import math
@@ -51,7 +52,7 @@ class FeedbackAttention(Module):
     This module computes recurrent attention similar to attention from original transformers
     paper.
 
-    $$\mathop{Attention}(Q, K, V) = \underset{seq}{\mathop{softmax}}\Bigg(\frac{Q^T K}{\sqrt{d_k}}\Bigg)V$$
+    $$\mathop{Attention}(Q, K, V) = \underset{seq}{\mathop{softmax}}\Bigg(\frac{Q^\top K}{\sqrt{d_k}}\Bigg)V$$
     """
 
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
@@ -99,23 +100,23 @@ class FeedbackAttention(Module):
         ### Get attention scores
 
         \begin{align}
-        A_{j} &== Q^T K_j \\
-            &= lin_q(\color{cyan}{X^q + P})^T lin_k(\color{lightgreen}{X^k_j + P_j}) \\
-            &= (\color{cyan}{Q^T + V^T})(\color{lightgreen}{K_j + U_j)}
+        A_{j} &= Q^\top K_j \\
+            &= lin_q(X^q + P_q)^\top lin_k(X^k_j + P_j) \\
+            &= (Q + U^Q)^\top(K_j + U^K_j)
         \end{align}
 
-        where $\color{cyan}{Q}, \color{lightgreen}{K_j}$, are linear transformations of
-         original embeddings $\color{cyan}{X^q}, \color{lightgreen}{X^k_j}$
-         and $\color{cyan}{V}, \color{lightgreen}{U_j}$ are linear transformations of
-         absolute positional encodings $\color{cyan}{P}, \color{lightgreen}{P_j}$.
+        where $Q, K_j$, are linear transformations of
+         original embeddings $X^q, X^k_j$
+         and $U^Q, U^K_j$ are linear transformations of
+         absolute positional encodings $P_q, P_j$.
         """
 
-        # $\color{lightgreen}{U_j}$
+        # $U^K_j$
         key_pos_emb = self.key_pos_embeddings[-key.shape[0]:]
-        # $\color{cyan}{V^T}$
+        # $U^Q$
         query_pos_bias = self.query_pos_bias[None, :, :]
 
-        # $(\color{cyan}{Q^T + V^T})(\color{lightgreen}{K_j + U_j)}$
+        # $(Q + U^Q)^\top(K_j + U^K_j)$
         return torch.einsum('bhd,jbhd->jbh', query + query_pos_bias, key + key_pos_emb[:, None, :, :])
 
     def __call__(self, *,

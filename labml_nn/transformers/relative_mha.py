@@ -102,14 +102,14 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
 
         For the second and third terms relative positional encodings are introduced.
         So $\underset{\color{lightgreen}{B}}{Q_i^\top U^K_j}$ is
-        replaced with $\underset{\color{lightgreen}{B}}{Q_i^T \color{orange}{R_{i - j}}}$
+        replaced with $\underset{\color{lightgreen}{B}}{Q_i^\top \color{orange}{R_{i - j}}}$
         and $\underset{\color{lightgreen}{D}}{{U^Q_i}^\top U^K_j}$
         with $\underset{\color{lightgreen}{D}}{\color{orange}{S_{i-j}}}$.
 
         \begin{align}
-        A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^T K_j} +
-                         \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^T \color{orange}{R_{i - j}}} +
-                         \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^T} K_j} +
+        A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
+                         \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^\top \color{orange}{R_{i - j}}} +
+                         \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^\top} K_j} +
                          \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
         \end{align}
         """
@@ -118,14 +118,14 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         key_pos_emb = self.key_pos_embeddings[self.P - query.shape[0]:self.P + key.shape[0]]
         # $\color{orange}{S_k}$
         key_pos_bias = self.key_pos_bias[self.P - query.shape[0]:self.P + key.shape[0]]
-        # $\color{orange}{v^T}$
+        # $\color{orange}{v^\top}$
         query_pos_bias = self.query_pos_bias[None, None, :, :]
 
         # ${(\color{lightgreen}{\mathbf{A + C}})}_{i,j} =
-        # Q_i^T K_j +
-        # \color{orange}{v^T} K_jZ$
+        # Q_i^\top K_j +
+        # \color{orange}{v^\top} K_jZ$
         ac = torch.einsum('ibhd,jbhd->ijbh', query + query_pos_bias, key)
-        # $\color{lightgreen}{\mathbf{B'}_{i,k}} = \color{cyan}{Q_i^T} \color{orange}{R_k}$
+        # $\color{lightgreen}{\mathbf{B'}_{i,k}} = Q_i^\top \color{orange}{R_k}$
         b = torch.einsum('ibhd,jhd->ijbh', query, key_pos_emb)
         # $\color{lightgreen}{\mathbf{D'}_{i,k}} = \color{orange}{S_k}$
         d = key_pos_bias[None, :, None, :]
@@ -136,9 +136,9 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         bd = bd[:, -key.shape[0]:]
 
         # Return the sum $$
-        # \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^T K_j} +
-        # \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^T \color{orange}{R_{i - j}}} +
-        # \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^T} K_j} +
+        # \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
+        # \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^\top \color{orange}{R_{i - j}}} +
+        # \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^\top} K_j} +
         # \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
         # $$
         return ac + bd
