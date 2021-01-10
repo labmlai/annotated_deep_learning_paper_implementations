@@ -1,10 +1,10 @@
 """
 ---
-title: HyperNetworks
+title: HyperNetworks - HyperLSTM
 summary: A PyTorch implementation/tutorial of HyperLSTM introduced in paper HyperNetworks.
 ---
 
-# HyperNetworks
+# HyperNetworks - HyperLSTM
 
 We have implemented HyperLSTM introduced in paper
 [HyperNetworks](https://arxiv.org/abs/1609.09106), with annotations.

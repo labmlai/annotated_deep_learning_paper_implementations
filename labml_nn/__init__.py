@@ -22,6 +22,7 @@ and
 [relative multi-headed attention](https://lab-ml.com/labml_nn/transformers/relative_mha.html).
 
 * [kNN-LM: Generalization through Memorization](https://lab-ml.com/labml_nn/transformers/knn)
+* [Feedback Transformer](https://lab-ml.com/labml_nn/transformers/feedback)
 
 #### ✨ [Recurrent Highway Networks](https://lab-ml.com/labml_nn/recurrent_highway_networks)
 

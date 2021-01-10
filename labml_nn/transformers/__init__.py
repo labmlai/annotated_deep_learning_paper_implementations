@@ -21,7 +21,12 @@ and derivatives and enhancements of it.
 ## [kNN-LM](knn)
 
 This is an implementation of the paper
- [Generalization through Memorization: Nearest Neighbor Language Models](https://arxiv.org/abs/1911.00172).
+[Generalization through Memorization: Nearest Neighbor Language Models](https://arxiv.org/abs/1911.00172).
+
+## [Feedback Transformer](feedback)
+
+This is an implementation of the paper
+[Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
 """
 
 from .configs import TransformerConfigs
