@@ -3,17 +3,18 @@
 
 # [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
-![Screenshot](https://github.com/lab-ml/nn/blob/master/images/dqn.png)
-
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 These implementations are documented with explanations,
-and the [website](https://lab-ml.com/labml_nn/index.html)
+
+[The website](https://lab-ml.com/labml_nn/index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
 We are actively maintaining this repo and adding new 
 implementations.
+
+![Screenshot](https://github.com/lab-ml/nn/blob/master/images/dqn.png)
 
 ## Modules
 
