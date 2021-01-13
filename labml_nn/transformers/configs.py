@@ -9,9 +9,9 @@ summary: These are configurable components that can be re-used quite easily.
 import copy
 
 import torch.nn as nn
-
 from labml.configs import BaseConfigs, option, calculate
 from labml_helpers.module import Module
+
 from .mha import MultiHeadAttention
 from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, FeedForward, \
     TransformerLayer, Encoder, Decoder, Generator, EncoderDecoder
@@ -30,6 +30,7 @@ class TransformerConfigs(BaseConfigs):
     decoder_attn: MultiHeadAttention = 'mha'
     decoder_mem_attn: MultiHeadAttention = 'mha'
     feed_forward: FeedForward
+    feed_forward_activation: nn.Module = 'ReLU'
 
     encoder_layer: TransformerLayer = 'normal'
     decoder_layer: TransformerLayer = 'normal'
@@ -45,12 +46,22 @@ class TransformerConfigs(BaseConfigs):
     encoder_decoder: EncoderDecoder
 
 
+@option(TransformerConfigs.feed_forward_activation, 'ReLU')
+def _feed_forward_activation_relu():
+    return nn.ReLU()
+
+
+@option(TransformerConfigs.feed_forward_activation, 'GELU')
+def _feed_forward_activation_relu():
+    return nn.GELU()
+
+
 @option(TransformerConfigs.feed_forward, 'default')
 def _feed_forward(c: TransformerConfigs):
-    return FeedForward(c.d_model, c.d_ff, c.dropout)
+    return FeedForward(c.d_model, c.d_ff, c.dropout, c.feed_forward_activation)
 
 
-### MHA
+# ## MHA
 def _mha(c: TransformerConfigs):
     return MultiHeadAttention(c.n_heads, c.d_model)
 
@@ -60,7 +71,7 @@ calculate(TransformerConfigs.decoder_attn, 'mha', _mha)
 calculate(TransformerConfigs.decoder_mem_attn, 'mha', _mha)
 
 
-### Relative MHA
+# ## Relative MHA
 def _relative_mha(c: TransformerConfigs):
     from .relative_mha import RelativeMultiHeadAttention
     return RelativeMultiHeadAttention(c.n_heads, c.d_model)
@@ -100,7 +111,7 @@ def _generator(c: TransformerConfigs):
     return Generator(c.n_tgt_vocab, c.d_model)
 
 
-### Positional Embeddings
+# ## Positional Embeddings
 @option(TransformerConfigs.src_embed, 'fixed_pos')
 def _src_embed_with_positional(c: TransformerConfigs):
     return EmbeddingsWithPositionalEncoding(c.d_model, c.n_src_vocab)
@@ -111,7 +122,7 @@ def _tgt_embed_with_positional(c: TransformerConfigs):
     return EmbeddingsWithPositionalEncoding(c.d_model, c.n_tgt_vocab)
 
 
-### Learned Positional Embeddings
+# ## Learned Positional Embeddings
 @option(TransformerConfigs.src_embed, 'learned_pos')
 def _src_embed_with_learned_positional(c: TransformerConfigs):
     return EmbeddingsWithLearnedPositionalEncoding(c.d_model, c.n_src_vocab)
@@ -122,7 +133,7 @@ def _tgt_embed_with_learned_positional(c: TransformerConfigs):
     return EmbeddingsWithLearnedPositionalEncoding(c.d_model, c.n_tgt_vocab)
 
 
-### No Positional Embeddings
+# ## No Positional Embeddings
 @option(TransformerConfigs.src_embed, 'no_pos')
 def _src_embed_without_positional(c: TransformerConfigs):
     return nn.Embedding(c.n_src_vocab, c.d_model)

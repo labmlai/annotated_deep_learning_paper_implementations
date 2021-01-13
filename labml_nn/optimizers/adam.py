@@ -41,6 +41,7 @@ import math
 from typing import Dict, Any, Tuple, Optional
 
 import torch
+from labml import tracker
 from torch import nn
 
 from labml_nn.optimizers import GenericAdaptiveOptimizer, WeightDecay
@@ -168,12 +169,15 @@ class Adam(GenericAdaptiveOptimizer):
         # Bias correction term for $\hat{v}_t$, $1 - \beta_2^t$
         bias_correction2 = 1 - beta2 ** state['step']
 
+        # Get learning rate
+        lr = self.get_lr(state, group)
+
         # Whether to optimize the computation
         if self.optimized_update:
             # $\sqrt{v_t} + \hat{\epsilon}$
             denominator = v.sqrt().add_(group['eps'])
             # $\alpha \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t}$
-            step_size = self.get_lr(state, group) * math.sqrt(bias_correction2) / bias_correction1
+            step_size = lr * math.sqrt(bias_correction2) / bias_correction1
             # $\theta_t \leftarrow \theta_{t-1} - \alpha \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \cdot
             #  \frac{m_t}{\sqrt{v_t} + \hat{\epsilon}}$
             param.data.addcdiv_(m, denominator, value=-step_size)
@@ -182,7 +186,7 @@ class Adam(GenericAdaptiveOptimizer):
             # $\frac{\sqrt{v_t}}{\sqrt{1-\beta_2^t}} + \epsilon$
             denominator = (v.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
             # $\frac{\alpha}{1-\beta_1^t}$
-            step_size = self.get_lr(state, group) / bias_correction1
+            step_size = lr / bias_correction1
             # $\theta_t \leftarrow \theta_{t-1} - \alpha \cdot
             # \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
             param.data.addcdiv_(m, denominator, value=-step_size)

@@ -209,3 +209,5 @@ class WeightDecay:
             if group['weight_decay'] != 0:
                 # Add the weight decay to the gradient and return the modified gradient
                 return grad.add(param.data, alpha=group['weight_decay'])
+            else:
+                return grad

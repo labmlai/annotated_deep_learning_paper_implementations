@@ -229,6 +229,9 @@ class RAdam(AMSGrad):
 
         r = self.calc_rectification_term(beta2, state['step'])
 
+        # Get learning rate
+        lr = self.get_lr(state, group)
+
         # If $r_t$ is intractable
         if r is not None:
             # Whether to optimize the computation by combining scalar computations
@@ -236,7 +239,7 @@ class RAdam(AMSGrad):
                 # Denominator $\sqrt{v_t} + \hat{\epsilon}$
                 denominator = v.sqrt().add_(group['eps'])
                 # Step size $\alpha \sqrt{r_t} * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t}$
-                step_size = self.get_lr(state, group) * math.sqrt(bias_correction2) * r / bias_correction1
+                step_size = lr * math.sqrt(bias_correction2) * r / bias_correction1
                 # Update parameters $\theta_t \leftarrow \theta_{t-1} - \alpha \sqrt{r_t} \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \cdot
                 #  \frac{m_t}{\sqrt{v_t} + \hat{\epsilon}}$
                 param.data.addcdiv_(m, denominator, value=-step_size)
@@ -245,7 +248,7 @@ class RAdam(AMSGrad):
                 # Denominator  $\frac{\sqrt{v_t}}{\sqrt{1-\beta_2^t}} + \epsilon$
                 denominator = (v.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
                 # Step size $\frac{\alpha \sqrt{r_t}}{1-\beta_1^t}$
-                step_size = self.get_lr(state, group) * r / bias_correction1
+                step_size = lr * r / bias_correction1
                 # Update parameters $\theta_t \leftarrow \theta_{t-1} - \alpha \sqrt{r_t} \cdot
                 # \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
                 param.data.addcdiv_(m, denominator, value=-step_size)
@@ -253,7 +256,7 @@ class RAdam(AMSGrad):
         # If $r_t$ is intractable do a SGD with momentum
         elif self.degenerated_to_sgd:
             # Step size $\frac{\alpha}{1-\beta_1^t}$
-            step_size = self.get_lr(state, group) / bias_correction1
+            step_size = lr / bias_correction1
             # Update parameters
             # $\theta_t \leftarrow \theta_{t-1} - \alpha \cdot \hat{m}_t$
             param.data.add_(m, alpha=-step_size)

@@ -47,6 +47,10 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     loss_func = CrossEntropyLoss()
     accuracy = Accuracy()
     d_model: int = 512
+    grad_norm_clip: float = 1.0
+
+    train_loader: DataLoader = 'shuffled_train_loader'
+    valid_loader: DataLoader = 'shuffled_valid_loader'
 
     def init(self):
         tracker.set_scalar("accuracy.*", True)
@@ -70,7 +74,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 
         if self.mode.is_train:
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm_clip)
             self.optimizer.step()
             if batch_idx.is_last:
                 tracker.add('model', self.model)

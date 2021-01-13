@@ -12,9 +12,8 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
 from labml_helpers.module import Module
+
 from labml_nn.utils import clone_module_list
 from .mha import MultiHeadAttention
 from .positional_encoding import get_positional_encoding
@@ -24,6 +23,7 @@ class EmbeddingsWithPositionalEncoding(Module):
     """
     ## Embed tokens and add [fixed positional encoding](positional_encoding.html)
     """
+
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
         super().__init__()
         self.linear = nn.Embedding(n_vocab, d_model)
@@ -39,6 +39,7 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
     """
     ## Embed tokens and add parameterized positional encodings
     """
+
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
         super().__init__()
         self.linear = nn.Embedding(n_vocab, d_model)
@@ -54,15 +55,17 @@ class FeedForward(Module):
     """
     ## Position-wise feed-forward network with hidden layer
     """
-    def __init__(self, d_model: int, d_ff: int, dropout: float = 0.1):
+
+    def __init__(self, d_model: int, d_ff: int, dropout: float = 0.1, activation=nn.ReLU()):
         super().__init__()
         self.layer1 = nn.Linear(d_model, d_ff)
         self.layer2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dropout)
+        self.activation = activation
 
     def __call__(self, x: torch.Tensor):
         x = self.layer1(x)
-        x = F.relu(x)
+        x = self.activation(x)
         x = self.dropout(x)
         return self.layer2(x)
 
@@ -82,6 +85,7 @@ class TransformerLayer(Module):
     We found a detailed discussion about this in paper
      [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745).
     """
+
     def __init__(self, *,
                  d_model: int,
                  self_attn: MultiHeadAttention,
@@ -141,6 +145,7 @@ class Encoder(Module):
     """
     ## Transformer Encoder
     """
+
     def __init__(self, layer: TransformerLayer, n_layers: int):
         super().__init__()
         # Make copies of the transformer layer
@@ -159,6 +164,7 @@ class Decoder(Module):
     """
     ## Transformer Decoder
     """
+
     def __init__(self, layer: TransformerLayer, n_layers: int):
         super().__init__()
         # Make copies of the transformer layer
@@ -180,18 +186,20 @@ class Generator(Module):
     This predicts the tokens and gives the lof softmax of those.
     You don't need this if you are using `nn.CrossEntropyLoss`.
     """
+
     def __init__(self, n_vocab: int, d_model: int):
         super().__init__()
         self.projection = nn.Linear(d_model, n_vocab)
 
     def __call__(self, x):
-        return F.log_softmax(self.projection(x), dim=-1)
+        return self.projection(x)
 
 
 class EncoderDecoder(Module):
     """
     ## Combined Encoder-Decoder
     """
+
     def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: Module, tgt_embed: Module, generator: Module):
         super().__init__()
         self.encoder = encoder

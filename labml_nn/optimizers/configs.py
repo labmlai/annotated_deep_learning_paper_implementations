@@ -31,6 +31,7 @@ class OptimizerConfigs(BaseConfigs):
     momentum: float = 0.5
     amsgrad: bool = False
     warmup: int = 2_000
+    total_steps: int = int(1e10)
     degenerated_to_sgd: bool = True
     rectify: bool = True
     d_model: int
@@ -103,3 +104,12 @@ def _noam_optimizer(c: OptimizerConfigs):
                 lr=c.learning_rate, betas=c.betas, eps=c.eps,
                 weight_decay=c.weight_decay_obj, amsgrad=c.amsgrad, warmup=c.warmup,
                 d_model=c.d_model)
+
+
+@option(OptimizerConfigs.optimizer, 'AdamWarmupCosineDecay')
+def _noam_optimizer(c: OptimizerConfigs):
+    from labml_nn.optimizers.adam_warmup_cosine_decay import AdamWarmupCosineDecay
+    return AdamWarmupCosineDecay(c.parameters,
+                                 lr=c.learning_rate, betas=c.betas, eps=c.eps,
+                                 weight_decay=c.weight_decay_obj, amsgrad=c.amsgrad,
+                                 warmup=c.warmup, total_steps=c.total_steps)
