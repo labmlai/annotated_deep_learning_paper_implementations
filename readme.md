@@ -1,5 +1,5 @@
 [![Join Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/)
-[![Twitter](https://img.shields.io/twitter/follow/LabML1?style=social)](https://twitter.com/LabML1?ref_src=twsrc%5Etfw)
+[![Twitter](https://img.shields.io/twitter/follow/LabML1?style=social)](https://twitter.com/LabML1)
 
 # [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
@@ -11,10 +11,11 @@ These implementations are documented with explanations,
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
-We are actively maintaining this repo and adding new 
-implementations.
-
 ![Screenshot](https://github.com/lab-ml/nn/blob/master/images/dqn.png)
+
+We are actively maintaining this repo and adding new 
+implementations almost weekly.
+[Follow us on Twitter](https://twitter.com/LabML1) for updates.
 
 ## Modules
 
