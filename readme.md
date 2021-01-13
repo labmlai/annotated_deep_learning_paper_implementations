@@ -15,7 +15,7 @@ We believe these would help you understand these algorithms better.
 
 We are actively maintaining this repo and adding new 
 implementations almost weekly.
-[Follow us on Twitter](https://twitter.com/LabML1) for updates.
+[![Twitter](https://img.shields.io/twitter/follow/LabML1?style=social)](https://twitter.com/LabML1) for updates.
 
 ## Modules
 
