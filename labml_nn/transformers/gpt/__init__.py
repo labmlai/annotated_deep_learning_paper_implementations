@@ -35,7 +35,7 @@ class Configs(NLPAutoRegressionConfigs):
     model: GPT
     transformer: TransformerConfigs
     weight_decay: float = 0.1
-    warmup_steps: int = 512 * 128 * 500
+    warmup_steps: int = 128 * 128 * 20
 
     optimizer = 'transformer_optimizer'
 
@@ -120,7 +120,7 @@ def transformer_optimizer(c: NLPAutoRegressionConfigs):
     optimizer.learning_rate = 6e-4
     optimizer.betas = (0.9, 0.95)
     optimizer.eps = 1e-8
-    optimizer.weight_decouple = False
+    optimizer.weight_decouple = True
     optimizer.total_steps = c.epochs * len(c.text.train)
     optimizer.warmup = c.warmup_steps // (c.batch_size * c.seq_len)
 
