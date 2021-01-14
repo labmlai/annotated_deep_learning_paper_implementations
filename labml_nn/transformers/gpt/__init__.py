@@ -218,7 +218,7 @@ def main():
     experiment.create(name="gpt")
     # Create configs
     conf = Configs()
-    # Load configurations
+    # Override configurations
     experiment.configs(conf, {
         # Use character level tokenizer
         'tokenizer': 'character',
@@ -255,5 +255,6 @@ def main():
         conf.run()
 
 
+#
 if __name__ == '__main__':
     main()
