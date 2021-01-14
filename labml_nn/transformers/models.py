@@ -21,7 +21,9 @@ from .positional_encoding import get_positional_encoding
 
 class EmbeddingsWithPositionalEncoding(Module):
     """
+    <a id="EmbeddingsWithPositionalEncoding">
     ## Embed tokens and add [fixed positional encoding](positional_encoding.html)
+    </a>
     """
 
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
@@ -37,7 +39,9 @@ class EmbeddingsWithPositionalEncoding(Module):
 
 class EmbeddingsWithLearnedPositionalEncoding(Module):
     """
+    <a id="EmbeddingsWithLearnedPositionalEncoding">
     ## Embed tokens and add parameterized positional encodings
+    </a>
     """
 
     def __init__(self, d_model: int, n_vocab: int, max_len: int = 5000):
@@ -53,7 +57,9 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
 
 class FeedForward(Module):
     """
+    <a id="FeedForward">
     ## Position-wise feed-forward network with hidden layer
+    </a>
     """
 
     def __init__(self, d_model: int, d_ff: int, dropout: float = 0.1, activation=nn.ReLU()):
@@ -72,7 +78,9 @@ class FeedForward(Module):
 
 class TransformerLayer(Module):
     """
+    <a id="TransformerLayer">
     ## Transformer Layer
+    </a>
 
     This can act as a encoder layer or a decoder layer.
 
@@ -143,7 +151,9 @@ class TransformerLayer(Module):
 
 class Encoder(Module):
     """
+    <a id="Encoder">
     ## Transformer Encoder
+    </a>
     """
 
     def __init__(self, layer: TransformerLayer, n_layers: int):
@@ -162,7 +172,9 @@ class Encoder(Module):
 
 class Decoder(Module):
     """
+    <a id="Decoder">
     ## Transformer Decoder
+    </a>
     """
 
     def __init__(self, layer: TransformerLayer, n_layers: int):
@@ -181,7 +193,9 @@ class Decoder(Module):
 
 class Generator(Module):
     """
+    <a id="Generator">
     ## Generator
+    </a>
 
     This predicts the tokens and gives the lof softmax of those.
     You don't need this if you are using `nn.CrossEntropyLoss`.
@@ -197,7 +211,9 @@ class Generator(Module):
 
 class EncoderDecoder(Module):
     """
+    <a id="EncoderDecoder">
     ## Combined Encoder-Decoder
+    </a>
     """
 
     def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: Module, tgt_embed: Module, generator: Module):

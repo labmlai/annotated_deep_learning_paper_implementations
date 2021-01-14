@@ -1,3 +1,31 @@
+"""
+---
+title: GPT
+summary: >
+  Implementation/tutorial of GPT model and training code.
+---
+
+# GPT
+
+This is an tutorial of
+[OpenAI GPT architecture](https://openai.com/blog/better-language-models/).
+We got a bunch of implementation details from
+[minGPT](https://github.com/karpathy/minGPT)
+by [@karpathy](https://twitter.com/karpathy).
+This implementation also uses character tiny shakespeare dataset.
+
+GPT model is essentially a standard transformer with a few tweaks.
+GPT-2 and especially GPT-3 models are quite large and won't fit on a
+single GPU and will need model parallelism.
+This implementation doesn't even use data parallelism and is intended to be
+more of a tutorial.
+
+Main differences of this to a standard autoregressive transformer
+are the parameter initialization, weight decay, and learning rate schedule.
+For the transformer we reuse the
+[existing labml/nn transformer implementation](https://lab-ml.com/labml_nn/transformers/).
+"""
+
 import torch
 from labml import experiment
 from labml.configs import option
@@ -11,27 +39,51 @@ from labml_nn.transformers.utils import subsequent_mask
 
 
 class GPT(Module):
+    """
+    ## GPT model
+
+    This consists of a token embedding layer, transformer encoder, and
+    a final linear layer that gives token logits.
+    """
     def __init__(self, encoder: Encoder, src_embed: Module, generator: Module):
+        """
+        * `encoder` is the transformer [Encoder](../models.html#Encoder)
+        * `src_embed` is the token
+        [embedding module (with positional encodings)](../models.html#EmbeddingsWithLearnedPositionalEncoding)
+        * `generator` is the [final fully connected layer](../models.html#Generator) that gives the logits.
+        """
         super().__init__()
-        # Make copies of the transformer layer
         self.src_embed = src_embed
         self.encoder = encoder
         self.generator = generator
-        # This will be initialized on the first call
+
+        # The mask will be initialized on the first call
         self.mask = None
 
     def __call__(self, x: torch.Tensor):
+        # Create subsequent mask if mask is not initialized
+        # or if the size of the mask is different
         if self.mask is None or self.mask.size(0) != len(x):
+            # Subsequent mask, will mask out tokens from seeing future tokens
             self.mask = subsequent_mask(len(x)).to(x.device)
-        # Run through each transformer layer
+        # Get the token embeddings with positional encodings
         x = self.src_embed(x)
+        # Transformer encoder
         x = self.encoder(x, self.mask)
+        # Get logits
         x = self.generator(x)
 
+        # Return results
+        # (second value is for state, since our trainer is used with RNNs also)
         return x, None
 
 
 class Configs(NLPAutoRegressionConfigs):
+    """
+    ## Configurations
+
+    This inherits
+    """
     model: GPT
     transformer: TransformerConfigs
     weight_decay: float = 0.1
