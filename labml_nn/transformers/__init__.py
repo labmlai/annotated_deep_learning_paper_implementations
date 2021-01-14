@@ -18,6 +18,10 @@ and derivatives and enhancements of it.
 * [Transformer Encoder and Decoder Models](models.html)
 * [Fixed positional encoding](positional_encoding.html)
 
+## [GPT Architecture](gpt)
+
+This is an implementation of GPT-2 architecture.
+
 ## [kNN-LM](knn)
 
 This is an implementation of the paper
