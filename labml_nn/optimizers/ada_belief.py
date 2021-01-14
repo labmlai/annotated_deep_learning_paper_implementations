@@ -51,7 +51,7 @@ class AdaBelief(RAdam):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-16,
                  weight_decay: WeightDecay = WeightDecay(), amsgrad=False,
-                 degenerated_to_sgd=True,
+                 degenerate_to_sgd=True,
                  rectify=True, defaults=None):
         """
         ### Initialize the optimizer
@@ -71,7 +71,7 @@ class AdaBelief(RAdam):
         """
 
         defaults = {} if defaults is None else defaults
-        super().__init__(params, lr, betas, eps, weight_decay, amsgrad, degenerated_to_sgd, defaults)
+        super().__init__(params, lr, betas, eps, weight_decay, amsgrad, degenerate_to_sgd, defaults)
         self.rectify = rectify
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
