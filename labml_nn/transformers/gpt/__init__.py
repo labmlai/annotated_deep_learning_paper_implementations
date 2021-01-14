@@ -24,6 +24,11 @@ Main differences of this to a standard autoregressive transformer
 are the parameter initialization, weight decay, and learning rate schedule.
 For the transformer we reuse the
 [existing labml/nn transformer implementation](https://lab-ml.com/labml_nn/transformers/).
+
+Here's a notebook for training a GPT mode on Tiny Shakespeare dataset.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/gpt/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=0324c6d0562111eba65d0242ac1c0002)
 """
 
 import torch
