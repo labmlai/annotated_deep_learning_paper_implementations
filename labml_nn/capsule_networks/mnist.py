@@ -6,6 +6,8 @@ summary: Code for training Capsule Networks on MNIST dataset
 
 # Classify MNIST digits with Capsule Networks
 
+This is an annotated PyTorch code to classify MNIST digits with PyTorch.
+
 This paper implements the experiment described in paper
 [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
 """
@@ -161,11 +163,13 @@ def main():
     """
     Run the experiment
     """
-    conf = Configs()
     experiment.create(name='capsule_network_mnist')
+    conf = Configs()
     experiment.configs(conf, {'optimizer.optimizer': 'Adam',
-                              'optimizer.learning_rate': 1e-3,
-                              'device.cuda_device': 1})
+                              'optimizer.learning_rate': 1e-3})
+
+    experiment.add_pytorch_models({'model': conf.model})
+
     with experiment.start():
         conf.run()
 
