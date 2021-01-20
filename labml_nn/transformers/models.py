@@ -58,11 +58,17 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
 class FeedForward(Module):
     """
     <a id="FeedForward">
-    ## Position-wise feed-forward network with hidden layer
+    ## Position-wise feed-forward network (FFN) with hidden layer
     </a>
     """
 
     def __init__(self, d_model: int, d_ff: int, dropout: float = 0.1, activation=nn.ReLU()):
+        """
+        * `d_model` is the number of features in a token embedding
+        * `d_ff` is the number of features in the hidden layer of the FFN
+        * `dropout` is dropout probability for the hidden layer
+        * `activation` is the activation function to apply on the hidden layer outputs
+        """
         super().__init__()
         self.layer1 = nn.Linear(d_model, d_ff)
         self.layer2 = nn.Linear(d_ff, d_model)

@@ -47,7 +47,7 @@ class Configs(NLPAutoRegressionConfigs):
     dropout: float = 0.0
     d_ff: int = 256
     n_layers: int = 6
-    n_switches = 4
+    n_experts: int = 4
     load_balancing_loss_ceof = 0.01
     is_scale_prob: bool = True
     drop_tokens: bool = False
@@ -89,7 +89,7 @@ class Configs(NLPAutoRegressionConfigs):
         tracker.add('route.std.', route_frac.std())
         # for i in range(self.n_switches):
         #     tracker.add(f'route.{i}', route_frac[:, i].mean())
-        load_balancing_loss = self.n_switches * (route_frac * route_prob).sum()
+        load_balancing_loss = self.n_experts * (route_frac * route_prob).sum()
         tracker.add("loss.", loss)
         tracker.add("lb_loss.", loss)
         loss = loss + self.load_balancing_loss_ceof * load_balancing_loss
@@ -133,7 +133,7 @@ def switch_transformer(c: Configs):
                                feed_forward=SwitchFeedForward(capacity_factor=c.capacity_factor,
                                                               drop_tokens=c.drop_tokens,
                                                               is_scale_prob=c.is_scale_prob,
-                                                              n_switches=c.n_switches,
+                                                              n_experts=c.n_experts,
                                                               d_model=c.d_model,
                                                               d_ff=c.d_ff,
                                                               dropout=c.dropout),
@@ -158,7 +158,7 @@ def main():
 
                         'transformer': 'switch_transformer',
                         'is_scale_prob': False,
-                        'n_switches': 4,
+                        'n_experts': 4,
 
                         'drop_tokens': True,
                         'capacity_factor': 1.2,
