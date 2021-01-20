@@ -81,6 +81,9 @@ class Configs(NLPAutoRegressionConfigs):
         # Calculate and log loss
         loss = self.loss_func(output, target)
         total = counts.sum(dim=-1, keepdims=True)
+        # $$f_i = \frac{1}{T} \sum_{x \in \mathscr{B}} \unicode{x1D7D9} \{ \mathop{argmax} p(x), i \}$$
+        # where $\mathscr{B}$ is the batch and $T$ is the number of tokens in the batch.
+        # $f_i$ is the count of tokens where the argmax of $p(x)$ is equal to $i$.
         route_frac = counts / total
         route_prob = route_prob / total
         tracker.add('dropped.', total.new_tensor(n_dropped) / total)

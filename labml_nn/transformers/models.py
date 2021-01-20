@@ -106,6 +106,13 @@ class TransformerLayer(Module):
                  src_attn: MultiHeadAttention = None,
                  feed_forward: FeedForward,
                  dropout_prob: float):
+        """
+        * `d_model` is the token embedding size
+        * `self_attn` is the self attention module
+        * `src_attn` is the source attention module (when this is used in a decoder)
+        * `feed_forward` is the feed forward module
+        * `dropout_prob` is the probability of dropping out after self attention and FFN
+        """
         super().__init__()
         self.size = d_model
         self.self_attn = self_attn
@@ -166,6 +173,7 @@ class Encoder(Module):
         super().__init__()
         # Make copies of the transformer layer
         self.layers = clone_module_list(layer, n_layers)
+        # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
     def __call__(self, x: torch.Tensor, mask: torch.Tensor):
@@ -187,6 +195,7 @@ class Decoder(Module):
         super().__init__()
         # Make copies of the transformer layer
         self.layers = clone_module_list(layer, n_layers)
+        # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
     def __call__(self, x: torch.Tensor, memory: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):

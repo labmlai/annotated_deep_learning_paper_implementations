@@ -30,7 +30,7 @@ In a distributed setup you would have each FFN (each very large) on a different 
 The paper introduces another loss term to balance load among the experts (FFNs) and
 discusses dropping tokens when routing is not balanced.
 
-Here's a notebook for training a switch transformer on Tiny Shakespeare dataset.
+Here's [the training code](experiment.html) and a notebook for training a switch transformer on Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/feedback/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=d8eb9416530a11eb8fb50242ac1c0002)
@@ -71,10 +71,10 @@ class SwitchFeedForward(Module):
 
         self.capacity_factor = capacity_factor
         self.is_scale_prob = is_scale_prob
-        self.n_switches = n_experts
+        self.n_experts = n_experts
         self.drop_tokens = drop_tokens
 
-        # FFN modules for each expert
+        # [FFN modules](../models.html#FeedForward) for each expert
         self.experts = nn.ModuleList([FeedForward(d_model, d_ff, dropout) for _ in range(n_experts)])
         # Routing layer and softmax
         self.switch = nn.Linear(d_model, n_experts)
@@ -110,7 +110,7 @@ class SwitchFeedForward(Module):
         x = x * factor.view(-1, 1)
 
         # Get indexes of tokens going to each expert
-        indexes_list = [torch.eq(routes, i).nonzero(as_tuple=True)[0] for i in range(self.n_switches)]
+        indexes_list = [torch.eq(routes, i).nonzero(as_tuple=True)[0] for i in range(self.n_experts)]
 
         # Initialize an empty tensor to store outputs
         final_output = x.new_zeros(x.shape)
@@ -119,24 +119,31 @@ class SwitchFeedForward(Module):
         # $$\mathrm{expert\;capacity} =
         # \frac{\mathrm{tokens\;per\;batch}}{\mathrm{number\;of\;experts}}
         # \times \mathrm{capacity\;factor}$$
-        capacity = int(self.capacity_factor * len(x) / self.n_switches)
-        # Number of tokens routed to each expert
-        counts = x.new_tensor([len(indexes_list[i]) for i in range(self.n_switches)])
+        capacity = int(self.capacity_factor * len(x) / self.n_experts)
+        # Number of tokens routed to each expert.
+        counts = x.new_tensor([len(indexes_list[i]) for i in range(self.n_experts)])
 
-        # Drop tokens
+        # Initialize an empty list of dropped tokens
         dropped = []
+        # Only drop tokens if `drop_tokens` is `True`.
         if self.drop_tokens:
-            for i in range(self.n_switches):
+            # Drop tokens in each of the experts
+            for i in range(self.n_experts):
+                # Ignore if the expert is not over capacity
                 if len(indexes_list[i]) <= capacity:
                     continue
+                # Shuffle indexes before dropping
                 indexes_list[i] = indexes_list[i][torch.randperm(len(indexes_list[i]))]
+                # Collect the tokens over capacity as dropped tokens
                 dropped.append(indexes_list[i][capacity:])
+                # Keep only the tokens upto the capacity of the expert
                 indexes_list[i] = indexes_list[i][:capacity]
 
-        route_outputs = [self.experts[i](x[indexes_list[i], :]) for i in range(self.n_switches)]
+        # Get outputs of the expert FFNs
+        route_outputs = [self.experts[i](x[indexes_list[i], :]) for i in range(self.n_experts)]
 
         # Assign to final output
-        for i in range(self.n_switches):
+        for i in range(self.n_experts):
             final_output[indexes_list[i], :] = route_outputs[i]
 
         # Pass through the dropped tokens
@@ -144,18 +151,36 @@ class SwitchFeedForward(Module):
             dropped = torch.cat(dropped)
             final_output[dropped, :] = x[dropped, :]
 
-        # Change the shape of the final output
+        # Change the shape of the final output back to `[seq_len, batch_size, d_model]`
         final_output = final_output.view(seq_len, batch_size, d_model)
 
+        # Return
+        # * the final output
+        # * number of tokens routed to each expert
+        # * sum of probabilities for each expert
+        # * number of tokens dropped
+        # These are used for the load balancing loss and logging
         return final_output, counts, route_prob.sum(0), len(dropped)
 
 
 class SwitchTransformerLayer(Module):
+    """
+    # Switch Transformer Block
+
+    This is same as [normal transformer block]([FFN modules](../models.html#FeedForward)
+    with handling extra outputs of switch feedforward module.
+    """
     def __init__(self, *,
                  d_model: int,
                  attn: MultiHeadAttention,
                  feed_forward: SwitchFeedForward,
                  dropout_prob: float):
+        """
+        * `d_model` is the token embedding size
+        * `attn` is the attention module
+        * `feed_forward` is the feed forward module (which is the switching module in this case)
+        * `dropout_prob` is the probability of dropping out after self attention and FFN
+        """
         super().__init__()
         self.size = d_model
         self.attn = attn
@@ -176,7 +201,7 @@ class SwitchTransformerLayer(Module):
 
         # Normalize for feed-forward
         z = self.norm_ff(x)
-        # Pass through the feed-forward network
+        # Pass through the switching feed-forward network
         ff, counts, route_prob, n_dropped = self.feed_forward(z)
         # Add the feed-forward results back
         x = x + self.dropout(ff)
@@ -186,15 +211,14 @@ class SwitchTransformerLayer(Module):
 
 class SwitchTransformer(Module):
     """
-    <a id="Encoder">
-    ## Transformer Encoder
-    </a>
+    ## Switch Transformer
     """
 
     def __init__(self, layer: SwitchTransformerLayer, n_layers: int):
         super().__init__()
         # Make copies of the transformer layer
         self.layers = clone_module_list(layer, n_layers)
+        # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
     def __call__(self, x: torch.Tensor, mask: torch.Tensor):
@@ -206,4 +230,6 @@ class SwitchTransformer(Module):
             route_prob.append(p)
             n_dropped.append(n_d)
         # Finally, normalize the vectors
-        return self.norm(x), torch.stack(counts), torch.stack(route_prob), n_dropped
+        x = self.norm(x)
+        #
+        return x, torch.stack(counts), torch.stack(route_prob), n_dropped
