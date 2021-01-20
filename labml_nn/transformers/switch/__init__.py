@@ -129,6 +129,7 @@ class SwitchFeedForward(Module):
             for i in range(self.n_switches):
                 if len(indexes_list[i]) <= capacity:
                     continue
+                indexes_list[i] = indexes_list[i][torch.randperm(len(indexes_list[i]))]
                 dropped.append(indexes_list[i][capacity:])
                 indexes_list[i] = indexes_list[i][:capacity]
 
