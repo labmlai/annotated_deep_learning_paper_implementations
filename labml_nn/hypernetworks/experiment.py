@@ -92,7 +92,6 @@ def main():
     # Set models for saving and loading
     experiment.add_pytorch_models(get_modules(conf))
 
-    conf.init()
     # Start the experiment
     with experiment.start():
         # `TrainValidConfigs.run`
