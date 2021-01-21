@@ -31,6 +31,13 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
+
+## [Switch Transformer](switch)
+
+This is a miniature implementation of the paper
+[Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961).
+Our implementation only has a few million parameters and doesn't do model parallel distributed training.
+It does single GPU training but we implement the concept of switching as described in the paper.
 """
 
 from .configs import TransformerConfigs

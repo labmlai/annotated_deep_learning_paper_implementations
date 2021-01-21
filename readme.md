@@ -30,6 +30,7 @@ and
 * [GPT Architecture](https://lab-ml.com/labml_nn/transformers/gpt)
 * [kNN-LM: Generalization through Memorization](https://lab-ml.com/labml_nn/transformers/knn)
 * [Feedback Transformer](https://lab-ml.com/labml_nn/transformers/feedback)
+* [Switch Transformer](https://lab-ml.com/labml_nn/transformers/switch)
 
 #### ✨ [Recurrent Highway Networks](https://lab-ml.com/labml_nn/recurrent_highway_networks)
 
