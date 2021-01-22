@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A simple PyTorch implementation/tutorial of AdaBelief optimizer."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="AdaBelief optimizer"/>
+    <meta name="twitter:description" content="A simple PyTorch implementation/tutorial of AdaBelief optimizer."/>
+    <meta name="twitter:site" content="@vpj"/>
+    <meta name="twitter:creator" content="@vpj"/>
+
+    <meta property="og:url" content="https://lab-ml.com/optimizers/ada_belief.html"/>
+    <meta property="og:title" content="AdaBelief optimizer"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="AdaBelief optimizer"/>
+    <meta property="og:description" content="A simple PyTorch implementation/tutorial of AdaBelief optimizer."/>
+
+    <title>AdaBelief optimizer</title>
+    <link rel="stylesheet" href="../pylit.css">
+    <link rel="canonical" href="https://lab-ml.com/optimizers/ada_belief.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="index.html">optimizers</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/optimizers/ada_belief.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>AdaBelief Optimizer</h1>
+<p>This is based from AdaBelief
+<a href="https://github.com/juntang-zhuang/Adabelief-Optimizer">official implementation</a>
+of the paper
+<a href="https://arxiv.org/abs/2010.07468">AdaBelief Optimizer: Adapting Stepsizes by the Belief in Observed Gradients</a>.</p>
+<p>This is implemented here as an extension to <a href="radam.html">RAdam</a>.</p>
+<p>The main difference between Adam optimizer and AdaBelief is that,
+how it calculates the adaptive learning rate;
+instead of dividing by the exponential moving average of square of the gradients,
+AdaBelief divides by the exponential mean of variance.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+m_t &\leftarrow \beta_1 m_{t-1} + (1 - \beta_1) \cdot g_t \\
+\color{cyan}{s_t} &\color{cyan}{\leftarrow} \color{cyan}{\beta_2 s_{t-1} + (1 - \beta_2) \cdot (g_t - m_t)^2} \\
+\hat{m}_t &\leftarrow \frac{m_t}{1-\beta_1^t} \\
+\color{cyan}{\hat{s}_t} &\color{cyan}{\leftarrow} \frac{\color{cyan}{s_t} + \color{red}{\epsilon}}{\color{cyan}{1-\beta_2^t}} \\
+\theta_t &\leftarrow \theta_{t-1} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\color{cyan}{\hat{s}_t}} + \epsilon}
+\end{align}</script>
+</p>
+<p>🤔 The paper calculates variance as $(g_t - m_t)^2$,
+but I feel it should use the bias corrected momentum
+$(g_t - \color{orange}{\hat{m}_t})^2$.
+I guess this doesn&rsquo;t affect things much because
+bias correction is $\approx 1$ after the initial training steps.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">36</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+<span class="lineno">37</span>
+<span class="lineno">38</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">39</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">40</span>
+<span class="lineno">41</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers</span> <span class="kn">import</span> <span class="n">WeightDecay</span>
+<span class="lineno">42</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.radam</span> <span class="kn">import</span> <span class="n">RAdam</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>AdaBelief Optimizer</h2>
+<p>This class extends from RAdam optimizer defined in <a href="radam.html"><code>radam.py</code></a>.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">45</span><span class="k">class</span> <span class="nc">AdaBelief</span><span class="p">(</span><span class="n">RAdam</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <h3>Initialize the optimizer</h3>
+<ul>
+<li><code>params</code> is the list of parameters</li>
+<li><code>lr</code> is the learning rate $\alpha$</li>
+<li><code>betas</code> is a tuple of ($\beta_1$, $\beta_2$)</li>
+<li><code>eps</code> is $\hat{\epsilon}$ or $\epsilon$ based on <code>optimized_update</code></li>
+<li><code>weight_decay</code> is an instance of class <code>WeightDecay</code> defined in <a href="index.html"><code>__init__.py</code></a></li>
+<li>&lsquo;optimized_update&rsquo; is a flag whether to optimize the bias correction of the second moment
+  by doing it after adding $\epsilon$</li>
+<li><code>amsgrad</code> is a flag indicating whether to use AMSGrad or fallback to plain Adam</li>
+<li><code>degenerate_to_sgd</code> whether to use sgd when the rectification term $r_t is intractable</li>
+<li>&lsquo;rectify&rsquo; is whether to use RAdam update</li>
+<li><code>defaults</code> is a dictionary of default for group values.
+ This is useful when you want to extend the class <code>AdaBelief</code>.</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">52</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">),</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-16</span><span class="p">,</span>
+<span class="lineno">53</span>                 <span class="n">weight_decay</span><span class="p">:</span> <span class="n">WeightDecay</span> <span class="o">=</span> <span class="n">WeightDecay</span><span class="p">(),</span> <span class="n">amsgrad</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="lineno">54</span>                 <span class="n">degenerate_to_sgd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="lineno">55</span>                 <span class="n">rectify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">73</span>        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">defaults</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">defaults</span>
+<span class="lineno">74</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">weight_decay</span><span class="p">,</span> <span class="n">amsgrad</span><span class="p">,</span> <span class="n">degenerate_to_sgd</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)</span>
+<span class="lineno">75</span>        <span class="bp">self</span><span class="o">.</span><span class="n">rectify</span> <span class="o">=</span> <span class="n">rectify</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <h3>Initialize a parameter state</h3>
+<ul>
+<li><code>state</code> is the optimizer state of the parameter (tensor)</li>
+<li><code>group</code> stores optimizer attributes of the parameter group</li>
+<li><code>param</code> is the parameter tensor $\theta_{t-1}$</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">77</span>    <span class="k">def</span> <span class="nf">init_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">param</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">85</span>        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Exponential moving average of gradient values</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;exp_avg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">memory_format</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">preserve_format</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Exponential moving average of variance</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">89</span>        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;exp_avg_var&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">memory_format</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">preserve_format</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>If <code>amsgrad</code> flag is <code>True</code> for this parameter group, we maintain the maximum of
+exponential moving average of variance</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">93</span>        <span class="k">if</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;amsgrad&#39;</span><span class="p">]:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>Maintains max of all exp. moving avg. of sq. grad. values</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">95</span>            <span class="n">state</span><span class="p">[</span><span class="s1">&#39;max_exp_avg_var&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">memory_format</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">preserve_format</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <h3>Calculate $m_t$ and $s_t$ or $\max(s_1, s_2, &hellip;, s_{t-1}, s_t)$</h3>
+<ul>
+<li><code>state</code> is the optimizer state of the parameter (tensor)</li>
+<li><code>group</code> stores optimizer attributes of the parameter group</li>
+<li><code>grad</code> is the current gradient tensor $g_t$ for the parameter $\theta_{t-1}$</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">97</span>    <span class="k">def</span> <span class="nf">get_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                <p>Get $\beta_1$ and $\beta_2$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">107</span>        <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;betas&#39;</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>Get $m_{t-1}$ and $s_{t-1}$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">110</span>        <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;exp_avg&#39;</span><span class="p">],</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;exp_avg_var&#39;</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>In-place calculation of $m_t$
+<script type="math/tex; mode=display">m_t \leftarrow \beta_1 m_{t-1} + (1 - \beta_1) \cdot g_t</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">114</span>        <span class="n">m</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">beta1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Difference between gradient and momentum</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">116</span>        <span class="n">grad_residual</span> <span class="o">=</span> <span class="n">grad</span> <span class="o">-</span> <span class="n">m</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>In-place calculation of $s_t$
+<script type="math/tex; mode=display">s_t \leftarrow \beta_2 s_{t-1} + (1 - \beta_2) \cdot (g_t - m_t)^2</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">119</span>        <span class="n">s</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">.</span><span class="n">addcmul_</span><span class="p">(</span><span class="n">grad_residual</span><span class="p">,</span> <span class="n">grad_residual</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">beta2</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                <p>If this parameter group is using <code>amsgrad</code></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">122</span>        <span class="k">if</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;amsgrad&#39;</span><span class="p">]:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                <p>Get $\max(s_1, s_2, &hellip;, s_{t-1})$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">124</span>            <span class="n">s_max</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;max_exp_avg_var&#39;</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                <p>Calculate $\max(s_1, s_2, &hellip;, s_{t-1}, s_t)$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">126</span>            <span class="n">torch</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">s_max</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">s_max</span><span class="p">)</span>
+<span class="lineno">127</span>
+<span class="lineno">128</span>            <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">s_max</span>
+<span class="lineno">129</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                <p>$m_t$ and $s_t$ otherwise</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">131</span>            <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-20'>#</a>
+                </div>
+                <h3>Take an update step for a given parameter tensor</h3>
+<ul>
+<li><code>state</code> is the optimizer state of the parameter (tensor)</li>
+<li><code>group</code> stores optimizer attributes of the parameter group</li>
+<li><code>grad</code> is the current gradient tensor  $g_t$ for the parameter $\theta_{t-1}$</li>
+<li><code>param</code> is the parameter tensor $\theta_{t-1}$</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">133</span>    <span class="k">def</span> <span class="nf">step_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-21'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-21'>#</a>
+                </div>
+                <p>Calculate weight decay</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">144</span>        <span class="n">grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">grad</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-22'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-22'>#</a>
+                </div>
+                <p>Get $m_t$ and $v_t$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">147</span>        <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ms</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-23'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-23'>#</a>
+                </div>
+                <p>Increment $t$ the number of optimizer steps</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">150</span>        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="lineno">151</span>
+<span class="lineno">152</span>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectify</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-24'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-24'>#</a>
+                </div>
+                <p>Perform <em>Adam</em> update, defined in <a href="adam.html"><code>adam.py</code></a>, with
+$\color{cyan}{s_t} + \color{red}{\epsilon}$ in place of $v_t$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">155</span>            <span class="bp">self</span><span class="o">.</span><span class="n">adam_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">])</span>
+<span class="lineno">156</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-25'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-25'>#</a>
+                </div>
+                <p>Perform <em>Rectified Adam</em> update defined in <a href="radam.html"><code>radam.py</code></a>, with
+$\color{cyan}{s_t} + \color{red}{\epsilon}$ in place of $v_t$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">159</span>            <span class="bp">self</span><span class="o">.</span><span class="n">r_adam_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

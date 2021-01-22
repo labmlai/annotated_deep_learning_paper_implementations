@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A simple PyTorch implementation/tutorial of Long Short-Term Memory (LSTM) modules."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Long Short-Term Memory (LSTM)"/>
+    <meta name="twitter:description" content="A simple PyTorch implementation/tutorial of Long Short-Term Memory (LSTM) modules."/>
+    <meta name="twitter:site" content="@vpj"/>
+    <meta name="twitter:creator" content="@vpj"/>
+
+    <meta property="og:url" content="https://lab-ml.com/lstm/index.html"/>
+    <meta property="og:title" content="Long Short-Term Memory (LSTM)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Long Short-Term Memory (LSTM)"/>
+    <meta property="og:description" content="A simple PyTorch implementation/tutorial of Long Short-Term Memory (LSTM) modules."/>
+
+    <title>Long Short-Term Memory (LSTM)</title>
+    <link rel="stylesheet" href="../pylit.css">
+    <link rel="canonical" href="https://lab-ml.com/lstm/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="index.html">lstm</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/lstm/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>Long Short-Term Memory (LSTM)</h1>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">10</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="lineno">11</span>
+<span class="lineno">12</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">13</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">14</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>Long Short-Term Memory Cell</h2>
+<p>LSTM Cell computes $c$, and $h$. $c$ is like the long-term memory,
+and $h$ is like the short term memory.
+We use the input $x$ and $h$ to update the long term memory.
+In the update, some features of $c$ are cleared with a forget gate $f$,
+and some features $i$ are added through a gate $g$.</p>
+<p>The new short term memory is the $\tanh$ of the long-term memory
+multiplied by the output gate $o$.</p>
+<p>Note that the cell doesn&rsquo;t look at long term memory $c$ when doing the update
+for the update. It only modifies it.
+Also $c$ never goes through a linear transformation.
+This is what solves vanishing and exploding gradients.</p>
+<p>Here&rsquo;s the update rule.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+c_t &= \sigma(f_t) \odot c_{t-1} + \sigma(i_t) \odot \tanh(g_t) \\
+h_t &= \sigma(o_t) \odot \tanh(c_t)
+\end{align}</script>
+</p>
+<p>$\odot$ stands for element-wise multiplication.</p>
+<p>Intermediate values and gates are computed as linear transformations of the hidden
+state and input.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+i_t &= lin_x^i(x_t) + lin_h^i(h_{t-1}) \\
+f_t &= lin_x^f(x_t) + lin_h^f(h_{t-1}) \\
+g_t &= lin_x^g(x_t) + lin_h^g(h_{t-1}) \\
+o_t &= lin_x^o(x_t) + lin_h^o(h_{t-1})
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">18</span><span class="k">class</span> <span class="nc">LSTMCell</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">57</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">layer_norm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="lineno">58</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p>These are the linear layer to transform the <code>input</code> and <code>hidden</code> vectors.
+One of them doesn&rsquo;t need a bias since we add the transformations.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>This combines $lin_x^i$, $lin_x^f$, $lin_x^g$, and $lin_x^o$ transformations.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">64</span>        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_lin</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>This combines $lin_h^i$, $lin_h^f$, $lin_h^g$, and $lin_h^o$ transformations.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">66</span>        <span class="bp">self</span><span class="o">.</span><span class="n">input_lin</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Whether to apply layer normalizations.</p>
+<p>Applying layer normalization gives better results.
+$i$, $f$, $g$ and $o$ embeddings are normalized and $c_t$ is normalized in
+$h_t = o_t \odot \tanh(\mathop{LN}(c_t))$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">73</span>        <span class="k">if</span> <span class="n">layer_norm</span><span class="p">:</span>
+<span class="lineno">74</span>            <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)])</span>
+<span class="lineno">75</span>            <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm_c</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">)</span>
+<span class="lineno">76</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">77</span>            <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)])</span>
+<span class="lineno">78</span>            <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm_c</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">80</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>We compute the linear transformations for $i_t$, $f_t$, $g_t$ and $o_t$
+using the same linear layers.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">83</span>        <span class="n">ifgo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_lin</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_lin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>Each layer produces an output of 4 times the <code>hidden_size</code> and we split them</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">85</span>        <span class="n">ifgo</span> <span class="o">=</span> <span class="n">ifgo</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Apply layer normalization (not in original paper, but gives better results)</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">88</span>        <span class="n">ifgo</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">ifgo</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">i_t, f_t, g_t, o_t</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">91</span>        <span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">o</span> <span class="o">=</span> <span class="n">ifgo</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">c_t = \sigma(f_t) \odot c_{t-1} + \sigma(i_t) \odot \tanh(g_t) </script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">94</span>        <span class="n">c_next</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">h_t = \sigma(o_t) \odot \tanh(c_t)</script>
+Optionally, apply layer norm to $c_t$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">98</span>        <span class="n">h_next</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_norm_c</span><span class="p">(</span><span class="n">c_next</span><span class="p">))</span>
+<span class="lineno">99</span>
+<span class="lineno">100</span>        <span class="k">return</span> <span class="n">h_next</span><span class="p">,</span> <span class="n">c_next</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <h2>Multilayer LSTM</h2>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">103</span><span class="k">class</span> <span class="nc">LSTM</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>Create a network of <code>n_layers</code> of LSTM.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">108</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">113</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">114</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span> <span class="o">=</span> <span class="n">n_layers</span>
+<span class="lineno">115</span>        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                <p>Create cells for each layer. Note that only the first layer gets the input directly.
+Rest of the layers get the input from the layer below</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">118</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cells</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">LSTMCell</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)]</span> <span class="o">+</span>
+<span class="lineno">119</span>                                   <span class="p">[</span><span class="n">LSTMCell</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                <p><code>x</code> has shape <code>[n_steps, batch_size, input_size]</code> and
+<code>state</code> is a tuple of $h$ and $c$, each with a shape of <code>[batch_size, hidden_size]</code>.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">121</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">126</span>        <span class="n">n_steps</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-20'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-20'>#</a>
+                </div>
+                <p>Initialize the state if <code>None</code></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">129</span>        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">130</span>            <span class="n">h</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">)]</span>
+<span class="lineno">131</span>            <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">)]</span>
+<span class="lineno">132</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">133</span>            <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-21'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-21'>#</a>
+                </div>
+                <p>Reverse stack the tensors to get the states of each layer <br />
+📝 You can just work with the tensor itself but this is easier to debug</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">136</span>            <span class="n">h</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">h</span><span class="p">)),</span> <span class="nb">list</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">c</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-22'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-22'>#</a>
+                </div>
+                <p>Array to collect the outputs of the final layer at each time step.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">139</span>        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">140</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-23'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-23'>#</a>
+                </div>
+                <p>Input to the first layer is the input itself</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">142</span>            <span class="n">inp</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">t</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-24'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-24'>#</a>
+                </div>
+                <p>Loop through the layers</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">144</span>            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-25'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-25'>#</a>
+                </div>
+                <p>Get the state of the layer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">146</span>                <span class="n">h</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cells</span><span class="p">[</span><span class="n">layer</span><span class="p">](</span><span class="n">inp</span><span class="p">,</span> <span class="n">h</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">layer</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-26'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-26'>#</a>
+                </div>
+                <p>Input to the next layer is the state of this layer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">148</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-27'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-27'>#</a>
+                </div>
+                <p>Collect the output $h$ of the final layer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">150</span>            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-28'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-28'>#</a>
+                </div>
+                <p>Stack the outputs and states</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">153</span>        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+<span class="lineno">154</span>        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="lineno">155</span>        <span class="n">c</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+<span class="lineno">156</span>
+<span class="lineno">157</span>        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
