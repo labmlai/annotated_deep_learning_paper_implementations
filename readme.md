@@ -1,5 +1,5 @@
 [![Join Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/)
-[![Twitter](https://img.shields.io/twitter/follow/LabML1?style=social)](https://twitter.com/LabML1)
+[![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai)
 
 # [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
 
