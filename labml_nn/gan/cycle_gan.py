@@ -444,6 +444,10 @@ class Configs(BaseConfigs):
         $$G^{*}, F^{*} = \arg \min_{G,F} \max_{D_X, D_Y} \mathcal{L}(G, F, D_X, D_Y)$$
 
         where,
+        $G$ translates images from $X \rightarrow Y$,
+        $F$ translates images from $Y \rightarrow X$,
+        $D_X$ tests if images are from $X$ space,
+        $D_Y$ tests if images are from $Y$ space, and
         \begin{align}
         \mathcal{L}(G, F, D_X, D_Y)
             &= \mathcal{L}_{GAN}(G, D_Y, X, Y) \\
