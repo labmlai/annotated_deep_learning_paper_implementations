@@ -13,6 +13,24 @@ This is an implementation of paper
 
 I've taken pieces of code from [https://github.com/eriklindernoren/PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).
 It is a very good resource if you want to checkout other GAN variations too.
+
+Cycle GAN does image-to-image translation.
+It trains a model to translate an image from given distribution to another, say images of class A and B
+Images of a certain distribution could be things like images of a certain style, or nature.
+The models do not need paired images between A and B.
+Just a set of images of each class is enough.
+This works very well on changing between image styles, lighting changes, pattern changes, etc.
+For example, changing summer to winter, painting style to photos, and horses to zebras.
+
+Cycle GAN trains two generator models and two discriminator models.
+One generator translates images from A to B and the other from B to A.
+The discriminators test whether the generated images look real.
+
+This file contains the model code as well as training code.
+We also have a Google Colab notebook.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/gan/cycle_gan.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=93b11a665d6811ebaac80242ac1c0002)
 """
 
 import itertools
@@ -192,43 +210,67 @@ def load_image(path: str):
 
 class ImageDataset(Dataset):
     """
-    Dataset to load images
+    ### Dataset to load images
     """
 
     @staticmethod
     def download(dataset_name: str):
+        """
+        #### Download dataset and extract data
+        """
+        # URL
         url = f'https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/{dataset_name}.zip'
+        # Download folder
         root = lab.get_data_path() / 'cycle_gan'
         if not root.exists():
             root.mkdir(parents=True)
+        # Download destination
         archive = root / f'{dataset_name}.zip'
+        # Download file (generally ~100MB)
         download_file(url, archive)
+        # Extract the archive
         with zipfile.ZipFile(archive, 'r') as f:
             f.extractall(root)
 
-    def __init__(self, dataset_name: str, transforms_, unaligned: bool, mode: str):
+    def __init__(self, dataset_name: str, transforms_, mode: str):
+        """
+        #### Initialize the dataset
+
+        * `dataset_name` is the name of the dataset
+        * `transforms_` is the set of image transforms
+        * `mode` is either `train` or `test`
+        """
+        # Dataset path
         root = lab.get_data_path() / 'cycle_gan' / dataset_name
+        # Download if missing
         if not root.exists():
             self.download(dataset_name)
 
+        # Image transforms
         self.transform = transforms.Compose(transforms_)
-        self.unaligned = unaligned
 
+        # Get image paths
         path_a = root / f'{mode}A'
         path_b = root / f'{mode}B'
         self.files_a = sorted(str(f) for f in path_a.iterdir())
         self.files_b = sorted(str(f) for f in path_b.iterdir())
 
     def __getitem__(self, index):
+        # Return a pair of images.
+        # These pairs get batched together, and they do not act like pairs in training
+        # So it is kind of ok that we always keep giving the same pair.
         return {"x": self.transform(load_image(self.files_a[index % len(self.files_a)])),
                 "y": self.transform(load_image(self.files_b[index % len(self.files_b)]))}
 
     def __len__(self):
+        # Number of images in the dataset
         return max(len(self.files_a), len(self.files_b))
 
 
 class ReplayBuffer:
     """
+    ### Replay Buffer
+
     Replay buffer is used to train the discriminator.
     Generated images are added to the replay buffer and sampled from it.
 
@@ -380,7 +422,7 @@ class Configs(BaseConfigs):
 
         # Training data loader
         self.dataloader = DataLoader(
-            ImageDataset(self.dataset_name, transforms_, True, 'train'),
+            ImageDataset(self.dataset_name, transforms_, 'train'),
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.data_loader_workers,
@@ -388,7 +430,7 @@ class Configs(BaseConfigs):
 
         # Validation data loader
         self.valid_dataloader = DataLoader(
-            ImageDataset(self.dataset_name, transforms_, True, "test"),
+            ImageDataset(self.dataset_name, transforms_, "test"),
             batch_size=5,
             shuffle=True,
             num_workers=self.data_loader_workers,
@@ -698,7 +740,7 @@ def evaluate():
         # I was trying with yosemite photos, they look awesome.
         # You can use `conf.dataset_name`, if you specified `dataset_name` as something you wanted to be calculated
         # in the call to `experiment.configs`
-        dataset = ImageDataset(conf.dataset_name, transforms_, True, 'train')
+        dataset = ImageDataset(conf.dataset_name, transforms_, 'train')
         # Get an images from dataset
         x_image = dataset[10]['x']
         # Display the image
