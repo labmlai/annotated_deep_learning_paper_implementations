@@ -493,7 +493,7 @@ class Configs(BaseConfigs):
         # Loop through epochs
         for epoch in monit.loop(self.epochs):
             # Loop through the dataset
-            for i, batch in enumerate(self.dataloader):
+            for i, batch in monit.enum('Train', self.dataloader):
                 # Move images to the device
                 data_x, data_y = batch['x'].to(self.device), batch['y'].to(self.device)
 
@@ -528,6 +528,8 @@ class Configs(BaseConfigs):
             # Update learning rates
             self.generator_lr_scheduler.step()
             self.discriminator_lr_scheduler.step()
+            # New line
+            tracker.new_line()
 
     def optimize_generators(self, data_x: torch.Tensor, data_y: torch.Tensor, true_labels: torch.Tensor):
         """
