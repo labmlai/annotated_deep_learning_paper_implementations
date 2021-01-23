@@ -11,7 +11,7 @@ summary: >
 This is an implementation of paper
 [Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593).
 
-I've taken pieces of code from [https://github.com/eriklindernoren/PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).
+I've taken pieces of code from [eriklindernoren/PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).
 It is a very good resource if you want to checkout other GAN variations too.
 
 Cycle GAN does image-to-image translation.
