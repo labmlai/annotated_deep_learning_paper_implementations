@@ -170,6 +170,7 @@ def switch_transformer(c: Configs):
     """
     from labml_nn.transformers.switch import SwitchTransformer, SwitchTransformerLayer, SwitchFeedForward
     from labml_nn.transformers import MultiHeadAttention
+    from labml_nn.transformers.models import FeedForward
 
     return SwitchTransformer(
         SwitchTransformerLayer(d_model=c.d_model,
@@ -178,9 +179,8 @@ def switch_transformer(c: Configs):
                                                               drop_tokens=c.drop_tokens,
                                                               is_scale_prob=c.is_scale_prob,
                                                               n_experts=c.n_experts,
-                                                              d_model=c.d_model,
-                                                              d_ff=c.d_ff,
-                                                              dropout=c.dropout),
+                                                              expert=FeedForward(c.d_model, c.d_ff, c.dropout),
+                                                              d_model=c.d_model),
                                dropout_prob=c.dropout),
         c.n_layers)
 

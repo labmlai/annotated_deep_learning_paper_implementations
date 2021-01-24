@@ -55,14 +55,14 @@ class SwitchFeedForward(Module):
                  drop_tokens: bool,
                  is_scale_prob: bool,
                  n_experts: int,
-                 d_model: int,
-                 d_ff: int,
-                 dropout: float = 0.1):
+                 expert: FeedForward,
+                 d_model: int):
         """
         * `capacity_factor` is the capacity of each expert as a factor relative to ideally balanced load
         * `drop_tokens` specifies whether to drop tokens if more tokens are routed to an expert than the capacity
         * `is_scale_prob` specifies whether to multiply the input to the FFN by the routing probability
         * `n_experts` is the number of experts
+        * `expert` is the expert layer, a [FFN module](../models.html#FeedForward)
         * `d_model` is the number of features in a token embedding
         * `d_ff` is the number of features in the hidden layer of the FFN
         * `dropout` is dropout probability in the FFN
@@ -74,8 +74,8 @@ class SwitchFeedForward(Module):
         self.n_experts = n_experts
         self.drop_tokens = drop_tokens
 
-        # [FFN modules](../models.html#FeedForward) for each expert
-        self.experts = nn.ModuleList([FeedForward(d_model, d_ff, dropout) for _ in range(n_experts)])
+        # make copies of the FFNs
+        self.experts = clone_module_list(expert, n_experts)
         # Routing layer and softmax
         self.switch = nn.Linear(d_model, n_experts)
         self.softmax = nn.Softmax(dim=-1)
@@ -167,7 +167,7 @@ class SwitchTransformerLayer(Module):
     """
     # Switch Transformer Block
 
-    This is same as [normal transformer block]([FFN modules](../models.html#FeedForward)
+    This is same as [normal transformer block](../models.html#TransformerLayer)
     with handling extra outputs of switch feedforward module.
     """
     def __init__(self, *,
