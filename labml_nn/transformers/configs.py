@@ -9,9 +9,9 @@ summary: These are configurable components that can be re-used quite easily.
 import copy
 
 import torch.nn as nn
+
 from labml.configs import BaseConfigs, option, calculate
 from labml_helpers.module import Module
-
 from .mha import MultiHeadAttention
 from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, FeedForward, \
     TransformerLayer, Encoder, Decoder, Generator, EncoderDecoder
@@ -85,7 +85,7 @@ def _feed_forward_activation_relu():
 
 
 @option(TransformerConfigs.feed_forward_activation, 'GELU')
-def _feed_forward_activation_relu():
+def _feed_forward_activation_gelu():
     """
     GELU activation
     """
@@ -103,6 +103,7 @@ def _feed_forward(c: TransformerConfigs):
 # ### Multi-head Attention
 def _mha(c: TransformerConfigs):
     return MultiHeadAttention(c.n_heads, c.d_model)
+
 
 calculate(TransformerConfigs.encoder_attn, 'mha', _mha)
 calculate(TransformerConfigs.decoder_attn, 'mha', _mha)
