@@ -12,12 +12,12 @@ This is a miniature implementation of the paper
 Our implementation only has a few million parameters and doesn't do model parallel distributed training.
 It does single GPU training but we implement the concept of switching as described in the paper.
 
-The Switch Transformer is uses different parameters for each tokens by switching among parameters,
+The Switch Transformer uses different parameters for each token by switching among parameters,
 based on the token. So only a fraction of parameters is chosen for each token, so you
-can have more parameters but a less computational cost.
+can have more parameters but less computational cost.
 
 The switching happens at the Position-wise Feedforward network (FFN) of of each transformer block.
-Position-wise feedforward network is a two sequential fully connected layers.
+Position-wise feedforward network is a two sequentially fully connected layers.
 In switch transformer we have multiple FFNs (multiple experts) and
 we chose which one to use based on a router.
 The outputs a set of probabilities for picking a FFN,
