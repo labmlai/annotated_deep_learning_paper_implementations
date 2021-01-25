@@ -16,7 +16,6 @@ from .feed_forward import FeedForward
 from .mha import MultiHeadAttention
 from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, TransformerLayer, \
     Encoder, Decoder, Generator, EncoderDecoder
-from .. import activations
 
 
 class FeedForwardConfigs(BaseConfigs):
@@ -102,7 +101,7 @@ aggregate(FeedForwardConfigs.glu_variant, 'SwiGLU',
           (FeedForwardConfigs.bias1, False),
           (FeedForwardConfigs.bias2, False),
           (FeedForwardConfigs.bias_gate, False),
-          (FeedForwardConfigs.activation, activations.Swish()))
+          (FeedForwardConfigs.activation, nn.SiLU()))
 
 
 class TransformerConfigs(BaseConfigs):

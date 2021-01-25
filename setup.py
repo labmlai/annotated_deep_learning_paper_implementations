@@ -5,7 +5,7 @@ with open("readme.md", "r") as f:
 
 setuptools.setup(
     name='labml-nn',
-    version='0.4.81',
+    version='0.4.82',
     author="Varuna Jayasiri, Nipun Wijerathne",
     author_email="vpjayasiri@gmail.com, hnipun@gmail.com",
     description="A collection of PyTorch implementations of neural network architectures and layers.",
@@ -20,7 +20,7 @@ setuptools.setup(
                                                'labml_helpers', 'labml_helpers.*',
                                                'test',
                                                'test.*')),
-    install_requires=['labml>=0.4.94',
+    install_requires=['labml>=0.4.97',
                       'labml-helpers>=0.4.72',
                       'torch',
                       'einops',

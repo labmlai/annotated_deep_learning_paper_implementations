@@ -104,7 +104,7 @@ def main():
                         'inner_iterations': 10,
 
                         # GLU Variant, one of GLU, Bilinear, ReGLU, GEGLU, SwiGLU
-                        'transformer.ffn.glu_variant': 'GLU',
+                        'transformer.ffn.glu_variant': 'Bilinear',
 
                         # Transformer configurations
                         'transformer.d_model': 256,
