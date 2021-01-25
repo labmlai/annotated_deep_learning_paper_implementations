@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Documented reusable implementation of the position wise feedforward network."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Position-wise Feed-Forward Network (FFN)"/>
+    <meta name="twitter:description" content="Documented reusable implementation of the position wise feedforward network."/>
+    <meta name="twitter:site" content="@vpj"/>
+    <meta name="twitter:creator" content="@vpj"/>
+
+    <meta property="og:url" content="https://lab-ml.com/transformers/feed_forward.html"/>
+    <meta property="og:title" content="Position-wise Feed-Forward Network (FFN)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Position-wise Feed-Forward Network (FFN)"/>
+    <meta property="og:description" content="Documented reusable implementation of the position wise feedforward network."/>
+
+    <title>Position-wise Feed-Forward Network (FFN)</title>
+    <link rel="stylesheet" href="../pylit.css">
+    <link rel="canonical" href="https://lab-ml.com/transformers/feed_forward.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">transformers</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/transformers/feed_forward.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>Position-wise Feed-Forward Network (FFN)</h1>
+<p>FFN consists of two fully connected layers.
+Number of dimensions in the hidden layer $d_{ff}$, is generally set to around
+four times that of the token embedding $d_{model}$.
+So it is sometime also called the expand-and-contract network.</p>
+<p>There is an activation at the hidden layer, which is
+usually set to ReLU (Rectified Linear Unit) activation, <script type="math/tex; mode=display">\max(0, x)</script>
+</p>
+<p>That is, the FFN function is,
+<script type="math/tex; mode=display">FFN(x, W_1, W_2, b_1, b_2) = \max(0, x W_1 + b_1) W_2 + b_2</script>
+where $W_1$, $W_2$, $b_1$ and $b_2$ are learnable parameters.</p>
+<p>Sometimes the
+GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
+<script type="math/tex; mode=display">x \Phi(x)</script> where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">26</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="lineno">28</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>Position-wise feed-forward network (FFN) module</h2>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">32</span><span class="k">class</span> <span class="nc">FeedForward</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <ul>
+<li><code>d_model</code> is the number of features in a token embedding</li>
+<li><code>d_ff</code> is the number of features in the hidden layer of the FFN</li>
+<li><code>dropout</code> is dropout probability for the hidden layer</li>
+<li><code>is_gated</code> specifies whether the hidden layer is gated</li>
+<li><code>bias1</code> specified whether the first fully connected layer should have a learnable bias</li>
+<li><code>bias2</code> specified whether the second fully connected layer should have a learnable bias</li>
+<li><code>bias_gate</code> specified whether the fully connected layer for the gate should have a learnable bias</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">38</span>                 <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="lineno">39</span>                 <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+<span class="lineno">40</span>                 <span class="n">is_gated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="lineno">41</span>                 <span class="n">bias1</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="lineno">42</span>                 <span class="n">bias2</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="lineno">43</span>                 <span class="n">bias_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">53</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">54</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias1</span><span class="p">)</span>
+<span class="lineno">55</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias2</span><span class="p">)</span>
+<span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+<span class="lineno">57</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+<span class="lineno">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span> <span class="o">=</span> <span class="n">is_gated</span>
+<span class="lineno">59</span>        <span class="k">if</span> <span class="n">is_gated</span><span class="p">:</span>
+<span class="lineno">60</span>            <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias_gate</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">62</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">63</span>        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="lineno">64</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span><span class="p">:</span>
+<span class="lineno">65</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">66</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">67</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span>
+<span class="lineno">68</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">69</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

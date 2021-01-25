@@ -1,3 +1,28 @@
+"""
+---
+title: Position-wise Feed-Forward Network (FFN)
+summary: Documented reusable implementation of the position wise feedforward network.
+---
+
+# Position-wise Feed-Forward Network (FFN)
+
+FFN consists of two fully connected layers.
+Number of dimensions in the hidden layer $d_{ff}$, is generally set to around
+four times that of the token embedding $d_{model}$.
+So it is sometime also called the expand-and-contract network.
+
+There is an activation at the hidden layer, which is
+usually set to ReLU (Rectified Linear Unit) activation, $$\max(0, x)$$
+
+That is, the FFN function is,
+$$FFN(x, W_1, W_2, b_1, b_2) = \max(0, x W_1 + b_1) W_2 + b_2$$
+where $W_1$, $W_2$, $b_1$ and $b_2$ are learnable parameters.
+
+Sometimes the
+GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
+$$x \Phi(x)$$ where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$
+"""
+
 import torch
 from torch import nn as nn
 
@@ -6,9 +31,7 @@ from labml_helpers.module import Module
 
 class FeedForward(Module):
     """
-    <a id="FeedForward">
-    ## Position-wise feed-forward network (FFN) with hidden layer
-    </a>
+    ## Position-wise feed-forward network (FFN) module
     """
 
     def __init__(self, d_model: int, d_ff: int,

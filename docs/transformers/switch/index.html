@@ -43,6 +43,7 @@
     <div class='section'>
         <div class='docs'>
             <p>
+                <a class="parent" href="/">home</a>
                 <a class="parent" href="../index.html">transformers</a>
                 <a class="parent" href="index.html">switch</a>
             </p>
@@ -75,11 +76,11 @@
 <a href="https://arxiv.org/abs/2101.03961">Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity</a>.
 Our implementation only has a few million parameters and doesn&rsquo;t do model parallel distributed training.
 It does single GPU training but we implement the concept of switching as described in the paper.</p>
-<p>The Switch Transformer is uses different parameters for each tokens by switching among parameters,
+<p>The Switch Transformer uses different parameters for each token by switching among parameters,
 based on the token. So only a fraction of parameters is chosen for each token, so you
-can have more parameters but a less computational cost.</p>
+can have more parameters but less computational cost.</p>
 <p>The switching happens at the Position-wise Feedforward network (FFN) of of each transformer block.
-Position-wise feedforward network is a two sequential fully connected layers.
+Position-wise feedforward network is a two sequentially fully connected layers.
 In switch transformer we have multiple FFNs (multiple experts) and
 we chose which one to use based on a router.
 The outputs a set of probabilities for picking a FFN,
@@ -100,7 +101,7 @@ discusses dropping tokens when routing is not balanced.</p>
 <span class="lineno">41</span>
 <span class="lineno">42</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span>
-<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.models</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
 <span class="lineno">45</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
             </div>
         </div>
@@ -125,6 +126,7 @@ discusses dropping tokens when routing is not balanced.</p>
 <li><code>drop_tokens</code> specifies whether to drop tokens if more tokens are routed to an expert than the capacity</li>
 <li><code>is_scale_prob</code> specifies whether to multiply the input to the FFN by the routing probability</li>
 <li><code>n_experts</code> is the number of experts</li>
+<li><code>expert</code> is the expert layer, a <a href="../feed_forward.html">FFN module</a></li>
 <li><code>d_model</code> is the number of features in a token embedding</li>
 <li><code>d_ff</code> is the number of features in the hidden layer of the FFN</li>
 <li><code>dropout</code> is dropout probability in the FFN</li>
@@ -136,9 +138,8 @@ discusses dropping tokens when routing is not balanced.</p>
 <span class="lineno">55</span>                 <span class="n">drop_tokens</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="lineno">56</span>                 <span class="n">is_scale_prob</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="lineno">57</span>                 <span class="n">n_experts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">58</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">59</span>                 <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">60</span>                 <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span></pre></div>
+<span class="lineno">58</span>                 <span class="n">expert</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
+<span class="lineno">59</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -162,10 +163,10 @@ discusses dropping tokens when routing is not balanced.</p>
                 <div class='section-link'>
                     <a href='#section-4'>#</a>
                 </div>
-                <p><a href="../models.html#FeedForward">FFN modules</a> for each expert</p>
+                <p>make copies of the FFNs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">experts</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">FeedForward</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_experts</span><span class="p">)])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">experts</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">expert</span><span class="p">,</span> <span class="n">n_experts</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -471,7 +472,7 @@ These are used for the load balancing loss and logging</p>
                     <a href='#section-30'>#</a>
                 </div>
                 <h1>Switch Transformer Block</h1>
-<p>This is same as [normal transformer block](<a href="../models.html#FeedForward">FFN modules</a>
+<p>This is same as <a href="../models.html#TransformerLayer">normal transformer block</a>
 with handling extra outputs of switch feedforward module.</p>
             </div>
             <div class='code'>

@@ -12,6 +12,8 @@ from typing import Callable
 
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+
 from labml import lab, monit, logger, tracker
 from labml.configs import option
 from labml.logger import Text
@@ -20,8 +22,6 @@ from labml_helpers.device import DeviceConfigs
 from labml_helpers.metrics.accuracy import Accuracy
 from labml_helpers.module import Module
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
-from torch.utils.data import DataLoader
-
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
@@ -172,6 +172,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 
         # Print the sampled output
         logger.log(log)
+
 
 @option(NLPAutoRegressionConfigs.optimizer)
 def _optimizer(c: NLPAutoRegressionConfigs):
