@@ -40,7 +40,7 @@ from torch import nn
 
 from labml_helpers.module import Module
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
-from labml_nn.transformers.models import FeedForward
+from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.utils import clone_module_list
 
 

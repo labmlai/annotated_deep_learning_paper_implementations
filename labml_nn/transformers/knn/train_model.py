@@ -124,7 +124,7 @@ def main():
 
                         # Transformer configurations
                         'transformer.d_model': 256,
-                        'transformer.d_ff': 1024,
+                        'transformer.ffn.d_ff': 1024,
                         'transformer.n_heads': 8,
                         'transformer.n_layers': 6})
 

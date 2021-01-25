@@ -10,11 +10,99 @@ import copy
 
 import torch.nn as nn
 
-from labml.configs import BaseConfigs, option, calculate
+from labml.configs import BaseConfigs, option, calculate, aggregate
 from labml_helpers.module import Module
+from .feed_forward import FeedForward
 from .mha import MultiHeadAttention
-from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, FeedForward, \
-    TransformerLayer, Encoder, Decoder, Generator, EncoderDecoder
+from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, TransformerLayer, \
+    Encoder, Decoder, Generator, EncoderDecoder
+from .. import activations
+
+
+class FeedForwardConfigs(BaseConfigs):
+    # Position-wise feedforward layer
+    ffn: FeedForward
+    # Number of features in the embedding
+    d_model: int
+    # Number of features in in the hidden layer
+    d_ff: int = 2048
+    # Dropout probability
+    dropout: float = 0.1
+    # Activation in position-wise feedforward layer
+    activation: nn.Module = 'ReLU'
+    # Whether the FFN layer should be gated
+    is_gated: bool = False
+    # Whether the first fully connected layer should have a learnable bias
+    bias1: bool = True
+    # Whether the second fully connected layer should have a learnable bias
+    bias2: bool = True
+    # Whether the fully connected layer for the gate should have a learnable bias
+    bias_gate: bool = False
+    # Predefined GLU variants
+    glu_variant: str = 'none'
+
+
+@option(FeedForwardConfigs.activation, 'ReLU')
+def _ffn_activation_relu():
+    """
+    ReLU activation
+    """
+    return nn.ReLU()
+
+
+@option(FeedForwardConfigs.activation, 'GELU')
+def _ffn_activation_gelu():
+    """
+    GELU activation
+    """
+    return nn.GELU()
+
+
+@option(FeedForwardConfigs.ffn, 'default')
+def _feed_forward(c: FeedForwardConfigs):
+    """
+    Create feedforward layer
+    """
+    return FeedForward(c.d_model, c.d_ff,
+                       dropout=c.dropout,
+                       activation=c.activation,
+                       is_gated=c.is_gated,
+                       bias1=c.bias1,
+                       bias2=c.bias2,
+                       bias_gate=c.bias_gate)
+
+
+aggregate(FeedForwardConfigs.glu_variant, 'GLU',
+          (FeedForwardConfigs.is_gated, True),
+          (FeedForwardConfigs.bias1, False),
+          (FeedForwardConfigs.bias2, False),
+          (FeedForwardConfigs.bias_gate, False),
+          (FeedForwardConfigs.activation, nn.Sigmoid()))
+
+aggregate(FeedForwardConfigs.glu_variant, 'Bilinear',
+          (FeedForwardConfigs.is_gated, True),
+          (FeedForwardConfigs.bias1, False),
+          (FeedForwardConfigs.bias2, False),
+          (FeedForwardConfigs.bias_gate, False),
+          (FeedForwardConfigs.activation, nn.Identity()))
+aggregate(FeedForwardConfigs.glu_variant, 'ReGLU',
+          (FeedForwardConfigs.is_gated, True),
+          (FeedForwardConfigs.bias1, False),
+          (FeedForwardConfigs.bias2, False),
+          (FeedForwardConfigs.bias_gate, False),
+          (FeedForwardConfigs.activation, nn.ReLU()))
+aggregate(FeedForwardConfigs.glu_variant, 'GEGLU',
+          (FeedForwardConfigs.is_gated, True),
+          (FeedForwardConfigs.bias1, False),
+          (FeedForwardConfigs.bias2, False),
+          (FeedForwardConfigs.bias_gate, False),
+          (FeedForwardConfigs.activation, nn.GELU()))
+aggregate(FeedForwardConfigs.glu_variant, 'SwiGLU',
+          (FeedForwardConfigs.is_gated, True),
+          (FeedForwardConfigs.bias1, False),
+          (FeedForwardConfigs.bias2, False),
+          (FeedForwardConfigs.bias_gate, False),
+          (FeedForwardConfigs.activation, activations.Swish()))
 
 
 class TransformerConfigs(BaseConfigs):
@@ -34,8 +122,6 @@ class TransformerConfigs(BaseConfigs):
     d_model: int = 512
     # Number of layers
     n_layers: int = 6
-    # Number of features in position-wise feedforward layer
-    d_ff: int = 2048
     # Dropout probability
     dropout: float = 0.1
     # Number of tokens in the source vocabulary (for token embeddings)
@@ -49,10 +135,9 @@ class TransformerConfigs(BaseConfigs):
     decoder_attn: MultiHeadAttention = 'mha'
     # The decoder memory attention
     decoder_mem_attn: MultiHeadAttention = 'mha'
-    # Position-wise feedforward layer
-    feed_forward: FeedForward
-    # Activation in position-wise feedforward layer
-    feed_forward_activation: nn.Module = 'ReLU'
+
+    # Configurable Feedforward Layer
+    ffn: FeedForwardConfigs
 
     # Encoder layer
     encoder_layer: TransformerLayer = 'default'
@@ -76,30 +161,6 @@ class TransformerConfigs(BaseConfigs):
     encoder_decoder: EncoderDecoder
 
 
-@option(TransformerConfigs.feed_forward_activation, 'ReLU')
-def _feed_forward_activation_relu():
-    """
-    ReLU activation
-    """
-    return nn.ReLU()
-
-
-@option(TransformerConfigs.feed_forward_activation, 'GELU')
-def _feed_forward_activation_gelu():
-    """
-    GELU activation
-    """
-    return nn.GELU()
-
-
-@option(TransformerConfigs.feed_forward, 'default')
-def _feed_forward(c: TransformerConfigs):
-    """
-    Create feedforward layer
-    """
-    return FeedForward(c.d_model, c.d_ff, c.dropout, c.feed_forward_activation)
-
-
 # ### Multi-head Attention
 def _mha(c: TransformerConfigs):
     return MultiHeadAttention(c.n_heads, c.d_model)
@@ -121,13 +182,24 @@ calculate(TransformerConfigs.decoder_attn, 'relative', _relative_mha)
 calculate(TransformerConfigs.decoder_mem_attn, 'relative', _relative_mha)
 
 
+@option(TransformerConfigs.ffn, 'default')
+def _feed_forward(c: TransformerConfigs):
+    """
+    Create feedforward layer configurations
+    """
+    conf = FeedForwardConfigs()
+    conf.set_default(FeedForwardConfigs.d_model, func=lambda: c.d_model)
+    conf.set_default(FeedForwardConfigs.dropout, func=lambda: c.dropout)
+    return conf
+
+
 @option(TransformerConfigs.encoder_layer, 'default')
 def _encoder_layer(c: TransformerConfigs):
     """
     Encoder layer
     """
     return TransformerLayer(d_model=c.d_model, self_attn=c.encoder_attn,
-                            src_attn=None, feed_forward=copy.deepcopy(c.feed_forward),
+                            src_attn=None, feed_forward=copy.deepcopy(c.ffn.ffn),
                             dropout_prob=c.dropout)
 
 
@@ -137,7 +209,7 @@ def _decoder_layer(c: TransformerConfigs):
     Decoder layer
     """
     return TransformerLayer(d_model=c.d_model, self_attn=c.decoder_attn,
-                            src_attn=c.decoder_mem_attn, feed_forward=copy.deepcopy(c.feed_forward),
+                            src_attn=c.decoder_mem_attn, feed_forward=copy.deepcopy(c.ffn.ffn),
                             dropout_prob=c.dropout)
 
 

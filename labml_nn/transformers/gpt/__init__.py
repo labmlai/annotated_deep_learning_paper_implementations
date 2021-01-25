@@ -118,7 +118,7 @@ def _transformer_configs(c: Configs):
     conf.n_src_vocab = c.n_tokens
     conf.n_tgt_vocab = c.n_tokens
     # GPT uses GELU activation for position wise feedforward
-    conf.feed_forward_activation = 'GELU'
+    conf.ffn.activation = 'GELU'
 
     #
     return conf
@@ -246,7 +246,7 @@ def main():
 
         # Transformer configurations
         'transformer.d_model': 512,
-        'transformer.d_ff': 2048,
+        'transformer.ffn.d_ff': 2048,
         'transformer.n_heads': 8,
         'transformer.n_layers': 6
     })

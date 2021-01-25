@@ -41,7 +41,7 @@ from torch import nn
 
 from labml_helpers.module import Module
 from labml_nn.transformers.mha import MultiHeadAttention
-from labml_nn.transformers.models import FeedForward
+from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.utils import clone_module_list
 
 
@@ -62,7 +62,7 @@ class SwitchFeedForward(Module):
         * `drop_tokens` specifies whether to drop tokens if more tokens are routed to an expert than the capacity
         * `is_scale_prob` specifies whether to multiply the input to the FFN by the routing probability
         * `n_experts` is the number of experts
-        * `expert` is the expert layer, a [FFN module](../models.html#FeedForward)
+        * `expert` is the expert layer, a [FFN module](../feed_forward.html)
         * `d_model` is the number of features in a token embedding
         * `d_ff` is the number of features in the hidden layer of the FFN
         * `dropout` is dropout probability in the FFN

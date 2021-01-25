@@ -170,7 +170,7 @@ def switch_transformer(c: Configs):
     """
     from labml_nn.transformers.switch import SwitchTransformer, SwitchTransformerLayer, SwitchFeedForward
     from labml_nn.transformers import MultiHeadAttention
-    from labml_nn.transformers.models import FeedForward
+    from labml_nn.transformers.feed_forward import FeedForward
 
     return SwitchTransformer(
         SwitchTransformerLayer(d_model=c.d_model,
