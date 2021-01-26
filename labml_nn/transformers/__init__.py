@@ -22,6 +22,12 @@ and derivatives and enhancements of it.
 
 This is an implementation of GPT-2 architecture.
 
+## [GLU Variants](glu_variants/simple.html)
+
+This is an implementation of the paper
+[GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202).
+
+
 ## [kNN-LM](knn)
 
 This is an implementation of the paper

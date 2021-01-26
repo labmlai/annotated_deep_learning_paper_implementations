@@ -1,10 +1,10 @@
 """
-# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
+# [LabML Neural Networks](index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 [These implementations](https://github.com/lab-ml/nn) are documented with explanations,
-and the [website](https://lab-ml.com/labml_nn/index.html)
+and the [website](index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
@@ -13,49 +13,50 @@ implementations.
 
 ## Modules
 
-#### ✨ [Transformers](https://lab-ml.com/labml_nn/transformers)
+#### ✨ [Transformers](transformers/index.html)
 
-[Transformers module](https://lab-ml.com/labml_nn/transformers)
+[Transformers module](transformers/index.html)
 contains implementations for
-[multi-headed attention](https://lab-ml.com/labml_nn/transformers/mha.html)
+[multi-headed attention](transformers/mha.html)
 and
-[relative multi-headed attention](https://lab-ml.com/labml_nn/transformers/relative_mha.html).
+[relative multi-headed attention](transformers/relative_mha.html).
 
-* [GPT Architecture](https://lab-ml.com/labml_nn/transformers/gpt)
-* [kNN-LM: Generalization through Memorization](https://lab-ml.com/labml_nn/transformers/knn)
-* [Feedback Transformer](https://lab-ml.com/labml_nn/transformers/feedback)
-* [Switch Transformer](https://lab-ml.com/labml_nn/transformers/switch)
+* [GPT Architecture](transformers/gpt/index.html)
+* [GLU Variants](transformers/glu_variants/simple.html)
+* [kNN-LM: Generalization through Memorization](transformers/knn/index.html)
+* [Feedback Transformer](transformers/feedback/index.html)
+* [Switch Transformer](transformers/switch/index.html)
 
-#### ✨ [Recurrent Highway Networks](https://lab-ml.com/labml_nn/recurrent_highway_networks)
+#### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 
-#### ✨ [LSTM](https://lab-ml.com/labml_nn/lstm)
+#### ✨ [LSTM](lstm/index.html)
 
-#### ✨ [HyperNetworks - HyperLSTM](https://lab-ml.com/labml_nn/hypernetworks/hyper_lstm.html)
+#### ✨ [HyperNetworks - HyperLSTM](hypernetworks/hyper_lstm.html)
 
-#### ✨ [Capsule Networks](https://lab-ml.com/labml_nn/capsule_networks/)
+#### ✨ [Capsule Networks](capsule_networks/index.html)
 
-#### ✨ [Generative Adversarial Networks](https://lab-ml.com/labml_nn/gan/)
-* [GAN with a multi-layer perceptron](https://lab-ml.com/labml_nn/gan/simple_mnist_experiment.html)
-* [GAN with deep convolutional network](https://lab-ml.com/labml_nn/gan/dcgan.html)
-* [Cycle GAN](https://lab-ml.com/labml_nn/gan/cycle_gan.html)
+#### ✨ [Generative Adversarial Networks](gan/index.html)
+* [GAN with a multi-layer perceptron](gan/simple_mnist_experiment.html)
+* [GAN with deep convolutional network](gan/dcgan.html)
+* [Cycle GAN](gan/cycle_gan.html)
 
-#### ✨ [Sketch RNN](https://lab-ml.com/labml_nn/sketch_rnn/)
+#### ✨ [Sketch RNN](sketch_rnn/index.html)
 
-#### ✨ [Reinforcement Learning](https://lab-ml.com/labml_nn/rl/)
-* [Proximal Policy Optimization](https://lab-ml.com/labml_nn/rl/ppo/) with
- [Generalized Advantage Estimation](https://lab-ml.com/labml_nn/rl/ppo/gae.html)
-* [Deep Q Networks](https://lab-ml.com/labml_nn/rl/dqn/) with
- with [Dueling Network](https://lab-ml.com/labml_nn/rl/dqn/model.html),
- [Prioritized Replay](https://lab-ml.com/labml_nn/rl/dqn/replay_buffer.html)
+#### ✨ [Reinforcement Learning](rl/index.html)
+* [Proximal Policy Optimization](rl/ppo/index.html) with
+ [Generalized Advantage Estimation](rl/ppo/gae.html)
+* [Deep Q Networks](rl/dqn/index.html) with
+ with [Dueling Network](rl/dqn/model.html),
+ [Prioritized Replay](rl/dqn/replay_buffer.html)
  and Double Q Network.
 
-#### ✨ [Optimizers](https://lab-ml.com/labml_nn/optimizers/)
-* [Adam](https://lab-ml.com/labml_nn/optimizers/adam.html)
-* [AMSGrad](https://lab-ml.com/labml_nn/optimizers/amsgrad.html)
-* [Adam Optimizer with warmup](https://lab-ml.com/labml_nn/optimizers/adam_warmup.html)
-* [Noam Optimizer](https://lab-ml.com/labml_nn/optimizers/noam.html)
-* [Rectified Adam Optimizer](https://lab-ml.com/labml_nn/optimizers/radam.html)
-* [AdaBelief Optimizer](https://lab-ml.com/labml_nn/optimizers/ada_belief.html)
+#### ✨ [Optimizers](optimizers/index.html)
+* [Adam](optimizers/adam.html)
+* [AMSGrad](optimizers/amsgrad.html)
+* [Adam Optimizer with warmup](optimizers/adam_warmup.html)
+* [Noam Optimizer](optimizers/noam.html)
+* [Rectified Adam Optimizer](optimizers/radam.html)
+* [AdaBelief Optimizer](optimizers/ada_belief.html)
 
 ### Installation
 

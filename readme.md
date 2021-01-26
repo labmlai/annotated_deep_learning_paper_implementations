@@ -1,13 +1,13 @@
 [![Join Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/)
 [![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai)
 
-# [LabML Neural Networks](https://lab-ml.com/labml_nn/index.html)
+# [LabML Neural Networks](https://nn.labml.ai/index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 These implementations are documented with explanations,
 
-[The website](https://lab-ml.com/labml_nn/index.html)
+[The website](https://nn.labml.ai/index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
@@ -19,49 +19,50 @@ implementations almost weekly.
 
 ## Modules
 
-#### ✨ [Transformers](https://lab-ml.com/labml_nn/transformers)
+#### ✨ [Transformers](https://nn.labml.ai/transformers/index.html)
 
-[Transformers module](https://lab-ml.com/labml_nn/transformers)
+[Transformers module](https://nn.labml.ai/transformers/index.html)
 contains implementations for
-[multi-headed attention](https://lab-ml.com/labml_nn/transformers/mha.html)
+[multi-headed attention](https://nn.labml.ai/transformers/mha.html)
 and
-[relative multi-headed attention](https://lab-ml.com/labml_nn/transformers/relative_mha.html).
+[relative multi-headed attention](https://nn.labml.ai/transformers/relative_mha.html).
 
-* [GPT Architecture](https://lab-ml.com/labml_nn/transformers/gpt)
-* [kNN-LM: Generalization through Memorization](https://lab-ml.com/labml_nn/transformers/knn)
-* [Feedback Transformer](https://lab-ml.com/labml_nn/transformers/feedback)
-* [Switch Transformer](https://lab-ml.com/labml_nn/transformers/switch)
+* [GPT Architecture](https://nn.labml.ai/transformers/gpt/index.html)
+* [GLU Variants](https://nn.labml.ai/transformers/glu_variants/simple.html)
+* [kNN-LM: Generalization through Memorization](https://nn.labml.ai/transformers/knn)
+* [Feedback Transformer](https://nn.labml.ai/transformers/feedback/index.html)
+* [Switch Transformer](https://nn.labml.ai/transformers/switch/index.html)
 
-#### ✨ [Recurrent Highway Networks](https://lab-ml.com/labml_nn/recurrent_highway_networks)
+#### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 
-#### ✨ [LSTM](https://lab-ml.com/labml_nn/lstm)
+#### ✨ [LSTM](https://nn.labml.ai/lstm/index.html)
 
-#### ✨ [HyperNetworks - HyperLSTM](https://lab-ml.com/labml_nn/hypernetworks/hyper_lstm.html)
+#### ✨ [HyperNetworks - HyperLSTM](https://nn.labml.ai/hypernetworks/hyper_lstm.html)
 
-#### ✨ [Capsule Networks](https://lab-ml.com/labml_nn/capsule_networks/)
+#### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
-#### ✨ [Generative Adversarial Networks](https://lab-ml.com/labml_nn/gan/)
-* [GAN with a multi-layer perceptron](https://lab-ml.com/labml_nn/gan/simple_mnist_experiment.html)
-* [GAN with deep convolutional network](https://lab-ml.com/labml_nn/gan/dcgan.html)
-* [Cycle GAN](https://lab-ml.com/labml_nn/gan/cycle_gan.html)
+#### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
+* [GAN with a multi-layer perceptron](https://nn.labml.ai/gan/simple_mnist_experiment.html)
+* [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan.html)
+* [Cycle GAN](https://nn.labml.ai/gan/cycle_gan.html)
 
-#### ✨ [Sketch RNN](https://lab-ml.com/labml_nn/sketch_rnn/)
+#### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
-#### ✨ [Reinforcement Learning](https://lab-ml.com/labml_nn/rl/)
-* [Proximal Policy Optimization](https://lab-ml.com/labml_nn/rl/ppo/) with
- [Generalized Advantage Estimation](https://lab-ml.com/labml_nn/rl/ppo/gae.html)
-* [Deep Q Networks](https://lab-ml.com/labml_nn/rl/dqn/) with
- with [Dueling Network](https://lab-ml.com/labml_nn/rl/dqn/model.html),
- [Prioritized Replay](https://lab-ml.com/labml_nn/rl/dqn/replay_buffer.html)
+#### ✨ [Reinforcement Learning](https://nn.labml.ai/rl/index.html)
+* [Proximal Policy Optimization](https://nn.labml.ai/rl/ppo/index.html) with
+ [Generalized Advantage Estimation](https://nn.labml.ai/rl/ppo/gae.html)
+* [Deep Q Networks](https://nn.labml.ai/rl/dqn/index.html) with
+ with [Dueling Network](https://nn.labml.ai/rl/dqn/model.html),
+ [Prioritized Replay](https://nn.labml.ai/rl/dqn/replay_buffer.html)
  and Double Q Network.
 
-#### ✨ [Optimizers](https://lab-ml.com/labml_nn/optimizers/)
-* [Adam](https://lab-ml.com/labml_nn/optimizers/adam.html)
-* [AMSGrad](https://lab-ml.com/labml_nn/optimizers/amsgrad.html)
-* [Adam Optimizer with warmup](https://lab-ml.com/labml_nn/optimizers/adam_warmup.html)
-* [Noam Optimizer](https://lab-ml.com/labml_nn/optimizers/noam.html)
-* [Rectified Adam Optimizer](https://lab-ml.com/labml_nn/optimizers/radam.html)
-* [AdaBelief Optimizer](https://lab-ml.com/labml_nn/optimizers/ada_belief.html)
+#### ✨ [Optimizers](https://nn.labml.ai/optimizers/index.html)
+* [Adam](https://nn.labml.ai/optimizers/adam.html)
+* [AMSGrad](https://nn.labml.ai/optimizers/amsgrad.html)
+* [Adam Optimizer with warmup](https://nn.labml.ai/optimizers/adam_warmup.html)
+* [Noam Optimizer](https://nn.labml.ai/optimizers/noam.html)
+* [Rectified Adam Optimizer](https://nn.labml.ai/optimizers/radam.html)
+* [AdaBelief Optimizer](https://nn.labml.ai/optimizers/ada_belief.html)
 
 ### Installation
 

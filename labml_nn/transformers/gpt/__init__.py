@@ -23,7 +23,7 @@ more of a tutorial.
 Main differences of this to a standard autoregressive transformer
 are the parameter initialization, weight decay, and learning rate schedule.
 For the transformer we reuse the
-[existing labml/nn transformer implementation](https://lab-ml.com/labml_nn/transformers/).
+[existing labml/nn transformer implementation](../transformers/index.html).
 
 Here's a notebook for training a GPT model on Tiny Shakespeare dataset.
 
