@@ -6,9 +6,11 @@ summary: >
   for the position-wise feedforward network (FFN).
 ---
 
-# Train Autoregressive Transformer
+# Gated Linear Units and Variants
 
 This trains a simple [transformer](../../) model for auto-regression.
+We try different variants for the [position-wise feedforward network](../feed_forward).
+The reusable & configurable are defined in [`configs.py`](configs.html).
 """
 
 import torch
@@ -72,7 +74,7 @@ def autoregressive_model(c: Configs):
 @option(Configs.transformer)
 def transformer_c(c: Configs):
     """
-    Initialize the configurable transformer encoder for our autoregressive model
+    Initialize the [configurable transformer](../configs.html) encoder for our autoregressive model.
     """
     tc = TransformerConfigs()
     tc.n_src_vocab = c.n_tokens
@@ -104,6 +106,9 @@ def main():
                         'inner_iterations': 10,
 
                         # GLU Variant, one of GLU, Bilinear, ReGLU, GEGLU, SwiGLU
+                        #
+                        # These are defined in the [configurable FFN](../configs.html#FFN)
+                        # implementation
                         'transformer.ffn.glu_variant': 'Bilinear',
 
                         # Transformer configurations

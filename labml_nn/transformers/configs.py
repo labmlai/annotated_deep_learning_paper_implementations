@@ -19,6 +19,14 @@ from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPosit
 
 
 class FeedForwardConfigs(BaseConfigs):
+    """
+    <a id="FFN">
+    ## FFN Configurations
+    </a>
+
+    Creates a Position-wise FeedForward Network defined in
+    [`feed_forward.py`](feed_forward.html).
+    """
     # Position-wise feedforward layer
     ffn: FeedForward
     # Number of features in the embedding
@@ -44,7 +52,9 @@ class FeedForwardConfigs(BaseConfigs):
 @option(FeedForwardConfigs.activation, 'ReLU')
 def _ffn_activation_relu():
     """
-    ReLU activation
+    ### ReLU activation
+
+    $$\max(0, x)$$
     """
     return nn.ReLU()
 
@@ -52,7 +62,11 @@ def _ffn_activation_relu():
 @option(FeedForwardConfigs.activation, 'GELU')
 def _ffn_activation_gelu():
     """
-    GELU activation
+    ### GELU activation
+
+    $$x \Phi(x)$$ where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$
+
+    It was introduced in paper [Gaussian Error Linear Units](https://arxiv.org/abs/1606.08415).
     """
     return nn.GELU()
 
@@ -60,7 +74,7 @@ def _ffn_activation_gelu():
 @option(FeedForwardConfigs.ffn, 'default')
 def _feed_forward(c: FeedForwardConfigs):
     """
-    Create feedforward layer
+    Initialize a [feed forward network](feed_forward.html)
     """
     return FeedForward(c.d_model, c.d_ff,
                        dropout=c.dropout,
@@ -70,7 +84,14 @@ def _feed_forward(c: FeedForwardConfigs):
                        bias2=c.bias2,
                        bias_gate=c.bias_gate)
 
+# ## GLU Variants
+# These are variants with gated hidden layers for the FFN
+# as introduced in paper [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202).
+# We have omitted the bias terms as specified in the paper.
 
+# ### FFN with Gated Linear Units
+#
+# $$FFN_{GLU}(x)(x, W_1, V, W_2) = (\sigma(x W_1) \otimes x V) W_2$$
 aggregate(FeedForwardConfigs.glu_variant, 'GLU',
           (FeedForwardConfigs.is_gated, True),
           (FeedForwardConfigs.bias1, False),
@@ -78,24 +99,40 @@ aggregate(FeedForwardConfigs.glu_variant, 'GLU',
           (FeedForwardConfigs.bias_gate, False),
           (FeedForwardConfigs.activation, nn.Sigmoid()))
 
+# ### FFN with Bilinear hidden layer
+#
+# $$FFN_{Bilinear}(x)(x, W_1, V, W_2) = (x W_1 \otimes x V) W_2$$
 aggregate(FeedForwardConfigs.glu_variant, 'Bilinear',
           (FeedForwardConfigs.is_gated, True),
           (FeedForwardConfigs.bias1, False),
           (FeedForwardConfigs.bias2, False),
           (FeedForwardConfigs.bias_gate, False),
           (FeedForwardConfigs.activation, nn.Identity()))
+
+# ### FFN with ReLU gate
+#
+# $$FFN_{ReGLU}(x)(x, W_1, V, W_2) = (\max(0, x W_1) \otimes x V) W_2$$
 aggregate(FeedForwardConfigs.glu_variant, 'ReGLU',
           (FeedForwardConfigs.is_gated, True),
           (FeedForwardConfigs.bias1, False),
           (FeedForwardConfigs.bias2, False),
           (FeedForwardConfigs.bias_gate, False),
           (FeedForwardConfigs.activation, nn.ReLU()))
+
+# ### FFN with GELU gate
+#
+# $$FFN_{GEGLU}(x)(x, W_1, V, W_2) = (\text{GELU}(x W_1) \otimes x V) W_2$$
 aggregate(FeedForwardConfigs.glu_variant, 'GEGLU',
           (FeedForwardConfigs.is_gated, True),
           (FeedForwardConfigs.bias1, False),
           (FeedForwardConfigs.bias2, False),
           (FeedForwardConfigs.bias_gate, False),
           (FeedForwardConfigs.activation, nn.GELU()))
+
+# ### FFN with Swish gate
+#
+# $$FFN_{SwiGLU}(x)(x, W_1, V, W_2) = (\text{Swish}_1(x W_1) \otimes x V) W_2$$
+# where $\text{Swish}_\beta(x) = x \sigma(\beta x)$
 aggregate(FeedForwardConfigs.glu_variant, 'SwiGLU',
           (FeedForwardConfigs.is_gated, True),
           (FeedForwardConfigs.bias1, False),
@@ -236,7 +273,7 @@ def _generator(c: TransformerConfigs):
     return Generator(c.n_tgt_vocab, c.d_model)
 
 
-# ## Positional Embeddings
+# ### Fixed Positional Embeddings
 @option(TransformerConfigs.src_embed, 'fixed_pos')
 def _src_embed_with_positional(c: TransformerConfigs):
     """
@@ -253,7 +290,7 @@ def _tgt_embed_with_positional(c: TransformerConfigs):
     return EmbeddingsWithPositionalEncoding(c.d_model, c.n_tgt_vocab)
 
 
-# ## Learned Positional Embeddings
+# ### Learned Positional Embeddings
 @option(TransformerConfigs.src_embed, 'learned_pos')
 def _src_embed_with_learned_positional(c: TransformerConfigs):
     """
@@ -270,7 +307,7 @@ def _tgt_embed_with_learned_positional(c: TransformerConfigs):
     return EmbeddingsWithLearnedPositionalEncoding(c.d_model, c.n_tgt_vocab)
 
 
-# ## No Positional Embeddings
+# ### No Positional Embeddings
 @option(TransformerConfigs.src_embed, 'no_pos')
 def _src_embed_without_positional(c: TransformerConfigs):
     """

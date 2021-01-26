@@ -84,12 +84,20 @@ where $W_1$, $W_2$, $b_1$ and $b_2$ are learnable parameters.</p>
 <p>Sometimes the
 GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
 <script type="math/tex; mode=display">x \Phi(x)</script> where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$</p>
+<h3>Gated Linear Units</h3>
+<p>This is a generic implementation that supports different variants including
+<a href="https://arxiv.org/abs/2002.05202">Gated Linear Units</a> (GLU).
+We have also implemented experiments on these:</p>
+<ul>
+<li><a href="glu_variants/experiment.html">experiment that uses <code>labml.configs</code></a></li>
+<li><a href="glu_variants/simple.html">simpler version from scratch</a></li>
+</ul>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">26</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">27</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="lineno">28</span>
-<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">35</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">36</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="lineno">37</span>
+<span class="lineno">38</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -97,10 +105,10 @@ GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
                 <div class='section-link'>
                     <a href='#section-1'>#</a>
                 </div>
-                <h2>Position-wise feed-forward network (FFN) module</h2>
+                <h2>FFN module</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">32</span><span class="k">class</span> <span class="nc">FeedForward</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">41</span><span class="k">class</span> <span class="nc">FeedForward</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -119,13 +127,13 @@ GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
 </ul>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">38</span>                 <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-<span class="lineno">39</span>                 <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
-<span class="lineno">40</span>                 <span class="n">is_gated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="lineno">41</span>                 <span class="n">bias1</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="lineno">42</span>                 <span class="n">bias2</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="lineno">43</span>                 <span class="n">bias_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">46</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">47</span>                 <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="lineno">48</span>                 <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+<span class="lineno">49</span>                 <span class="n">is_gated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="lineno">50</span>                 <span class="n">bias1</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="lineno">51</span>                 <span class="n">bias2</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="lineno">52</span>                 <span class="n">bias_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -136,14 +144,7 @@ GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">53</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">54</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias1</span><span class="p">)</span>
-<span class="lineno">55</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias2</span><span class="p">)</span>
-<span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
-<span class="lineno">57</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
-<span class="lineno">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span> <span class="o">=</span> <span class="n">is_gated</span>
-<span class="lineno">59</span>        <span class="k">if</span> <span class="n">is_gated</span><span class="p">:</span>
-<span class="lineno">60</span>            <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias_gate</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">62</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -151,17 +152,136 @@ GELU (Gaussian Error Linear Unit) activation is also used instead of ReLU.
                 <div class='section-link'>
                     <a href='#section-4'>#</a>
                 </div>
+                <p>Layer one parameterized by weight $W_1$ and bias $b_1$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">64</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Layer one parameterized by weight $W_1$ and bias $b_1$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">66</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias2</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Hidden layer dropout</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">68</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Activation function $f$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">70</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Whether there is a gate</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">72</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span> <span class="o">=</span> <span class="n">is_gated</span>
+<span class="lineno">73</span>        <span class="k">if</span> <span class="n">is_gated</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>If there is a gate the linear layer to transform inputs to
+be multiplied by the gate, parameterized by weight $V$ and bias $c$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">76</span>            <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_ff</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias_gate</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">62</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-<span class="lineno">63</span>        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<span class="lineno">64</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span><span class="p">:</span>
-<span class="lineno">65</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">66</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">67</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span>
-<span class="lineno">68</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">69</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">78</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                <p>$f(x W_1 + b_1)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>If gated, $f(x W_1 + b_1) \otimes (x V + b) $</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">82</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_gated</span><span class="p">:</span>
+<span class="lineno">83</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_v</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>Otherwise</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">85</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">86</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">g</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Apply dropout</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">88</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>$(f(x W_1 + b_1) \otimes (x V + b)) W_2 + b_2$ or $f(x W_1 + b_1) W_2 + b_2$
+depending on whether it is gated</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">91</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>
