@@ -22,6 +22,7 @@ uninstall: ## Uninstall
 	pip uninstall labml_nn
 
 docs: ## Render annotated HTML
+	python utils/sitemap.py
 	cd labml_nn; pylit --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs -w *
 
 pages-old: ## Copy to lab-ml site
