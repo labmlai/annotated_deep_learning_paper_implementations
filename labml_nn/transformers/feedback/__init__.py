@@ -55,7 +55,8 @@ class FeedbackAttention(Module):
     $$\mathop{Attention}(Q, K, V) = \underset{seq}{\mathop{softmax}}\Bigg(\frac{Q^\top K}{\sqrt{d_k}}\Bigg)V$$
     """
 
-    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1, *,
+                 is_kv_precomputed: bool = False):
         """
         * 'heads' is the number of attention heads
         * `d_model` is the number of features in the transformer
@@ -70,9 +71,13 @@ class FeedbackAttention(Module):
         self.heads = heads
 
         # These transform the `query`, `key` and `value` vectors for multi-headed attention.
-        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k,  bias=False)
-        self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k,  bias=False)
-        self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k,  bias=True)
+        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
+        if not is_kv_precomputed:
+            self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
+            self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=True)
+        else:
+            self.key = None
+            self.value = None
 
         # Output layer
         self.output = nn.Linear(d_model, d_model)
@@ -117,7 +122,10 @@ class FeedbackAttention(Module):
         query_pos_bias = self.query_pos_bias[None, :, :]
 
         # $(Q + U^Q)^\top(K_j + U^K_j)$
-        return torch.einsum('bhd,jbhd->jbh', query + query_pos_bias, key + key_pos_emb[:, None, :, :])
+        ac = torch.einsum('bhd,jbhd->jbh', query + query_pos_bias, key)
+        bd = torch.einsum('bhd,jhd->jbh', query, key_pos_emb)
+
+        return ac + bd
 
     def __call__(self, *,
                  query: torch.Tensor,
@@ -132,8 +140,10 @@ class FeedbackAttention(Module):
         # `key` and `value`  will then have shape `[seq_len, batch_size, heads, d_k]`
         # and `query` will have shape `[batch_size, heads, d_k]`
         query = self.query(query)
-        key = self.key(key)
-        value = self.value(value)
+        if self.key:
+            key = self.key(key)
+        if self.value:
+            value = self.value(value)
 
         # Compute attention scores
         # Results in a tensor of shape `[seq_len, batch_size, heads]`
@@ -190,13 +200,14 @@ class FeedbackTransformerLayer(Module):
 
     def __call__(self, *,
                  x: torch.Tensor,
-                 mem: Optional[torch.Tensor]):
+                 key: Optional[torch.Tensor],
+                 value: Optional[torch.Tensor]):
         # If there is memory
-        if mem is not None:
+        if key is not None:
             # Normalize the vectors before doing self attention
             z = self.norm_self_attn(x)
             # Run through self attention, i.e. keys and values are from self
-            self_attn = self.attn(query=z, key=mem, value=mem)
+            self_attn = self.attn(query=z, key=key, value=value)
             # Add the self attention results
             x = x + self.dropout(self_attn)
 
@@ -255,7 +266,7 @@ class FeedbackTransformer(Module):
             # Run through each layer
             for layer in self.layers:
                 # Get layer output
-                x = layer(x=x, mem=mem_tensor)
+                x = layer(x=x, key=mem_tensor, value=mem_tensor)
                 # Append them to the list of layer outputs
                 layer_outputs.append(x)
 
@@ -263,6 +274,124 @@ class FeedbackTransformer(Module):
             layer_outputs = torch.stack(layer_outputs)
             # Calculate the memory vector as a weighted sum of layer outputs
             mem.append(torch.einsum('lbd,l->bd', layer_outputs, self.softmax(self.weights)))
+            # Append the output to results
+            res.append(x)
+
+        # Stack the output tensors
+        res = torch.stack(res)
+        # Normalize the output
+        return self.norm(res)
+
+
+class StackFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, memory, memory_grad, last, n):
+        ctx._mem_grad = memory_grad
+        ctx._n = n
+        return memory[:n + 1]
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        n = ctx._n
+        memory_grad = ctx._mem_grad
+        memory_grad[:n + 1] += grad_output
+        return None, None, memory_grad[n], None
+
+
+class Stack:
+    def __init__(self, max_len: int):
+        self.max_len = max_len
+        self.memory = None
+        self.memory_grad = None
+        self.last = None
+        self.n = -1
+        self.last_get_n = -1
+
+    def append(self, n: int, vector: torch.Tensor):
+        assert n == 0 or self.last_get_n == n - 1, f"{n}, {self.last_get_n}"
+
+        with torch.no_grad():
+            if self.memory is None or self.memory.shape[1:] != vector.shape:
+                assert n == 0
+                self.memory = vector.new_zeros(self.max_len, *vector.shape, requires_grad=False)
+                self.memory_grad = vector.new_zeros(self.memory.shape, requires_grad=False)
+            elif n == 0:
+                self.memory_grad.fill_(0.)
+
+            # memory[n] = vector.detach()
+            self.memory.data[n] = vector.detach()
+            self.n = n
+
+        self.last = vector
+
+    def get(self):
+        self.last_get_n = self.n
+        return StackFunction.apply(self.memory, self.memory_grad, self.last, self.n)
+
+
+class FeedbackTransformerKV(Module):
+    """
+    ## Feedback Transformer Module
+    """
+
+    def __init__(self, layer: FeedbackTransformerLayer, n_layers: int, d_model: int, heads: int):
+        """
+        * `layer` is the feedback transformer layer, which we clone for each layer
+        * `n_layers` is the number of layers in the transformer
+        """
+
+        super().__init__()
+        # Make copies of the transformer layer
+        self.layers = clone_module_list(layer, n_layers)
+        # Final normalization layer
+        self.norm = nn.LayerNorm([layer.size])
+        # Memory vectors are computed as a weighted sum of representations of each layer.
+        # This is the weights parameter for that.
+        self.weights = nn.Parameter(torch.ones(n_layers + 1), requires_grad=True)
+        # Softmax for weights before taking the weighted sum
+        self.softmax = nn.Softmax(0)
+
+        d_k = d_model // heads
+        self.key = PrepareForMultiHeadAttention(d_model, heads, d_k, bias=False)
+        self.value = PrepareForMultiHeadAttention(d_model, heads, d_k, bias=False)
+
+        self.mem_key = Stack(512)
+        self.mem_value = Stack(512)
+
+    def __call__(self, x_seq: torch.Tensor):
+        """
+        * `x_seq` is the input with shape `[seq_len, batch_size, d_model]`
+        """
+
+        # Split the input to a list along the sequence axis
+        x_seq = torch.unbind(x_seq, dim=0)
+        # List to store the outputs
+        res = []
+        # For each input step
+        for step, x in enumerate(x_seq):
+            # List to store layer outputs
+            layer_outputs = [x]
+
+            # If there is memory, stack them into a vector
+            key_tensor = None
+            value_tensor = None
+            if step > 0:
+                key_tensor = self.mem_key.get()
+                value_tensor = self.mem_value.get()
+
+            # Run through each layer
+            for layer in self.layers:
+                # Get layer output
+                x = layer(x=x, key=key_tensor, value=value_tensor)
+                # Append them to the list of layer outputs
+                layer_outputs.append(x)
+
+            # Stack the layer outputs to a tensor
+            layer_outputs = torch.stack(layer_outputs)
+            # Calculate the memory vector as a weighted sum of layer outputs
+            mem = torch.einsum('lbd,l->bd', layer_outputs, self.softmax(self.weights))
+            self.mem_key.append(step, self.key(mem))
+            self.mem_value.append(step, self.value(mem))
             # Append the output to results
             res.append(x)
 
