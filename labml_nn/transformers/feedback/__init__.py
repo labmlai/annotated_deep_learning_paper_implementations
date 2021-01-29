@@ -114,7 +114,7 @@ class FeedbackAttention(Module):
         self.attn = None
 
     def get_scores(self, query: torch.Tensor, key: torch.Tensor):
-        """
+        r"""
         ### Get attention scores
 
         We use relative positional encodings for attention, similar
