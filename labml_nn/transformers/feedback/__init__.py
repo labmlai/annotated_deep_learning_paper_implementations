@@ -28,7 +28,7 @@ This reduces the memory used for caching during prediction.
 The first half of this file implements this.
 
 The updated feedback transformer shares weights $W^l_k$ and $W^l_v$ used
-to calculate keys and values for among the layers.
+to calculate keys and values among the layers.
 We then calculate the keys and values for each step only once and keep
 them cached.
 The [second half](#shared_kv) of this file implements this.
