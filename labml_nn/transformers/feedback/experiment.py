@@ -7,6 +7,13 @@ summary: This is training code with notes for a feedback transformer.
 # Train Feedback Transformer
 
 This trains a [feedback transformer](index.html) model for auto-regression.
+You can pick the original feedback transformer or the new version
+where the keys and values are precalculated.
+
+Here's a Colab notebook for training a feedback transformer on Tiny Shakespeare dataset.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/feedback/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=d8eb9416530a11eb8fb50242ac1c0002)
 """
 
 import torch
@@ -35,8 +42,9 @@ class AutoregressiveModel(Module):
         self.generator = nn.Linear(d_model, n_vocab)
 
     def __call__(self, x: torch.Tensor):
+        # Embed the tokens
         x = self.src_embed(x)
-        # Embed the tokens (`src`) and run it through the the transformer
+        # Run it through the the transformer
         res = self.transformer(x)
         # Generate logits of the next token
         return self.generator(res), None
@@ -60,6 +68,9 @@ class Configs(NLPAutoRegressionConfigs):
 
 @option(Configs.model)
 def feedback_transformer(c: Configs):
+    """
+    Create [original feedback transformer](index.html).
+    """
     from labml_nn.transformers.feedback import FeedbackTransformer, FeedbackTransformerLayer, \
         FeedbackAttention, FeedForward
 
@@ -75,6 +86,9 @@ def feedback_transformer(c: Configs):
 
 @option(Configs.model)
 def feedback_transformer_kv(c: Configs):
+    """
+    Create [updated feedback transformer](index.html#kv_shared), with precalculated keys and values.
+    """
     from labml_nn.transformers.feedback import FeedbackTransformerKV, FeedbackTransformerLayer, \
         FeedbackAttention, FeedForward
 
@@ -104,6 +118,7 @@ def main():
                         'prompt': 'It is',
                         'prompt_separator': '',
 
+                        # Use `feedback_transformer` for original feedback transformer
                         'model': 'feedback_transformer_kv',
 
                         'train_loader': 'shuffled_train_loader',
@@ -119,7 +134,7 @@ def main():
 
     # Start the experiment
     with experiment.start():
-        # `TrainValidConfigs.run`
+        # Run the training loop
         conf.run()
 
 
