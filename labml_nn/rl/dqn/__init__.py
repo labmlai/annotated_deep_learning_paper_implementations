@@ -11,7 +11,7 @@ summary: >
 
 # Deep Q Networks (DQN)
 
-This is an implementation of paper
+This is a [PyTorch](https://pytorch.org) implementation of paper
  [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
  along with [Dueling Network](model.html), [Prioritized Replay](replay_buffer.html)
  and Double Q Network.

@@ -7,7 +7,8 @@ summary: A PyTorch implementation/tutorial of HyperLSTM introduced in paper Hype
 # HyperNetworks - HyperLSTM
 
 We have implemented HyperLSTM introduced in paper
-[HyperNetworks](https://arxiv.org/abs/1609.09106), with annotations.
+[HyperNetworks](https://arxiv.org/abs/1609.09106), with annotations
+using [PyTorch](https://pytorch.org).
 [This blog post](https://blog.otoro.net/2016/09/28/hyper-networks/)
 by David Ha gives a good explanation of HyperNetworks.
 
@@ -17,7 +18,7 @@ Here's the link to code: [`experiment.py`](experiment.html)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=9e7f39e047e811ebbaff2b26e3148b3d)
 
-HyperNetworks uses a smaller network to generate weights of a larger network.
+HyperNetworks use a smaller network to generate weights of a larger network.
 There are two variants: static hyper-networks and dynamic hyper-networks.
 Static HyperNetworks have smaller network that generates weights (kernels)
 of a convolutional network. Dynamic HyperNetworks generate parameters of a

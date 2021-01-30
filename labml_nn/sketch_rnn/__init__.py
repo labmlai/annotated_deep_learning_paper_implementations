@@ -8,7 +8,7 @@ summary: >
 
 # Sketch RNN
 
-This is an annotated implementation of the paper
+This is an annotated [PyTorch](https://pytorch.org) implementation of the paper
 [A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).
 
 Sketch RNN is a sequence-to-sequence variational auto-encoder.

@@ -6,7 +6,7 @@ summary: A simple PyTorch implementation/tutorial of Adam optimizer
 
 # Adam Optimizer
 
-This is an implementation of popular optimizer *Adam* from paper
+This is a [PyTorch](https://pytorch.org) implementation of popular optimizer *Adam* from paper
  [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980v9).
 
 *Adam* update is,

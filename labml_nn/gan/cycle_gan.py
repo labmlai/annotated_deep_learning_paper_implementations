@@ -8,7 +8,7 @@ summary: >
 
 # Cycle GAN
 
-This is an implementation of paper
+This is a [PyTorch](https://pytorch.org) implementation/tutorial of paper
 [Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks](https://arxiv.org/abs/1703.10593).
 
 I've taken pieces of code from [eriklindernoren/PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).

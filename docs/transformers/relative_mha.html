@@ -73,7 +73,8 @@
                 </div>
                 <h1>Relative Multi-Headed Attention</h1>
 <p>This is an implementation of 
-<a href="https://arxiv.org/abs/1901.02860">Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context</a>.</p>
+<a href="https://arxiv.org/abs/1901.02860">Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context</a>
+in <a href="https://pytorch.org">PyTorch</a>.</p>
 <p>Transformer has a limited attention span,
 equal to the length of the sequence trained in parallel.
 All these positions have a fixed positional encoding.
@@ -87,11 +88,11 @@ They introduce relative positional encoding, where the positional encodings
 are introduced at the attention calculation.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">27</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">28</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">29</span>
-<span class="lineno">30</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
-<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">28</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">30</span>
+<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
+<span class="lineno">32</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -105,7 +106,7 @@ result would be <code>[[1, 2 ,3], [0, 4, 5], [9, 0, 7]]</code>.
 <em>Ideally we should mask out the lower triangle but it&rsquo;s ok for our purpose</em>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">34</span><span class="k">def</span> <span class="nf">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">35</span><span class="k">def</span> <span class="nf">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -116,8 +117,8 @@ result would be <code>[[1, 2 ,3], [0, 4, 5], [9, 0, 7]]</code>.
                 <p>Concatenate a column of zeros</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">44</span>    <span class="n">zero_pad</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="lineno">45</span>    <span class="n">x_padded</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">zero_pad</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">45</span>    <span class="n">zero_pad</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+<span class="lineno">46</span>    <span class="n">x_padded</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">zero_pad</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -128,10 +129,10 @@ result would be <code>[[1, 2 ,3], [0, 4, 5], [9, 0, 7]]</code>.
                 <p>Remove excess elements from the end</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">48</span>    <span class="n">x_padded</span> <span class="o">=</span> <span class="n">x_padded</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="lineno">49</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">x_padded</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">50</span>
-<span class="lineno">51</span>    <span class="k">return</span> <span class="n">x</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">49</span>    <span class="n">x_padded</span> <span class="o">=</span> <span class="n">x_padded</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+<span class="lineno">50</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">x_padded</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">51</span>
+<span class="lineno">52</span>    <span class="k">return</span> <span class="n">x</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -144,7 +145,7 @@ result would be <code>[[1, 2 ,3], [0, 4, 5], [9, 0, 7]]</code>.
 write the <code>get_scores</code> method.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">54</span><span class="k">class</span> <span class="nc">RelativeMultiHeadAttention</span><span class="p">(</span><span class="n">MultiHeadAttention</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">55</span><span class="k">class</span> <span class="nc">RelativeMultiHeadAttention</span><span class="p">(</span><span class="n">MultiHeadAttention</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -155,7 +156,7 @@ write the <code>get_scores</code> method.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">62</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">63</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -168,7 +169,7 @@ calculating scores.
 However having a bias for <code>value</code> might make sense.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">66</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">heads</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">67</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">heads</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -179,7 +180,7 @@ However having a bias for <code>value</code> might make sense.</p>
                 <p>Number of relative positions</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">69</span>        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">70</span>        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -191,7 +192,7 @@ However having a bias for <code>value</code> might make sense.</p>
 We need $2P$ embeddings because the keys can be before or after the query.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">73</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_embeddings</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">74</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_embeddings</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -202,7 +203,7 @@ We need $2P$ embeddings because the keys can be before or after the query.</p>
                 <p>Relative positional embedding bias for key relative to the query.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">75</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">heads</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">76</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">heads</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -213,7 +214,7 @@ We need $2P$ embeddings because the keys can be before or after the query.</p>
                 <p>Positional embeddings for the query is independent of the position of the query</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">77</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query_pos_bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query_pos_bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -255,7 +256,7 @@ A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">79</span>    <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">80</span>    <span class="k">def</span> <span class="nf">get_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -266,7 +267,7 @@ A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
                 <p>$\color{orange}{R_k}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">118</span>        <span class="n">key_pos_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_embeddings</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">+</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">119</span>        <span class="n">key_pos_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_embeddings</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">+</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -277,7 +278,7 @@ A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
                 <p>$\color{orange}{S_k}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">120</span>        <span class="n">key_pos_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_bias</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">+</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">121</span>        <span class="n">key_pos_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_pos_bias</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">+</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -288,7 +289,7 @@ A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
                 <p>$\color{orange}{v^\top}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">122</span>        <span class="n">query_pos_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_pos_bias</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">123</span>        <span class="n">query_pos_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_pos_bias</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -301,7 +302,7 @@ Q_i^\top K_j +
 \color{orange}{v^\top} K_jZ$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">127</span>        <span class="n">ac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ibhd,jbhd-&gt;ijbh&#39;</span><span class="p">,</span> <span class="n">query</span> <span class="o">+</span> <span class="n">query_pos_bias</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">128</span>        <span class="n">ac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ibhd,jbhd-&gt;ijbh&#39;</span><span class="p">,</span> <span class="n">query</span> <span class="o">+</span> <span class="n">query_pos_bias</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -312,7 +313,7 @@ Q_i^\top K_j +
                 <p>$\color{lightgreen}{\mathbf{B&rsquo;}_{i,k}} = Q_i^\top \color{orange}{R_k}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">129</span>        <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ibhd,jhd-&gt;ijbh&#39;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">key_pos_emb</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">130</span>        <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ibhd,jhd-&gt;ijbh&#39;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">key_pos_emb</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -323,7 +324,7 @@ Q_i^\top K_j +
                 <p>$\color{lightgreen}{\mathbf{D&rsquo;}_{i,k}} = \color{orange}{S_k}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">131</span>        <span class="n">d</span> <span class="o">=</span> <span class="n">key_pos_bias</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">132</span>        <span class="n">d</span> <span class="o">=</span> <span class="n">key_pos_bias</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -336,7 +337,7 @@ to get <script type="math/tex; mode=display">\color{lightgreen}{\mathbf{(B + D)}
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">134</span>        <span class="n">bd</span> <span class="o">=</span> <span class="n">shift_right</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">135</span>        <span class="n">bd</span> <span class="o">=</span> <span class="n">shift_right</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -347,7 +348,7 @@ to get <script type="math/tex; mode=display">\color{lightgreen}{\mathbf{(B + D)}
                 <p>Remove extra positions</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">136</span>        <span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span><span class="p">[:,</span> <span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">137</span>        <span class="n">bd</span> <span class="o">=</span> <span class="n">bd</span><span class="p">[:,</span> <span class="o">-</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -364,7 +365,7 @@ to get <script type="math/tex; mode=display">\color{lightgreen}{\mathbf{(B + D)}
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">144</span>        <span class="k">return</span> <span class="n">ac</span> <span class="o">+</span> <span class="n">bd</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">145</span>        <span class="k">return</span> <span class="n">ac</span> <span class="o">+</span> <span class="n">bd</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -375,22 +376,22 @@ to get <script type="math/tex; mode=display">\color{lightgreen}{\mathbf{(B + D)}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">147</span><span class="k">def</span> <span class="nf">_test_shift_right</span><span class="p">():</span>
-<span class="lineno">148</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span>
-<span class="lineno">149</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">150</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<span class="lineno">151</span>
-<span class="lineno">152</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="lineno">153</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="lineno">154</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="lineno">155</span>
-<span class="lineno">156</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="lineno">157</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="lineno">158</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="lineno">159</span>
+                <div class="highlight"><pre><span class="lineno">148</span><span class="k">def</span> <span class="nf">_test_shift_right</span><span class="p">():</span>
+<span class="lineno">149</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span>
+<span class="lineno">150</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">151</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="lineno">152</span>
+<span class="lineno">153</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">154</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="lineno">155</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="lineno">156</span>
+<span class="lineno">157</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">158</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="lineno">159</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">shift_right</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="lineno">160</span>
-<span class="lineno">161</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">162</span>    <span class="n">_test_shift_right</span><span class="p">()</span></pre></div>
+<span class="lineno">161</span>
+<span class="lineno">162</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">163</span>    <span class="n">_test_shift_right</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>

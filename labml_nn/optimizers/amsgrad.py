@@ -6,7 +6,7 @@ summary: A simple PyTorch implementation/tutorial of AMSGrad optimizer.
 
 # AMSGrad
 
-This is an implementation of the paper
+This is a [PyTorch](https://pytorch.org) implementation of the paper
 [On the Convergence of Adam and Beyond](https://arxiv.org/abs/1904.09237).
 
 We implement this as an extension to our [Adam optimizer implementation](adam.html).

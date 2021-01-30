@@ -11,7 +11,7 @@ This is based from AdaBelief
 of the paper
 [AdaBelief Optimizer: Adapting Stepsizes by the Belief in Observed Gradients](https://arxiv.org/abs/2010.07468).
 
-This is implemented here as an extension to [RAdam](radam.html).
+This is implemented in [PyTorch](https://pytorch.org) as an extension to [RAdam](radam.html).
 
 The main difference between Adam optimizer and AdaBelief is that,
 how it calculates the adaptive learning rate;

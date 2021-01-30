@@ -5,6 +5,8 @@ summary: A simple PyTorch implementation/tutorial of Long Short-Term Memory (LST
 ---
 
 # Long Short-Term Memory (LSTM)
+
+This is a [PyTorch](https://pytorch.org) implementation of Long Short-Term Memory.
 """
 
 from typing import Optional, Tuple

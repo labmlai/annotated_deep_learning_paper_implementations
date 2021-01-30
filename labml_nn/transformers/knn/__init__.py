@@ -11,7 +11,7 @@ summary: >
 
 # k-Nearest Neighbor Language Models
 
-This is an implementation of the paper
+This is a [PyTorch](https://pytorch.org) implementation of the paper
  [Generalization through Memorization: Nearest Neighbor Language Models](https://arxiv.org/abs/1911.00172).
 It uses k-nearest neighbors to  improve perplexity of autoregressive transformer models.
 

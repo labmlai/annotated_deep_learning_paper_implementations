@@ -7,10 +7,10 @@ summary: >
 
 # Feedback Transformer
 
-This is an implementation of the paper
+This is a [PyTorch](https://pytorch.org) implementation of the paper
 [Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
 
-Normal transformers process tokens in parallel and each transformer layer pays attention
+Normal transformers process tokens in parallel. Each transformer layer pays attention
 to the outputs of the previous layer.
 Feedback transformer pays attention to the output of all layers in previous steps.
 So this adds recurrence and we need to process token-by-token.

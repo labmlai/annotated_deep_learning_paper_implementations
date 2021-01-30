@@ -7,7 +7,8 @@ summary: >
 
 # Proximal Policy Optimization (PPO)
 
-This is a an implementation of [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
+This is a [PyTorch](https://pytorch.org) implementation of
+[Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
 
 You can find an experiment that uses it [here](experiment.html).
 The experiment uses [Generalized Advantage Estimation](gae.html).

@@ -7,8 +7,9 @@ summary: >
 
 # GPT
 
-This is an tutorial of
-[OpenAI GPT architecture](https://openai.com/blog/better-language-models/).
+This is an tutorial/implementation of
+[OpenAI GPT architecture](https://openai.com/blog/better-language-models/)
+in [PyTorch](https://pytorch.org).
 We got a bunch of implementation details from
 [minGPT](https://github.com/karpathy/minGPT)
 by [@karpathy](https://twitter.com/karpathy).

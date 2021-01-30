@@ -11,7 +11,8 @@ This implementation is based on
 of the paper
 [On the Variance of the Adaptive Learning Rate and Beyond](https://arxiv.org/abs/1908.03265).
 
-We have implemented it as an extension to [our AMSGrad implementation](amsgrad.html)
+We have implemented it in [PyTorch](https://pytorch.org)
+as an extension to [our AMSGrad implementation](amsgrad.html)
 thus requiring only the modifications to be implemented.
 
 Adam optimizer sometimes converges to a bad local optima during the initial stages of the training;

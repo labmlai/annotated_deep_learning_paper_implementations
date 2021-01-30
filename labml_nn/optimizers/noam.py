@@ -8,7 +8,7 @@ summary: >
 
 # Noam Optimizer
 
-This is the implementation of optimizer introduced in the paper
+This is the [PyTorch](https://pytorch.org) implementation of optimizer introduced in the paper
 [Attention Is All You Need](https://arxiv.org/abs/1706.03762).
 """
 from typing import Dict

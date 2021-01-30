@@ -6,6 +6,9 @@ summary: Documented reusable implementation of the position wise feedforward net
 
 # Position-wise Feed-Forward Network (FFN)
 
+This is a [PyTorch](https://pytorch.org)  implementation
+of position-wise feedforward network used in transformer.
+
 FFN consists of two fully connected layers.
 Number of dimensions in the hidden layer $d_{ff}$, is generally set to around
 four times that of the token embedding $d_{model}$.
