@@ -76,6 +76,9 @@ like $Wu + b$ the bias parameter $b$ gets cancelled due to normalization.
 So you can and should omit bias parameter in linear transforms right before the
 batch normalization.
 
+Batch normalization also makes the back propagation invariant to the scale of the weights.
+And empirically it improves generalization, so it has regularization effects too.
+
 ## Inference
 
 We need to know $\mathbb{E}[x^{(k)}]$ and $Var[x^{(k)}]$ in order to
@@ -84,6 +87,12 @@ So during inference, you either need to go through the whole (or part of) datase
 and find the mean and variance, or you can use an estimate calculated during training.
 The usual practice is to calculate an exponential moving average of
 mean and variance during training phase and use that for inference.
+
+Here's [the training code](mnist.html) and a notebook for training
+a CNN classifier that use batch normalization for MNIST dataset.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=011254fe647011ebbb8e0242ac1c0002)
 """
 
 import torch

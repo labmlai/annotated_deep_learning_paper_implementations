@@ -126,6 +126,8 @@ where $y^{(k)}$ is the output of of the batch normalization layer.</p>
 like $Wu + b$ the bias parameter $b$ gets cancelled due to normalization.
 So you can and should omit bias parameter in linear transforms right before the
 batch normalization.</p>
+<p>Batch normalization also makes the back propagation invariant to the scale of the weights.
+And empirically it improves generalization, so it has regularization effects too.</p>
 <h2>Inference</h2>
 <p>We need to know $\mathbb{E}[x^{(k)}]$ and $Var[x^{(k)}]$ in order to
 perform the normalization.
@@ -133,12 +135,16 @@ So during inference, you either need to go through the whole (or part of) datase
 and find the mean and variance, or you can use an estimate calculated during training.
 The usual practice is to calculate an exponential moving average of
 mean and variance during training phase and use that for inference.</p>
+<p>Here&rsquo;s <a href="mnist.html">the training code</a> and a notebook for training
+a CNN classifier that use batch normalization for MNIST dataset.</p>
+<p><a href="https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://web.lab-ml.com/run?uuid=011254fe647011ebbb8e0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">89</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">90</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">91</span>
-<span class="lineno">92</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">98</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">99</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">100</span>
+<span class="lineno">101</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -149,7 +155,7 @@ mean and variance during training phase and use that for inference.</p>
                 <h2>Batch Normalization Layer</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">95</span><span class="k">class</span> <span class="nc">BatchNorm</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">104</span><span class="k">class</span> <span class="nc">BatchNorm</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -167,9 +173,9 @@ mean and variance during training phase and use that for inference.</p>
 <p>We&rsquo;ve tried to use the same names for arguments as PyTorch <code>BatchNorm</code> implementation.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">99</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">100</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-<span class="lineno">101</span>                 <span class="n">affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">track_running_stats</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">108</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">109</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="lineno">110</span>                 <span class="n">affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">track_running_stats</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -180,14 +186,14 @@ mean and variance during training phase and use that for inference.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">111</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">112</span>
-<span class="lineno">113</span>        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span>
-<span class="lineno">114</span>
-<span class="lineno">115</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
-<span class="lineno">116</span>        <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum</span>
-<span class="lineno">117</span>        <span class="bp">self</span><span class="o">.</span><span class="n">affine</span> <span class="o">=</span> <span class="n">affine</span>
-<span class="lineno">118</span>        <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span> <span class="o">=</span> <span class="n">track_running_stats</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">120</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">121</span>
+<span class="lineno">122</span>        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span>
+<span class="lineno">123</span>
+<span class="lineno">124</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+<span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum</span>
+<span class="lineno">126</span>        <span class="bp">self</span><span class="o">.</span><span class="n">affine</span> <span class="o">=</span> <span class="n">affine</span>
+<span class="lineno">127</span>        <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span> <span class="o">=</span> <span class="n">track_running_stats</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -198,9 +204,9 @@ mean and variance during training phase and use that for inference.</p>
                 <p>Create parameters for $\gamma$ and $\beta$ for scale and shift</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">120</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
-<span class="lineno">121</span>            <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
-<span class="lineno">122</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shift</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">129</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
+<span class="lineno">130</span>            <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+<span class="lineno">131</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shift</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -212,9 +218,9 @@ mean and variance during training phase and use that for inference.</p>
 mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">125</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span>
-<span class="lineno">126</span>            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;exp_mean&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
-<span class="lineno">127</span>            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;exp_var&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">134</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span>
+<span class="lineno">135</span>            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;exp_mean&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+<span class="lineno">136</span>            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;exp_var&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -228,7 +234,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
 <code>[batch_size, channels, height, width]</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">129</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">138</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -239,7 +245,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
                 <p>Keep the original shape</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">137</span>        <span class="n">x_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">146</span>        <span class="n">x_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -250,7 +256,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
                 <p>Get the batch size</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">139</span>        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">148</span>        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -261,7 +267,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
                 <p>Sanity check to make sure the number of features is same</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">141</span>        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">150</span>        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -272,7 +278,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
                 <p>Reshape into <code>[batch_size, channels, n]</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">144</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">153</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -284,7 +290,7 @@ mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$</p>
 if we are in training mode or if we have not tracked exponential moving averages</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">148</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">157</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -296,7 +302,7 @@ if we are in training mode or if we have not tracked exponential moving averages
 i.e. the means for each feature $\mathbb{E}[x^{(k)}]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">151</span>            <span class="n">mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">160</span>            <span class="n">mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -308,7 +314,7 @@ i.e. the means for each feature $\mathbb{E}[x^{(k)}]$</p>
 i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">154</span>            <span class="n">mean_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">163</span>            <span class="n">mean_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -319,7 +325,7 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
                 <p>Variance for each feature $Var[x^{(k)}] = \mathbb{E}[(x^{(k)})^2] - \mathbb{E}[x^{(k)}]^2$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">156</span>            <span class="n">var</span> <span class="o">=</span> <span class="n">mean_x2</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">165</span>            <span class="n">var</span> <span class="o">=</span> <span class="n">mean_x2</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -330,9 +336,9 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
                 <p>Update exponential moving averages</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">159</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span>
-<span class="lineno">160</span>                <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">mean</span>
-<span class="lineno">161</span>                <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">var</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">168</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_running_stats</span><span class="p">:</span>
+<span class="lineno">169</span>                <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">mean</span>
+<span class="lineno">170</span>                <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">var</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -343,9 +349,9 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
                 <p>Use exponential moving averages as estimates</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">163</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">164</span>            <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span>
-<span class="lineno">165</span>            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">172</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">173</span>            <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_mean</span>
+<span class="lineno">174</span>            <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_var</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -357,7 +363,7 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">168</span>        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">177</span>        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -369,8 +375,8 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">170</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
-<span class="lineno">171</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">179</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
+<span class="lineno">180</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -381,7 +387,7 @@ i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$</p>
                 <p>Reshape to original and return</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">174</span>        <span class="k">return</span> <span class="n">x_norm</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x_shape</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">183</span>        <span class="k">return</span> <span class="n">x_norm</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x_shape</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>

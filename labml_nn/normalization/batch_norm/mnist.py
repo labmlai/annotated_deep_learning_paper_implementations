@@ -2,7 +2,8 @@
 ---
 title: MNIST Experiment to try Batch Normalization
 summary: >
-  This is a simple model for MNIST digit classification that uses batch normalization
+  This trains is a simple convolutional neural network that uses batch normalization
+  to classify MNIST digits.
 ---
 
 # MNIST Experiment for Batch Normalization
