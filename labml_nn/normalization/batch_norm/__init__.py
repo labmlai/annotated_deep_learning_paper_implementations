@@ -18,10 +18,10 @@ network parameters during training.
 For example, let's say there are two layers $l_1$ and $l_2$.
 During the beginning of the training $l_1$ outputs (inputs to $l_2$)
 could be in distribution $\mathcal{N}(0.5, 1)$.
-Then, after some training steps it could move to $\mathcal{N}(0.5, 1)$.
+Then, after some training steps, it could move to $\mathcal{N}(0.5, 1)$.
 This is *internal covariate shift*.
 
-Internal covriate shift will adversely affect training speed because the later layers
+Internal covariate shift will adversely affect training speed because the later layers
 ($l_2$ in the above example) has to adapt to this shifted distribution.
 
 By stabilizing the distribution batch normalization minimizes the internal covariate shift.
@@ -29,7 +29,7 @@ By stabilizing the distribution batch normalization minimizes the internal covar
 ## Normalization
 
 It is known that whitening improves training speed and convergence.
-*Whitening* is linearly transforming inputs to have zero mean, unit variance
+*Whitening* is linearly transforming inputs to have zero mean, unit variance,
 and be uncorrelated.
 
 ### Normalizing outside gradient computation doesn't work
@@ -45,7 +45,7 @@ Therefore,
 $b$ will increase or decrease based
 $\frac{\partial{\mathcal{L}}}{\partial x}$,
 and keep on growing indefinitely in each training update.
-Paper notes that similar explosions happen with variances.
+The paper notes that similar explosions happen with variances.
 
 ### Batch Normalization
 
@@ -62,14 +62,14 @@ The second simplification is to use estimates of mean $\mathbb{E}[x^{(k)}]$
 and variance $Var[x^{(k)}]$ from the mini-batch
 for normalization; instead of calculating the mean and variance across whole dataset.
 
-Normalizing each feature to zero mean and unit variance could effect what the layer
+Normalizing each feature to zero mean and unit variance could affect what the layer
 can represent.
 As an example paper illustrates that, if the inputs to a sigmoid are normalized
 most of it will be within $[-1, 1]$ range where the sigmoid is linear.
 To overcome this each feature is scaled and shifted by two trained parameters
 $\gamma^{(k)}$ and $\beta^{(k)}$.
 $$y^{(k)} =\gamma^{(k)} \hat{x}^{(k)} + \beta^{(k)}$$
-where $y^{(k)}$ is the output of of the batch normalization layer.
+where $y^{(k)}$ is the output of the batch normalization layer.
 
 Note that when applying batch normalization after a linear transform
 like $Wu + b$ the bias parameter $b$ gets cancelled due to normalization.
@@ -86,7 +86,7 @@ perform the normalization.
 So during inference, you either need to go through the whole (or part of) dataset
 and find the mean and variance, or you can use an estimate calculated during training.
 The usual practice is to calculate an exponential moving average of
-mean and variance during training phase and use that for inference.
+mean and variance during the training phase and use that for inference.
 
 Here's [the training code](mnist.html) and a notebook for training
 a CNN classifier that use batch normalization for MNIST dataset.
