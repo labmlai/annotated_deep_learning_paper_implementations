@@ -61,8 +61,8 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
     """
 
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
-        # The linear transformations doesn't need a bias since we take care of it when
-        # calculating scores.
+        # The linear transformations do not need a bias since we
+        # explicitly include it when calculating scores.
         # However having a bias for `value` might make sense.
         super().__init__(heads, d_model, dropout_prob, bias=False)
 

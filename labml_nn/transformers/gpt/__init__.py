@@ -7,7 +7,7 @@ summary: >
 
 # GPT
 
-This is an tutorial/implementation of
+This is a tutorial/implementation of
 [OpenAI GPT architecture](https://openai.com/blog/better-language-models/)
 in [PyTorch](https://pytorch.org).
 We got a bunch of implementation details from
@@ -21,7 +21,7 @@ single GPU and will need model parallelism.
 This implementation doesn't even use data parallelism and is intended to be
 more of a tutorial.
 
-Main differences of this to a standard autoregressive transformer
+Main differences of this compared to a simple autoregressive transformer
 are the parameter initialization, weight decay, and learning rate schedule.
 For the transformer we reuse the
 [existing labml/nn transformer implementation](../transformers/index.html).
@@ -188,28 +188,28 @@ def transformer_optimizer(c: NLPAutoRegressionConfigs):
     ]
 
     # Create a [configurable optimizer](../optimizers/configs.html#OptimizerConfigs),
-    # so that we can change these simple by passing
+    # so that we can change these simply by passing
     # a config dictionary.
     optimizer = OptimizerConfigs()
 
-    # Set parameter groups for optimization
+    # Set parameter groups for optimization.
     optimizer.parameters = opt_groups
-    # Use [cosine decay optimizer](../optimizers/adam_warmup_cosine_decay.html)
-    # This is what GPT uses
+    # Use [cosine decay optimizer](../optimizers/adam_warmup_cosine_decay.html).
+    # This is what GPT uses.
     optimizer.optimizer = 'AdamWarmupCosineDecay'
     # Set model embedding size, required if we use [Noam optimizer](../optimizers/noam.html)
-    # which has an exponential decay
+    # which has an exponential decay.
     optimizer.d_model = c.d_model
     # Set default weight decay.
-    # This is not required since we set the weight decay in the parameter groups
+    # This is not required since we set the weight decay in the parameter groups.
     optimizer.weight_decay = c.weight_decay
-    # GPT uses a maximum learning rate of $6 \times 10^{-4}$
+    # GPT uses a maximum learning rate of $6 \times 10^{-4}$.
     optimizer.learning_rate = 6e-4
     # $\beta_1 = 0.9, \beta_2 = 0.95$
     optimizer.betas = (0.9, 0.95)
     # $\epsilon = 10^{-8}$
     optimizer.eps = 1e-8
-    # Weight decay decoupled from gradients
+    # Weight decay is decoupled from gradients
     optimizer.weight_decouple = True
     # Total number of optimization steps for learning rate cosine decay
     optimizer.total_steps = c.epochs * len(c.text.train) // (c.batch_size * c.seq_len)

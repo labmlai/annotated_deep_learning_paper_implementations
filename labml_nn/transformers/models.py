@@ -62,7 +62,7 @@ class TransformerLayer(Module):
     ## Transformer Layer
     </a>
 
-    This can act as a encoder layer or a decoder layer.
+    This can act as an encoder layer or a decoder layer.
 
     🗒 Some implementations, including the paper seem to have differences
     in where the layer-normalization is done.
@@ -70,7 +70,7 @@ class TransformerLayer(Module):
     and add the original residual vectors.
     Alternative is to do a layer normalization after adding the residuals.
     But we found this to be less stable when training.
-    We found a detailed discussion about this in paper
+    We found a detailed discussion about this in the paper
      [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745).
     """
 
@@ -220,7 +220,7 @@ class EncoderDecoder(Module):
                 nn.init.xavier_uniform_(p)
 
     def __call__(self, src: torch.Tensor, tgt: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):
-        # Runs the source through encoder
+        # Run the source through encoder
         enc = self.encode(src, src_mask)
         # Run encodings and targets through decoder
         return self.decode(enc, src_mask, tgt, tgt_mask)
