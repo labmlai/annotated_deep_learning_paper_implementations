@@ -13,9 +13,9 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 Normal transformers process tokens in parallel. Each transformer layer pays attention
 to the outputs of the previous layer.
 Feedback transformer pays attention to the output of all layers in previous steps.
-So this adds recurrence and we need to process token-by-token.
+So this adds recurrence, and we need to process token-by-token.
 This slows down the training significantly (about 5X - 10X depending on the sequence length).
-However when predicting Feedback Transformer is faster because you can predict the next token
+However, when predicting Feedback Transformer is faster because you can predict the next token
 if you cache the memory vectors.
 
 In order to speed up the training the paper discusses starting with a short sequence length and
