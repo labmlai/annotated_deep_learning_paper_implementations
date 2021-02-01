@@ -58,6 +58,9 @@ and
 * [Rectified Adam Optimizer](optimizers/radam.html)
 * [AdaBelief Optimizer](optimizers/ada_belief.html)
 
+#### ✨ [Normalization Layers](https://nn.labml.ai/normalization/index.html)
+* [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)
+
 ### Installation
 
 ```bash
