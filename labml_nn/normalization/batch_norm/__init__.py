@@ -98,13 +98,12 @@ a CNN classifier that use batch normalization for MNIST dataset.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
-
-class BatchNorm(Module):
+class BatchNorm(nn.Module):
     """
     ## Batch Normalization Layer
     """
+
     def __init__(self, channels: int, *,
                  eps: float = 1e-5, momentum: float = 0.1,
                  affine: bool = True, track_running_stats: bool = True):
@@ -135,7 +134,7 @@ class BatchNorm(Module):
             self.register_buffer('exp_mean', torch.zeros(channels))
             self.register_buffer('exp_var', torch.ones(channels))
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         `x` is a tensor of shape `[batch_size, channels, *]`.
         `*` could be any (even *) dimensions.
