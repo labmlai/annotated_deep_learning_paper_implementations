@@ -2,7 +2,7 @@
 ---
 title: Batch Normalization
 summary: >
- A PyTorch implementations/tutorials of batch normalization.
+ A PyTorch implementation/tutorial of batch normalization.
 ---
 
 # Batch Normalization
@@ -100,8 +100,28 @@ from torch import nn
 
 
 class BatchNorm(nn.Module):
-    """
+    r"""
     ## Batch Normalization Layer
+
+    Batch normalization layer $\text{BN}$ normalizes the input $X$ as follows:
+
+    When input $X \in \mathbb{R}^{B \times C \times H \times W}$ is a batch of image representations,
+    where $B$ is the batch size, $C$ is the number of channels, $H$ is the height and $W$ is the width.
+    $$\text{BN}(X) = \gamma
+    \frac{X - \underset{B, H, W}{\mathbb{E}}[X]}{\sqrt{\underset{B, H, W}{Var}[X] + \epsilon}}
+    + \beta$$
+
+    When input $X \in \mathbb{R}^{B \times C}$ is a batch of vector embeddings,
+    where $B$ is the batch size and $C$ is the number of features.
+    $$\text{BN}(X) = \gamma
+    \frac{X - \underset{B}{\mathbb{E}}[X]}{\sqrt{\underset{B}{Var}[X] + \epsilon}}
+    + \beta$$
+
+    When input $X \in \mathbb{R}^{B \times C \times L}$ is a batch of sequence embeddings,
+    where $B$ is the batch size, $C$ is the number of features, and $L$ is the length of the sequence.
+    $$\text{BN}(X) = \gamma
+    \frac{X - \underset{B, L}{\mathbb{E}}[X]}{\sqrt{\underset{B, L}{Var}[X] + \epsilon}}
+    + \beta$$
     """
 
     def __init__(self, channels: int, *,
