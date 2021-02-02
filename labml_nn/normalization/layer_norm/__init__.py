@@ -29,20 +29,17 @@ Layer normalization does it for each batch across all elements.
 
 Layer normalization is generally used for NLP tasks.
 
-Here's [the training code](mnist.html) and a notebook for training
-a CNN classifier that use batch normalization for MNIST dataset.
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=011254fe647011ebbb8e0242ac1c0002)
+We have used layer normalization in most of the
+[transformer implementations](../../transformers/gpt/index.html).
 """
 
 import torch
 from torch import nn
 
 
-class BatchNorm(nn.Module):
+class LayerNorm(nn.Module):
     """
-    ## Batch Normalization Layer
+    ## Layer Normalization
     """
 
     def __init__(self, channels: int, *,
