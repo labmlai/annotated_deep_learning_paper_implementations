@@ -41,7 +41,7 @@ class AutoregressiveModel(Module):
         self.transformer = transformer
         self.generator = nn.Linear(d_model, n_vocab)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Embed the tokens
         x = self.src_embed(x)
         # Run it through the the transformer

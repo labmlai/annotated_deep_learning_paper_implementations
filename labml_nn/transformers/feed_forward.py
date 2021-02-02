@@ -78,7 +78,7 @@ class FeedForward(Module):
             # be multiplied by the gate, parameterized by weight $V$ and bias $c$
             self.linear_v = nn.Linear(d_model, d_ff, bias=bias_gate)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # $f(x W_1 + b_1)$
         g = self.activation(self.layer1(x))
         # If gated, $f(x W_1 + b_1) \otimes (x V + b) $

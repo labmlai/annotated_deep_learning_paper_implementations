@@ -49,7 +49,7 @@ class AutoregressiveModel(Module):
         """
         return self.encoder.layers[-1].ff_input
 
-    def __call__(self, src: torch.Tensor):
+    def forward(self, src: torch.Tensor):
         # Create subsequent mask, so that the transformer can only pay attention to past tokens.
         if self.src_mask is None or self.src_mask.size(0) != len(src):
             self.src_mask = subsequent_mask(len(src)).to(src.device)

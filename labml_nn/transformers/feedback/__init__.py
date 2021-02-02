@@ -155,7 +155,7 @@ class FeedbackAttention(Module):
         # $A_j$
         return ac + bd
 
-    def __call__(self, *,
+    def forward(self, *,
                  query: torch.Tensor,
                  key: torch.Tensor,
                  value: torch.Tensor):
@@ -226,7 +226,7 @@ class FeedbackTransformerLayer(Module):
         self.norm_self_attn = nn.LayerNorm([d_model])
         self.norm_ff = nn.LayerNorm([d_model])
 
-    def __call__(self, *,
+    def forward(self, *,
                  x: torch.Tensor,
                  key: Optional[torch.Tensor],
                  value: Optional[torch.Tensor]):
@@ -272,7 +272,7 @@ class FeedbackTransformer(Module):
         # Softmax for weights before taking the weighted sum
         self.softmax = nn.Softmax(0)
 
-    def __call__(self, x_seq: torch.Tensor):
+    def forward(self, x_seq: torch.Tensor):
         """
         * `x_seq` is the input with shape `[seq_len, batch_size, d_model]`
         """
@@ -470,7 +470,7 @@ class FeedbackTransformerKV(Module):
         # Memory for stacked values
         self.mem_value = Stack(512)
 
-    def __call__(self, x_seq: torch.Tensor):
+    def forward(self, x_seq: torch.Tensor):
         """
         * `x_seq` is the input with shape `[seq_len, batch_size, d_model]`
         """

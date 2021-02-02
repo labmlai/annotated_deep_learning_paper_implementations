@@ -33,7 +33,7 @@ class EmbeddingsWithPositionalEncoding(Module):
         self.d_model = d_model
         self.register_buffer('positional_encodings', get_positional_encoding(d_model, max_len))
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         pe = self.positional_encodings[:x.shape[0]].requires_grad_(False)
         return self.linear(x) * math.sqrt(self.d_model) + pe
 
@@ -51,7 +51,7 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
         self.d_model = d_model
         self.positional_encodings = nn.Parameter(torch.zeros(max_len, 1, d_model), requires_grad=True)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         pe = self.positional_encodings[:x.shape[0]]
         return self.linear(x) * math.sqrt(self.d_model) + pe
 
@@ -100,7 +100,7 @@ class TransformerLayer(Module):
         # Whether to save input to the feed forward layer
         self.is_save_ff_input = False
 
-    def __call__(self, *,
+    def forward(self, *,
                  x: torch.Tensor,
                  mask: torch.Tensor,
                  src: torch.Tensor = None,
@@ -150,7 +150,7 @@ class Encoder(Module):
         # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
-    def __call__(self, x: torch.Tensor, mask: torch.Tensor):
+    def forward(self, x: torch.Tensor, mask: torch.Tensor):
         # Run through each transformer layer
         for layer in self.layers:
             x = layer(x=x, mask=mask)
@@ -172,7 +172,7 @@ class Decoder(Module):
         # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
-    def __call__(self, x: torch.Tensor, memory: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):
+    def forward(self, x: torch.Tensor, memory: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):
         # Run through each transformer layer
         for layer in self.layers:
             x = layer(x=x, mask=tgt_mask, src=memory, src_mask=src_mask)
@@ -194,7 +194,7 @@ class Generator(Module):
         super().__init__()
         self.projection = nn.Linear(d_model, n_vocab)
 
-    def __call__(self, x):
+    def forward(self, x):
         return self.projection(x)
 
 
@@ -219,7 +219,7 @@ class EncoderDecoder(Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def __call__(self, src: torch.Tensor, tgt: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):
+    def forward(self, src: torch.Tensor, tgt: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor):
         # Run the source through encoder
         enc = self.encode(src, src_mask)
         # Run encodings and targets through decoder

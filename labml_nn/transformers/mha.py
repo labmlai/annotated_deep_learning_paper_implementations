@@ -42,7 +42,7 @@ class PrepareForMultiHeadAttention(Module):
         # Number of dimensions in vectors in each head
         self.d_k = d_k
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Input has shape `[seq_len, batch_size, d_model]` or `[batch_size, d_model]`.
         # We apply the linear transformation to the last dimension and split that into
         # the heads.
@@ -118,7 +118,7 @@ class MultiHeadAttention(Module):
         # Calculate $Q K^\top$ or $S_{ijbh} = \sum_d Q_{ibhd} K_{jbhd}$
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
 
-    def __call__(self, *,
+    def forward(self, *,
                  query: torch.Tensor,
                  key: torch.Tensor,
                  value: torch.Tensor,

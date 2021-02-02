@@ -80,7 +80,7 @@ class SwitchFeedForward(Module):
         self.switch = nn.Linear(d_model, n_experts)
         self.softmax = nn.Softmax(dim=-1)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the input to the switching module with shape `[seq_len, batch_size, d_model]`
         """
@@ -189,7 +189,7 @@ class SwitchTransformerLayer(Module):
         self.norm_self_attn = nn.LayerNorm([d_model])
         self.norm_ff = nn.LayerNorm([d_model])
 
-    def __call__(self, *,
+    def forward(self, *,
                  x: torch.Tensor,
                  mask: torch.Tensor):
         # Normalize the vectors before doing self attention
@@ -221,7 +221,7 @@ class SwitchTransformer(Module):
         # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
-    def __call__(self, x: torch.Tensor, mask: torch.Tensor):
+    def forward(self, x: torch.Tensor, mask: torch.Tensor):
         # Run through each transformer layer
         counts, route_prob, n_dropped = [], [], []
         for layer in self.layers:

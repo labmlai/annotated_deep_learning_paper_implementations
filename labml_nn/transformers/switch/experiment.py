@@ -34,7 +34,7 @@ class AutoregressiveModel(Module):
         self.generator = nn.Linear(d_model, n_vocab)
         self.mask = None
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Initialize the subsequent mask
         if self.mask is None or self.mask.size(0) != len(x):
             from labml_nn.transformers.utils import subsequent_mask

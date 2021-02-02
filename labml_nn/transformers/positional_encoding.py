@@ -36,7 +36,7 @@ class PositionalEncoding(Module):
 
         self.register_buffer('positional_encodings', get_positional_encoding(d_model, max_len), False)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         pe = self.positional_encodings[:x.shape[0]].detach().requires_grad_(False)
         x = x + pe
         x = self.dropout(x)

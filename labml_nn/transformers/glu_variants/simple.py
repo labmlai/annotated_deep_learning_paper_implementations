@@ -20,6 +20,7 @@ We decided to write a simpler implementation to make it easier readers who are n
 import dataclasses
 
 import torch
+from labml_helpers.module import Module
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
@@ -34,7 +35,7 @@ from labml_nn.transformers.models import EmbeddingsWithPositionalEncoding, Trans
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class AutoregressiveModel(nn.Module):
+class AutoregressiveModel(Module):
     """
     ## Auto regressive model
     """
@@ -51,7 +52,7 @@ class AutoregressiveModel(nn.Module):
         # This will be initialized on the first call
         self.src_mask = None
 
-    def __call__(self, src: torch.Tensor):
+    def forward(self, src: torch.Tensor):
         # Create subsequent mask, so that the transformer can only pay attention to past tokens.
         if self.src_mask is None or self.src_mask.size(0) != len(src):
             self.src_mask = subsequent_mask(len(src)).to(src.device)

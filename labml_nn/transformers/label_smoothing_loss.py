@@ -26,7 +26,7 @@ class LabelSmoothingLoss(Module):
         self.size = size
         self.true_dist = None
 
-    def __call__(self, x: torch.Tensor, target: torch.Tensor):
+    def forward(self, x: torch.Tensor, target: torch.Tensor):
         assert x.shape[1] == self.size
         true_dist = x.clone()
         true_dist.fill_(self.smoothing / (self.size - 2))

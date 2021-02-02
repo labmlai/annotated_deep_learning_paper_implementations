@@ -67,7 +67,7 @@ class GPT(Module):
         # The mask will be initialized on the first call
         self.mask = None
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Create subsequent mask if mask is not initialized
         # or if the size of the mask is different
         if self.mask is None or self.mask.size(0) != len(x):
