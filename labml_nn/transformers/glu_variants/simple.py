@@ -40,7 +40,7 @@ class AutoregressiveModel(Module):
     ## Auto regressive model
     """
 
-    def __init__(self, src_embed: nn.Module, encoder: Encoder, generator: nn.Module):
+    def __init__(self, src_embed: Module, encoder: Encoder, generator: Module):
         super().__init__()
         # Token embedding module
         self.src_embed = src_embed

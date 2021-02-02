@@ -8,6 +8,7 @@ summary: This is a simple MNIST example with a CNN model to test the optimizers.
 """
 import torch.nn as nn
 import torch.utils.data
+from labml_helpers.module import Module
 
 from labml import experiment, tracker
 from labml.configs import option
@@ -19,7 +20,7 @@ from labml_helpers.train_valid import TrainValidConfigs, BatchIndex, hook_model_
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
-class Model(nn.Module):
+class Model(Module):
     """
     ## The model
     """

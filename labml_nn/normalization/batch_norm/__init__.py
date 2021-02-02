@@ -98,8 +98,10 @@ a CNN classifier that use batch normalization for MNIST dataset.
 import torch
 from torch import nn
 
+from labml_helpers.module import Module
 
-class BatchNorm(nn.Module):
+
+class BatchNorm(Module):
     r"""
     ## Batch Normalization Layer
 
@@ -157,7 +159,7 @@ class BatchNorm(nn.Module):
     def forward(self, x: torch.Tensor):
         """
         `x` is a tensor of shape `[batch_size, channels, *]`.
-        `*` could be any (even *) dimensions.
+        `*` could be any number of (even 0) dimensions.
          For example, in an image (2D) convolution this will be
         `[batch_size, channels, height, width]`
         """
@@ -200,3 +202,19 @@ class BatchNorm(nn.Module):
 
         # Reshape to original and return
         return x_norm.view(x_shape)
+
+
+def _test():
+    from labml.logger import inspect
+
+    x = torch.zeros([2, 3, 2, 4])
+    inspect(x.shape)
+    bn = BatchNorm(3)
+
+    x = bn(x)
+    inspect(x.shape)
+    inspect(bn.exp_var.shape)
+
+
+if __name__ == '__main__':
+    _test()

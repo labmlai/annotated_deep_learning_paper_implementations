@@ -32,89 +32,86 @@ Layer normalization is generally used for NLP tasks.
 We have used layer normalization in most of the
 [transformer implementations](../../transformers/gpt/index.html).
 """
+from typing import Union, List
 
 import torch
-from torch import nn
+from torch import nn, Size
+
+from labml_helpers.module import Module
 
 
-class LayerNorm(nn.Module):
+class LayerNorm(Module):
     """
     ## Layer Normalization
     """
 
-    def __init__(self, channels: int, *,
-                 eps: float = 1e-5, momentum: float = 0.1,
-                 affine: bool = True, track_running_stats: bool = True):
+    def __init__(self, normalized_shape: Union[int, List[int], Size], *,
+                 eps: float = 1e-5,
+                 elementwise_affine: bool = True):
         """
-        * `channels` is the number of features in the input
-        * `eps` is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability
-        * `momentum` is the momentum in taking the exponential moving average
-        * `affine` is whether to scale and shift the normalized value
-        * `track_running_stats` is whether to calculate the moving averages or mean and variance
+        * `normalized_shape` $S$ is shape of the elements (except the batch).
+         The input should then be
+         $X \in \mathbb{R}^{* \times S[0] \times S[1] \times ... \times S[n]}$
+        * `eps` is $\epsilon$, used in $\sqrt{Var[X}] + \epsilon}$ for numerical stability
+        * `elementwise_affine` is whether to scale and shift the normalized value
 
-        We've tried to use the same names for arguments as PyTorch `BatchNorm` implementation.
+        We've tried to use the same names for arguments as PyTorch `LayerNorm` implementation.
         """
         super().__init__()
 
-        self.channels = channels
-
+        self.normalized_shape = normalized_shape
         self.eps = eps
-        self.momentum = momentum
-        self.affine = affine
-        self.track_running_stats = track_running_stats
-        # Create parameters for $\gamma$ and $\beta$ for scale and shift
-        if self.affine:
-            self.scale = nn.Parameter(torch.ones(channels))
-            self.shift = nn.Parameter(torch.zeros(channels))
-        # Create buffers to store exponential moving averages of
-        # mean $\mathbb{E}[x^{(k)}]$ and variance $Var[x^{(k)}]$
-        if self.track_running_stats:
-            self.register_buffer('exp_mean', torch.zeros(channels))
-            self.register_buffer('exp_var', torch.ones(channels))
+        self.elementwise_affine = elementwise_affine
+        # Create parameters for $\gamma$ and $\beta$ for gain and bias
+        if self.elementwise_affine:
+            self.gain = nn.Parameter(torch.ones(normalized_shape))
+            self.bias = nn.Parameter(torch.zeros(normalized_shape))
 
     def forward(self, x: torch.Tensor):
         """
-        `x` is a tensor of shape `[batch_size, channels, *]`.
-        `*` could be any (even *) dimensions.
-         For example, in an image (2D) convolution this will be
-        `[batch_size, channels, height, width]`
+        `x` is a tensor of shape `[*, S[0], S[1], ..., S[n]]`.
+        `*` could be any number of dimensions.
+         For example, in an NLP task this will be
+        `[seq_len, batch_size, features]`
         """
         # Keep the original shape
         x_shape = x.shape
-        # Get the batch size
-        batch_size = x_shape[0]
-        # Sanity check to make sure the number of features is same
-        assert self.channels == x.shape[1]
+        # Sanity check to make sure the shapes match
+        assert self.normalized_shape == x.shape[-len(self.normalized_shape):]
 
-        # Reshape into `[batch_size, channels, n]`
-        x = x.view(batch_size, self.channels, -1)
+        # Reshape into `[M, S[0], S[1], ..., S[n]]`
+        x = x.view(-1, *self.normalized_shape)
 
-        # We will calculate the mini-batch mean and variance
-        # if we are in training mode or if we have not tracked exponential moving averages
-        if self.training or not self.track_running_stats:
-            # Calculate the mean across first and last dimension;
-            # i.e. the means for each feature $\mathbb{E}[x^{(k)}]$
-            mean = x.mean(dim=[0, 2])
-            # Calculate the squared mean across first and last dimension;
-            # i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$
-            mean_x2 = (x ** 2).mean(dim=[0, 2])
-            # Variance for each feature $Var[x^{(k)}] = \mathbb{E}[(x^{(k)})^2] - \mathbb{E}[x^{(k)}]^2$
-            var = mean_x2 - mean ** 2
+        # Calculate the mean across first dimension;
+        # i.e. the means for each element $\mathbb{E}[X}]$
+        mean = x.mean(dim=0)
+        # Calculate the squared mean across first dimension;
+        # i.e. the means for each element $\mathbb{E}[X^2]$
+        mean_x2 = (x ** 2).mean(dim=0)
+        # Variance for each element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$
+        var = mean_x2 - mean ** 2
 
-            # Update exponential moving averages
-            if self.training and self.track_running_stats:
-                self.exp_mean = (1 - self.momentum) * self.exp_mean + self.momentum * mean
-                self.exp_var = (1 - self.momentum) * self.exp_var + self.momentum * var
-        # Use exponential moving averages as estimates
-        else:
-            mean = self.exp_mean
-            var = self.exp_var
-
-        # Normalize $$\hat{x}^{(k)} = \frac{x^{(k)} - \mathbb{E}[x^{(k)}]}{\sqrt{Var[x^{(k)}] + \epsilon}}$$
-        x_norm = (x - mean.view(1, -1, 1)) / torch.sqrt(var + self.eps).view(1, -1, 1)
-        # Scale and shift $$y^{(k)} =\gamma^{(k)} \hat{x}^{(k)} + \beta^{(k)}$$
-        if self.affine:
-            x_norm = self.scale.view(1, -1, 1) * x_norm + self.shift.view(1, -1, 1)
+        # Normalize $$\hat{X} = \frac{X} - \mathbb{E}[X]}{\sqrt{Var[X] + \epsilon}}$$
+        x_norm = (x - mean) / torch.sqrt(var + self.eps)
+        # Scale and shift $$\text{LN}(x) = \gamma \hat{X} + \beta$$
+        if self.elementwise_affine:
+            x_norm = self.gain * x_norm + self.bias
 
         # Reshape to original and return
         return x_norm.view(x_shape)
+
+
+def _test():
+    from labml.logger import inspect
+
+    x = torch.zeros([2, 3, 2, 4])
+    inspect(x.shape)
+    ln = LayerNorm(x.shape[2:])
+
+    x = ln(x)
+    inspect(x.shape)
+    inspect(ln.gain.shape)
+
+
+if __name__ == '__main__':
+    _test()
