@@ -88,7 +88,7 @@ large NLP models are usually trained with small batch sizes.</li>
 on a wider range of settings.
 Layer normalization transformers the inputs to have zero mean and unit variance
 across the features.
-*Note that batch normalization, fixes the zero mean and unit variance for each vector.
+<em>Note that batch normalization fixes the zero mean and unit variance for each element.</em>
 Layer normalization does it for each batch across all elements.</p>
 <p>Layer normalization is generally used for NLP tasks.</p>
 <p>We have used layer normalization in most of the
@@ -109,6 +109,29 @@ Layer normalization does it for each batch across all elements.</p>
                     <a href='#section-1'>#</a>
                 </div>
                 <h2>Layer Normalization</h2>
+<p>Layer normalization $\text{LN}$ normalizes the input $X$ as follows:</p>
+<p>When input $X \in \mathbb{R}^{B \times C}$ is a batch of embeddings,
+where $B$ is the batch size and $C$ is the number of features.
+$\gamma \in \mathbb{R}^{C}$ and $\beta \in \mathbb{R}^{C}$.
+<script type="math/tex; mode=display">\text{LN}(X) = \gamma
+\frac{X - \underset{C}{\mathbb{E}}[X]}{\sqrt{\underset{C}{Var}[X] + \epsilon}}
++ \beta</script>
+</p>
+<p>When input $X \in \mathbb{R}^{L \times B \times C}$ is a batch of a sequence of embeddings,
+where $B$ is the batch size, $C$ is the number of channels, $L$ is the length of the sequence.
+$\gamma \in \mathbb{R}^{C}$ and $\beta \in \mathbb{R}^{C}$.
+<script type="math/tex; mode=display">\text{LN}(X) = \gamma
+\frac{X - \underset{C}{\mathbb{E}}[X]}{\sqrt{\underset{C}{Var}[X] + \epsilon}}
++ \beta</script>
+</p>
+<p>When input $X \in \mathbb{R}^{B \times C \times H \times W}$ is a batch of image representations,
+where $B$ is the batch size, $C$ is the number of channels, $H$ is the height and $W$ is the width.
+This is not a widely used scenario.
+$\gamma \in \mathbb{R}^{C \times H \times W}$ and $\beta \in \mathbb{R}^{C \times H \times W}$.
+<script type="math/tex; mode=display">\text{LN}(X) = \gamma
+\frac{X - \underset{C, H, W}{\mathbb{E}}[X]}{\sqrt{\underset{C, H, W}{Var}[X] + \epsilon}}
++ \beta</script>
+</p>
             </div>
             <div class='code'>
                 <div class="highlight"><pre><span class="lineno">43</span><span class="k">class</span> <span class="nc">LayerNorm</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -120,18 +143,18 @@ Layer normalization does it for each batch across all elements.</p>
                     <a href='#section-2'>#</a>
                 </div>
                 <ul>
-<li><code>normalized_shape</code> $S$ is shape of the elements (except the batch).
+<li><code>normalized_shape</code> $S$ is the shape of the elements (except the batch).
  The input should then be
  $X \in \mathbb{R}^{* \times S[0] \times S[1] \times &hellip; \times S[n]}$</li>
-<li><code>eps</code> is $\epsilon$, used in $\sqrt{Var[X}] + \epsilon}$ for numerical stability</li>
+<li><code>eps</code> is $\epsilon$, used in $\sqrt{Var[X] + \epsilon}$ for numerical stability</li>
 <li><code>elementwise_affine</code> is whether to scale and shift the normalized value</li>
 </ul>
 <p>We&rsquo;ve tried to use the same names for arguments as PyTorch <code>LayerNorm</code> implementation.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">48</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normalized_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Size</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">49</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
-<span class="lineno">50</span>                 <span class="n">elementwise_affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normalized_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Size</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">73</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+<span class="lineno">74</span>                 <span class="n">elementwise_affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -142,11 +165,11 @@ Layer normalization does it for each batch across all elements.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">60</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">61</span>
-<span class="lineno">62</span>        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span> <span class="o">=</span> <span class="n">normalized_shape</span>
-<span class="lineno">63</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
-<span class="lineno">64</span>        <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span> <span class="o">=</span> <span class="n">elementwise_affine</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">84</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">85</span>
+<span class="lineno">86</span>        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span> <span class="o">=</span> <span class="n">normalized_shape</span>
+<span class="lineno">87</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+<span class="lineno">88</span>        <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span> <span class="o">=</span> <span class="n">elementwise_affine</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -157,9 +180,9 @@ Layer normalization does it for each batch across all elements.</p>
                 <p>Create parameters for $\gamma$ and $\beta$ for gain and bias</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">66</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span><span class="p">:</span>
-<span class="lineno">67</span>            <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">))</span>
-<span class="lineno">68</span>            <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">90</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span><span class="p">:</span>
+<span class="lineno">91</span>            <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">))</span>
+<span class="lineno">92</span>            <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -173,7 +196,7 @@ Layer normalization does it for each batch across all elements.</p>
 <code>[seq_len, batch_size, features]</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">94</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -181,10 +204,10 @@ Layer normalization does it for each batch across all elements.</p>
                 <div class='section-link'>
                     <a href='#section-6'>#</a>
                 </div>
-                <p>Keep the original shape</p>
+                <p>Sanity check to make sure the shapes match</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">78</span>        <span class="n">x_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">102</span>        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span><span class="p">):]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -192,10 +215,10 @@ Layer normalization does it for each batch across all elements.</p>
                 <div class='section-link'>
                     <a href='#section-7'>#</a>
                 </div>
-                <p>Sanity check to make sure the shapes match</p>
+                <p>The dimensions to calculate the mean and variance on</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">80</span>        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span><span class="p">):]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">105</span>        <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span><span class="p">))]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -203,10 +226,11 @@ Layer normalization does it for each batch across all elements.</p>
                 <div class='section-link'>
                     <a href='#section-8'>#</a>
                 </div>
-                <p>Reshape into <code>[M, S[0], S[1], ..., S[n]]</code></p>
+                <p>Calculate the mean of all elements;
+i.e. the means for each element $\mathbb{E}[X]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">83</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">109</span>        <span class="n">mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -214,11 +238,11 @@ Layer normalization does it for each batch across all elements.</p>
                 <div class='section-link'>
                     <a href='#section-9'>#</a>
                 </div>
-                <p>Calculate the mean across first dimension;
-i.e. the means for each element $\mathbb{E}[X}]$</p>
+                <p>Calculate the squared mean of all elements;
+i.e. the means for each element $\mathbb{E}[X^2]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">112</span>        <span class="n">mean_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -226,11 +250,10 @@ i.e. the means for each element $\mathbb{E}[X}]$</p>
                 <div class='section-link'>
                     <a href='#section-10'>#</a>
                 </div>
-                <p>Calculate the squared mean across first dimension;
-i.e. the means for each element $\mathbb{E}[X^2]$</p>
+                <p>Variance of all element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">mean_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">114</span>        <span class="n">var</span> <span class="o">=</span> <span class="n">mean_x2</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -238,10 +261,11 @@ i.e. the means for each element $\mathbb{E}[X^2]$</p>
                 <div class='section-link'>
                     <a href='#section-11'>#</a>
                 </div>
-                <p>Variance for each element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$</p>
+                <p>Normalize <script type="math/tex; mode=display">\hat{X} = \frac{X - \mathbb{E}[X]}{\sqrt{Var[X] + \epsilon}}</script>
+</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">92</span>        <span class="n">var</span> <span class="o">=</span> <span class="n">mean_x2</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">117</span>        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -249,11 +273,12 @@ i.e. the means for each element $\mathbb{E}[X^2]$</p>
                 <div class='section-link'>
                     <a href='#section-12'>#</a>
                 </div>
-                <p>Normalize <script type="math/tex; mode=display">\hat{X} = \frac{X} - \mathbb{E}[X]}{\sqrt{Var[X] + \epsilon}}</script>
+                <p>Scale and shift <script type="math/tex; mode=display">\text{LN}(x) = \gamma \hat{X} + \beta</script>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">95</span>        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">119</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span><span class="p">:</span>
+<span class="lineno">120</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -261,23 +286,21 @@ i.e. the means for each element $\mathbb{E}[X^2]$</p>
                 <div class='section-link'>
                     <a href='#section-13'>#</a>
                 </div>
-                <p>Scale and shift <script type="math/tex; mode=display">\text{LN}(x) = \gamma \hat{X} + \beta</script>
-</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">97</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span><span class="p">:</span>
-<span class="lineno">98</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">*</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">123</span>        <span class="k">return</span> <span class="n">x_norm</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
-            <div class='docs'>
+        <div class='docs doc-strings'>
                 <div class='section-link'>
                     <a href='#section-14'>#</a>
                 </div>
-                <p>Reshape to original and return</p>
+                <p>Simple test</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">101</span>        <span class="k">return</span> <span class="n">x_norm</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x_shape</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">126</span><span class="k">def</span> <span class="nf">_test</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -288,20 +311,27 @@ i.e. the means for each element $\mathbb{E}[X^2]$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">104</span><span class="k">def</span> <span class="nf">_test</span><span class="p">():</span>
-<span class="lineno">105</span>    <span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
-<span class="lineno">106</span>
-<span class="lineno">107</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-<span class="lineno">108</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="lineno">109</span>    <span class="n">ln</span> <span class="o">=</span> <span class="n">LayerNorm</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="lineno">110</span>
-<span class="lineno">111</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">112</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="lineno">113</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">ln</span><span class="o">.</span><span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="lineno">114</span>
-<span class="lineno">115</span>
-<span class="lineno">116</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">117</span>    <span class="n">_test</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">130</span>    <span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
+<span class="lineno">131</span>
+<span class="lineno">132</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="lineno">133</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="lineno">134</span>    <span class="n">ln</span> <span class="o">=</span> <span class="n">LayerNorm</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+<span class="lineno">135</span>
+<span class="lineno">136</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">137</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="lineno">138</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">ln</span><span class="o">.</span><span class="n">gain</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">142</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">143</span>    <span class="n">_test</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>

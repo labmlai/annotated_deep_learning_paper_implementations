@@ -109,18 +109,21 @@ class BatchNorm(Module):
 
     When input $X \in \mathbb{R}^{B \times C \times H \times W}$ is a batch of image representations,
     where $B$ is the batch size, $C$ is the number of channels, $H$ is the height and $W$ is the width.
+    $\gamma \in \mathbb{R}^{C}$ and $\beta \in \mathbb{R}^{C}$.
     $$\text{BN}(X) = \gamma
     \frac{X - \underset{B, H, W}{\mathbb{E}}[X]}{\sqrt{\underset{B, H, W}{Var}[X] + \epsilon}}
     + \beta$$
 
-    When input $X \in \mathbb{R}^{B \times C}$ is a batch of vector embeddings,
+    When input $X \in \mathbb{R}^{B \times C}$ is a batch of embeddings,
     where $B$ is the batch size and $C$ is the number of features.
+    $\gamma \in \mathbb{R}^{C}$ and $\beta \in \mathbb{R}^{C}$.
     $$\text{BN}(X) = \gamma
     \frac{X - \underset{B}{\mathbb{E}}[X]}{\sqrt{\underset{B}{Var}[X] + \epsilon}}
     + \beta$$
 
-    When input $X \in \mathbb{R}^{B \times C \times L}$ is a batch of sequence embeddings,
+    When input $X \in \mathbb{R}^{B \times C \times L}$ is a batch of a sequence embeddings,
     where $B$ is the batch size, $C$ is the number of features, and $L$ is the length of the sequence.
+    $\gamma \in \mathbb{R}^{C}$ and $\beta \in \mathbb{R}^{C}$.
     $$\text{BN}(X) = \gamma
     \frac{X - \underset{B, L}{\mathbb{E}}[X]}{\sqrt{\underset{B, L}{Var}[X] + \epsilon}}
     + \beta$$
@@ -205,6 +208,9 @@ class BatchNorm(Module):
 
 
 def _test():
+    """
+    Simple test
+    """
     from labml.logger import inspect
 
     x = torch.zeros([2, 3, 2, 4])
@@ -216,5 +222,6 @@ def _test():
     inspect(bn.exp_var.shape)
 
 
+#
 if __name__ == '__main__':
     _test()

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Batch Normalization"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/normalization/batch_norm/readme.html"/>
+    <meta property="og:title" content="Batch Normalization"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Batch Normalization"/>
+    <meta property="og:description" content=""/>
+
+    <title>Batch Normalization</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/normalization/batch_norm/readme.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">normalization</a>
+                <a class="parent" href="index.html">batch_norm</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/normalization/batch_norm/readme.md">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1><a href="https://nn.labml.ai/normalization/batch_norm/index.html">Batch Normalization</a></h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of Batch Normalization from paper
+ <a href="https://arxiv.org/abs/1502.03167">Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift</a>.</p>
+<h3>Internal Covariate Shift</h3>
+<p>The paper defines <em>Internal Covariate Shift</em> as the change in the
+distribution of network activations due to the change in
+network parameters during training.
+For example, let&rsquo;s say there are two layers $l_1$ and $l_2$.
+During the beginning of the training $l_1$ outputs (inputs to $l_2$)
+could be in distribution $\mathcal{N}(0.5, 1)$.
+Then, after some training steps, it could move to $\mathcal{N}(0.5, 1)$.
+This is <em>internal covariate shift</em>.</p>
+<p>Internal covariate shift will adversely affect training speed because the later layers
+($l_2$ in the above example) has to adapt to this shifted distribution.</p>
+<p>By stabilizing the distribution batch normalization minimizes the internal covariate shift.</p>
+<h2>Normalization</h2>
+<p>It is known that whitening improves training speed and convergence.
+<em>Whitening</em> is linearly transforming inputs to have zero mean, unit variance,
+and be uncorrelated.</p>
+<h3>Normalizing outside gradient computation doesn&rsquo;t work</h3>
+<p>Normalizing outside the gradient computation using pre-computed (detached)
+means and variances doesn&rsquo;t work. For instance. (ignoring variance), let
+<script type="math/tex; mode=display">\hat{x} = x - \mathbb{E}[x]</script>
+where $x = u + b$ and $b$ is a trained bias.
+and $\mathbb{E}[x]$ is outside gradient computation (pre-computed constant).</p>
+<p>Note that $\hat{x}$ has no effect of $b$.
+Therefore,
+$b$ will increase or decrease based
+$\frac{\partial{\mathcal{L}}}{\partial x}$,
+and keep on growing indefinitely in each training update.
+The paper notes that similar explosions happen with variances.</p>
+<h3>Batch Normalization</h3>
+<p>Whitening is computationally expensive because you need to de-correlate and
+the gradients must flow through the full whitening calculation.</p>
+<p>The paper introduces simplified version which they call <em>Batch Normalization</em>.
+First simplification is that it normalizes each feature independently to have
+zero mean and unit variance:
+<script type="math/tex; mode=display">\hat{x}^{(k)} = \frac{x^{(k)} - \mathbb{E}[x^{(k)}]}{\sqrt{Var[x^{(k)}]}}</script>
+where $x = (x^{(1)} &hellip; x^{(d)})$ is the $d$-dimensional input.</p>
+<p>The second simplification is to use estimates of mean $\mathbb{E}[x^{(k)}]$
+and variance $Var[x^{(k)}]$ from the mini-batch
+for normalization; instead of calculating the mean and variance across whole dataset.</p>
+<p>Normalizing each feature to zero mean and unit variance could affect what the layer
+can represent.
+As an example paper illustrates that, if the inputs to a sigmoid are normalized
+most of it will be within $[-1, 1]$ range where the sigmoid is linear.
+To overcome this each feature is scaled and shifted by two trained parameters
+$\gamma^{(k)}$ and $\beta^{(k)}$.
+<script type="math/tex; mode=display">y^{(k)} =\gamma^{(k)} \hat{x}^{(k)} + \beta^{(k)}</script>
+where $y^{(k)}$ is the output of the batch normalization layer.</p>
+<p>Note that when applying batch normalization after a linear transform
+like $Wu + b$ the bias parameter $b$ gets cancelled due to normalization.
+So you can and should omit bias parameter in linear transforms right before the
+batch normalization.</p>
+<p>Batch normalization also makes the back propagation invariant to the scale of the weights.
+And empirically it improves generalization, so it has regularization effects too.</p>
+<h2>Inference</h2>
+<p>We need to know $\mathbb{E}[x^{(k)}]$ and $Var[x^{(k)}]$ in order to
+perform the normalization.
+So during inference, you either need to go through the whole (or part of) dataset
+and find the mean and variance, or you can use an estimate calculated during training.
+The usual practice is to calculate an exponential moving average of
+mean and variance during the training phase and use that for inference.</p>
+<p>Here&rsquo;s <a href="https://nn.labml.ai/normalization/layer_norm/mnist.html">the training code</a> and a notebook for training
+a CNN classifier that use batch normalization for MNIST dataset.</p>
+<p><a href="https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://web.lab-ml.com/run?uuid=011254fe647011ebbb8e0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+            </div>
+            <div class='code'>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

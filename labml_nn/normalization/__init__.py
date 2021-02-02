@@ -8,10 +8,10 @@ summary: >
 # Normalization Layers
 
 * [Batch Normalization](batch_norm/index.html)
+* [Layer Normalization](layer_norm/index.html)
 
 *TODO*
 
-* Layer Normalization
 * Instance Normalization
 * Group Normalization
 """
