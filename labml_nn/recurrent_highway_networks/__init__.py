@@ -51,7 +51,7 @@ class RHNCell(Module):
     We have also replaced the weight matrices and bias vectors from the equations with
     linear transforms, because that's how the implementation is going to look like.
 
-    We implement weight tying, as described in paper, $c_d^t = (1 - g_d^t$.
+    We implement weight tying, as described in paper, $c_d^t = 1 - g_d^t$.
     """
 
     def __init__(self, input_size: int, hidden_size: int, depth: int):
