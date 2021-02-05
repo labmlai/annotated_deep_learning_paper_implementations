@@ -21,7 +21,7 @@ setuptools.setup(
                                                'test',
                                                'test.*')),
     install_requires=['labml>=0.4.97',
-                      'labml-helpers>=0.4.72',
+                      'labml-helpers>=0.4.74',
                       'torch',
                       'einops',
                       'numpy'],

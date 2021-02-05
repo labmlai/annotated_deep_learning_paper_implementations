@@ -49,4 +49,4 @@ It does single GPU training but we implement the concept of switching as describ
 from .configs import TransformerConfigs
 from .models import TransformerLayer, Encoder, Decoder, Generator, EncoderDecoder
 from .mha import MultiHeadAttention
-from .relative_mha import RelativeMultiHeadAttention
+from labml_nn.transformers.xl.relative_mha import RelativeMultiHeadAttention

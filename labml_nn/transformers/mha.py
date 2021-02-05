@@ -137,10 +137,12 @@ class MultiHeadAttention(Module):
         seq_len, batch_size, _ = query.shape
 
         if mask is not None:
-            # `mask` has shape `[seq_len, seq_len, batch_size]`,
+            # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`,
             # where first dimension is the query dimension.
             # If the query dimension is equal to $1$ it will be broadcasted.
-            assert mask.shape[0] == 1 or mask.shape[0] == mask.shape[1]
+            assert mask.shape[0] == 1 or mask.shape[0] == query.shape[0]
+            assert mask.shape[1] == key.shape[0]
+            assert mask.shape[2] == 1 or mask.shape[2] == query.shape[1]
 
             # Same mask applied to all heads.
             mask = mask.unsqueeze(-1)
