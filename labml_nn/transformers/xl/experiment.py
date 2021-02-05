@@ -36,20 +36,26 @@ class AutoregressiveModel(Module):
         self.transformer = transformer
         # Final layer
         self.generator = nn.Linear(d_model, n_vocab)
-        self.mask = None
+        self.mask_x = None
+        self.mask_mem = None
 
     def forward(self, x: torch.Tensor, mem: List[torch.Tensor]):
         # Initialize the subsequent mask
-        length = len(x)
-        if mem:
-            length += len(mem[0])
-        if self.mask is None or self.mask.size(0) != length:
+        m_len = len(mem[0]) if mem else 0
+        if self.mask_x is None or self.mask_x.shape[0] < len(x):
             from labml_nn.transformers.utils import subsequent_mask
-            self.mask = subsequent_mask(length).to(x.device)
+            self.mask_x = subsequent_mask(len(x)).to(x.device)
+        if self.mask_mem is None or self.mask_mem.shape[1] < m_len or self.mask_mem.shape[0] < len(x):
+            self.mask_mem = self.mask_x.new_ones(len(x), m_len, 1)
+
+        if m_len:
+            mask = torch.cat((self.mask_mem[:len(x), :m_len], self.mask_x[:len(x), :len(x)]), dim=1)
+        else:
+            mask = self.mask_x[:len(x), :len(x)]
         # Token embeddings
         x = self.src_embed(x)
         # Run it through the transformer
-        res, mem = self.transformer(x, mem, self.mask[:len(x), :length, :])
+        res, mem = self.transformer(x, mem, mask)
         # Generate logits of the next token
         res = self.generator(res)
         #
@@ -77,6 +83,7 @@ class Configs(NLPAutoRegressionConfigs):
     n_layers: int = 6
     #
     memory = SimpleStateModule()
+    mem_len: int = 128
 
     def init(self):
         # Set tracker configurations
@@ -89,6 +96,20 @@ class Configs(NLPAutoRegressionConfigs):
         # states between training and validation for RNNs.
         # This will keep the accuracy metric stats separate for training and validation.
         self.state_modules = [self.accuracy, self.memory]
+
+    def merge_memory(self, old_mem, new_mem):
+        if self.mem_len == 0:
+            return []
+
+        if old_mem:
+            mem = [torch.cat((m, x), dim=0) for m, x in zip(old_mem, new_mem)]
+        else:
+            mem = new_mem
+
+        if len(mem[0]) > self.mem_len:
+            mem = [m[-self.mem_len:] for m in mem]
+
+        return mem
 
     def step(self, batch: any, batch_idx: BatchIndex):
         """
@@ -105,7 +126,9 @@ class Configs(NLPAutoRegressionConfigs):
         # Whether to capture model outputs
         with self.mode.update(is_log_activations=batch_idx.is_last):
             # Get model outputs.
-            output, mem = self.model(data, self.memory.get())
+            mem = self.memory.get()
+            output, new_mem = self.model(data, mem)
+            mem = self.merge_memory(mem, new_mem)
             self.memory.set(mem)
 
         # Calculate and cross entropy loss
@@ -140,24 +163,31 @@ class Configs(NLPAutoRegressionConfigs):
 
         # Starting prompt
         prompt = self.prompt
+
         # Collect output for printing
         log = [(prompt, Text.subtle)]
+        # memory
+        mem = []
         # Sample 25 tokens
         for i in monit.iterate('Sample', 25):
             # Tokenize the prompt
             data = self.text.text_to_i(prompt).unsqueeze(-1)
+            data = data[-1:]
             data = data.to(self.device)
             # Get the model output
-            output, *_ = self.model(data, [])
+            output, new_mem = self.model(data, mem)
             # Get the model prediction (greedy)
-            output = output.argmax(dim=-1).squeeze()
+            output = output.argmax(dim=-1).squeeze(1)
             # Add the prediction to prompt
             prompt += self.prompt_separator + self.text.itos[output[-1]]
             # Add the prediction for logging
             log += [(self.prompt_separator + self.text.itos[output[-1]], Text.value)]
+            # Memory
+            mem = self.merge_memory(mem, new_mem)
 
         # Print the sampled output
         logger.log(log)
+
 
 @option(Configs.model)
 def autoregressive_model(c: Configs):
@@ -189,13 +219,14 @@ def main():
                         'text': 'tiny_shakespeare',
                         'optimizer.learning_rate': 1.,
                         'optimizer.optimizer': 'Noam',
-                        'prompt': 'It is',
+                        'prompt': 'I ',
                         'prompt_separator': '',
 
                         'train_loader': 'sequential_train_loader',
                         'valid_loader': 'sequential_valid_loader',
 
-                        'seq_len': 64,
+                        'seq_len': 2,
+                        'mem_len': 32,
                         'epochs': 128,
                         'batch_size': 32,
                         'inner_iterations': 25,

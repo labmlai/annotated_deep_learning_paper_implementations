@@ -40,7 +40,7 @@ class TransformerXLLayer(Module):
         # Normalize memory
         if mem is not None:
             mem = self.norm_self_attn(mem)
-            zm = torch.cat((z, mem), dim=0)
+            zm = torch.cat((mem, z), dim=0)
         else:
             zm = z
         # Run through self attention, i.e. keys and values are from self

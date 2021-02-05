@@ -116,9 +116,9 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
         """
 
         # $\color{orange}{R_k}$
-        key_pos_emb = self.key_pos_embeddings[self.P - query.shape[0]:self.P + key.shape[0]]
+        key_pos_emb = self.key_pos_embeddings[self.P - key.shape[0]:self.P + query.shape[0]]
         # $\color{orange}{S_k}$
-        key_pos_bias = self.key_pos_bias[self.P - query.shape[0]:self.P + key.shape[0]]
+        key_pos_bias = self.key_pos_bias[self.P - key.shape[0]:self.P + query.shape[0]]
         # $\color{orange}{v^\top}$
         query_pos_bias = self.query_pos_bias[None, None, :, :]
 
