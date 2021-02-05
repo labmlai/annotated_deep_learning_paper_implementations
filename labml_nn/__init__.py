@@ -15,12 +15,9 @@ implementations.
 
 #### ✨ [Transformers](transformers/index.html)
 
-[Transformers module](transformers/index.html)
-contains implementations for
-[multi-headed attention](transformers/mha.html)
-and
-[relative multi-headed attention](transformers/relative_mha.html).
-
+* [Multi-headed attention](transformers/mha.html)
+* [Transformer building blocks](transformers/models.html)
+* [Relative multi-headed attention](transformers/xl/relative_mha.html).
 * [GPT Architecture](transformers/gpt/index.html)
 * [GLU Variants](transformers/glu_variants/simple.html)
 * [kNN-LM: Generalization through Memorization](transformers/knn/index.html)

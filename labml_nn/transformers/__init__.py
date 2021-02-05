@@ -14,7 +14,7 @@ from paper [Attention Is All You Need](https://arxiv.org/abs/1706.03762),
 and derivatives and enhancements of it.
 
 * [Multi-head attention](mha.html)
-* [Relative multi-head attention](relative_mha.html)
+* [Relative multi-head attention](xl/relative_mha.html)
 * [Transformer Encoder and Decoder Models](models.html)
 * [Fixed positional encoding](positional_encoding.html)
 
