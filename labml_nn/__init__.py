@@ -62,7 +62,7 @@ implementations.
 ### Installation
 
 ```bash
-pip install labml_nn
+pip install labml-nn
 ```
 
 ### Citing LabML

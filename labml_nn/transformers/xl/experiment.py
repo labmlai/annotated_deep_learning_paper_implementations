@@ -36,22 +36,28 @@ class AutoregressiveModel(Module):
         self.transformer = transformer
         # Final layer
         self.generator = nn.Linear(d_model, n_vocab)
+        # Masks
         self.mask_x = None
         self.mask_mem = None
 
     def forward(self, x: torch.Tensor, mem: List[torch.Tensor]):
-        # Initialize the subsequent mask
+        # Length of the memory
         m_len = len(mem[0]) if mem else 0
+        # Create a subsequent mask for tokens
         if self.mask_x is None or self.mask_x.shape[0] < len(x):
             from labml_nn.transformers.utils import subsequent_mask
             self.mask_x = subsequent_mask(len(x)).to(x.device)
+        # Create an all ones (full visibility) mask for memory
         if self.mask_mem is None or self.mask_mem.shape[1] < m_len or self.mask_mem.shape[0] < len(x):
             self.mask_mem = self.mask_x.new_ones(len(x), m_len, 1)
 
+        # Concatenate the masks if there is memory
         if m_len:
             mask = torch.cat((self.mask_mem[:len(x), :m_len], self.mask_x[:len(x), :len(x)]), dim=1)
+        # Use the subsequent mask otherwise
         else:
             mask = self.mask_x[:len(x), :len(x)]
+
         # Token embeddings
         x = self.src_embed(x)
         # Run it through the transformer
@@ -81,9 +87,10 @@ class Configs(NLPAutoRegressionConfigs):
     d_ff: int = 256
     # Number of transformer layers
     n_layers: int = 6
-    #
-    memory = SimpleStateModule()
+    # Number of memories to keep
     mem_len: int = 128
+    # State module to maintain memories when switching between training and validation
+    memory = SimpleStateModule()
 
     def init(self):
         # Set tracker configurations
@@ -91,29 +98,35 @@ class Configs(NLPAutoRegressionConfigs):
         tracker.set_scalar("loss.*", True)
         # Add a hook to log module outputs
         hook_model_outputs(self.mode, self.model, 'model')
-        # Add accuracy as a state module.
-        # The name is probably confusing, since it's meant to store
-        # states between training and validation for RNNs.
-        # This will keep the accuracy metric stats separate for training and validation.
+        # This will keep the accuracy metric stats and memories separate for training and validation.
         self.state_modules = [self.accuracy, self.memory]
 
     def merge_memory(self, old_mem, new_mem):
+        """
+        Concatenate memories and remove old memories to keep a maximum of
+        `mem_len` memories.
+        """
+
+        # If it's configured not to use memory
         if self.mem_len == 0:
             return []
 
+        # Concatenate with old memory
         if old_mem:
             mem = [torch.cat((m, x), dim=0) for m, x in zip(old_mem, new_mem)]
         else:
             mem = new_mem
 
+        # Truncate old memories
         if len(mem[0]) > self.mem_len:
             mem = [m[-self.mem_len:] for m in mem]
 
+        #
         return mem
 
     def step(self, batch: any, batch_idx: BatchIndex):
         """
-        ### Training or validation step
+        ### Training/validation step
         """
 
         # Move data to the device
@@ -125,13 +138,16 @@ class Configs(NLPAutoRegressionConfigs):
 
         # Whether to capture model outputs
         with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Get model outputs.
+            # Get memories
             mem = self.memory.get()
+            # Run the model
             output, new_mem = self.model(data, mem)
+            # Merge memory
             mem = self.merge_memory(mem, new_mem)
+            # Update memories
             self.memory.set(mem)
 
-        # Calculate and cross entropy loss
+        # Calculate and log cross entropy loss
         loss = self.loss_func(output, target)
         tracker.add("loss.", loss)
 
@@ -163,7 +179,6 @@ class Configs(NLPAutoRegressionConfigs):
 
         # Starting prompt
         prompt = self.prompt
-
         # Collect output for printing
         log = [(prompt, Text.subtle)]
         # memory
@@ -172,7 +187,7 @@ class Configs(NLPAutoRegressionConfigs):
         for i in monit.iterate('Sample', 25):
             # Tokenize the prompt
             data = self.text.text_to_i(prompt).unsqueeze(-1)
-            data = data[-1:]
+            # Move to device
             data = data.to(self.device)
             # Get the model output
             output, new_mem = self.model(data, mem)
@@ -180,9 +195,11 @@ class Configs(NLPAutoRegressionConfigs):
             output = output.argmax(dim=-1).squeeze(1)
             # Add the prediction to prompt
             prompt += self.prompt_separator + self.text.itos[output[-1]]
+            # Only feed the last character to model in next iteration, rest will go in as memories
+            prompt = prompt[-1:]
             # Add the prediction for logging
             log += [(self.prompt_separator + self.text.itos[output[-1]], Text.value)]
-            # Memory
+            # Update memory
             mem = self.merge_memory(mem, new_mem)
 
         # Print the sampled output
@@ -219,7 +236,7 @@ def main():
                         'text': 'tiny_shakespeare',
                         'optimizer.learning_rate': 1.,
                         'optimizer.optimizer': 'Noam',
-                        'prompt': 'I ',
+                        'prompt': 'It is',
                         'prompt_separator': '',
 
                         'train_loader': 'sequential_train_loader',
