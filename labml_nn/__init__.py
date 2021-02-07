@@ -17,7 +17,8 @@ implementations.
 
 * [Multi-headed attention](transformers/mha.html)
 * [Transformer building blocks](transformers/models.html)
-* [Relative multi-headed attention](transformers/xl/relative_mha.html).
+* [Transformer XL](transformers/xl/index.html)
+    * [Relative multi-headed attention](transformers/xl/relative_mha.html)
 * [GPT Architecture](transformers/gpt/index.html)
 * [GLU Variants](transformers/glu_variants/simple.html)
 * [kNN-LM: Generalization through Memorization](transformers/knn/index.html)

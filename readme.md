@@ -23,7 +23,8 @@ implementations almost weekly.
 
 * [Multi-headed attention](https://nn.labml.ai/transformers/mha.html)
 * [Transformer building blocks](https://nn.labml.ai/transformers/models.html) 
-* [Relative multi-headed attention](https://nn.labml.ai/transformers/xl/relative_mha.html).
+* [Transformer XL](https://nn.labml.ai/transformers/xl/index.html)
+    * [Relative multi-headed attention](https://nn.labml.ai/transformers/xl/relative_mha.html)
 * [GPT Architecture](https://nn.labml.ai/transformers/gpt/index.html)
 * [GLU Variants](https://nn.labml.ai/transformers/glu_variants/simple.html)
 * [kNN-LM: Generalization through Memorization](https://nn.labml.ai/transformers/knn)
