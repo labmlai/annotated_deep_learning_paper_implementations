@@ -18,7 +18,7 @@ This slows down the training significantly (about 5X - 10X depending on the sequ
 However, when predicting Feedback Transformer is faster because you can predict the next token
 if you cache the memory vectors.
 
-In order to speed up the training the paper discusses starting with a short sequence length and
+In order to speed up the training, the paper discusses starting with a short sequence length and
 gradually increasing it.
 They also discuss using a pretrained parallel transformer as the starting point.
 
@@ -81,7 +81,7 @@ class FeedbackAttention(Module):
 
         # These transform the `query` multi-headed attention.
         self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
-        # These transform the `key` and `value` fir multi-headed attention.
+        # These transform the `key` and `value` for multi-headed attention.
         if not is_kv_precomputed:
             self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
             self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=True)
@@ -110,7 +110,7 @@ class FeedbackAttention(Module):
         # Positional embeddings for the query is independent of the position of the query
         self.query_pos_bias = nn.Parameter(torch.zeros((heads, self.d_k)), requires_grad=True)
 
-        # We store attentions so that it can used for logging, or other computations if needed
+        # We store attentions so that it can be used for logging, or other computations if needed
         self.attn = None
 
     def get_scores(self, query: torch.Tensor, key: torch.Tensor):
@@ -173,7 +173,7 @@ class FeedbackAttention(Module):
         if self.value:
             value = self.value(value)
 
-        # Compute attention scores
+        # Compute attention scores.
         # Results in a tensor of shape `[seq_len, batch_size, heads]`
         scores = self.get_scores(query, key)
 
@@ -312,7 +312,7 @@ class FeedbackTransformer(Module):
 
 
 # <a id="shared_kv">
-# # Shared keys and values for among layers
+# # Shared keys and values among layers
 # </a>
 
 class StackFunction(torch.autograd.Function):
@@ -323,14 +323,14 @@ class StackFunction(torch.autograd.Function):
     and then doing `torch.stack`.
     This greatly improves the performance over calling `torch.stack` at
     each step along the sequence.
-    Everytime `torch.stack` is called it creates a new tensor, while
+    Everytime `torch.stack` is called, it creates a new tensor, while
     this method and the accompanying class `Stack` share memory for each step.
     """
 
     @staticmethod
     def forward(ctx, memory, memory_grad, last, n):
         """
-        * `ctx` is the context of the function (which lets as cache stuff)
+        * `ctx` is the context of the function (which lets us cache stuff)
         * `memory` is the shared memory tensor where we stack and store the values of each step (keys & values)
         * `memory_grad` is the shared memory tensor to store and accumulate gradients of each step
         * `last` is the last value stacked
