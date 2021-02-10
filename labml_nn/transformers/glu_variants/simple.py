@@ -12,7 +12,7 @@ This trains a simple [transformer](../../) model for auto-regression.
 We try different variants for the [position-wise feedforward network](../feed_forward).
 
 *This is a simpler implementation that doesn't use [`labml.configs`](experiment.html) module.
-We decided to write a simpler implementation to make it easier readers who are not familiar.*
+We decided to write a simpler implementation to make it easier for readers who are not familiar.*
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/glu_variants/simple.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=86b773f65fc911ebb2ac0242ac1c0002)
@@ -47,7 +47,7 @@ class AutoregressiveModel(Module):
         # Transformer based encoder
         self.encoder = encoder
         # Next token generation layer;
-        # this give logits of the the next token
+        # this gives logits of the the next token
         self.generator = generator
         # This will be initialized on the first call
         self.src_mask = None
