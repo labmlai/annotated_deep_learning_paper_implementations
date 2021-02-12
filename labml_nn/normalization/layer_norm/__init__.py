@@ -16,9 +16,9 @@ This is a [PyTorch](https://pytorch.org) implementation of
 * Tricky for RNNs. Do you need different normalizations for each step?
 * Doesn't work with small batch sizes;
 large NLP models are usually trained with small batch sizes.
-* Need to compute means and variances across devices in distributed training
+* Need to compute means and variances across devices in distributed training.
 
-## Layer Normalization
+## Layer Normalizati
 
 Layer normalization is a simpler normalization method that works
 on a wider range of settings.
