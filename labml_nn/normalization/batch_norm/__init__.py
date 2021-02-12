@@ -22,9 +22,9 @@ Then, after some training steps, it could move to $\mathcal{N}(0.5, 1)$.
 This is *internal covariate shift*.
 
 Internal covariate shift will adversely affect training speed because the later layers
-($l_2$ in the above example) has to adapt to this shifted distribution.
+($l_2$ in the above example) have to adapt to this shifted distribution.
 
-By stabilizing the distribution batch normalization minimizes the internal covariate shift.
+By stabilizing the distribution, batch normalization minimizes the internal covariate shift.
 
 ## Normalization
 
@@ -37,10 +37,10 @@ and be uncorrelated.
 Normalizing outside the gradient computation using pre-computed (detached)
 means and variances doesn't work. For instance. (ignoring variance), let
 $$\hat{x} = x - \mathbb{E}[x]$$
-where $x = u + b$ and $b$ is a trained bias.
-and $\mathbb{E}[x]$ is outside gradient computation (pre-computed constant).
+where $x = u + b$ and $b$ is a trained bias
+and $\mathbb{E}[x]$ is an outside gradient computation (pre-computed constant).
 
-Note that $\hat{x}$ has no effect of $b$.
+Note that $\hat{x}$ has no effect on $b$.
 Therefore,
 $b$ will increase or decrease based
 $\frac{\partial{\mathcal{L}}}{\partial x}$,
@@ -52,7 +52,7 @@ The paper notes that similar explosions happen with variances.
 Whitening is computationally expensive because you need to de-correlate and
 the gradients must flow through the full whitening calculation.
 
-The paper introduces simplified version which they call *Batch Normalization*.
+The paper introduces a simplified version which they call *Batch Normalization*.
 First simplification is that it normalizes each feature independently to have
 zero mean and unit variance:
 $$\hat{x}^{(k)} = \frac{x^{(k)} - \mathbb{E}[x^{(k)}]}{\sqrt{Var[x^{(k)}]}}$$
@@ -60,7 +60,7 @@ where $x = (x^{(1)} ... x^{(d)})$ is the $d$-dimensional input.
 
 The second simplification is to use estimates of mean $\mathbb{E}[x^{(k)}]$
 and variance $Var[x^{(k)}]$ from the mini-batch
-for normalization; instead of calculating the mean and variance across whole dataset.
+for normalization; instead of calculating the mean and variance across the whole dataset.
 
 Normalizing each feature to zero mean and unit variance could affect what the layer
 can represent.
@@ -76,8 +76,8 @@ like $Wu + b$ the bias parameter $b$ gets cancelled due to normalization.
 So you can and should omit bias parameter in linear transforms right before the
 batch normalization.
 
-Batch normalization also makes the back propagation invariant to the scale of the weights.
-And empirically it improves generalization, so it has regularization effects too.
+Batch normalization also makes the back propagation invariant to the scale of the weights
+and empirically it improves generalization, so it has regularization effects too.
 
 ## Inference
 
@@ -89,7 +89,7 @@ The usual practice is to calculate an exponential moving average of
 mean and variance during the training phase and use that for inference.
 
 Here's [the training code](mnist.html) and a notebook for training
-a CNN classifier that use batch normalization for MNIST dataset.
+a CNN classifier that uses batch normalization for MNIST dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=011254fe647011ebbb8e0242ac1c0002)
@@ -162,7 +162,7 @@ class BatchNorm(Module):
     def forward(self, x: torch.Tensor):
         """
         `x` is a tensor of shape `[batch_size, channels, *]`.
-        `*` could be any number of (even 0) dimensions.
+        `*` denotes any number of (possibly 0) dimensions.
          For example, in an image (2D) convolution this will be
         `[batch_size, channels, height, width]`
         """
@@ -170,7 +170,7 @@ class BatchNorm(Module):
         x_shape = x.shape
         # Get the batch size
         batch_size = x_shape[0]
-        # Sanity check to make sure the number of features is same
+        # Sanity check to make sure the number of features is the same
         assert self.channels == x.shape[1]
 
         # Reshape into `[batch_size, channels, n]`
