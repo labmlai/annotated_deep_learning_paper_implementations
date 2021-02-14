@@ -42,7 +42,7 @@ class Generator(Module):
             nn.ConvTranspose2d(1024, 512, 3, 2, 0, bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
-            # This give $14 \times 14$
+            # This gives $14 \times 14$
             nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
