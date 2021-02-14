@@ -62,7 +62,7 @@ class DiscriminatorLogitsLoss(Module):
         # *Note the negative sign*.
         # We use labels equal to $1$ for $\pmb{x}$ from $p_{data}$
         # and labels equal to $0$ for $\pmb{x}$ from $p_{G}.$
-        # Then descending on the sum of these is same as ascending on
+        # Then descending on the sum of these is the same as ascending on
         # the above gradient.
         #
         # `BCEWithLogitsLoss` combines softmax and binary cross entropy loss.
@@ -107,7 +107,7 @@ class GeneratorLogitsLoss(Module):
         self.loss_true = nn.BCEWithLogitsLoss()
         self.smoothing = smoothing
         # We use labels equal to $1$ for $\pmb{x}$ from $p_{G}.$
-        # Then descending on this loss is same as descending on
+        # Then descending on this loss is the same as descending on
         # the above gradient.
         self.register_buffer('fake_labels', _create_labels(256, 1.0 - smoothing, 1.0), False)
 
