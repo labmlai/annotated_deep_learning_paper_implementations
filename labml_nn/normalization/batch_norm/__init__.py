@@ -18,7 +18,7 @@ network parameters during training.
 For example, let's say there are two layers $l_1$ and $l_2$.
 During the beginning of the training $l_1$ outputs (inputs to $l_2$)
 could be in distribution $\mathcal{N}(0.5, 1)$.
-Then, after some training steps, it could move to $\mathcal{N}(0.5, 1)$.
+Then, after some training steps, it could move to $\mathcal{N}(0.6, 1.5)$.
 This is *internal covariate shift*.
 
 Internal covariate shift will adversely affect training speed because the later layers
