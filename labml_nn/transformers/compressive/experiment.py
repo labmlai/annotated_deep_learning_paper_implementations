@@ -204,7 +204,7 @@ class Configs(NLPAutoRegressionConfigs):
         if old_mem:
             ar_loss = self.attention_reconstruction_loss(new_mem, old_mem)
             tracker.add("ar_loss.", ar_loss)
-            # loss = loss + ar_loss
+            loss = loss + ar_loss
 
         # Calculate and log accuracy
         self.accuracy(output, target)
