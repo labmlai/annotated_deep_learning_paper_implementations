@@ -74,8 +74,8 @@ class TransformerXLLayer(Module):
                 mem: Optional[torch.Tensor],
                 mask: torch.Tensor):
         """
-        * `x` are the token level feature vectors of shape `[seq_len, batch_size, d_model]`
-        * `mem` are the past token level feature vectors of shape `[mem_len, batch_size, d_model]`
+        * `x` is a tensor of the token level feature vectors of shape `[seq_len, batch_size, d_model]`
+        * `mem` is a tensor of the past token level feature vectors of shape `[mem_len, batch_size, d_model]`
         * `mask` is a matrix of shape `[seq_len, mem_len + seq_len, batch_size]` or `[seq_len, mem_len + seq_len, 1]`.
         `mask[i, j]` is  true if token at `i` can see token at `j`.
         """
@@ -122,12 +122,13 @@ class TransformerXL(Module):
 
     def forward(self, x: torch.Tensor, mem: List[torch.Tensor], mask: torch.Tensor):
         """
-        * `x` are the token embeddings vectors of shape `[seq_len, batch_size, d_model]`
-        * `mem` are the past token level feature vectors of shape `[mem_len, batch_size, d_model]`  for each layer
+        * `x` is a tensor of the token embeddings vectors of shape `[seq_len, batch_size, d_model]`
+        * `mem` is a list of tensors of the past token level feature vectors of shape
+        `[mem_len, batch_size, d_model]`  for each layer
         * `mask` is the masking matrix
         """
         # List to store token level feature vectors,
-        # which will be the memories for the next sequential batch.
+        # which will become the memories for the next sequential batch.
         new_mem = []
         # Run through each transformer layer
         for i, layer in enumerate(self.layers):
