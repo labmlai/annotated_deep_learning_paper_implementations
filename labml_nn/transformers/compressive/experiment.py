@@ -54,7 +54,7 @@ class AutoregressiveModel(Module):
             mem = []
             c_mem = []
 
-        # Length of the memory (for masks)
+        # Total length of the memory and compressed memory (for masks)
         m_len = len(mem[0]) if mem else 0
         if c_mem:
             m_len += len(c_mem[0])
@@ -88,7 +88,7 @@ class Configs(NLPAutoRegressionConfigs):
     """
     ## Configurations
 
-    The default configs can and will be over-ridden when we start the experiment.
+    The default configurations can and will be overridden when we start the experiment.
     """
 
     model: AutoregressiveModel
@@ -132,7 +132,7 @@ class Configs(NLPAutoRegressionConfigs):
         Concatenate new memories and compress the oldest memories.
         """
 
-        # If it's configured not to use memory
+        # If the configurations specify not to use memory
         if self.mem_len == 0 and self.c_mem_len == 0:
             return CompressedMemory([], []), []
 
@@ -191,7 +191,7 @@ class Configs(NLPAutoRegressionConfigs):
             mem_to_compress = []
 
         # Return memories and the memories that were compressed.
-        # Memories that were compressed is needed for the reconstruction loss computation.
+        # Memories that were compressed are needed for the reconstruction loss computation.
         return CompressedMemory(mem, c_mem), mem_to_compress
 
     def step(self, batch: any, batch_idx: BatchIndex):

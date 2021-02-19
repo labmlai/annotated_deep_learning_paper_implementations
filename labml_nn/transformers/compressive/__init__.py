@@ -22,29 +22,30 @@ $n_{cm}$ memories, where $c$ is the compression rate.
 The compression operation is defined as
 $f_c: \mathbb{R}^{nc \times d} \rightarrow \mathbb{R}^{n \times d}$.
 The paper introduces multiple choices for $f_c$ and we have only implemented
-1D convolution which seems to give best results.
+1D convolution which seems to give the best results.
 Each layer has a separate compression operation $f_c^{(i)}$ where
 $i$ is the layer number.
 
 ## Training compression operation
 
 Since training compression with BPTT requires maintaining
-a very large computational graph (many time steps), paper proposes
+a very large computational graph (many time steps), the paper proposes
 an *auto-encoding loss* and an *attention reconstruction loss*.
-The auto-encoding loss, decodes the original memories from the compressed memories,
-and calculate the loss.
+The auto-encoding loss decodes the original memories from the compressed memories
+and calculates the loss.
 Attention reconstruction loss computes the multi-headed attention results
-on the compressed memory and on uncompressed memory and get a mean squared error
+on the compressed memory and on uncompressed memory and gets a mean squared error
 between them.
 We have implemented the latter here since it gives better results.
 
-This implementation uses pre-layer norm while the paper uses post-layer norm.
+This implementation uses pre-layer normalization
+while the paper uses post-layer normalization.
 Pre-layer norm does the layer norm before FFN[../feedforward.html) and
-self attention, and the pass through in the residual connection is not normalized.
+self-attention, and the pass-through in the residual connection is not normalized.
 This is supposed to be more stable in standard transformer setups.
 
-Here's [the training code](experiment.html) and a notebook for training a compressive transformer
-model on Tiny Shakespeare dataset.
+Here are [the training code](experiment.html) and a notebook for training a compressive transformer
+model on the Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/compressive/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=0d9b5338726c11ebb7c80242ac1c0002)
@@ -219,18 +220,18 @@ class AttentionReconstructionLoss:
     """
     ## Attention Reconstruction Loss
 
-    Attention reconstruction loss recreates the self attention output with
-    uncompressed memory and with compressed memory and calculate mean squared error
+    Attention reconstruction loss recreates the self-attention output with
+    uncompressed memory and with compressed memory and calculates the mean squared error
     between the two. It does this without positional encoding.
 
     When calculating and training the compression function $f_c$ with attention
-    reconstruction loss all parameters but $f_c$ are frozen.
-    This includes key value projections and bias/scaling after normalization.
+    reconstruction loss, all parameters but $f_c$ are frozen.
+    This includes key/value projections and bias/scaling after normalization.
 
     Since this loss can be computed independently of the cross-entropy-loss of the model
     you can have a separate optimizer that only updates $f_c$.
     However, we use the same optimizer to update $f_c$ so when calculating
-    attention reconstruction loss we detach all other parameters except $f_c$
+    attention reconstruction loss, we detach all other parameters except $f_c$
     from the gradient computation.
     """
     def __init__(self, layers: TypedModuleList[CompressiveTransformerLayer]):
@@ -320,7 +321,7 @@ class AttentionReconstructionLoss:
         mem = self.norm(layer.norm_self_attn, mem)
         c_mem = self.norm(layer.norm_self_attn, c_mem)
 
-        # Calculate attention with uncompressed memory
+        # Calculate the attention with uncompressed memory
         attn_mem = self.attn(layer.self_attn, h, mem, mem)
         # Calculate the attention with compressed memory
         attn_cmem = self.attn(layer.self_attn, h, c_mem, c_mem)
