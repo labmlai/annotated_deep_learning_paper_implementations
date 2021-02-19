@@ -335,7 +335,7 @@ def main():
                         'epochs': 128,
                         'batch_size': 32,
                         'inner_iterations': 25,
-                        'compression_ratio': 2,
+                        'compression_rate': 2,
                         })
 
     # Set models for saving and loading
