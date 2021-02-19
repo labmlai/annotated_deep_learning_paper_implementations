@@ -16,9 +16,9 @@ the same positions as the current context.
 They introduce relative positional encoding, where the positional encodings
 are introduced at the attention calculation.
 
-Annotated implementation of relative multi-headed attention is in [`relative_mha.py`](relative_mha.html).
+Annotated implementation of relative multi-headed attention is in [`relative_mha.py`](https://nn.labml.ai/transformers/xl/relative_mha.html).
 
-Here's [the training code](experiment.html) and a notebook for training a transformer XL model on Tiny Shakespeare dataset.
+Here's [the training code](https://nn.labml.ai/transformers/xl/experiment.html) and a notebook for training a transformer XL model on Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/xl/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=d3b6760c692e11ebb6a70242ac1c0002)

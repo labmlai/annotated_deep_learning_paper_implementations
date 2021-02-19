@@ -21,6 +21,12 @@ and derivatives and enhancements of it.
 This implements Transformer XL model using
 [relative multi-head attention](xl/relative_mha.html)
 
+## [Compressive Transformer](compressive/index.html)
+
+This is an implementation of compressive transformer
+that extends upon [Transformer XL](xl/index.html) by compressing
+oldest memories to give a longer attention span.
+
 ## [GPT Architecture](gpt)
 
 This is an implementation of GPT-2 architecture.
@@ -29,7 +35,6 @@ This is an implementation of GPT-2 architecture.
 
 This is an implementation of the paper
 [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202).
-
 
 ## [kNN-LM](knn)
 
