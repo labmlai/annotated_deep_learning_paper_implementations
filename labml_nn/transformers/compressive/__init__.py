@@ -23,6 +23,8 @@ The compression operation is defined as
 $f_c: \mathbb{R}^{nc \times d} \rightarrow \mathbb{R}^{n \times d}$.
 The paper introduces multiple choices for $f_c$ and we have only implemented
 1D convolution which seems to give best results.
+Each layer has a separate compression operation $f_c^{(i)}$ where
+$i$ is the layer number.
 
 ## Training compression operation
 
@@ -35,6 +37,14 @@ Attention reconstruction loss computes the multi-headed attention results
 on the compressed memory and on uncompressed memory and get a mean squared error
 between them.
 We have implemented the latter here since it gives better results.
+
+This implementation uses pre-layer norm while the paper uses post-layer norm.
+Pre-layer norm does the layer norm before FFN[../feedforward.html) and
+self attention, and the pass through in the residual connection is not normalized.
+This is supposed to be more stable in standard transformer setups.
+
+Here's [the training code](experiment.html) and a notebook for training a compressive transformer
+model on Tiny Shakespeare dataset.
 """
 
 from typing import Optional, List
@@ -205,6 +215,20 @@ class CompressiveTransformer(Module):
 class AttentionReconstructionLoss:
     """
     ## Attention Reconstruction Loss
+
+    Attention reconstruction loss recreates the self attention output with
+    uncompressed memory and with compressed memory and calculate mean squared error
+    between the two. It does this without positional encoding.
+
+    When calculating and training the compression function $f_c$ with attention
+    reconstruction loss all parameters but $f_c$ are frozen.
+    This includes key value projections and bias/scaling after normalization.
+
+    Since this loss can be computed independently of the cross-entropy-loss of the model
+    you can have a separate optimizer that only updates $f_c$.
+    However, we use the same optimizer to update $f_c$ so when calculating
+    attention reconstruction loss we detach all other parameters except $f_c$
+    from the gradient computation.
     """
     def __init__(self, layers: TypedModuleList[CompressiveTransformerLayer]):
         """
@@ -214,11 +238,21 @@ class AttentionReconstructionLoss:
         self.loss_func = nn.MSELoss()
 
     def prepare_for_attn(self, pmha: PrepareForMultiHeadAttention, x: torch.Tensor):
+        """
+        This is a reimplementation of ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA)
+        where the projections are done with the parameters detached from gradient computation.
+
+        * `pmha* is the ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA) module
+        * `x` is tensor with the token embeddings
+        """
+
+        # Shape of the input except embedding dimension; `[seq_len, batch_size]`.
         head_shape = x.shape[:-1]
 
-        # Linear transform
+        # Detach projection weights and bias
         weight = pmha.linear.weight.detach()
         bias = pmha.linear.bias.detach() if pmha.linear.bias is not None else None
+        # Linear transform
         x = F.linear(x, weight, bias)
 
         # Split last dimension into heads
@@ -228,6 +262,12 @@ class AttentionReconstructionLoss:
         return x
 
     def attn(self, layer: RelativeMultiHeadAttention, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor):
+        """
+        This is a reimplementation of ['Multi-Head Attention'](../mha.html#MHA) which calls
+        `prepare_for_attn` instead of ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA)
+        to detach projection parameters.
+        """
+        # Calculate query, key and value projections
         query = self.prepare_for_attn(layer.query, query)
         key = self.prepare_for_attn(layer.key, key)
         value = self.prepare_for_attn(layer.value, value)
@@ -248,24 +288,45 @@ class AttentionReconstructionLoss:
         return torch.einsum("ijbh,jbhd->ibhd", attn, value)
 
     def norm(self, ln: nn.LayerNorm, x: torch.Tensor):
+        """
+        Perform layer normalization with shift and scale parameters detached.
+        """
+
+        # Detach shift(`bias`) and scaling(`weight`) parameters
         weight = ln.weight.detach() if ln.weight is not None else None
         bias = ln.bias.detach() if ln.bias is not None else None
 
+        # Layer normalization
         return F.layer_norm(x, ln.normalized_shape, weight, bias, ln.eps)
 
     def calc_loss(self, layer: CompressiveTransformerLayer, h: torch.Tensor, mem: torch.Tensor):
+        """
+        This calculates the loss for a layer
+        """
+
+        # Detach the token embeddings and memory.
         h = h.detach()
         mem = mem.detach()
 
+        # Compress the memory with $f_c^{(i)}$.
+        # The parameters of $f_c^{(i)}$ are the only parameters not detached from gradient computation.
         c_mem = layer.compress(mem)
 
+        # Normalize the embeddings and memories
         h = self.norm(layer.norm_self_attn, h)
         mem = self.norm(layer.norm_self_attn, mem)
         c_mem = self.norm(layer.norm_self_attn, c_mem)
 
-        return self.loss_func(self.attn(layer.self_attn, h, mem, mem),
-                              self.attn(layer.self_attn, h, c_mem, c_mem))
+        # Calculate attention with uncompressed memory
+        attn_mem = self.attn(layer.self_attn, h, mem, mem)
+        # Calculate the attention with compressed memory
+        attn_cmem = self.attn(layer.self_attn, h, c_mem, c_mem)
+
+        # Calculate the mean square error
+        return self.loss_func(attn_cmem, attn_mem)
 
     def __call__(self, h: List[torch.Tensor], mem: List[torch.Tensor]):
+        # Calculate the losses for each layer
         losses = [self.calc_loss(layer, h[n], mem[n]) for n, layer in enumerate(self.layers)]
+        # Sum of the losses
         return sum(losses)
