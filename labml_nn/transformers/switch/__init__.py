@@ -13,8 +13,9 @@ Our implementation only has a few million parameters and doesn't do model parall
 It does single GPU training, but we implement the concept of switching as described in the paper.
 
 The Switch Transformer uses different parameters for each token by switching among parameters
-based on the token. Thererfore, only a fraction of parameters are chosen for each token. So you
-can have more parameters but less computational cost.
+based on the token.
+Therefore, only a fraction of parameters are chosen for each token.
+So you can have more parameters but less computational cost.
 
 The switching happens at the Position-wise Feedforward network (FFN) of each transformer block.
 Position-wise feedforward network consists of two sequentially fully connected layers.

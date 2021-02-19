@@ -5,17 +5,18 @@ This is a miniature [PyTorch](https://pytorch.org) implementation of the paper
 Our implementation only has a few million parameters and doesn't do model parallel distributed training.
 It does single GPU training, but we implement the concept of switching as described in the paper.
 
-The Switch Transformer uses different parameters for each token by switching among parameters,
-based on the token. So only a fraction of parameters is chosen for each token, so you
-can have more parameters but less computational cost.
+The Switch Transformer uses different parameters for each token by switching among parameters
+based on the token.
+Therefore, only a fraction of parameters are chosen for each token.
+So you can have more parameters but less computational cost.
 
 The switching happens at the Position-wise Feedforward network (FFN) of each transformer block.
-Position-wise feedforward network is a two sequentially fully connected layers.
-In switch transformer we have multiple FFNs (multiple experts), 
+Position-wise feedforward network consists of two sequentially fully connected layers.
+In switch transformer we have multiple FFNs (multiple experts),
 and we chose which one to use based on a router.
-The outputs a set of probabilities for picking a FFN,
-and we pick the one with the highest probability and only evaluates that.
-So essentially the computational cost is same as having a single FFN.
+The output is a set of probabilities for picking a FFN,
+and we pick the one with the highest probability and only evaluate that.
+So essentially the computational cost is the same as having a single FFN.
 In our implementation this doesn't parallelize well when you have many or large FFNs since it's all
 happening on a single GPU.
 In a distributed setup you would have each FFN (each very large) on a different device.
