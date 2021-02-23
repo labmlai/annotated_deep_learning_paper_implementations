@@ -75,14 +75,22 @@
                 <h1>Proximal Policy Optimization (PPO)</h1>
 <p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of
 <a href="https://arxiv.org/abs/1707.06347">Proximal Policy Optimization - PPO</a>.</p>
+<p>PPO is a policy gradient method for reinforcement learning.
+Simple policy gradient methods one do a single gradient update per sample (or a set of samples).
+Doing multiple gradient steps for a singe sample causes problems
+because the policy deviates too much producing a bad policy.
+PPO lets us do multiple gradient updates per sample by trying to keep the
+policy close to the policy that was used to sample data.
+It does so by clipping gradient flow if the updated policy
+is not close to the policy used to sample the data.</p>
 <p>You can find an experiment that uses it <a href="experiment.html">here</a>.
 The experiment uses <a href="gae.html">Generalized Advantage Estimation</a>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">17</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">18</span>
-<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo.gae</span> <span class="kn">import</span> <span class="n">GAE</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">26</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">27</span>
+<span class="lineno">28</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo.gae</span> <span class="kn">import</span> <span class="n">GAE</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -91,6 +99,7 @@ The experiment uses <a href="gae.html">Generalized Advantage Estimation</a>.</p>
                     <a href='#section-1'>#</a>
                 </div>
                 <h2>PPO Loss</h2>
+<p>Here&rsquo;s how the PPO update rule is derived.</p>
 <p>We want to maximize policy reward
  <script type="math/tex; mode=display">\max_\theta J(\pi_\theta) =
    \mathop{\mathbb{E}}_{\tau \sim \pi_\theta}\Biggl[\sum_{t=0}^\infty \gamma^t r_t \Biggr]</script>
@@ -186,7 +195,7 @@ J(\pi_\theta) - J(\pi_{\theta_{OLD}})
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">23</span><span class="k">class</span> <span class="nc">ClippedPPOLoss</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">32</span><span class="k">class</span> <span class="nc">ClippedPPOLoss</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -197,8 +206,8 @@ J(\pi_\theta) - J(\pi_{\theta_{OLD}})
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">122</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">123</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">133</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">134</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -209,8 +218,8 @@ J(\pi_\theta) - J(\pi_{\theta_{OLD}})
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">125</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_pi</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_log_pi</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">126</span>                 <span class="n">advantage</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">136</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_pi</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_log_pi</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">137</span>                 <span class="n">advantage</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -222,7 +231,7 @@ J(\pi_\theta) - J(\pi_{\theta_{OLD}})
 <em>this is different from rewards</em> $r_t$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">129</span>        <span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_pi</span> <span class="o">-</span> <span class="n">sampled_log_pi</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">140</span>        <span class="n">ratio</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_pi</span> <span class="o">-</span> <span class="n">sampled_log_pi</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -230,7 +239,8 @@ J(\pi_\theta) - J(\pi_{\theta_{OLD}})
                 <div class='section-link'>
                     <a href='#section-5'>#</a>
                 </div>
-                <p>
+                <h3>Cliping the policy ratio</h3>
+<p>
 <script type="math/tex; mode=display">\begin{align}
 \mathcal{L}^{CLIP}(\theta) =
  \mathbb{E}_{a_t, s_t \sim \pi_{\theta{OLD}}} \biggl[
@@ -257,14 +267,14 @@ Large deviation can cause performance collapse;
  but it reduces variance a lot.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">156</span>        <span class="n">clipped_ratio</span> <span class="o">=</span> <span class="n">ratio</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">clip</span><span class="p">,</span>
-<span class="lineno">157</span>                                    <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">clip</span><span class="p">)</span>
-<span class="lineno">158</span>        <span class="n">policy_reward</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">advantage</span><span class="p">,</span>
-<span class="lineno">159</span>                                  <span class="n">clipped_ratio</span> <span class="o">*</span> <span class="n">advantage</span><span class="p">)</span>
-<span class="lineno">160</span>
-<span class="lineno">161</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clip_fraction</span> <span class="o">=</span> <span class="p">(</span><span class="nb">abs</span><span class="p">((</span><span class="n">ratio</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">clip</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<span class="lineno">162</span>
-<span class="lineno">163</span>        <span class="k">return</span> <span class="o">-</span><span class="n">policy_reward</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">169</span>        <span class="n">clipped_ratio</span> <span class="o">=</span> <span class="n">ratio</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">clip</span><span class="p">,</span>
+<span class="lineno">170</span>                                    <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">clip</span><span class="p">)</span>
+<span class="lineno">171</span>        <span class="n">policy_reward</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">advantage</span><span class="p">,</span>
+<span class="lineno">172</span>                                  <span class="n">clipped_ratio</span> <span class="o">*</span> <span class="n">advantage</span><span class="p">)</span>
+<span class="lineno">173</span>
+<span class="lineno">174</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clip_fraction</span> <span class="o">=</span> <span class="p">(</span><span class="nb">abs</span><span class="p">((</span><span class="n">ratio</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">clip</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="lineno">175</span>
+<span class="lineno">176</span>        <span class="k">return</span> <span class="o">-</span><span class="n">policy_reward</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -273,6 +283,7 @@ Large deviation can cause performance collapse;
                     <a href='#section-6'>#</a>
                 </div>
                 <h2>Clipped Value Function Loss</h2>
+<p>Similarly we clip the value function update also.</p>
 <p>
 <script type="math/tex; mode=display">\begin{align}
 V^{\pi_\theta}_{CLIP}(s_t)
@@ -289,7 +300,7 @@ V^{\pi_\theta}_{CLIP}(s_t)
  significantly from $V_{\theta_{OLD}}$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">166</span><span class="k">class</span> <span class="nc">ClippedValueFunctionLoss</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">179</span><span class="k">class</span> <span class="nc">ClippedValueFunctionLoss</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -300,10 +311,10 @@ V^{\pi_\theta}_{CLIP}(s_t)
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">185</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_return</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">186</span>        <span class="n">clipped_value</span> <span class="o">=</span> <span class="n">sampled_value</span> <span class="o">+</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">sampled_value</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="n">clip</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">clip</span><span class="p">)</span>
-<span class="lineno">187</span>        <span class="n">vf_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="n">sampled_return</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">clipped_value</span> <span class="o">-</span> <span class="n">sampled_return</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-<span class="lineno">188</span>        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">vf_loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">200</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sampled_return</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">201</span>        <span class="n">clipped_value</span> <span class="o">=</span> <span class="n">sampled_value</span> <span class="o">+</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">sampled_value</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="n">clip</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">clip</span><span class="p">)</span>
+<span class="lineno">202</span>        <span class="n">vf_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="n">sampled_return</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">clipped_value</span> <span class="o">-</span> <span class="n">sampled_return</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+<span class="lineno">203</span>        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">vf_loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>

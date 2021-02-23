@@ -10,6 +10,15 @@ summary: >
 This is a [PyTorch](https://pytorch.org) implementation of
 [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
 
+PPO is a policy gradient method for reinforcement learning.
+Simple policy gradient methods one do a single gradient update per sample (or a set of samples).
+Doing multiple gradient steps for a singe sample causes problems
+because the policy deviates too much producing a bad policy.
+PPO lets us do multiple gradient updates per sample by trying to keep the
+policy close to the policy that was used to sample data.
+It does so by clipping gradient flow if the updated policy
+is not close to the policy used to sample the data.
+
 You can find an experiment that uses it [here](experiment.html).
 The experiment uses [Generalized Advantage Estimation](gae.html).
 """
@@ -23,6 +32,8 @@ from labml_nn.rl.ppo.gae import GAE
 class ClippedPPOLoss(Module):
     """
     ## PPO Loss
+
+    Here's how the PPO update rule is derived.
 
     We want to maximize policy reward
      $$\max_\theta J(\pi_\theta) =
@@ -128,6 +139,8 @@ class ClippedPPOLoss(Module):
         # *this is different from rewards* $r_t$.
         ratio = torch.exp(log_pi - sampled_log_pi)
 
+        # ### Cliping the policy ratio
+        #
         # \begin{align}
         # \mathcal{L}^{CLIP}(\theta) =
         #  \mathbb{E}_{a_t, s_t \sim \pi_{\theta{OLD}}} \biggl[
@@ -166,6 +179,8 @@ class ClippedPPOLoss(Module):
 class ClippedValueFunctionLoss(Module):
     """
     ## Clipped Value Function Loss
+
+    Similarly we clip the value function update also.
 
     \begin{align}
     V^{\pi_\theta}_{CLIP}(s_t)
