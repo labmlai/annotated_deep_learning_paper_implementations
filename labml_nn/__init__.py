@@ -76,7 +76,7 @@ If you use LabML for academic research, please cite the library using the follow
  author = {Varuna Jayasiri, Nipun Wijerathne},
  title = {LabML: A library to organize machine learning experiments},
  year = {2020},
- url = {https://lab-ml.com/},
+ url = {https://nn.labml.ai/},
 }
 ```
 """

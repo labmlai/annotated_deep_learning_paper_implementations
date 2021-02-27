@@ -16,7 +16,7 @@ We have an experiment that trains a HyperLSTM to predict text on Shakespeare dat
 Here's the link to code: [`experiment.py`](experiment.html)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=9e7f39e047e811ebbaff2b26e3148b3d)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/9e7f39e047e811ebbaff2b26e3148b3d)
 
 HyperNetworks use a smaller network to generate weights of a larger network.
 There are two variants: static hyper-networks and dynamic hyper-networks.

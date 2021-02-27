@@ -27,7 +27,7 @@ confusions I had with the paper.
 Here's a notebook for training a Capsule Network on MNIST dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/capsule_networks/mnist.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=e7c08e08586711ebb3e30242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/e7c08e08586711ebb3e30242ac1c0002)
 """
 
 import torch.nn as nn

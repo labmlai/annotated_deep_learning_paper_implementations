@@ -195,10 +195,10 @@ def _synthetic_experiment(is_adam: bool):
 
 if __name__ == '__main__':
     # Run the synthetic experiment is *Adam*.
-    # [Here are the results](https://web.lab-ml.com/metrics?uuid=61ebfdaa384411eb94d8acde48001122).
+    # [Here are the results](https://app.labml.ai/run/61ebfdaa384411eb94d8acde48001122).
     # You can see that Adam converges at $x = +1$
     _synthetic_experiment(True)
     # Run the synthetic experiment is *AMSGrad*
-    # [Here are the results](https://web.lab-ml.com/metrics?uuid=bc06405c384411eb8b82acde48001122).
+    # [Here are the results](https://app.labml.ai/run/uuid=bc06405c384411eb8b82acde48001122).
     # You can see that AMSGrad converges to true optimal $x = -1$
     _synthetic_experiment(False)
