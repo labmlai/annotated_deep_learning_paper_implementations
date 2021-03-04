@@ -11,9 +11,9 @@ This is a [PyTorch](https://pytorch.org) implementation of
 [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
 
 PPO is a policy gradient method for reinforcement learning.
-Simple policy gradient methods one do a single gradient update per sample (or a set of samples).
-Doing multiple gradient steps for a singe sample causes problems
-because the policy deviates too much producing a bad policy.
+Simple policy gradient methods do a single gradient update per sample (or a set of samples).
+Doing multiple gradient steps for a single sample causes problems
+because the policy deviates too much, producing a bad policy.
 PPO lets us do multiple gradient updates per sample by trying to keep the
 policy close to the policy that was used to sample data.
 It does so by clipping gradient flow if the updated policy
@@ -107,7 +107,7 @@ class ClippedPPOLoss(Module):
 
     Then we assume $d^\pi_\theta(s)$ and  $d^\pi_{\theta_{OLD}}(s)$ are similar.
     The error we introduce to $J(\pi_\theta) - J(\pi_{\theta_{OLD}})$
-     by this assumtion is bound by the KL divergence between
+     by this assumption is bound by the KL divergence between
      $\pi_\theta$ and $\pi_{\theta_{OLD}}$.
     [Constrained Policy Optimization](https://arxiv.org/abs/1705.10528)
      shows the proof of this. I haven't read it.
