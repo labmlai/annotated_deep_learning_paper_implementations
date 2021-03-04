@@ -219,7 +219,7 @@ class EncoderRNN(Module):
         # h_{\leftarrow} = encode←_{\leftarrow}(S_{reverse}),
         # h = [h_{\rightarrow}; h_{\leftarrow}]$$
         _, (hidden, cell) = self.lstm(inputs.float(), state)
-        # The state has shape `[2, batch_size, hidden_size],`
+        # The state has shape `[2, batch_size, hidden_size]`,
         # where the first dimension is the direction.
         # We rearrange it to get $h = [h_{\rightarrow}; h_{\leftarrow}]$
         hidden = einops.rearrange(hidden, 'fb b h -> b (fb h)')
