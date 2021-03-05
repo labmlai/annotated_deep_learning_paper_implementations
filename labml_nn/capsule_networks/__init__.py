@@ -16,7 +16,7 @@ Capsule network is a neural network architecture that embeds features
 as capsules and routes them with a voting mechanism to next layer of capsules.
 
 Unlike in other implementations of models, we've included a sample, because
-it is difficult to understand some of the concepts with just the modules.
+it is difficult to understand some concepts with just the modules.
 [This is the annotated code for a model that uses capsules to classify MNIST dataset](mnist.html)
 
 This file holds the implementations of the core modules of Capsule Networks.
