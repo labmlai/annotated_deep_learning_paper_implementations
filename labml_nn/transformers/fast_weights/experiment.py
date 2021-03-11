@@ -58,17 +58,17 @@ def fast_weights_transformer(c: Configs):
     """
     Create [fast weights transformer](index.html).
     """
-    from labml_nn.transformers.fast_weights import FastWeightAttentionTransformer, \
-        FastWeightAttentionTransformerLayer, FastWeightAttention, FeedForward
+    from labml_nn.transformers.fast_weights import FastWeightsAttentionTransformer, \
+        FastWeightsAttentionTransformerLayer, FastWeightsAttention, FeedForward
 
     from labml_nn.transformers.fast_weights import DPFP
     return AutoregressiveModel(
         c.n_tokens, c.d_model,
-        FastWeightAttentionTransformer(
-            FastWeightAttentionTransformerLayer(d_model=c.d_model,
-                                                attn=FastWeightAttention(c.heads, c.d_model, c.dropout, DPFP(nu=c.nu)),
-                                                feed_forward=FeedForward(c.d_model, c.d_ff, c.dropout),
-                                                dropout_prob=c.dropout),
+        FastWeightsAttentionTransformer(
+            FastWeightsAttentionTransformerLayer(d_model=c.d_model,
+                                                 attn=FastWeightsAttention(c.heads, c.d_model, c.dropout, DPFP(nu=c.nu)),
+                                                 feed_forward=FeedForward(c.d_model, c.d_ff, c.dropout),
+                                                 dropout_prob=c.dropout),
             c.n_layers)).to(c.device)
 
 

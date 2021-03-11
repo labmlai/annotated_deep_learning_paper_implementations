@@ -81,9 +81,10 @@
 <span class="lineno">12</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 <span class="lineno">13</span>
 <span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
-<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">PrepareForMultiHeadAttention</span>
-<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.fast_weights</span> <span class="kn">import</span> <span class="n">DPFP</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">PrepareForMultiHeadAttention</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -94,7 +95,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">20</span><span class="k">class</span> <span class="nc">DPFP</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">21</span><span class="k">class</span> <span class="nc">FastWeightsAttention</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -105,11 +106,8 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">21</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span>
-<span class="lineno">22</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="n">nu</span>
-<span class="lineno">24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
-<span class="lineno">25</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">22</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">DPFP</span><span class="p">):</span>
+<span class="lineno">23</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -117,12 +115,10 @@
                 <div class='section-link'>
                     <a href='#section-3'>#</a>
                 </div>
-                
+                <p>Number of features per head</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">27</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-<span class="lineno">28</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpfp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">29</span>        <span class="k">return</span> <span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">heads</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -133,12 +129,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">31</span>    <span class="k">def</span> <span class="nf">dpfp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-<span class="lineno">32</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">33</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">shifts</span><span class="o">=</span><span class="n">j</span><span class="p">,</span> <span class="n">dims</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">34</span>        <span class="n">x_repeat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">35</span>
-<span class="lineno">36</span>        <span class="k">return</span> <span class="n">x_repeat</span> <span class="o">*</span> <span class="n">x_rolled</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">28</span>        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -146,10 +137,10 @@
                 <div class='section-link'>
                     <a href='#section-5'>#</a>
                 </div>
-                
+                <p>These transform the <code>query</code> multi-headed attention.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">39</span><span class="k">class</span> <span class="nc">FastWeightAttention</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">31</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -157,11 +148,16 @@
                 <div class='section-link'>
                     <a href='#section-6'>#</a>
                 </div>
-                
+                <p>These transform the <code>key</code> and <code>value</code> for multi-headed attention.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">40</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">DPFP</span><span class="p">):</span>
-<span class="lineno">41</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">33</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">34</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">35</span>
+<span class="lineno">36</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gate</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="lineno">37</span>                                  <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">())</span>
+<span class="lineno">38</span>
+<span class="lineno">39</span>        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -169,10 +165,10 @@
                 <div class='section-link'>
                     <a href='#section-7'>#</a>
                 </div>
-                <p>Number of features per head</p>
+                <p>Output layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">heads</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -180,10 +176,10 @@
                 <div class='section-link'>
                     <a href='#section-8'>#</a>
                 </div>
-                
+                <p>Dropout</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -191,10 +187,24 @@
                 <div class='section-link'>
                     <a href='#section-9'>#</a>
                 </div>
-                <p>These transform the <code>query</code> multi-headed attention.</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">49</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">46</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
+<span class="lineno">47</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="lineno">48</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="lineno">49</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">50</span>
+<span class="lineno">51</span>        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">52</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+<span class="lineno">53</span>
+<span class="lineno">54</span>        <span class="n">value_existing</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+<span class="lineno">55</span>
+<span class="lineno">56</span>        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">57</span>
+<span class="lineno">58</span>        <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhv,bhk-&gt;bhvk&#39;</span><span class="p">,</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">value_existing</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
+<span class="lineno">59</span>
+<span class="lineno">60</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -202,16 +212,10 @@
                 <div class='section-link'>
                     <a href='#section-10'>#</a>
                 </div>
-                <p>These transform the <code>key</code> and <code>value</code> for multi-headed attention.</p>
+                <p>Concatenate multiple heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">51</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="lineno">52</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="lineno">53</span>
-<span class="lineno">54</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gate</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-<span class="lineno">55</span>                                  <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">())</span>
-<span class="lineno">56</span>
-<span class="lineno">57</span>        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">63</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -222,7 +226,7 @@
                 <p>Output layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">60</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">66</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">weights</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -230,10 +234,10 @@
                 <div class='section-link'>
                     <a href='#section-12'>#</a>
                 </div>
-                <p>Dropout</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">62</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">69</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -244,21 +248,12 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">64</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
-<span class="lineno">65</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<span class="lineno">66</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<span class="lineno">67</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">68</span>
-<span class="lineno">69</span>        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<span class="lineno">70</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
-<span class="lineno">71</span>
-<span class="lineno">72</span>        <span class="n">value_existing</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-<span class="lineno">73</span>
-<span class="lineno">74</span>        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">75</span>
-<span class="lineno">76</span>        <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhv,bhk-&gt;bhvk&#39;</span><span class="p">,</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">value_existing</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
-<span class="lineno">77</span>
-<span class="lineno">78</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">71</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">72</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">FastWeightsAttention</span><span class="p">,</span>
+<span class="lineno">73</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
+<span class="lineno">74</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">75</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -266,10 +261,10 @@
                 <div class='section-link'>
                     <a href='#section-14'>#</a>
                 </div>
-                <p>Concatenate multiple heads</p>
+                <p>Transformer size $d_{model}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">81</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">77</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -277,10 +272,12 @@
                 <div class='section-link'>
                     <a href='#section-15'>#</a>
                 </div>
-                <p>Output layer</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">84</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">weights</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">79</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
+<span class="lineno">80</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
+<span class="lineno">81</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -288,10 +285,11 @@
                 <div class='section-link'>
                     <a href='#section-16'>#</a>
                 </div>
-                
+                <p>Normalization layers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">87</span><span class="k">class</span> <span class="nc">FastWeightAttentionTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">84</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">85</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -302,12 +300,8 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">88</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">89</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">90</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">FastWeightAttention</span><span class="p">,</span>
-<span class="lineno">91</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
-<span class="lineno">92</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">93</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">87</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
+<span class="lineno">88</span>        <span class="n">attn</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -315,10 +309,10 @@
                 <div class='section-link'>
                     <a href='#section-18'>#</a>
                 </div>
-                <p>Transformer size $d_{model}$</p>
+                <p>Add the self attention results</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">95</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -326,12 +320,10 @@
                 <div class='section-link'>
                     <a href='#section-19'>#</a>
                 </div>
-                
+                <p>Normalize for feed-forward</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">97</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
-<span class="lineno">98</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
-<span class="lineno">99</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">93</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -339,11 +331,10 @@
                 <div class='section-link'>
                     <a href='#section-20'>#</a>
                 </div>
-                <p>Normalization layers</p>
+                <p>Pass through the feed-forward network</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
-<span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">95</span>        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -351,11 +342,10 @@
                 <div class='section-link'>
                     <a href='#section-21'>#</a>
                 </div>
-                
+                <p>Add the feed-forward results back</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">105</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
-<span class="lineno">106</span>        <span class="n">attn</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">97</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -363,10 +353,10 @@
                 <div class='section-link'>
                     <a href='#section-22'>#</a>
                 </div>
-                <p>Add the self attention results</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">108</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">100</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">weights</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -374,10 +364,10 @@
                 <div class='section-link'>
                     <a href='#section-23'>#</a>
                 </div>
-                <p>Normalize for feed-forward</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">111</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">103</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -385,10 +375,11 @@
                 <div class='section-link'>
                     <a href='#section-24'>#</a>
                 </div>
-                <p>Pass through the feed-forward network</p>
+                
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">113</span>        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">104</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">FastWeightsAttentionTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">105</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -396,10 +387,10 @@
                 <div class='section-link'>
                     <a href='#section-25'>#</a>
                 </div>
-                <p>Add the feed-forward results back</p>
+                <p>Make copies of the transformer layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">115</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">107</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -407,10 +398,10 @@
                 <div class='section-link'>
                     <a href='#section-26'>#</a>
                 </div>
-                
+                <p>Final normalization layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">118</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">weights</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">109</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-27'>
@@ -421,7 +412,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">121</span><span class="k">class</span> <span class="nc">FastWeightAttentionTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">111</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_seq</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-28'>
@@ -429,11 +420,10 @@
                 <div class='section-link'>
                     <a href='#section-28'>#</a>
                 </div>
-                
+                <p>Split the input to a list along the sequence axis</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">122</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">FastWeightAttentionTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">123</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">113</span>        <span class="n">x_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x_seq</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-29'>
@@ -441,10 +431,10 @@
                 <div class='section-link'>
                     <a href='#section-29'>#</a>
                 </div>
-                <p>Make copies of the transformer layer</p>
+                <p>List to store the outputs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">115</span>        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-30'>
@@ -452,10 +442,12 @@
                 <div class='section-link'>
                     <a href='#section-30'>#</a>
                 </div>
-                <p>Final normalization layer</p>
+                <p>For each input step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">127</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">117</span>        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">))]</span>
+<span class="lineno">118</span>
+<span class="lineno">119</span>        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_seq</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-31'>
@@ -463,10 +455,10 @@
                 <div class='section-link'>
                     <a href='#section-31'>#</a>
                 </div>
-                
+                <p>Run through each layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">129</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_seq</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">121</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-32'>
@@ -474,10 +466,12 @@
                 <div class='section-link'>
                     <a href='#section-32'>#</a>
                 </div>
-                <p>Split the input to a list along the sequence axis</p>
+                <p>Get layer output</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">131</span>        <span class="n">x_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">x_seq</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">123</span>                <span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="lineno">124</span>
+<span class="lineno">125</span>            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-33'>
@@ -485,10 +479,10 @@
                 <div class='section-link'>
                     <a href='#section-33'>#</a>
                 </div>
-                <p>List to store the outputs</p>
+                <p>Stack the output tensors</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">133</span>        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">128</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-34'>
@@ -496,58 +490,10 @@
                 <div class='section-link'>
                     <a href='#section-34'>#</a>
                 </div>
-                <p>For each input step</p>
-            </div>
-            <div class='code'>
-                <div class="highlight"><pre><span class="lineno">135</span>        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">))]</span>
-<span class="lineno">136</span>
-<span class="lineno">137</span>        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_seq</span><span class="p">:</span></pre></div>
-            </div>
-        </div>
-    <div class='section' id='section-35'>
-            <div class='docs'>
-                <div class='section-link'>
-                    <a href='#section-35'>#</a>
-                </div>
-                <p>Run through each layer</p>
-            </div>
-            <div class='code'>
-                <div class="highlight"><pre><span class="lineno">139</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span></pre></div>
-            </div>
-        </div>
-    <div class='section' id='section-36'>
-            <div class='docs'>
-                <div class='section-link'>
-                    <a href='#section-36'>#</a>
-                </div>
-                <p>Get layer output</p>
-            </div>
-            <div class='code'>
-                <div class="highlight"><pre><span class="lineno">141</span>                <span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-<span class="lineno">142</span>
-<span class="lineno">143</span>            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
-            </div>
-        </div>
-    <div class='section' id='section-37'>
-            <div class='docs'>
-                <div class='section-link'>
-                    <a href='#section-37'>#</a>
-                </div>
-                <p>Stack the output tensors</p>
-            </div>
-            <div class='code'>
-                <div class="highlight"><pre><span class="lineno">146</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
-            </div>
-        </div>
-    <div class='section' id='section-38'>
-            <div class='docs'>
-                <div class='section-link'>
-                    <a href='#section-38'>#</a>
-                </div>
                 <p>Normalize the output</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">148</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>

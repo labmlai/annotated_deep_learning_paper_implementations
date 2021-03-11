@@ -12,31 +12,13 @@ import torch
 from torch import nn
 
 from labml_helpers.module import Module
+from labml_nn.transformers.fast_weights import DPFP
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class DPFP(Module):
-    def __init__(self, nu: int = 1, eps: float = 1e-6):
-        super().__init__()
-        self.nu = nu
-        self.r = nn.ReLU()
-        self.eps = eps
-
-    def __call__(self, x: torch.Tensor):
-        x = self.dpfp(x)
-        return x / (torch.sum(x, dim=-1, keepdim=True) + self.eps)
-
-    def dpfp(self, x: torch.Tensor):
-        x = torch.cat([self.r(x), self.r(-x)], dim=-1)
-        x_rolled = torch.cat([x.roll(shifts=j, dims=-1) for j in range(1, self.nu + 1)], dim=-1)
-        x_repeat = torch.cat([x] * self.nu, dim=-1)
-
-        return x_repeat * x_rolled
-
-
-class FastWeightAttention(Module):
+class FastWeightsAttention(Module):
     def __init__(self, heads: int, d_model: int, dropout_prob: float, phi: DPFP):
         super().__init__()
 
@@ -84,10 +66,10 @@ class FastWeightAttention(Module):
         return self.output(x), weights
 
 
-class FastWeightAttentionTransformerLayer(Module):
+class FastWeightsAttentionTransformerLayer(Module):
     def __init__(self, *,
                  d_model: int,
-                 attn: FastWeightAttention,
+                 attn: FastWeightsAttention,
                  feed_forward: FeedForward,
                  dropout_prob: float):
         super().__init__()
@@ -118,8 +100,8 @@ class FastWeightAttentionTransformerLayer(Module):
         return x, weights
 
 
-class FastWeightAttentionTransformer(Module):
-    def __init__(self, layer: FastWeightAttentionTransformerLayer, n_layers: int):
+class FastWeightsAttentionTransformer(Module):
+    def __init__(self, layer: FastWeightsAttentionTransformerLayer, n_layers: int):
         super().__init__()
         # Make copies of the transformer layer
         self.layers = clone_module_list(layer, n_layers)
