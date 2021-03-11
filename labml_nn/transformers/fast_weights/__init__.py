@@ -1,10 +1,76 @@
 """
 ---
-title: Fast Weight Systems
+title: Linear Transformers Are Secretly Fast Weight Memory Systems
 summary: >
   This is an annotated implementation/tutorial of
   Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch.
 ---
+
+# Fast weights transformer
+
+This paper compares linear self attention to fast weight systems and makes
+modifications to self attention update rule based on that.
+It also introduces a simpler, yet effective kernel function.
+
+## Fast weights
+
+Consider a sequence of inputs $\big\\{x^{(i)}\big\\}^L_{i=1}$ or length $L$
+and each step is a vector of size $d_{in}$; i.e. $x \in \mathbb{R}^{d_{in}}$.
+The fast weight model generates a weight matrix at each step to produce output
+$\big\\{y^{(i)}\big\\}^L_{i=1}$, $y \in \mathbb{R}^{d_{out}}$
+
+\begin{align}
+a^{(i)}, b^{(i)} &= \color{orange}{W_a} x^{(i)}, \color{orange}{W_b} x^{(i)} \\
+\color{cyan}{W^{(i)}} &= \sigma \Big( \color{cyan}{W^{(i-1)}} + a^{(i)} \otimes b^{(i)} \Big) \\
+y^{(i)} &= \color{cyan}{W^{(i)}} x^{(i)}
+\end{align}
+
+$\otimes$ is the outer product ($a \otimes b = a b^\top$), where elements of the two vectors are multiplied with each other
+to give a matrix.
+$\sigma$ is an activation function.
+$\color{orange}{W_a}$ and $\color{orange}{W_b}$ are trainable weights (parameters).
+$\color{cyan}{W^{(i)}}$ are the fast weights that are generated at each step.
+
+## Linear self-attention
+
+Original transformer self-attention is, (omitting $\frac{1}{d_k}$ for clarity)
+
+\begin{align}
+y^{(i)} &= \Big[v^{(1)}, v^{(2)}, ..., v^{(i)}\Big] \text{softmax}
+ \bigg(
+    \Big[k^{(1)}, k^{(2)}, ..., k^{(i)}\Big] ^\top
+    q^{(i)}
+ \bigg) \\
+ &= \sum^i_{j=1} \frac
+ { v^{(j)} \kappa(k^{(j)}, q^{(i)}) }
+ { \sum^i_{j'=1} \kappa(k^{(j')}, q^{(i)}) } \\
+\end{align}
+
+where $\kappa(k, q) = \text{exp}(k \cdot q)$
+
+The idea behind linearizing self attention is to replace softmax
+kernel $\kappa$ with a different kernel $\kappa '$ so that we can calculate the
+denominator of the self attention function faster:
+
+$$\kappa '(k, q) = \phi(k)^\top \phi(q)$$
+
+This gives
+
+\begin{align}
+y^{(i)} &= \frac
+ {\Big( \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)} \Big) \phi(q^{(i)}) }
+ { \Big( \sum^i_{j'=1} \phi(k^{(j')}) \Big) \phi(q^{(i)}) }
+\end{align}
+
+With $W^{(i)} = \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)})$ and
+$z^{(i)} = \sum^i_{j=1} \phi(k^{(j)})$, we can calculate them efficiently:
+\begin{align}
+W^{(i)} &= W^{(i-1)} + v^{(i)} \otimes \phi(k^{(i)}) \\
+z^{(i)} &= z{(i)} + \phi(k^{(i)}) \\
+y^{(i)} &= \frac{1}{z^{(i)} \cdot \phi(q^{(i)})} W^{(i)} \phi(q^{(i)})
+\end{align}
+
+This is quite similar to fast weights.
 """
 
 import torch
@@ -36,7 +102,7 @@ class DPFP(Module):
 
 
 class FastWeightAttention(Module):
-    def __init__(self, heads: int, d_model: int, dropout_prob: float, sigma: DPFP):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float, phi: DPFP):
         super().__init__()
 
         # Number of features per head
@@ -53,7 +119,7 @@ class FastWeightAttention(Module):
         self.gate = nn.Sequential(PrepareForMultiHeadAttention(d_model, heads, 1, bias=False),
                                   nn.Sigmoid())
 
-        self.sigma = sigma
+        self.phi = phi
 
         # Output layer
         self.output = nn.Linear(d_model, d_model)
@@ -62,8 +128,8 @@ class FastWeightAttention(Module):
 
     def __call__(self, x: torch.Tensor):
         seq_len = x.shape[0]
-        query = self.sigma(self.query(x))
-        key = self.sigma(self.key(x))
+        query = self.phi(self.query(x))
+        key = self.phi(self.key(x))
         value = self.value(x)
         beta = self.gate(x)
 

@@ -37,7 +37,7 @@ class DPFP(Module):
 
 
 class FastWeightAttention(Module):
-    def __init__(self, heads: int, d_model: int, dropout_prob: float, sigma: DPFP):
+    def __init__(self, heads: int, d_model: int, dropout_prob: float, phi: DPFP):
         super().__init__()
 
         # Number of features per head
@@ -54,7 +54,7 @@ class FastWeightAttention(Module):
         self.gate = nn.Sequential(PrepareForMultiHeadAttention(d_model, heads, 1, bias=False),
                                   nn.Sigmoid())
 
-        self.sigma = sigma
+        self.phi = phi
 
         # Output layer
         self.output = nn.Linear(d_model, d_model)
@@ -62,8 +62,8 @@ class FastWeightAttention(Module):
         self.dropout = nn.Dropout(dropout_prob)
 
     def __call__(self, x: torch.Tensor, weights: Optional[torch.Tensor]):
-        query = self.sigma(self.query(x))
-        key = self.sigma(self.key(x))
+        query = self.phi(self.query(x))
+        key = self.phi(self.key(x))
         value = self.value(x)
 
         if weights is None:

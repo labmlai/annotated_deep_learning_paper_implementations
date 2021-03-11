@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is training code with notes for a Fast Weights Transformer."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Train Fast Weights Transformer"/>
+    <meta name="twitter:description" content="This is training code with notes for a Fast Weights Transformer."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/fast_weights/experiment.html"/>
+    <meta property="og:title" content="Train Fast Weights Transformer"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Train Fast Weights Transformer"/>
+    <meta property="og:description" content="This is training code with notes for a Fast Weights Transformer."/>
+
+    <title>Train Fast Weights Transformer</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/fast_weights/experiment.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">fast_weights</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/transformers/fast_weights/experiment.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">8</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">9</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">10</span>
+<span class="lineno">11</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">13</span><span class="kn">from</span> <span class="nn">labml.utils.pytorch</span> <span class="kn">import</span> <span class="n">get_modules</span>
+<span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">NLPAutoRegressionConfigs</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>Auto regressive model</h2>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">18</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">23</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+<span class="lineno">24</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p>Token embedding module</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_vocab</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span>
+<span class="lineno">27</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span>
+<span class="lineno">28</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">30</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Embed the tokens</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">32</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Run it through the the transformer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">34</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Generate logits of the next token</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">36</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> <span class="kc">None</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <h2>Configurations</h2>
+<p>The default configs can and will be over-ridden when we start the experiment</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">39</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">NLPAutoRegressionConfigs</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">46</span>    <span class="n">model</span><span class="p">:</span> <span class="n">AutoregressiveModel</span>
+<span class="lineno">47</span>
+<span class="lineno">48</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="lineno">49</span>    <span class="n">nu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">50</span>    <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="lineno">51</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="lineno">52</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
+<span class="lineno">53</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Create <a href="index.html">fast weights transformer</a>.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">56</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="lineno">57</span><span class="k">def</span> <span class="nf">fast_weights_transformer</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">61</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.fast_weights</span> <span class="kn">import</span> <span class="n">FastWeightAttentionTransformer</span><span class="p">,</span> \
+<span class="lineno">62</span>        <span class="n">FastWeightAttentionTransformerLayer</span><span class="p">,</span> <span class="n">FastWeightAttention</span><span class="p">,</span> <span class="n">FeedForward</span>
+<span class="lineno">63</span>
+<span class="lineno">64</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.fast_weights</span> <span class="kn">import</span> <span class="n">DPFP</span>
+<span class="lineno">65</span>    <span class="k">return</span> <span class="n">AutoregressiveModel</span><span class="p">(</span>
+<span class="lineno">66</span>        <span class="n">c</span><span class="o">.</span><span class="n">n_tokens</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span>
+<span class="lineno">67</span>        <span class="n">FastWeightAttentionTransformer</span><span class="p">(</span>
+<span class="lineno">68</span>            <span class="n">FastWeightAttentionTransformerLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span>
+<span class="lineno">69</span>                                                <span class="n">attn</span><span class="o">=</span><span class="n">FastWeightAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">DPFP</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">nu</span><span class="p">)),</span>
+<span class="lineno">70</span>                                                <span class="n">feed_forward</span><span class="o">=</span><span class="n">FeedForward</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">71</span>                                                <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">72</span>            <span class="n">c</span><span class="o">.</span><span class="n">n_layers</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">75</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>Create experiment</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">77</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;fast_weights_transformer&quot;</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Create configs</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">79</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>Load configurations</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">81</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                <p>A dictionary of configurations to override</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">83</span>                       <span class="p">{</span><span class="s1">&#39;tokenizer&#39;</span><span class="p">:</span> <span class="s1">&#39;character&#39;</span><span class="p">,</span>
+<span class="lineno">84</span>                        <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span>
+<span class="lineno">85</span>                        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="lineno">86</span>                        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Noam&#39;</span><span class="p">,</span>
+<span class="lineno">87</span>                        <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="s1">&#39;It is&#39;</span><span class="p">,</span>
+<span class="lineno">88</span>                        <span class="s1">&#39;prompt_separator&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="lineno">89</span>
+<span class="lineno">90</span>                        <span class="s1">&#39;train_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;shuffled_train_loader&#39;</span><span class="p">,</span>
+<span class="lineno">91</span>                        <span class="s1">&#39;valid_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;shuffled_valid_loader&#39;</span><span class="p">,</span>
+<span class="lineno">92</span>
+<span class="lineno">93</span>                        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+<span class="lineno">94</span>                        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+<span class="lineno">95</span>                        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+<span class="lineno">96</span>                        <span class="s1">&#39;inner_iterations&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">})</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                <p>Set models for saving and loading</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">99</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">(</span><span class="n">get_modules</span><span class="p">(</span><span class="n">conf</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                <p>Start the experiment</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">102</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                <p>Run the training loop</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">104</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="lineno">105</span>
+<span class="lineno">106</span>
+<span class="lineno">107</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">108</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
