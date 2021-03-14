@@ -81,6 +81,12 @@ This is quite similar to fast weights.
 The paper introduces a new linear attention projection function $\color{lightgreen}{\phi}$
 a new update rule for $\color{cyan}{W^{(i)}} = f(\color{cyan}{W^{(i-1)}})$ and change the normalization
 $\frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}$
+
+Here's [the training code](experiment.html) and a notebook for training a fast weights
+ transformer on Tiny Shakespeare dataset.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/fast_weights/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/928aadc0846c11eb85710242ac1c0002)
 """
 
 import torch
@@ -250,7 +256,7 @@ class FastWeightsAttention(Module):
             y = torch.einsum('bhvk,bhk->bhv', weights, query[i])
 
             # Merge multiple heads and append to `outputs`
-            outputs.append(x.reshape(y.shape[0], -1))
+            outputs.append(y.reshape(y.shape[0], -1))
 
         # Stack outputs at each step into a single tensor
         x = torch.stack(outputs)
