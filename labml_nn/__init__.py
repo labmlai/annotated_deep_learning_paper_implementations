@@ -25,6 +25,7 @@ implementations.
 * [kNN-LM: Generalization through Memorization](transformers/knn/index.html)
 * [Feedback Transformer](transformers/feedback/index.html)
 * [Switch Transformer](transformers/switch/index.html)
+* [Fast Weights Transformer](transformers/fast_weights/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 

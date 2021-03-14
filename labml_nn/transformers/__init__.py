@@ -27,7 +27,7 @@ This is an implementation of compressive transformer
 that extends upon [Transformer XL](xl/index.html) by compressing
 oldest memories to give a longer attention span.
 
-## [GPT Architecture](gpt)
+## [GPT Architecture](gpt/index.html)
 
 This is an implementation of GPT-2 architecture.
 
@@ -36,22 +36,27 @@ This is an implementation of GPT-2 architecture.
 This is an implementation of the paper
 [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202).
 
-## [kNN-LM](knn)
+## [kNN-LM](knn/index.html)
 
 This is an implementation of the paper
 [Generalization through Memorization: Nearest Neighbor Language Models](https://arxiv.org/abs/1911.00172).
 
-## [Feedback Transformer](feedback)
+## [Feedback Transformer](feedback/index.html)
 
 This is an implementation of the paper
 [Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
 
-## [Switch Transformer](switch)
+## [Switch Transformer](switch/index.html)
 
 This is a miniature implementation of the paper
 [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961).
 Our implementation only has a few million parameters and doesn't do model parallel distributed training.
 It does single GPU training but we implement the concept of switching as described in the paper.
+
+## [Fast Weights Transformer](fast_weights/index.html)
+
+This is an implementation of the paper
+[Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://arxiv.org/abs/2102.11174).
 """
 
 from .configs import TransformerConfigs
