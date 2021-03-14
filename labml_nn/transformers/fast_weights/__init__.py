@@ -14,6 +14,9 @@ finds similarities between linear self-attention and fast weight systems
 and makes modifications to self-attention update rule based on that.
 It also introduces a simpler, yet effective kernel function.
 
+*The authors have provided an [official implementation](https://github.com/ischlag/fast-weight-transformers)
+of the paper including other variants they compare with in the paper.*
+
 ## Fast weights
 
 Consider a sequence of inputs $\big\\{x^{(i)}\big\\}^L_{i=1}$ or length $L$

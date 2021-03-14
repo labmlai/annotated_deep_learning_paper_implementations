@@ -78,6 +78,8 @@
 finds similarities between linear self-attention and fast weight systems
 and makes modifications to self-attention update rule based on that.
 It also introduces a simpler, yet effective kernel function.</p>
+<p><em>The authors have provided an <a href="https://github.com/ischlag/fast-weight-transformers">official implementation</a>
+of the paper including other variants they compare with in the paper.</em></p>
 <h2>Fast weights</h2>
 <p>Consider a sequence of inputs $\big\{x^{(i)}\big\}^L_{i=1}$ or length $L$
 and each step is a vector of size $d_{in}$; i.e. $x \in \mathbb{R}^{d_{in}}$.
@@ -146,13 +148,13 @@ $\frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}$</p>
 <a href="https://app.labml.ai/run/928aadc0846c11eb85710242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">92</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">93</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">94</span>
-<span class="lineno">95</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">96</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
-<span class="lineno">97</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">PrepareForMultiHeadAttention</span>
-<span class="lineno">98</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">95</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">96</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">97</span>
+<span class="lineno">98</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">99</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">100</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">PrepareForMultiHeadAttention</span>
+<span class="lineno">101</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -187,7 +189,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
 <p><em>Check the paper for derivation.</em></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">101</span><span class="k">class</span> <span class="nc">DPFP</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">104</span><span class="k">class</span> <span class="nc">DPFP</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -201,7 +203,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
 </ul>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">135</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">138</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -212,10 +214,10 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">140</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">141</span>        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="n">nu</span>
-<span class="lineno">142</span>        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
-<span class="lineno">143</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">143</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">144</span>        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="n">nu</span>
+<span class="lineno">145</span>        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+<span class="lineno">146</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -226,7 +228,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">145</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">148</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -237,7 +239,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
                 <p>Get $\color{lightgreen}{\phi(k)}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">147</span>        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpfp</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">150</span>        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpfp</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -248,7 +250,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
                 <p>Normalize by $\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">149</span>        <span class="k">return</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">152</span>        <span class="k">return</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -261,7 +263,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">151</span>    <span class="k">def</span> <span class="nf">dpfp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">154</span>    <span class="k">def</span> <span class="nf">dpfp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -272,7 +274,7 @@ unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
                 <p>$x = \text{ReLU}\Big(\big[k, -k\big]\Big)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">156</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="n">k</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">159</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="n">k</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -285,7 +287,7 @@ to get <script type="math/tex; mode=display">x'_{i,j} = \text{ReLU}\Big(\big[k, 
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">159</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">shifts</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">dims</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">162</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">shifts</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">dims</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -298,7 +300,7 @@ to get <script type="math/tex; mode=display">x'_{i,j} = \text{ReLU}\Big(\big[k, 
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">162</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x_rolled</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">165</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x_rolled</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -309,7 +311,7 @@ to get <script type="math/tex; mode=display">x'_{i,j} = \text{ReLU}\Big(\big[k, 
                 <p>Concatenate copies of $x$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">164</span>        <span class="n">x_repeat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">167</span>        <span class="n">x_repeat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -324,7 +326,7 @@ to get <script type="math/tex; mode=display">x'_{i,j} = \text{ReLU}\Big(\big[k, 
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">170</span>        <span class="k">return</span> <span class="n">x_repeat</span> <span class="o">*</span> <span class="n">x_rolled</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">173</span>        <span class="k">return</span> <span class="n">x_repeat</span> <span class="o">*</span> <span class="n">x_rolled</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -356,7 +358,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
 <p>Note that we don&rsquo;t need the normalization term $z$ because $\color{lightgreen}{\phi&rsquo;}$ is normalized.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">173</span><span class="k">class</span> <span class="nc">FastWeightsAttention</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">176</span><span class="k">class</span> <span class="nc">FastWeightsAttention</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -367,8 +369,8 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">201</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">DPFP</span><span class="p">):</span>
-<span class="lineno">202</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">204</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">DPFP</span><span class="p">):</span>
+<span class="lineno">205</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -379,7 +381,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Number of features per head $d_k$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">heads</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">208</span>        <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">heads</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -390,7 +392,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Number of heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">207</span>        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">210</span>        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -401,9 +403,9 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>These transform the <code>query</code>, <code>key</code> and <code>value</code> multi-headed attention.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">210</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="lineno">211</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="lineno">212</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">213</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">214</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">215</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -414,10 +416,10 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Interpolation weight function $\sigma \Big(\color{orange}{W_\beta} x^{(i)} \Big)$ for each head</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">215</span>        <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-<span class="lineno">216</span>            <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-<span class="lineno">217</span>            <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
-<span class="lineno">218</span>        <span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">218</span>        <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+<span class="lineno">219</span>            <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="lineno">220</span>            <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+<span class="lineno">221</span>        <span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -428,7 +430,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$\color{lightgreen}{\phi&rsquo;}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">221</span>        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -439,7 +441,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Output layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">227</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -450,7 +452,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Dropout</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">226</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">229</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -461,7 +463,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">228</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">231</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -472,7 +474,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Get the number of steps $L$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">230</span>        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">233</span>        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -483,7 +485,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$\color{lightgreen}{\phi&rsquo;(q^{(i)})}$ for all steps and heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">232</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -494,7 +496,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$\color{lightgreen}{\phi&rsquo;(k^{(i)})}$ for all steps and heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">234</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">237</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -505,7 +507,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$v^{(i)}$ for all steps and heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">236</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">239</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-27'>
@@ -516,7 +518,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$\beta^{(i)}$ for all steps and heads</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">238</span>        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">241</span>        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-28'>
@@ -527,7 +529,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>$\color{cyan}{W^{(0)}}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">241</span>        <span class="n">weights</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">244</span>        <span class="n">weights</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-29'>
@@ -538,7 +540,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>List to store outputs $y^{(i)}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">243</span>        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">246</span>        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-30'>
@@ -549,7 +551,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Iterate through steps</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">246</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_len</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">249</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_len</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-31'>
@@ -562,7 +564,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">248</span>            <span class="n">value_existing</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">251</span>            <span class="n">value_existing</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-32'>
@@ -577,7 +579,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">253</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhv,bhk-&gt;bhvk&#39;</span><span class="p">,</span> <span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">value_existing</span><span class="p">),</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">256</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhv,bhk-&gt;bhvk&#39;</span><span class="p">,</span> <span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">value_existing</span><span class="p">),</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-33'>
@@ -590,7 +592,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">256</span>            <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">259</span>            <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-34'>
@@ -601,7 +603,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Merge multiple heads and append to <code>outputs</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">259</span>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">262</span>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-35'>
@@ -612,7 +614,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Stack outputs at each step into a single tensor</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">262</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">265</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-36'>
@@ -623,7 +625,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Output layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">265</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">268</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-37'>
@@ -634,7 +636,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>This is a general transformer layer that combines self attention and feedforward network.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">268</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">271</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-38'>
@@ -645,12 +647,12 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">272</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">273</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">274</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">FastWeightsAttention</span><span class="p">,</span>
-<span class="lineno">275</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
-<span class="lineno">276</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">277</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">275</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">276</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">277</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">FastWeightsAttention</span><span class="p">,</span>
+<span class="lineno">278</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
+<span class="lineno">279</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">280</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-39'>
@@ -661,7 +663,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Transformer size $d_{model}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">279</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">282</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-40'>
@@ -672,7 +674,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Fast weights attention module</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">281</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">284</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-41'>
@@ -683,7 +685,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Feed-forward network</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">283</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">286</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-42'>
@@ -694,7 +696,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Dropout layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">285</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">288</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-43'>
@@ -705,8 +707,8 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Normalization layers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">288</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
-<span class="lineno">289</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">291</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">292</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-44'>
@@ -717,7 +719,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">291</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">294</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-45'>
@@ -728,7 +730,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Calculate fast weights self attention</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">293</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">296</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-46'>
@@ -739,7 +741,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Add the self attention results</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">295</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">298</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-47'>
@@ -750,7 +752,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Normalize for feed-forward</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">298</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">301</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-48'>
@@ -761,7 +763,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Pass through the feed-forward network</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">300</span>        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">303</span>        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-49'>
@@ -772,7 +774,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Add the feed-forward results back</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">302</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">305</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-50'>
@@ -783,7 +785,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">305</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">308</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-51'>
@@ -794,7 +796,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>This is a general transformer module with multiple transformer layers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">308</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">311</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-52'>
@@ -805,8 +807,8 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">312</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">FastWeightsAttentionTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">313</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">315</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">FastWeightsAttentionTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">316</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-53'>
@@ -817,7 +819,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Make copies of the transformer layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">315</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">318</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-54'>
@@ -828,7 +830,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Final normalization layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">317</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">320</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-55'>
@@ -839,8 +841,8 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">319</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-<span class="lineno">320</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">322</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">323</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-56'>
@@ -851,7 +853,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Get layer output</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">322</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">325</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-57'>
@@ -862,7 +864,7 @@ y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
                 <p>Normalize the output</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">325</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">328</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>
