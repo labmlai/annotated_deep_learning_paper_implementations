@@ -10,8 +10,8 @@ summary: >
 
 The paper
 [Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://arxiv.org/abs/2102.11174)
-finds similarities between linear self attention and fast weight systems,
-and makes modifications to self attention update rule based on that.
+finds similarities between linear self-attention and fast weight systems
+and makes modifications to self-attention update rule based on that.
 It also introduces a simpler, yet effective kernel function.
 
 ## Fast weights
@@ -82,8 +82,8 @@ The paper introduces a new linear attention projection function $\color{lightgre
 a new update rule for $\color{cyan}{W^{(i)}} = f(\color{cyan}{W^{(i-1)}})$ and change the normalization
 $\frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}$
 
-Here's [the training code](experiment.html) and a notebook for training a fast weights
- transformer on Tiny Shakespeare dataset.
+Here are [the training code](experiment.html) and a notebook for training a fast weights
+ transformer on the Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/fast_weights/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/928aadc0846c11eb85710242ac1c0002)
@@ -277,9 +277,11 @@ class FastWeightsAttentionTransformerLayer(Module):
         super().__init__()
         # Transformer size $d_{model}$
         self.size = d_model
-        #
+        # Fast weights attention module
         self.attn = attn
+        # Feed-forward network
         self.feed_forward = feed_forward
+        # Dropout layer
         self.dropout = nn.Dropout(dropout_prob)
 
         # Normalization layers
@@ -287,6 +289,7 @@ class FastWeightsAttentionTransformerLayer(Module):
         self.norm_ff = nn.LayerNorm([d_model])
 
     def __call__(self, x: torch.Tensor):
+        # Calculate fast weights self attention
         attn = self.attn(x)
         # Add the self attention results
         x = x + self.dropout(attn)
