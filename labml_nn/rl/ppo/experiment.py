@@ -19,7 +19,7 @@ from torch import optim
 from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
-from labml.internal.configs.dynamic_hyperparam import FloatDynamicHyperParam
+from labml.configs import FloatDynamicHyperParam
 from labml_helpers.module import Module
 from labml_nn.rl.game import Worker
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
