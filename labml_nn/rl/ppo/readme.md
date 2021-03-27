@@ -1,4 +1,4 @@
-# [Proximal Policy Optimization (PPO)](https://nn.labml.ai/rl/ppo/index.html)
+# [Proximal Policy Optimization - PPO](https://nn.labml.ai/rl/ppo/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of
 [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).

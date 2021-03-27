@@ -1,11 +1,11 @@
 """
 ---
-title: Proximal Policy Optimization (PPO)
+title: Proximal Policy Optimization - PPO
 summary: >
- An annotated implementation of Proximal Policy Optimization (PPO) algorithm in PyTorch.
+ An annotated implementation of Proximal Policy Optimization - PPO algorithm in PyTorch.
 ---
 
-# Proximal Policy Optimization (PPO)
+# Proximal Policy Optimization - PPO
 
 This is a [PyTorch](https://pytorch.org) implementation of
 [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
