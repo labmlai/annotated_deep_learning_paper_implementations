@@ -75,22 +75,24 @@
                 <h1>PPO Experiment with Atari Breakout</h1>
 <p>This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.
 It runs the <a href="../game.html">game environments on multiple processes</a> to sample efficiently.</p>
+<p><a href="https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/rl/ppo/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">13</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
-<span class="lineno">14</span>
-<span class="lineno">15</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="lineno">16</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">17</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">18</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">optim</span>
-<span class="lineno">19</span><span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Categorical</span>
-<span class="lineno">20</span>
-<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">experiment</span>
-<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">FloatDynamicHyperParam</span>
-<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">24</span><span class="kn">from</span> <span class="nn">labml_nn.rl.game</span> <span class="kn">import</span> <span class="n">Worker</span>
-<span class="lineno">25</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo</span> <span class="kn">import</span> <span class="n">ClippedPPOLoss</span><span class="p">,</span> <span class="n">ClippedValueFunctionLoss</span>
-<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo.gae</span> <span class="kn">import</span> <span class="n">GAE</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">16</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="lineno">17</span>
+<span class="lineno">18</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">19</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">optim</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Categorical</span>
+<span class="lineno">23</span>
+<span class="lineno">24</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">experiment</span>
+<span class="lineno">25</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span> <span class="n">IntDynamicHyperParam</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml_nn.rl.game</span> <span class="kn">import</span> <span class="n">Worker</span>
+<span class="lineno">28</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo</span> <span class="kn">import</span> <span class="n">ClippedPPOLoss</span><span class="p">,</span> <span class="n">ClippedValueFunctionLoss</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_nn.rl.ppo.gae</span> <span class="kn">import</span> <span class="n">GAE</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -101,10 +103,10 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
                 <p>Select device</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">29</span><span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-<span class="lineno">30</span>    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span><span class="p">)</span>
-<span class="lineno">31</span><span class="k">else</span><span class="p">:</span>
-<span class="lineno">32</span>    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">32</span><span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+<span class="lineno">33</span>    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span><span class="p">)</span>
+<span class="lineno">34</span><span class="k">else</span><span class="p">:</span>
+<span class="lineno">35</span>    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -115,7 +117,7 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
                 <h2>Model</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">35</span><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">38</span><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -126,8 +128,8 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">40</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">41</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">43</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">44</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -139,7 +141,7 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
 84x84 frame and produces a 20x20 frame</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">48</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -151,7 +153,7 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
 20x20 frame and produces a 9x9 frame</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">49</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">52</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -163,7 +165,7 @@ It runs the <a href="../game.html">game environments on multiple processes</a> t
 9x9 frame and produces a 7x7 frame</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">53</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -176,7 +178,7 @@ frame from third convolution layer, and outputs
 512 features</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lin</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">7</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">64</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">61</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lin</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">7</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">64</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -187,7 +189,7 @@ frame from third convolution layer, and outputs
                 <p>A fully connected layer to get logits for $\pi$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">61</span>        <span class="bp">self</span><span class="o">.</span><span class="n">pi_logits</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">64</span>        <span class="bp">self</span><span class="o">.</span><span class="n">pi_logits</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -198,7 +200,7 @@ frame from third convolution layer, and outputs
                 <p>A fully connected layer to get value function</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">64</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">67</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">out_features</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -209,7 +211,7 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">67</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">70</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -220,18 +222,18 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">69</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-<span class="lineno">70</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">obs</span><span class="p">))</span>
-<span class="lineno">71</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
-<span class="lineno">72</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv3</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
-<span class="lineno">73</span>        <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">64</span><span class="p">))</span>
-<span class="lineno">74</span>
-<span class="lineno">75</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
-<span class="lineno">76</span>
-<span class="lineno">77</span>        <span class="n">pi</span> <span class="o">=</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pi_logits</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
-<span class="lineno">78</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">73</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">obs</span><span class="p">))</span>
+<span class="lineno">74</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+<span class="lineno">75</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv3</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+<span class="lineno">76</span>        <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">64</span><span class="p">))</span>
+<span class="lineno">77</span>
+<span class="lineno">78</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
 <span class="lineno">79</span>
-<span class="lineno">80</span>        <span class="k">return</span> <span class="n">pi</span><span class="p">,</span> <span class="n">value</span></pre></div>
+<span class="lineno">80</span>        <span class="n">pi</span> <span class="o">=</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pi_logits</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+<span class="lineno">81</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">82</span>
+<span class="lineno">83</span>        <span class="k">return</span> <span class="n">pi</span><span class="p">,</span> <span class="n">value</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -242,7 +244,7 @@ frame from third convolution layer, and outputs
                 <p>Scale observations from <code>[0, 255]</code> to <code>[0, 1]</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">83</span><span class="k">def</span> <span class="nf">obs_to_torch</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">86</span><span class="k">def</span> <span class="nf">obs_to_torch</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -253,7 +255,7 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">85</span>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">88</span>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -264,7 +266,7 @@ frame from third convolution layer, and outputs
                 <h2>Trainer</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">88</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">91</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -275,13 +277,14 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">93</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">94</span>                 <span class="n">updates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">worker_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batches</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">95</span>                 <span class="n">value_loss_coef</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
-<span class="lineno">96</span>                 <span class="n">entropy_bonus_coef</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
-<span class="lineno">97</span>                 <span class="n">clip_range</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
-<span class="lineno">98</span>                 <span class="n">learning_rate</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
-<span class="lineno">99</span>                 <span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">96</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">97</span>                 <span class="n">updates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="n">IntDynamicHyperParam</span><span class="p">,</span>
+<span class="lineno">98</span>                 <span class="n">n_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">worker_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batches</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">99</span>                 <span class="n">value_loss_coef</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
+<span class="lineno">100</span>                 <span class="n">entropy_bonus_coef</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
+<span class="lineno">101</span>                 <span class="n">clip_range</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
+<span class="lineno">102</span>                 <span class="n">learning_rate</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">,</span>
+<span class="lineno">103</span>                 <span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -303,7 +306,7 @@ frame from third convolution layer, and outputs
                 <p>number of updates</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="n">updates</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">107</span>        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="n">updates</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -314,7 +317,7 @@ frame from third convolution layer, and outputs
                 <p>number of epochs to train the model with sampled data</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">109</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -325,7 +328,7 @@ frame from third convolution layer, and outputs
                 <p>number of worker processes</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">107</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_workers</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">111</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_workers</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -336,7 +339,7 @@ frame from third convolution layer, and outputs
                 <p>number of steps to run on each process for a single update</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">109</span>        <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span> <span class="o">=</span> <span class="n">worker_steps</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">113</span>        <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span> <span class="o">=</span> <span class="n">worker_steps</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -347,7 +350,7 @@ frame from third convolution layer, and outputs
                 <p>number of mini batches</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">111</span>        <span class="bp">self</span><span class="o">.</span><span class="n">batches</span> <span class="o">=</span> <span class="n">batches</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">115</span>        <span class="bp">self</span><span class="o">.</span><span class="n">batches</span> <span class="o">=</span> <span class="n">batches</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -358,7 +361,7 @@ frame from third convolution layer, and outputs
                 <p>total number of samples for a single update</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">113</span>        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">117</span>        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -369,8 +372,8 @@ frame from third convolution layer, and outputs
                 <p>size of a mini batch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">115</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">batches</span>
-<span class="lineno">116</span>        <span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">batches</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">119</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">batches</span>
+<span class="lineno">120</span>        <span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">batches</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -381,7 +384,7 @@ frame from third convolution layer, and outputs
                 <p>Value loss coefficient</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">119</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value_loss_coef</span> <span class="o">=</span> <span class="n">value_loss_coef</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">123</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value_loss_coef</span> <span class="o">=</span> <span class="n">value_loss_coef</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -392,7 +395,7 @@ frame from third convolution layer, and outputs
                 <p>Entropy bonus coefficient</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">121</span>        <span class="bp">self</span><span class="o">.</span><span class="n">entropy_bonus_coef</span> <span class="o">=</span> <span class="n">entropy_bonus_coef</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">entropy_bonus_coef</span> <span class="o">=</span> <span class="n">entropy_bonus_coef</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -403,7 +406,7 @@ frame from third convolution layer, and outputs
                 <p>Clipping range</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">124</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span> <span class="o">=</span> <span class="n">clip_range</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">128</span>        <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span> <span class="o">=</span> <span class="n">clip_range</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-27'>
@@ -414,7 +417,7 @@ frame from third convolution layer, and outputs
                 <p>Learning rate</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">126</span>        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">130</span>        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-28'>
@@ -436,7 +439,7 @@ frame from third convolution layer, and outputs
                 <p>create workers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">131</span>        <span class="bp">self</span><span class="o">.</span><span class="n">workers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Worker</span><span class="p">(</span><span class="mi">47</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">)]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">135</span>        <span class="bp">self</span><span class="o">.</span><span class="n">workers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Worker</span><span class="p">(</span><span class="mi">47</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">)]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-30'>
@@ -447,11 +450,11 @@ frame from third convolution layer, and outputs
                 <p>initialize tensors for observations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">134</span>        <span class="bp">self</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
-<span class="lineno">135</span>        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-<span class="lineno">136</span>            <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-<span class="lineno">137</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span>
-<span class="lineno">138</span>            <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">138</span>        <span class="bp">self</span><span class="o">.</span><span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="lineno">139</span>        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
+<span class="lineno">140</span>            <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="lineno">141</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span>
+<span class="lineno">142</span>            <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-31'>
@@ -462,7 +465,7 @@ frame from third convolution layer, and outputs
                 <p>model</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">141</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">145</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-32'>
@@ -473,7 +476,7 @@ frame from third convolution layer, and outputs
                 <p>optimizer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">144</span>        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">2.5e-4</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">148</span>        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">2.5e-4</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-33'>
@@ -484,7 +487,7 @@ frame from third convolution layer, and outputs
                 <p>GAE with $\gamma = 0.99$ and $\lambda = 0.95$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">147</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gae</span> <span class="o">=</span> <span class="n">GAE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">151</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gae</span> <span class="o">=</span> <span class="n">GAE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-34'>
@@ -495,7 +498,7 @@ frame from third convolution layer, and outputs
                 <p>PPO Loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">150</span>        <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span> <span class="o">=</span> <span class="n">ClippedPPOLoss</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">154</span>        <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span> <span class="o">=</span> <span class="n">ClippedPPOLoss</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-35'>
@@ -506,7 +509,7 @@ frame from third convolution layer, and outputs
                 <p>Value Loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">153</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value_loss</span> <span class="o">=</span> <span class="n">ClippedValueFunctionLoss</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">157</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value_loss</span> <span class="o">=</span> <span class="n">ClippedValueFunctionLoss</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-36'>
@@ -517,7 +520,7 @@ frame from third convolution layer, and outputs
                 <h3>Sample data with current policy</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">155</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">159</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-37'>
@@ -528,14 +531,14 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">160</span>        <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<span class="lineno">161</span>        <span class="n">actions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-<span class="lineno">162</span>        <span class="n">done</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
-<span class="lineno">163</span>        <span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
-<span class="lineno">164</span>        <span class="n">log_pis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<span class="lineno">165</span>        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<span class="lineno">166</span>
-<span class="lineno">167</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">164</span>        <span class="n">rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="lineno">165</span>        <span class="n">actions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+<span class="lineno">166</span>        <span class="n">done</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+<span class="lineno">167</span>        <span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="lineno">168</span>        <span class="n">log_pis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="lineno">169</span>        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="lineno">170</span>
+<span class="lineno">171</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-38'>
@@ -546,7 +549,7 @@ frame from third convolution layer, and outputs
                 <p>sample <code>worker_steps</code> from each worker</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">169</span>            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">173</span>            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-39'>
@@ -558,7 +561,7 @@ frame from third convolution layer, and outputs
  which is the input for the model to sample the next action</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">172</span>                <span class="n">obs</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">176</span>                <span class="n">obs</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-40'>
@@ -570,11 +573,11 @@ frame from third convolution layer, and outputs
  this returns arrays of size <code>n_workers</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">175</span>                <span class="n">pi</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">obs_to_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">))</span>
-<span class="lineno">176</span>                <span class="n">values</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
-<span class="lineno">177</span>                <span class="n">a</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
-<span class="lineno">178</span>                <span class="n">actions</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
-<span class="lineno">179</span>                <span class="n">log_pis</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">179</span>                <span class="n">pi</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">obs_to_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">))</span>
+<span class="lineno">180</span>                <span class="n">values</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="lineno">181</span>                <span class="n">a</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+<span class="lineno">182</span>                <span class="n">actions</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="lineno">183</span>                <span class="n">log_pis</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-41'>
@@ -585,10 +588,10 @@ frame from third convolution layer, and outputs
                 <p>run sampled actions on each worker</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">182</span>                <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span>
-<span class="lineno">183</span>                    <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">actions</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">]))</span>
-<span class="lineno">184</span>
-<span class="lineno">185</span>                <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">186</span>                <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span>
+<span class="lineno">187</span>                    <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="n">actions</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">]))</span>
+<span class="lineno">188</span>
+<span class="lineno">189</span>                <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-42'>
@@ -599,7 +602,7 @@ frame from third convolution layer, and outputs
                 <p>get results after executing the actions</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">187</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">w</span><span class="p">],</span> <span class="n">rewards</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">done</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">info</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">191</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">w</span><span class="p">],</span> <span class="n">rewards</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">done</span><span class="p">[</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">info</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-43'>
@@ -612,9 +615,9 @@ frame from third convolution layer, and outputs
  look at <code>Game</code> to see how it works.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">192</span>                    <span class="k">if</span> <span class="n">info</span><span class="p">:</span>
-<span class="lineno">193</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">])</span>
-<span class="lineno">194</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">196</span>                    <span class="k">if</span> <span class="n">info</span><span class="p">:</span>
+<span class="lineno">197</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">])</span>
+<span class="lineno">198</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-44'>
@@ -625,8 +628,8 @@ frame from third convolution layer, and outputs
                 <p>Get value of after the final step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">197</span>            <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">obs_to_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">))</span>
-<span class="lineno">198</span>            <span class="n">values</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">201</span>            <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">obs_to_torch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">))</span>
+<span class="lineno">202</span>            <span class="n">values</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-45'>
@@ -637,7 +640,7 @@ frame from third convolution layer, and outputs
                 <p>calculate advantages</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">201</span>        <span class="n">advantages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gae</span><span class="p">(</span><span class="n">done</span><span class="p">,</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">205</span>        <span class="n">advantages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gae</span><span class="p">(</span><span class="n">done</span><span class="p">,</span> <span class="n">rewards</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-46'>
@@ -648,13 +651,13 @@ frame from third convolution layer, and outputs
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">204</span>        <span class="n">samples</span> <span class="o">=</span> <span class="p">{</span>
-<span class="lineno">205</span>            <span class="s1">&#39;obs&#39;</span><span class="p">:</span> <span class="n">obs</span><span class="p">,</span>
-<span class="lineno">206</span>            <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="n">actions</span><span class="p">,</span>
-<span class="lineno">207</span>            <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="n">values</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-<span class="lineno">208</span>            <span class="s1">&#39;log_pis&#39;</span><span class="p">:</span> <span class="n">log_pis</span><span class="p">,</span>
-<span class="lineno">209</span>            <span class="s1">&#39;advantages&#39;</span><span class="p">:</span> <span class="n">advantages</span>
-<span class="lineno">210</span>        <span class="p">}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">208</span>        <span class="n">samples</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">209</span>            <span class="s1">&#39;obs&#39;</span><span class="p">:</span> <span class="n">obs</span><span class="p">,</span>
+<span class="lineno">210</span>            <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="n">actions</span><span class="p">,</span>
+<span class="lineno">211</span>            <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="n">values</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+<span class="lineno">212</span>            <span class="s1">&#39;log_pis&#39;</span><span class="p">:</span> <span class="n">log_pis</span><span class="p">,</span>
+<span class="lineno">213</span>            <span class="s1">&#39;advantages&#39;</span><span class="p">:</span> <span class="n">advantages</span>
+<span class="lineno">214</span>        <span class="p">}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-47'>
@@ -666,15 +669,15 @@ frame from third convolution layer, and outputs
 we should flatten it for training</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">214</span>        <span class="n">samples_flat</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="lineno">215</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<span class="lineno">216</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-<span class="lineno">217</span>            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;obs&#39;</span><span class="p">:</span>
-<span class="lineno">218</span>                <span class="n">samples_flat</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_to_torch</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-<span class="lineno">219</span>            <span class="k">else</span><span class="p">:</span>
-<span class="lineno">220</span>                <span class="n">samples_flat</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-<span class="lineno">221</span>
-<span class="lineno">222</span>        <span class="k">return</span> <span class="n">samples_flat</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">218</span>        <span class="n">samples_flat</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">219</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">220</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+<span class="lineno">221</span>            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;obs&#39;</span><span class="p">:</span>
+<span class="lineno">222</span>                <span class="n">samples_flat</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_to_torch</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="lineno">223</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">224</span>                <span class="n">samples_flat</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">225</span>
+<span class="lineno">226</span>        <span class="k">return</span> <span class="n">samples_flat</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-48'>
@@ -685,7 +688,7 @@ we should flatten it for training</p>
                 <h3>Train the model based on samples</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">224</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">228</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-49'>
@@ -700,7 +703,7 @@ we should flatten it for training</p>
 May be reducing the clipping range might solve it.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">234</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">238</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">()):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-50'>
@@ -711,7 +714,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>shuffle for each epoch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">236</span>            <span class="n">indexes</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">240</span>            <span class="n">indexes</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-51'>
@@ -722,7 +725,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>for each mini batch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">239</span>            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">243</span>            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-52'>
@@ -733,11 +736,11 @@ May be reducing the clipping range might solve it.</p>
                 <p>get mini batch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">241</span>                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span>
-<span class="lineno">242</span>                <span class="n">mini_batch_indexes</span> <span class="o">=</span> <span class="n">indexes</span><span class="p">[</span><span class="n">start</span><span class="p">:</span> <span class="n">end</span><span class="p">]</span>
-<span class="lineno">243</span>                <span class="n">mini_batch</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="lineno">244</span>                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<span class="lineno">245</span>                    <span class="n">mini_batch</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">mini_batch_indexes</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">245</span>                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mini_batch_size</span>
+<span class="lineno">246</span>                <span class="n">mini_batch_indexes</span> <span class="o">=</span> <span class="n">indexes</span><span class="p">[</span><span class="n">start</span><span class="p">:</span> <span class="n">end</span><span class="p">]</span>
+<span class="lineno">247</span>                <span class="n">mini_batch</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">248</span>                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">249</span>                    <span class="n">mini_batch</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">mini_batch_indexes</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-53'>
@@ -748,7 +751,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>train</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">248</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_loss</span><span class="p">(</span><span class="n">mini_batch</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">252</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_loss</span><span class="p">(</span><span class="n">mini_batch</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-54'>
@@ -759,8 +762,8 @@ May be reducing the clipping range might solve it.</p>
                 <p>Set learning rate</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">251</span>                <span class="k">for</span> <span class="n">pg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
-<span class="lineno">252</span>                    <span class="n">pg</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">255</span>                <span class="k">for</span> <span class="n">pg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
+<span class="lineno">256</span>                    <span class="n">pg</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-55'>
@@ -771,7 +774,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>Zero out the previously calculated gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">254</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">258</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-56'>
@@ -782,7 +785,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>Calculate gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">256</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">260</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-57'>
@@ -793,7 +796,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>Clip gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">258</span>                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">262</span>                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-58'>
@@ -804,7 +807,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>Update parameters based on gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">260</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">264</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-59'>
@@ -815,8 +818,8 @@ May be reducing the clipping range might solve it.</p>
                 <h4>Normalize advantage function</h4>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">262</span>    <span class="nd">@staticmethod</span>
-<span class="lineno">263</span>    <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">adv</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">266</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">267</span>    <span class="k">def</span> <span class="nf">_normalize</span><span class="p">(</span><span class="n">adv</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-60'>
@@ -827,7 +830,7 @@ May be reducing the clipping range might solve it.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">265</span>        <span class="k">return</span> <span class="p">(</span><span class="n">adv</span> <span class="o">-</span> <span class="n">adv</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">adv</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">269</span>        <span class="k">return</span> <span class="p">(</span><span class="n">adv</span> <span class="o">-</span> <span class="n">adv</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">adv</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-61'>
@@ -838,7 +841,7 @@ May be reducing the clipping range might solve it.</p>
                 <h3>Calculate total loss</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">267</span>    <span class="k">def</span> <span class="nf">_calc_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">271</span>    <span class="k">def</span> <span class="nf">_calc_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-62'>
@@ -849,7 +852,7 @@ May be reducing the clipping range might solve it.</p>
                 <p>$R_t$ returns sampled from $\pi_{\theta_{OLD}}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">273</span>        <span class="n">sampled_return</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;advantages&#39;</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">277</span>        <span class="n">sampled_return</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;advantages&#39;</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-63'>
@@ -863,7 +866,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
  for the calculation of $\hat{A}_t$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">279</span>        <span class="n">sampled_normalized_advantage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;advantages&#39;</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">283</span>        <span class="n">sampled_normalized_advantage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;advantages&#39;</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-64'>
@@ -875,7 +878,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
  we are treating observations as state</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">283</span>        <span class="n">pi</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;obs&#39;</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">287</span>        <span class="n">pi</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;obs&#39;</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-65'>
@@ -886,7 +889,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>$-\log \pi_\theta (a_t|s_t)$, $a_t$ are actions sampled from $\pi_{\theta_{OLD}}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">286</span>        <span class="n">log_pi</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;actions&#39;</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">290</span>        <span class="n">log_pi</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;actions&#39;</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-66'>
@@ -897,7 +900,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Calculate policy loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">289</span>        <span class="n">policy_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span><span class="p">(</span><span class="n">log_pi</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;log_pis&#39;</span><span class="p">],</span> <span class="n">sampled_normalized_advantage</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span><span class="p">())</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">293</span>        <span class="n">policy_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span><span class="p">(</span><span class="n">log_pi</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;log_pis&#39;</span><span class="p">],</span> <span class="n">sampled_normalized_advantage</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span><span class="p">())</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-67'>
@@ -910,8 +913,8 @@ Refer to sampling function in <a href="#main">Main class</a> below
  \mathbb{E}\Bigl[ S\bigl[\pi_\theta\bigr] (s_t) \Bigr]$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">295</span>        <span class="n">entropy_bonus</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span>
-<span class="lineno">296</span>        <span class="n">entropy_bonus</span> <span class="o">=</span> <span class="n">entropy_bonus</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">299</span>        <span class="n">entropy_bonus</span> <span class="o">=</span> <span class="n">pi</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span>
+<span class="lineno">300</span>        <span class="n">entropy_bonus</span> <span class="o">=</span> <span class="n">entropy_bonus</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-68'>
@@ -922,7 +925,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Calculate value function loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">299</span>        <span class="n">value_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_loss</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">],</span> <span class="n">sampled_return</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span><span class="p">())</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">303</span>        <span class="n">value_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_loss</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">],</span> <span class="n">sampled_return</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_range</span><span class="p">())</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-69'>
@@ -935,9 +938,9 @@ Refer to sampling function in <a href="#main">Main class</a> below
  c_1 \mathcal{L}^{VF} (\theta) - c_2 \mathcal{L}^{EB}(\theta)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">304</span>        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">policy_loss</span>
-<span class="lineno">305</span>                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_loss_coef</span><span class="p">()</span> <span class="o">*</span> <span class="n">value_loss</span>
-<span class="lineno">306</span>                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy_bonus_coef</span><span class="p">()</span> <span class="o">*</span> <span class="n">entropy_bonus</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">308</span>        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">policy_loss</span>
+<span class="lineno">309</span>                <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_loss_coef</span><span class="p">()</span> <span class="o">*</span> <span class="n">value_loss</span>
+<span class="lineno">310</span>                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy_bonus_coef</span><span class="p">()</span> <span class="o">*</span> <span class="n">entropy_bonus</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-70'>
@@ -948,7 +951,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>for monitoring</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">309</span>        <span class="n">approx_kl_divergence</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;log_pis&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">log_pi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">313</span>        <span class="n">approx_kl_divergence</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;log_pis&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">log_pi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-71'>
@@ -959,13 +962,13 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Add to tracker</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">312</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span><span class="s1">&#39;policy_reward&#39;</span><span class="p">:</span> <span class="o">-</span><span class="n">policy_loss</span><span class="p">,</span>
-<span class="lineno">313</span>                     <span class="s1">&#39;value_loss&#39;</span><span class="p">:</span> <span class="n">value_loss</span><span class="p">,</span>
-<span class="lineno">314</span>                     <span class="s1">&#39;entropy_bonus&#39;</span><span class="p">:</span> <span class="n">entropy_bonus</span><span class="p">,</span>
-<span class="lineno">315</span>                     <span class="s1">&#39;kl_div&#39;</span><span class="p">:</span> <span class="n">approx_kl_divergence</span><span class="p">,</span>
-<span class="lineno">316</span>                     <span class="s1">&#39;clip_fraction&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span><span class="o">.</span><span class="n">clip_fraction</span><span class="p">})</span>
-<span class="lineno">317</span>
-<span class="lineno">318</span>        <span class="k">return</span> <span class="n">loss</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">316</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span><span class="s1">&#39;policy_reward&#39;</span><span class="p">:</span> <span class="o">-</span><span class="n">policy_loss</span><span class="p">,</span>
+<span class="lineno">317</span>                     <span class="s1">&#39;value_loss&#39;</span><span class="p">:</span> <span class="n">value_loss</span><span class="p">,</span>
+<span class="lineno">318</span>                     <span class="s1">&#39;entropy_bonus&#39;</span><span class="p">:</span> <span class="n">entropy_bonus</span><span class="p">,</span>
+<span class="lineno">319</span>                     <span class="s1">&#39;kl_div&#39;</span><span class="p">:</span> <span class="n">approx_kl_divergence</span><span class="p">,</span>
+<span class="lineno">320</span>                     <span class="s1">&#39;clip_fraction&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ppo_loss</span><span class="o">.</span><span class="n">clip_fraction</span><span class="p">})</span>
+<span class="lineno">321</span>
+<span class="lineno">322</span>        <span class="k">return</span> <span class="n">loss</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-72'>
@@ -976,7 +979,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <h3>Run training loop</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">320</span>    <span class="k">def</span> <span class="nf">run_training_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">324</span>    <span class="k">def</span> <span class="nf">run_training_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-73'>
@@ -987,10 +990,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>last 100 episode information</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">326</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_queue</span><span class="p">(</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-<span class="lineno">327</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_queue</span><span class="p">(</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-<span class="lineno">328</span>
-<span class="lineno">329</span>        <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">330</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_queue</span><span class="p">(</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="lineno">331</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_queue</span><span class="p">(</span><span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="lineno">332</span>
+<span class="lineno">333</span>        <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-74'>
@@ -1001,7 +1004,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>sample with current policy</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">331</span>            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">335</span>            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-75'>
@@ -1012,7 +1015,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>train the model</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">334</span>            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">338</span>            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-76'>
@@ -1023,7 +1026,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Save tracked indicators.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">337</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">341</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-77'>
@@ -1034,8 +1037,8 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Add a new line to the screen periodically</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">339</span>            <span class="k">if</span> <span class="p">(</span><span class="n">update</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">340</span>                <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">343</span>            <span class="k">if</span> <span class="p">(</span><span class="n">update</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">344</span>                <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-78'>
@@ -1047,7 +1050,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
 <p>Stop the workers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">342</span>    <span class="k">def</span> <span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">346</span>    <span class="k">def</span> <span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-79'>
@@ -1058,8 +1061,8 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">347</span>        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-<span class="lineno">348</span>            <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;close&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">351</span>        <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
+<span class="lineno">352</span>            <span class="n">worker</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s2">&quot;close&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-80'>
@@ -1070,7 +1073,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">351</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">355</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-81'>
@@ -1081,7 +1084,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Create the experiment</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">353</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ppo&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">357</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;ppo&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-82'>
@@ -1092,7 +1095,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Configurations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">355</span>    <span class="n">configs</span> <span class="o">=</span> <span class="p">{</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">359</span>    <span class="n">configs</span> <span class="o">=</span> <span class="p">{</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-83'>
@@ -1100,10 +1103,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-83'>#</a>
                 </div>
-                <p>number of updates</p>
+                <p>Number of updates</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">357</span>        <span class="s1">&#39;updates&#39;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">361</span>        <span class="s1">&#39;updates&#39;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-84'>
@@ -1111,10 +1114,12 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-84'>#</a>
                 </div>
-                <p>number of epochs to train the model with sampled data</p>
+                <p>⚙️ Number of epochs to train the model with sampled data.
+You can change this while the experiment is running.
+<a href="https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params"><img alt="Example" src="https://img.shields.io/badge/example-hyperparams-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">359</span>        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">365</span>        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">IntDynamicHyperParam</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-85'>
@@ -1122,10 +1127,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-85'>#</a>
                 </div>
-                <p>number of worker processes</p>
+                <p>Number of worker processes</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">361</span>        <span class="s1">&#39;n_workers&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">367</span>        <span class="s1">&#39;n_workers&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-86'>
@@ -1133,10 +1138,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-86'>#</a>
                 </div>
-                <p>number of steps to run on each process for a single update</p>
+                <p>Number of steps to run on each process for a single update</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">363</span>        <span class="s1">&#39;worker_steps&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">369</span>        <span class="s1">&#39;worker_steps&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-87'>
@@ -1144,10 +1149,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-87'>#</a>
                 </div>
-                <p>number of mini batches</p>
+                <p>Number of mini batches</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">365</span>        <span class="s1">&#39;batches&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">371</span>        <span class="s1">&#39;batches&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-88'>
@@ -1155,10 +1160,12 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-88'>#</a>
                 </div>
-                <p>Value loss coefficient</p>
+                <p>⚙️ Value loss coefficient.
+You can change this while the experiment is running.
+<a href="https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params"><img alt="Example" src="https://img.shields.io/badge/example-hyperparams-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">367</span>        <span class="s1">&#39;value_loss_coef&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.5</span><span class="p">),</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">375</span>        <span class="s1">&#39;value_loss_coef&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.5</span><span class="p">),</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-89'>
@@ -1166,10 +1173,12 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-89'>#</a>
                 </div>
-                <p>Entropy bonus coefficient</p>
+                <p>⚙️ Entropy bonus coefficient.
+You can change this while the experiment is running.
+<a href="https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params"><img alt="Example" src="https://img.shields.io/badge/example-hyperparams-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">369</span>        <span class="s1">&#39;entropy_bonus_coef&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">379</span>        <span class="s1">&#39;entropy_bonus_coef&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-90'>
@@ -1177,10 +1186,10 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-90'>#</a>
                 </div>
-                <p>Clip range</p>
+                <p>⚙️ Clip range.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">371</span>        <span class="s1">&#39;clip_range&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.1</span><span class="p">),</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">381</span>        <span class="s1">&#39;clip_range&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">0.1</span><span class="p">),</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-91'>
@@ -1188,13 +1197,15 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <div class='section-link'>
                     <a href='#section-91'>#</a>
                 </div>
-                <p>Learning rate</p>
+                <p>You can change this while the experiment is running.
+<a href="https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params"><img alt="Example" src="https://img.shields.io/badge/example-hyperparams-brightgreen" /></a>
+⚙️ Learning rate.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">373</span>        <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">2.5e-4</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)),</span>
-<span class="lineno">374</span>    <span class="p">}</span>
-<span class="lineno">375</span>
-<span class="lineno">376</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">385</span>        <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="n">FloatDynamicHyperParam</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)),</span>
+<span class="lineno">386</span>    <span class="p">}</span>
+<span class="lineno">387</span>
+<span class="lineno">388</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-92'>
@@ -1205,17 +1216,17 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Initialize the trainer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">379</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
-<span class="lineno">380</span>        <span class="n">updates</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">],</span>
-<span class="lineno">381</span>        <span class="n">epochs</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">],</span>
-<span class="lineno">382</span>        <span class="n">n_workers</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;n_workers&#39;</span><span class="p">],</span>
-<span class="lineno">383</span>        <span class="n">worker_steps</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;worker_steps&#39;</span><span class="p">],</span>
-<span class="lineno">384</span>        <span class="n">batches</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;batches&#39;</span><span class="p">],</span>
-<span class="lineno">385</span>        <span class="n">value_loss_coef</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;value_loss_coef&#39;</span><span class="p">],</span>
-<span class="lineno">386</span>        <span class="n">entropy_bonus_coef</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;entropy_bonus_coef&#39;</span><span class="p">],</span>
-<span class="lineno">387</span>        <span class="n">clip_range</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;clip_range&#39;</span><span class="p">],</span>
-<span class="lineno">388</span>        <span class="n">learning_rate</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">],</span>
-<span class="lineno">389</span>    <span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">391</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
+<span class="lineno">392</span>        <span class="n">updates</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">],</span>
+<span class="lineno">393</span>        <span class="n">epochs</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">],</span>
+<span class="lineno">394</span>        <span class="n">n_workers</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;n_workers&#39;</span><span class="p">],</span>
+<span class="lineno">395</span>        <span class="n">worker_steps</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;worker_steps&#39;</span><span class="p">],</span>
+<span class="lineno">396</span>        <span class="n">batches</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;batches&#39;</span><span class="p">],</span>
+<span class="lineno">397</span>        <span class="n">value_loss_coef</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;value_loss_coef&#39;</span><span class="p">],</span>
+<span class="lineno">398</span>        <span class="n">entropy_bonus_coef</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;entropy_bonus_coef&#39;</span><span class="p">],</span>
+<span class="lineno">399</span>        <span class="n">clip_range</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;clip_range&#39;</span><span class="p">],</span>
+<span class="lineno">400</span>        <span class="n">learning_rate</span><span class="o">=</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">],</span>
+<span class="lineno">401</span>    <span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-93'>
@@ -1226,8 +1237,8 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Run and monitor the experiment</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">392</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
-<span class="lineno">393</span>        <span class="n">m</span><span class="o">.</span><span class="n">run_training_loop</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">404</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
+<span class="lineno">405</span>        <span class="n">m</span><span class="o">.</span><span class="n">run_training_loop</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-94'>
@@ -1238,7 +1249,7 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <p>Stop the workers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">395</span>    <span class="n">m</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">407</span>    <span class="n">m</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-95'>
@@ -1249,8 +1260,8 @@ Refer to sampling function in <a href="#main">Main class</a> below
                 <h2>Run it</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">399</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-<span class="lineno">400</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">411</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="lineno">412</span>    <span class="n">main</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>

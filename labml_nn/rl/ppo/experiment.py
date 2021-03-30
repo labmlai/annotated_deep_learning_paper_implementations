@@ -8,6 +8,9 @@ summary: Annotated implementation to train a PPO agent on Atari Breakout game.
 
 This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.
 It runs the [game environments on multiple processes](../game.html) to sample efficiently.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/rl/ppo/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f)
 """
 
 from typing import Dict
@@ -354,23 +357,31 @@ def main():
     experiment.create(name='ppo')
     # Configurations
     configs = {
-        # number of updates
+        # Number of updates
         'updates': 10000,
-        # number of epochs to train the model with sampled data
+        # ⚙️ Number of epochs to train the model with sampled data.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
         'epochs': IntDynamicHyperParam(8),
-        # number of worker processes
+        # Number of worker processes
         'n_workers': 8,
-        # number of steps to run on each process for a single update
+        # Number of steps to run on each process for a single update
         'worker_steps': 128,
-        # number of mini batches
+        # Number of mini batches
         'batches': 4,
-        # Value loss coefficient
+        # ⚙️ Value loss coefficient.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
         'value_loss_coef': FloatDynamicHyperParam(0.5),
-        # Entropy bonus coefficient
+        # ⚙️ Entropy bonus coefficient.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
         'entropy_bonus_coef': FloatDynamicHyperParam(0.01),
-        # Clip range
+        # ⚙️ Clip range.
         'clip_range': FloatDynamicHyperParam(0.1),
-        # Learning rate
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
+        # ⚙️ Learning rate.
         'learning_rate': FloatDynamicHyperParam(1e-3, (0, 1e-3)),
     }
 
