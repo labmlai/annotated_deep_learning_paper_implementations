@@ -19,7 +19,7 @@ from torch import optim
 from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
-from labml.configs import FloatDynamicHyperParam
+from labml.configs import FloatDynamicHyperParam, IntDynamicHyperParam
 from labml_helpers.module import Module
 from labml_nn.rl.game import Worker
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
@@ -91,7 +91,8 @@ class Trainer:
     """
 
     def __init__(self, *,
-                 updates: int, epochs: int, n_workers: int, worker_steps: int, batches: int,
+                 updates: int, epochs: IntDynamicHyperParam,
+                 n_workers: int, worker_steps: int, batches: int,
                  value_loss_coef: FloatDynamicHyperParam,
                  entropy_bonus_coef: FloatDynamicHyperParam,
                  clip_range: FloatDynamicHyperParam,
@@ -231,7 +232,7 @@ class Trainer:
         #  the average episode reward does not monotonically increase
         #  over time.
         # May be reducing the clipping range might solve it.
-        for _ in range(self.epochs):
+        for _ in range(self.epochs()):
             # shuffle for each epoch
             indexes = torch.randperm(self.batch_size)
 
@@ -356,7 +357,7 @@ def main():
         # number of updates
         'updates': 10000,
         # number of epochs to train the model with sampled data
-        'epochs': 4,
+        'epochs': IntDynamicHyperParam(8),
         # number of worker processes
         'n_workers': 8,
         # number of steps to run on each process for a single update
@@ -370,7 +371,7 @@ def main():
         # Clip range
         'clip_range': FloatDynamicHyperParam(0.1),
         # Learning rate
-        'learning_rate': FloatDynamicHyperParam(2.5e-4, (0, 1e-3)),
+        'learning_rate': FloatDynamicHyperParam(1e-3, (0, 1e-3)),
     }
 
     experiment.configs(configs)
