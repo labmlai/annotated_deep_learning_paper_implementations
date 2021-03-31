@@ -137,7 +137,7 @@ class Trainer:
                     # Add transition to replay buffer
                     self.replay_buffer.add(self.obs[w], actions[w], reward, next_obs, done)
 
-                    # update episode information
+                    # update episode information. 
                     # collect episode info, which is available if an episode finished;
                     #  this includes total reward and length of the episode -
                     #  look at `Game` to see how it works.
