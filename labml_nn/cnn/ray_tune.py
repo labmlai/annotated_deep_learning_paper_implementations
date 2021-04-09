@@ -20,6 +20,15 @@ gpus_per_trial= 1
 # Cifar 10 Datasets location
 data_dir = './data/Cifar10'
 
+"""
+Code has been referenced from the official ray tune documentation
+ASHA
+https://docs.ray.io/en/master/tune/api_docs/schedulers.html#tune-scheduler-hyperband
+
+PBT
+https://docs.ray.io/en/latest/tune/api_docs/schedulers.html#tune-scheduler-pbt
+"""
+
 """config - returns a dict of hyperparameters
 
 Selecting different hyperparameters for tuning
