@@ -16,7 +16,7 @@ Capsule network is a neural network architecture that embeds features
 as capsules and routes them with a voting mechanism to next layer of capsules.
 
 Unlike in other implementations of models, we've included a sample, because
-it is difficult to understand some of the concepts with just the modules.
+it is difficult to understand some concepts with just the modules.
 [This is the annotated code for a model that uses capsules to classify MNIST dataset](mnist.html)
 
 This file holds the implementations of the core modules of Capsule Networks.
@@ -27,7 +27,7 @@ confusions I had with the paper.
 Here's a notebook for training a Capsule Network on MNIST dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/capsule_networks/mnist.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=e7c08e08586711ebb3e30242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/e7c08e08586711ebb3e30242ac1c0002)
 """
 
 import torch.nn as nn

@@ -1,19 +1,19 @@
 """
 ---
-title: Proximal Policy Optimization (PPO)
+title: Proximal Policy Optimization - PPO
 summary: >
- An annotated implementation of Proximal Policy Optimization (PPO) algorithm in PyTorch.
+ An annotated implementation of Proximal Policy Optimization - PPO algorithm in PyTorch.
 ---
 
-# Proximal Policy Optimization (PPO)
+# Proximal Policy Optimization - PPO
 
 This is a [PyTorch](https://pytorch.org) implementation of
 [Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
 
 PPO is a policy gradient method for reinforcement learning.
-Simple policy gradient methods one do a single gradient update per sample (or a set of samples).
-Doing multiple gradient steps for a singe sample causes problems
-because the policy deviates too much producing a bad policy.
+Simple policy gradient methods do a single gradient update per sample (or a set of samples).
+Doing multiple gradient steps for a single sample causes problems
+because the policy deviates too much, producing a bad policy.
 PPO lets us do multiple gradient updates per sample by trying to keep the
 policy close to the policy that was used to sample data.
 It does so by clipping gradient flow if the updated policy
@@ -21,6 +21,9 @@ is not close to the policy used to sample the data.
 
 You can find an experiment that uses it [here](experiment.html).
 The experiment uses [Generalized Advantage Estimation](gae.html).
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/rl/ppo/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f)
 """
 
 import torch
@@ -107,7 +110,7 @@ class ClippedPPOLoss(Module):
 
     Then we assume $d^\pi_\theta(s)$ and  $d^\pi_{\theta_{OLD}}(s)$ are similar.
     The error we introduce to $J(\pi_\theta) - J(\pi_{\theta_{OLD}})$
-     by this assumtion is bound by the KL divergence between
+     by this assumption is bound by the KL divergence between
      $\pi_\theta$ and $\pi_{\theta_{OLD}}$.
     [Constrained Policy Optimization](https://arxiv.org/abs/1705.10528)
      shows the proof of this. I haven't read it.

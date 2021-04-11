@@ -15,7 +15,7 @@ We try different variants for the [position-wise feedforward network](../feed_fo
 We decided to write a simpler implementation to make it easier for readers who are not familiar.*
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/glu_variants/simple.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=86b773f65fc911ebb2ac0242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/86b773f65fc911ebb2ac0242ac1c0002)
 """
 import dataclasses
 
