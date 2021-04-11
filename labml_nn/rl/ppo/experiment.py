@@ -8,6 +8,9 @@ summary: Annotated implementation to train a PPO agent on Atari Breakout game.
 
 This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.
 It runs the [game environments on multiple processes](../game.html) to sample efficiently.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/rl/ppo/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f)
 """
 
 from typing import Dict
@@ -19,6 +22,7 @@ from torch import optim
 from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
+from labml.configs import FloatDynamicHyperParam, IntDynamicHyperParam
 from labml_helpers.module import Module
 from labml_nn.rl.game import Worker
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
@@ -89,24 +93,41 @@ class Trainer:
     ## Trainer
     """
 
-    def __init__(self):
+    def __init__(self, *,
+                 updates: int, epochs: IntDynamicHyperParam,
+                 n_workers: int, worker_steps: int, batches: int,
+                 value_loss_coef: FloatDynamicHyperParam,
+                 entropy_bonus_coef: FloatDynamicHyperParam,
+                 clip_range: FloatDynamicHyperParam,
+                 learning_rate: FloatDynamicHyperParam,
+                 ):
         # #### Configurations
 
         # number of updates
-        self.updates = 10000
+        self.updates = updates
         # number of epochs to train the model with sampled data
-        self.epochs = 4
+        self.epochs = epochs
         # number of worker processes
-        self.n_workers = 8
+        self.n_workers = n_workers
         # number of steps to run on each process for a single update
-        self.worker_steps = 128
+        self.worker_steps = worker_steps
         # number of mini batches
-        self.n_mini_batch = 4
+        self.batches = batches
         # total number of samples for a single update
         self.batch_size = self.n_workers * self.worker_steps
         # size of a mini batch
-        self.mini_batch_size = self.batch_size // self.n_mini_batch
-        assert (self.batch_size % self.n_mini_batch == 0)
+        self.mini_batch_size = self.batch_size // self.batches
+        assert (self.batch_size % self.batches == 0)
+
+        # Value loss coefficient
+        self.value_loss_coef = value_loss_coef
+        # Entropy bonus coefficient
+        self.entropy_bonus_coef = entropy_bonus_coef
+
+        # Clipping range
+        self.clip_range = clip_range
+        # Learning rate
+        self.learning_rate = learning_rate
 
         # #### Initialize
 
@@ -204,7 +225,7 @@ class Trainer:
 
         return samples_flat
 
-    def train(self, samples: Dict[str, torch.Tensor], learning_rate: float, clip_range: float):
+    def train(self, samples: Dict[str, torch.Tensor]):
         """
         ### Train the model based on samples
         """
@@ -214,7 +235,7 @@ class Trainer:
         #  the average episode reward does not monotonically increase
         #  over time.
         # May be reducing the clipping range might solve it.
-        for _ in range(self.epochs):
+        for _ in range(self.epochs()):
             # shuffle for each epoch
             indexes = torch.randperm(self.batch_size)
 
@@ -228,12 +249,11 @@ class Trainer:
                     mini_batch[k] = v[mini_batch_indexes]
 
                 # train
-                loss = self._calc_loss(clip_range=clip_range,
-                                       samples=mini_batch)
+                loss = self._calc_loss(mini_batch)
 
                 # Set learning rate
                 for pg in self.optimizer.param_groups:
-                    pg['lr'] = learning_rate
+                    pg['lr'] = self.learning_rate()
                 # Zero out the previously calculated gradients
                 self.optimizer.zero_grad()
                 # Calculate gradients
@@ -248,7 +268,7 @@ class Trainer:
         """#### Normalize advantage function"""
         return (adv - adv.mean()) / (adv.std() + 1e-8)
 
-    def _calc_loss(self, samples: Dict[str, torch.Tensor], clip_range: float) -> torch.Tensor:
+    def _calc_loss(self, samples: Dict[str, torch.Tensor]) -> torch.Tensor:
         """
         ### Calculate total loss
         """
@@ -270,7 +290,7 @@ class Trainer:
         log_pi = pi.log_prob(samples['actions'])
 
         # Calculate policy loss
-        policy_loss = self.ppo_loss(log_pi, samples['log_pis'], sampled_normalized_advantage, clip_range)
+        policy_loss = self.ppo_loss(log_pi, samples['log_pis'], sampled_normalized_advantage, self.clip_range())
 
         # Calculate Entropy Bonus
         #
@@ -280,12 +300,14 @@ class Trainer:
         entropy_bonus = entropy_bonus.mean()
 
         # Calculate value function loss
-        value_loss = self.value_loss(value, samples['values'], sampled_return, clip_range)
+        value_loss = self.value_loss(value, samples['values'], sampled_return, self.clip_range())
 
         # $\mathcal{L}^{CLIP+VF+EB} (\theta) =
         #  \mathcal{L}^{CLIP} (\theta) +
         #  c_1 \mathcal{L}^{VF} (\theta) - c_2 \mathcal{L}^{EB}(\theta)$
-        loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_bonus
+        loss = (policy_loss
+                + self.value_loss_coef() * value_loss
+                - self.entropy_bonus_coef() * entropy_bonus)
 
         # for monitoring
         approx_kl_divergence = .5 * ((samples['log_pis'] - log_pi) ** 2).mean()
@@ -309,17 +331,11 @@ class Trainer:
         tracker.set_queue('length', 100, True)
 
         for update in monit.loop(self.updates):
-            progress = update / self.updates
-
-            # decreasing `learning_rate` and `clip_range` $\epsilon$
-            learning_rate = 2.5e-4 * (1 - progress)
-            clip_range = 0.1 * (1 - progress)
-
             # sample with current policy
             samples = self.sample()
 
             # train the model
-            self.train(samples, learning_rate, clip_range)
+            self.train(samples)
 
             # Save tracked indicators.
             tracker.save()
@@ -339,8 +355,51 @@ class Trainer:
 def main():
     # Create the experiment
     experiment.create(name='ppo')
+    # Configurations
+    configs = {
+        # Number of updates
+        'updates': 10000,
+        # ⚙️ Number of epochs to train the model with sampled data.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
+        'epochs': IntDynamicHyperParam(8),
+        # Number of worker processes
+        'n_workers': 8,
+        # Number of steps to run on each process for a single update
+        'worker_steps': 128,
+        # Number of mini batches
+        'batches': 4,
+        # ⚙️ Value loss coefficient.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
+        'value_loss_coef': FloatDynamicHyperParam(0.5),
+        # ⚙️ Entropy bonus coefficient.
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
+        'entropy_bonus_coef': FloatDynamicHyperParam(0.01),
+        # ⚙️ Clip range.
+        'clip_range': FloatDynamicHyperParam(0.1),
+        # You can change this while the experiment is running.
+        # [![Example](https://img.shields.io/badge/example-hyperparams-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f/hyper_params)
+        # ⚙️ Learning rate.
+        'learning_rate': FloatDynamicHyperParam(1e-3, (0, 1e-3)),
+    }
+
+    experiment.configs(configs)
+
     # Initialize the trainer
-    m = Trainer()
+    m = Trainer(
+        updates=configs['updates'],
+        epochs=configs['epochs'],
+        n_workers=configs['n_workers'],
+        worker_steps=configs['worker_steps'],
+        batches=configs['batches'],
+        value_loss_coef=configs['value_loss_coef'],
+        entropy_bonus_coef=configs['entropy_bonus_coef'],
+        clip_range=configs['clip_range'],
+        learning_rate=configs['learning_rate'],
+    )
+
     # Run and monitor the experiment
     with experiment.start():
         m.run_training_loop()

@@ -8,6 +8,8 @@ summary: A PyTorch implementation/tutorial of Generalized Advantage Estimation (
 
 This is a [PyTorch](https://pytorch.org) implementation of paper
 [Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438).
+
+You can find an experiment that uses it [here](experiment.html).
 """
 
 import numpy as np
@@ -33,7 +35,7 @@ class GAE:
         \hat{A_t^{(\infty)}} &= r_t + \gamma r_{t+1} +\gamma^2 r_{t+1} + ... - V(s)
         \end{align}
 
-        $\hat{A_t^{(1)}}$ is high bias, low variance whilst
+        $\hat{A_t^{(1)}}$ is high bias, low variance, whilst
         $\hat{A_t^{(\infty)}}$ is unbiased, high variance.
 
         We take a weighted average of $\hat{A_t^{(k)}}$ to balance bias and variance.

@@ -1,5 +1,5 @@
 """
-# [LabML Neural Networks](index.html)
+# [labml.ai Neural Networks](index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
@@ -25,6 +25,7 @@ implementations.
 * [kNN-LM: Generalization through Memorization](transformers/knn/index.html)
 * [Feedback Transformer](transformers/feedback/index.html)
 * [Switch Transformer](transformers/switch/index.html)
+* [Fast Weights Transformer](transformers/fast_weights/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 
@@ -76,7 +77,7 @@ If you use LabML for academic research, please cite the library using the follow
  author = {Varuna Jayasiri, Nipun Wijerathne},
  title = {LabML: A library to organize machine learning experiments},
  year = {2020},
- url = {https://lab-ml.com/},
+ url = {https://nn.labml.ai/},
 }
 ```
 """

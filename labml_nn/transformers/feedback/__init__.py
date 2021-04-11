@@ -37,7 +37,7 @@ We implemented a custom PyTorch function to improve performance.
 Here's [the training code](experiment.html) and a notebook for training a feedback transformer on Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/feedback/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=d8eb9416530a11eb8fb50242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d8eb9416530a11eb8fb50242ac1c0002)
 """
 
 import math
@@ -156,9 +156,9 @@ class FeedbackAttention(Module):
         return ac + bd
 
     def forward(self, *,
-                 query: torch.Tensor,
-                 key: torch.Tensor,
-                 value: torch.Tensor):
+                query: torch.Tensor,
+                key: torch.Tensor,
+                value: torch.Tensor):
         """
         * `query` has shape `[batch_size, d_model]`
         * `key` and `value` has shape `[seq_len, batch_size, d_model]`
@@ -227,9 +227,9 @@ class FeedbackTransformerLayer(Module):
         self.norm_ff = nn.LayerNorm([d_model])
 
     def forward(self, *,
-                 x: torch.Tensor,
-                 key: Optional[torch.Tensor],
-                 value: Optional[torch.Tensor]):
+                x: torch.Tensor,
+                key: Optional[torch.Tensor],
+                value: Optional[torch.Tensor]):
         # If there is memory
         if key is not None:
             # Normalize the vectors before doing self attention
@@ -370,6 +370,7 @@ class Stack:
 
     This uses the stack function defined above, and does the necessary initializations.
     """
+
     def __init__(self, max_len: int):
         """
         * `max_len` is the maximum size of the stack
@@ -430,6 +431,15 @@ class Stack:
         # Take it all through `StackFunction` so that `StackFunction.backwards`
         # is called by PyTorch during backpropagation.
         return StackFunction.apply(self.memory, self.memory_grad, self.last, self.n)
+
+    def free(self):
+        """
+        To release memory
+        """
+
+        self.memory = None
+        self.memory_grad = None
+        self.last = None
 
 
 class FeedbackTransformerKV(Module):
@@ -514,3 +524,7 @@ class FeedbackTransformerKV(Module):
         res = torch.stack(res)
         # Normalize the output
         return self.norm(res)
+
+    def free(self):
+        self.mem_key.free()
+        self.mem_value.free()

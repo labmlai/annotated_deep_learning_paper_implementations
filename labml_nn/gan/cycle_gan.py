@@ -30,7 +30,7 @@ This file contains the model code as well as the training code.
 We also have a Google Colab notebook.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/gan/cycle_gan.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=93b11a665d6811ebaac80242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/93b11a665d6811ebaac80242ac1c0002)
 """
 
 import itertools
