@@ -60,10 +60,10 @@ class GroupNorm(Module):
 
         # Calculate the mean across first and last dimension;
         # i.e. the means for each feature $\mathbb{E}[x^{(k)}]$
-        mean = x.mean(dim=[2], keepdims=True)
+        mean = x.mean(dim=[2], keepdim=True)
         # Calculate the squared mean across first and last dimension;
         # i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$
-        mean_x2 = (x ** 2).mean(dim=[2], keepdims=True)
+        mean_x2 = (x ** 2).mean(dim=[2], keepdim=True)
         # Variance for each feature $Var[x^{(k)}] = \mathbb{E}[(x^{(k)})^2] - \mathbb{E}[x^{(k)}]^2$
         var = mean_x2 - mean ** 2
 

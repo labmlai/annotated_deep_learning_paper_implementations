@@ -106,10 +106,10 @@ class LayerNorm(Module):
 
         # Calculate the mean of all elements;
         # i.e. the means for each element $\mathbb{E}[X]$
-        mean = x.mean(dim=dims, keepdims=True)
+        mean = x.mean(dim=dims, keepdim=True)
         # Calculate the squared mean of all elements;
         # i.e. the means for each element $\mathbb{E}[X^2]$
-        mean_x2 = (x ** 2).mean(dim=dims, keepdims=True)
+        mean_x2 = (x ** 2).mean(dim=dims, keepdim=True)
         # Variance of all element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$
         var = mean_x2 - mean ** 2
 
