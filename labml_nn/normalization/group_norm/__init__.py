@@ -56,14 +56,14 @@ class GroupNorm(Module):
         assert self.channels == x.shape[1]
 
         # Reshape into `[batch_size, channels, n]`
-        x = x.view(batch_size, self.groups, self.channels // self.groups, -1)
+        x = x.view(batch_size, self.groups, -1)
 
         # Calculate the mean across first and last dimension;
         # i.e. the means for each feature $\mathbb{E}[x^{(k)}]$
-        mean = x.mean(dim=[2, 3], keepdims=True)
+        mean = x.mean(dim=[2], keepdims=True)
         # Calculate the squared mean across first and last dimension;
         # i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$
-        mean_x2 = (x ** 2).mean(dim=[2, 3], keepdims=True)
+        mean_x2 = (x ** 2).mean(dim=[2], keepdims=True)
         # Variance for each feature $Var[x^{(k)}] = \mathbb{E}[(x^{(k)})^2] - \mathbb{E}[x^{(k)}]^2$
         var = mean_x2 - mean ** 2
 

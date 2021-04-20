@@ -40,19 +40,23 @@ class Model(Module):
         return self.fc(x)
 
 
-@option(CIFAR10Configs.model)
-def model(c: CIFAR10Configs):
+class Configs(CIFAR10Configs):
+    groups: int = 16
+
+
+@option(Configs.model)
+def model(c: Configs):
     """
     ### Create model
     """
-    return Model().to(c.device)
+    return Model(c.groups).to(c.device)
 
 
 def main():
     # Create experiment
     experiment.create(name='cifar10', comment='group norm')
     # Create configurations
-    conf = CIFAR10Configs()
+    conf = Configs()
     # Load configurations
     experiment.configs(conf, {
         'optimizer.optimizer': 'Adam',
