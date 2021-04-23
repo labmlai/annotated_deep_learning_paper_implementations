@@ -1,7 +1,5 @@
 # [Instance Normalization](https://nn.labml.ai/normalization/instance_norm/index.html)
 
-# Instance Normalization
-
 This is a [PyTorch](https://pytorch.org) implementation of
 [Instance Normalization: The Missing Ingredient for Fast Stylization](https://arxiv.org/abs/1607.08022).
 
