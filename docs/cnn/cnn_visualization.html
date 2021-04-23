@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="cnn_visualization.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/cnn/cnn_visualization.html"/>
+    <meta property="og:title" content="cnn_visualization.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="cnn_visualization.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>cnn_visualization.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/cnn/cnn_visualization.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">cnn</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/cnn/cnn_visualization.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">3</span><span></span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="lineno">4</span><span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+<span class="lineno">5</span><span class="kn">from</span> <span class="nn">torchsummary</span> <span class="kn">import</span> <span class="n">summary</span>
+<span class="lineno">6</span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="lineno">7</span><span class="kn">from</span> <span class="nn">skimage.filters</span> <span class="kn">import</span> <span class="n">sobel</span><span class="p">,</span> <span class="n">sobel_h</span><span class="p">,</span> <span class="n">roberts</span>
+<span class="lineno">8</span><span class="kn">from</span> <span class="nn">models.cnn</span> <span class="kn">import</span> <span class="n">CNN</span>
+<span class="lineno">9</span><span class="kn">from</span> <span class="nn">utils.dataloader</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="lineno">10</span><span class="kn">from</span> <span class="nn">utils.train</span> <span class="kn">import</span> <span class="n">Trainer</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <p>Check if GPU is available</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">13</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="lineno">14</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Device:  &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <p>Cifar 10 Datasets location</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">17</span><span class="n">save</span><span class="o">=</span><span class="s1">&#39;./data/Cifar10&#39;</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p>Transformations train</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">20</span><span class="n">transform_train</span> <span class="o">=</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">(</span>
+<span class="lineno">21</span>        <span class="p">[</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+<span class="lineno">22</span>         <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>Load train dataset and dataloader</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">25</span><span class="n">trainset</span> <span class="o">=</span> <span class="n">LoadCifar10DatasetTrain</span><span class="p">(</span><span class="n">save</span><span class="p">,</span> <span class="n">transform_train</span><span class="p">)</span>
+<span class="lineno">26</span><span class="n">trainloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">trainset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+<span class="lineno">27</span>                                          <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Transformations test</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">30</span><span class="n">transform_test</span> <span class="o">=</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">(</span>
+<span class="lineno">31</span>        <span class="p">[</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+<span class="lineno">32</span>         <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Load test dataset and dataloader</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">35</span><span class="n">testset</span> <span class="o">=</span> <span class="n">LoadCifar10DatasetTest</span><span class="p">(</span><span class="n">save</span><span class="p">,</span> <span class="n">transform_test</span><span class="p">)</span>
+<span class="lineno">36</span><span class="n">testloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">testset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+<span class="lineno">37</span>                                         <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Create CNN model</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">40</span><span class="k">def</span> <span class="nf">GetCNN</span><span class="p">():</span>
+<span class="lineno">41</span>    <span class="n">cnn</span> <span class="o">=</span> <span class="n">CNN</span><span class="p">(</span> <span class="n">in_features</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+<span class="lineno">42</span>                <span class="n">out_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="lineno">43</span>                <span class="n">conv_filters</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">],</span>
+<span class="lineno">44</span>                <span class="n">conv_kernel_size</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span>
+<span class="lineno">45</span>                <span class="n">conv_strides</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+<span class="lineno">46</span>                <span class="n">conv_pad</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+<span class="lineno">47</span>                <span class="n">max_pool_kernels</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)],</span>
+<span class="lineno">48</span>                <span class="n">max_pool_strides</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+<span class="lineno">49</span>                <span class="n">use_dropout</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="lineno">50</span>                <span class="n">use_batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1">#False</span>
+<span class="lineno">51</span>                <span class="n">actv_func</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="s2">&quot;relu&quot;</span><span class="p">],</span>
+<span class="lineno">52</span>                <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+<span class="lineno">53</span>        <span class="p">)</span>
+<span class="lineno">54</span>
+<span class="lineno">55</span>    <span class="k">return</span> <span class="n">cnn</span>
+<span class="lineno">56</span>
+<span class="lineno">57</span><span class="n">model</span> <span class="o">=</span> <span class="n">GetCNN</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Display model specifications</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">60</span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>Send model to GPU</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">63</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Specify optimizer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">66</span><span class="n">opt</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                <p>Specify loss function</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">69</span><span class="n">cost</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>Train the model</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">72</span><span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Basic_CNN&quot;</span><span class="p">)</span>
+<span class="lineno">73</span><span class="n">epochs</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="lineno">74</span><span class="n">trainer</span><span class="o">.</span><span class="n">Train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">trainloader</span><span class="p">,</span> <span class="n">testloader</span><span class="p">,</span> <span class="n">cost</span><span class="o">=</span><span class="n">cost</span><span class="p">,</span> <span class="n">opt</span><span class="o">=</span><span class="n">opt</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>Load best saved model for inference</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">77</span><span class="n">model_loaded</span> <span class="o">=</span> <span class="n">GetCNN</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Specify location of saved model</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">80</span><span class="n">PATH</span> <span class="o">=</span> <span class="s2">&quot;./save/Basic_CNN-best-model/model.pt&quot;</span>
+<span class="lineno">81</span><span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">PATH</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>load the saved model</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">84</span><span class="n">model_loaded</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">[</span><span class="s1">&#39;state_dict&#39;</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                <p>intialization for hooks and storing activation of ReLU layers</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">87</span><span class="n">activation</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">88</span><span class="n">hooks</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                <p>Hook function saves activation of a particular layer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">91</span><span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="lineno">92</span>    <span class="n">activation</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                <p>Registering hooks</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">95</span><span class="n">count</span> <span class="o">=</span><span class="mi">0</span>
+<span class="lineno">96</span><span class="n">conv_count</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">97</span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">model_loaded</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+<span class="lineno">98</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">):</span>
+<span class="lineno">99</span>        <span class="n">count</span> <span class="o">+=</span><span class="mi">1</span>
+<span class="lineno">100</span>        <span class="n">hook</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">hook_fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">layer</span><span class="o">.</span><span class="n">_get_name</span><span class="p">()</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span> <span class="c1">#f&quot;{type(layer).__name__}-{name}&quot;</span>
+<span class="lineno">101</span>        <span class="n">hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hook</span><span class="p">)</span>
+<span class="lineno">102</span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+<span class="lineno">103</span>        <span class="n">conv_count</span> <span class="o">+=</span> <span class="mi">1</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                <p>Displaying image used for inference</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">106</span><span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">trainset</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span>
+<span class="lineno">107</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-20'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-20'>#</a>
+                </div>
+                <p>Infering model to save activation of ReLU layers</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">110</span><span class="n">output</span> <span class="o">=</span> <span class="n">model_loaded</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-21'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-21'>#</a>
+                </div>
+                <p>Removing hooks</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">113</span><span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="n">hooks</span><span class="p">:</span>
+<span class="lineno">114</span>    <span class="n">hook</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-22'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-22'>#</a>
+                </div>
+                <p>Function to display output of a particular ReLU layer</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">117</span><span class="k">def</span> <span class="nf">output_one_layer</span><span class="p">(</span><span class="n">layer_num</span><span class="p">):</span>
+<span class="lineno">118</span>    <span class="k">assert</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">layer_num</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">activation</span><span class="p">),</span> <span class="s2">&quot;Wrong layer number&quot;</span>
+<span class="lineno">119</span>
+<span class="lineno">120</span>    <span class="n">layer_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;ReLu-</span><span class="si">{</span><span class="n">layer_num</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="lineno">121</span>    <span class="n">act</span> <span class="o">=</span> <span class="n">activation</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;ReLU-</span><span class="si">{</span><span class="n">layer_num</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+<span class="lineno">122</span>    <span class="k">if</span> <span class="n">act</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">32</span><span class="p">:</span>
+<span class="lineno">123</span>        <span class="n">rows</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="lineno">124</span>        <span class="n">columns</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="lineno">125</span>    <span class="k">elif</span> <span class="n">act</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">64</span><span class="p">:</span>
+<span class="lineno">126</span>        <span class="n">rows</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="lineno">127</span>        <span class="n">columns</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="lineno">128</span>
+<span class="lineno">129</span>    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">))</span>
+<span class="lineno">130</span>    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">columns</span> <span class="o">*</span> <span class="n">rows</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<span class="lineno">131</span>        <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+<span class="lineno">132</span>        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">sobel</span><span class="p">(</span><span class="n">act</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-23'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-23'>#</a>
+                </div>
+                <p>try different filters
+plt.imshow(act[0][idx-1], cmap=&rsquo;viridis&rsquo;, vmin=0, vmax=act.max())
+plt.imshow(act[0][idx - 1], cmap=&rsquo;hot&rsquo;)
+plt.imshow(roberts(act[0][idx - 1]), cmap=plt.cm.gray)
+plt.imshow(sobel_h(act[0][idx-1]), cmap=plt.cm.gray)</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">140</span>        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+<span class="lineno">141</span>
+<span class="lineno">142</span>    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="lineno">143</span>    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-24'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-24'>#</a>
+                </div>
+                <p>Function to display output of all ReLU layer after Convulution layers</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">146</span><span class="k">def</span> <span class="nf">output_all_layers</span><span class="p">():</span>
+<span class="lineno">147</span>    <span class="k">for</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">output</span><span class="p">],</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">activation</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="nb">range</span><span class="p">(</span><span class="n">conv_count</span><span class="p">)):</span>
+<span class="lineno">148</span>        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">32</span><span class="p">:</span>
+<span class="lineno">149</span>            <span class="n">_</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="lineno">150</span>        <span class="k">elif</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">64</span><span class="p">:</span>
+<span class="lineno">151</span>            <span class="n">_</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="lineno">152</span>
+<span class="lineno">153</span>        <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">out</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">axs</span><span class="p">),</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+<span class="lineno">154</span>            <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">sobel</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">gray</span><span class="p">)</span>
+<span class="lineno">155</span>            <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+<span class="lineno">156</span>
+<span class="lineno">157</span>        <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="lineno">158</span>        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="lineno">159</span>        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-25'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-25'>#</a>
+                </div>
+                <p>Choose either one to display</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">162</span><span class="n">output_one_layer</span><span class="p">(</span><span class="n">layer_num</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="c1"># choose layer number</span>
+<span class="lineno">163</span><span class="n">output_all_layers</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

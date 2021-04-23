@@ -1,12 +1,16 @@
 """
 ---
-title: CIFAR10 Experiment to try Group Normalization
+title: CIFAR10 Experiment to try Instance Normalization
 summary: >
-  This trains is a simple convolutional neural network that uses group normalization
+  This trains is a simple convolutional neural network that uses instance normalization
   to classify CIFAR10 images.
 ---
 
-# CIFAR10 Experiment for Group Normalization
+# CIFAR10 Experiment for Instance Normalization
+
+This demonstrates the use of an instance normalization layer in a convolutional
+neural network for classification. Not that instance normalization was designed for
+style transfer and this is only a demo.
 """
 
 import torch.nn as nn
