@@ -61,6 +61,8 @@ implementations.
 #### ✨ [Normalization Layers](https://nn.labml.ai/normalization/index.html)
 * [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)
 * [Layer Normalization](https://nn.labml.ai/normalization/layer_norm/index.html)
+* [Instance Normalization](https://nn.labml.ai/normalization/instance_norm/index.html)
+* [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
 
 ### Installation
 
