@@ -1,10 +1,10 @@
 # [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of
-the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
+the [Group Normalization](https://arxiv.org/abs/1803.08494) paper.
 
-[Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html) works well for sufficiently large batch sizes,
-but does not perform well for small batch sizes, because it normalizes across the batch.
+[Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html) works well for large enough batch sizes
+but not well for small batch sizes, because it normalizes over the batch.
 Training large models with large batch sizes is not possible due to the memory capacity of the
 devices.
 
@@ -35,7 +35,7 @@ $\mu_i$ and $\sigma_i$ are mean and standard deviation.
 
 $\mathcal{S}_i$ is the set of indexes across which the mean and standard deviation
 are calculated for index $i$.
-$m$ is the size of the set $\mathcal{S}_i$ which is same for all $i$.
+$m$ is the size of the set $\mathcal{S}_i$ which is the same for all $i$.
 
 The definition of $\mathcal{S}_i$ is different for
 [Batch normalization](https://nn.labml.ai/normalization/batch_norm/index.html),
