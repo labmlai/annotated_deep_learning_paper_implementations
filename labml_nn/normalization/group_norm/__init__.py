@@ -7,6 +7,81 @@ summary: >
 
 # Group Normalization
 
+This is a [PyTorch](https://pytorch.org) implementation of
+the paper [Group Normalization](https://arxiv.org/abs/1803.08494).
+
+[Batch Normalization](../batch_norm/index.html) works well for sufficiently large batch sizes,
+but does not perform well for small batch sizes, because it normalizes across the batch.
+Training large models with large batch sizes is not possible due to the memory capacity of the
+devices.
+
+This paper introduces Group Normalization, which normalizes a set of features together as a group.
+This is based on the observation that classical features such as
+[SIFT](https://en.wikipedia.org/wiki/Scale-invariant_feature_transform) and
+[HOG](https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients) are group-wise features.
+The paper proposes dividing feature channels into groups and then separately normalizing
+all channels within each group.
+
+## Formulation
+
+All normalization layers can be defined by the following computation.
+
+$$\hat{x}_i = \frac{1}{\sigma_i} (x_i - \mu_i)$$
+
+where $x$ is the tensor representing the batch,
+and $i$ is the index of a single value.
+For instance, when it's 2D images
+$i = (i_N, i_C, i_H, i_W)$ is a 4-d vector for indexing
+image within batch, feature channel, vertical coordinate and horizontal coordinate.
+$\mu_i$ and $\sigma_i$ are mean and standard deviation.
+
+\begin{align}
+\mu_i &= \frac{1}{m} \sum_{k \in \mathcal{S}_i} x_k \\
+\sigma_i  &= \sqrt{\frac{1}{m} \sum_{k \in \mathcal{S}_i} (x_k - \mu_i)^2 + \epsilon}
+\end{align}
+
+$\mathcal{S}_i$ is the set of indexes across which the mean and standard deviation
+are calculated for index $i$.
+$m$ is the size of the set $\mathcal{S}_i$ which is same for all $i$.
+
+The definition of $\mathcal{S}_i$ is different for
+[Batch normalization](../batch_norm/index.html),
+[Layer normalization](../layer_norm/index.html), and
+[Instance normalization](../instance_norm/index.html).
+
+### [Batch Normalization](../batch_norm/index.html)
+
+$$\mathcal{S}_i = \{k | k_C = i_C\}$$
+
+The values that share the same feature channel are normalized together.
+
+### [Layer Normalization](../layer_norm/index.html)
+
+$$\mathcal{S}_i = \{k | k_N = i_N\}$$
+
+The values from the same sample in the batch are normalized together.
+
+### [Instance Normalization](../instance_norm/index.html)
+
+$$\mathcal{S}_i = \{k | k_N = i_N, k_C = i_C\}$$
+
+The values from the same sample and same feature channel are normalized together.
+
+### Group Normalization
+
+$$\mathcal{S}_i = \{k | k_N = i_N,
+ \bigg \lfloor \frac{k_C}{C/G} \bigg \rfloor = \bigg \lfloor \frac{i_C}{C/G} \bigg \rfloor\}$$
+
+where $G$ is the number of groups and $C$ is the number of channels.
+
+Group normalization normalizes values of the same sample and the same group of channels together.
+
+Here's a [CIFAR 10 classification model](experiment.html) that uses instance normalization.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/group_norm/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/011254fe647011ebbb8e0242ac1c0002)
+[![WandB](https://img.shields.io/badge/wandb-run-yellow)](https://app.labml.ai/run/011254fe647011ebbb8e0242ac1c0002)
+
 """
 
 import torch
@@ -55,24 +130,28 @@ class GroupNorm(Module):
         # Sanity check to make sure the number of features is the same
         assert self.channels == x.shape[1]
 
-        # Reshape into `[batch_size, channels, n]`
+        # Reshape into `[batch_size, groups, n]`
         x = x.view(batch_size, self.groups, -1)
 
-        # Calculate the mean across first and last dimension;
-        # i.e. the means for each feature $\mathbb{E}[x^{(k)}]$
-        mean = x.mean(dim=[2], keepdim=True)
-        # Calculate the squared mean across first and last dimension;
-        # i.e. the means for each feature $\mathbb{E}[(x^{(k)})^2]$
-        mean_x2 = (x ** 2).mean(dim=[2], keepdim=True)
-        # Variance for each feature $Var[x^{(k)}] = \mathbb{E}[(x^{(k)})^2] - \mathbb{E}[x^{(k)}]^2$
+        # Calculate the mean across last dimension;
+        # i.e. the means for each sample and channel group $\mathbb{E}[x_{(i_N, i_G)}]$
+        mean = x.mean(dim=[-1], keepdim=True)
+        # Calculate the squared mean across last dimension;
+        # i.e. the means for each sample and channel group $\mathbb{E}[x^2_{(i_N, i_G)}]$
+        mean_x2 = (x ** 2).mean(dim=[-1], keepdim=True)
+        # Variance for each sample and feature group
+        # $Var[x_{(i_N, i_G)}] = \mathbb{E}[x^2_{(i_N, i_G)}] - \mathbb{E}[x_{(i_N, i_G)}]^2$
         var = mean_x2 - mean ** 2
 
-        # Normalize $$\hat{x}^{(k)} = \frac{x^{(k)} - \mathbb{E}[x^{(k)}]}{\sqrt{Var[x^{(k)}] + \epsilon}}$$
+        # Normalize
+        # $$\hat{x}_{(i_N, i_G)} =
+        # \frac{x_{(i_N, i_G)} - \mathbb{E}[x_{(i_N, i_G)}]}{\sqrt{Var[x_{(i_N, i_G)}] + \epsilon}}$$
         x_norm = (x - mean) / torch.sqrt(var + self.eps)
-        x_norm = x_norm.view(batch_size, self.channels, -1)
 
-        # Scale and shift $$y^{(k)} =\gamma^{(k)} \hat{x}^{(k)} + \beta^{(k)}$$
+        # Scale and shift channel-wise
+        # $$y_{i_C} =\gamma_{i_C} \hat{x}_{i_C} + \beta_{i_C}$$
         if self.affine:
+            x_norm = x_norm.view(batch_size, self.channels, -1)
             x_norm = self.scale.view(1, -1, 1) * x_norm + self.shift.view(1, -1, 1)
 
         # Reshape to original and return
