@@ -15,7 +15,7 @@ from labml import experiment
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.cifar10 import CIFAR10Configs
-from labml_nn.normalization.weight_standardization.channel_norm import BatchChannelNorm
+from labml_nn.normalization.batch_channel_norm import BatchChannelNorm
 from labml_nn.normalization.weight_standardization.conv2d import Conv2d
 
 
