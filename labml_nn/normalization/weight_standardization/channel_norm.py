@@ -10,18 +10,18 @@ class ChannelNorm(Module):
     This is similar to group norm but affine transform is done group wise
     """
 
-    def __init__(self, num_channels, num_groups,
+    def __init__(self, channels, groups,
                  eps: float = 1e-5, affine: bool = True):
         super().__init__()
-        self.num_channels = num_channels
-        self.num_groups = num_groups
+        self.channels = channels
+        self.groups = groups
         self.eps = eps
         self.affine = affine
         # Note that these transforms are per group, unlike in group norm where
         # they are transformed channel-wise
         if self.affine:
-            self.scale = nn.Parameter(torch.ones(num_groups))
-            self.shift = nn.Parameter(torch.zeros(num_groups))
+            self.scale = nn.Parameter(torch.ones(groups))
+            self.shift = nn.Parameter(torch.zeros(groups))
 
     def __call__(self, x: torch.Tensor):
         # Keep the original shape
@@ -59,17 +59,17 @@ class ChannelNorm(Module):
 
 
 class BatchChannelNorm(Module):
-    def __init__(self, num_channels, num_groups, eps: float = 1e-5,
-                 momentum: float = 0.1, estimate: bool = False):
+    def __init__(self, channels, groups, eps: float = 1e-5,
+                 momentum: float = 0.1, estimate: bool = True):
         super().__init__()
         if estimate:
-            self.batch_norm = EstimatedBatchNorm(num_channels,
+            self.batch_norm = EstimatedBatchNorm(channels,
                                                  eps=eps, momentum=momentum)
         else:
-            self.batch_norm = BatchNorm(num_channels,
+            self.batch_norm = BatchNorm(channels,
                                         eps=eps, momentum=momentum)
 
-        self.channel_norm = ChannelNorm(num_channels, num_groups, eps)
+        self.channel_norm = ChannelNorm(channels, groups, eps)
 
     def __call__(self, x):
         x = self.batch_norm(x)
@@ -77,23 +77,26 @@ class BatchChannelNorm(Module):
 
 
 class EstimatedBatchNorm(Module):
-    def __init__(self, num_features, eps: float = 1e-5, momentum: float = 0.1,
+    def __init__(self, channels, eps: float = 1e-5, momentum: float = 0.1,
                  affine: bool = True):
         super().__init__()
         self.eps = eps
         self.momentum = momentum
         self.affine = affine
-        self.num_features = num_features
+        self.channels = channels
         if self.affine:
-            self.scale = nn.Parameter(torch.ones(num_features))
-            self.shift = nn.Parameter(torch.zeros(num_features))
-        self.register_buffer('exp_mean', torch.zeros(num_features))
-        self.register_buffer('exp_var', torch.ones(num_features))
+            self.scale = nn.Parameter(torch.ones(channels))
+            self.shift = nn.Parameter(torch.zeros(channels))
+        self.register_buffer('exp_mean', torch.zeros(channels))
+        self.register_buffer('exp_var', torch.ones(channels))
 
     def __call__(self, x):
         x_shape = x.shape
         # Get the batch size
         batch_size = x_shape[0]
+
+        assert self.channels == x.shape[1]
+
         # Reshape into `[batch_size, channels, n]`
         x = x.view(batch_size, self.channels, -1)
 

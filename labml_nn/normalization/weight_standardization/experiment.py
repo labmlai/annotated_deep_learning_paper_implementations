@@ -15,7 +15,7 @@ from labml import experiment
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.cifar10 import CIFAR10Configs
-from labml_nn.normalization.batch_norm import BatchNorm
+from labml_nn.normalization.weight_standardization.channel_norm import BatchChannelNorm
 from labml_nn.normalization.weight_standardization.conv2d import Conv2d
 
 
@@ -27,7 +27,7 @@ class Model(Module):
         for block in [[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]]:
             for channels in block:
                 layers += [Conv2d(in_channels, channels, kernel_size=3, padding=1),
-                           BatchNorm(channels),
+                           BatchChannelNorm(channels, 32),
                            nn.ReLU(inplace=True)]
                 in_channels = channels
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
