@@ -20,7 +20,8 @@ Here is [the training code](../weight_standardization/experiment.html) for train
 a VGG network that uses weight standardization to classify CIFAR-10 data.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/weight_standardization/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/011254fe647011ebbb8e0242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/f4a783a2a7df11eb921d0242ac1c0002)
+[![WandB](https://img.shields.io/badge/wandb-run-yellow)](https://wandb.ai/vpj/cifar10/runs/3flr4k8w)
 """
 
 import torch
