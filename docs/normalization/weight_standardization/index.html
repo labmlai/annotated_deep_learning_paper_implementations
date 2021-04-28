@@ -119,9 +119,13 @@ This uses a <a href="../conv2d.html">2D-Convolution Layer with Weight Standardiz
 <p>where,</p>
 <p>
 <script type="math/tex; mode=display">\begin{align}
-W \in \mathbb{R}^{O \times I} \\
+W &\in \mathbb{R}^{O \times I} \\
+\mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+\sigma_{W_{i,\cdot}} &= \sqrt{\frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}} + \epsilon} \\
 \end{align}</script>
 </p>
+<p>for a 2D-convolution layer $O$ is the number of output channels ($O = C_{out}$)
+and $I$ is the number of input channels times the kernel size ($I = C_{in} \times k_H \times k_W$)</p>
             </div>
             <div class='code'>
                 <div class="highlight"><pre><span class="lineno">53</span><span class="k">def</span> <span class="nf">weight_standardization</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
@@ -132,14 +136,62 @@ W \in \mathbb{R}^{O \times I} \\
                 <div class='section-link'>
                     <a href='#section-2'>#</a>
                 </div>
-                
+                <p>Get $C_{out}$, $C_{in}$ and kernel shape</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">65</span>    <span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">shape</span>
-<span class="lineno">66</span>    <span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">67</span>    <span class="n">std</span><span class="p">,</span> <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">std_mean</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="lineno">68</span>    <span class="n">weight</span> <span class="o">=</span> <span class="p">(</span><span class="n">weight</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">std</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
-<span class="lineno">69</span>    <span class="k">return</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">72</span>    <span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">shape</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p>Reshape $W$ to $O \times I$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">74</span>    <span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>Calculate</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+\sigma^2_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}}
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">81</span>    <span class="n">var</span><span class="p">,</span> <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var_mean</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Normalize
+<script type="math/tex; mode=display">\hat{W}_{i,j} = \frac{W_{i,j} - \mu_{W_{i,\cdot}}} {\sigma_{W_{i,\cdot}}}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">84</span>    <span class="n">weight</span> <span class="o">=</span> <span class="p">(</span><span class="n">weight</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Change back to original shape and return</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">86</span>    <span class="k">return</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>

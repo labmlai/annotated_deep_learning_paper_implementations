@@ -59,11 +59,28 @@ def weight_standardization(weight: torch.Tensor, eps: float):
     where,
 
     \begin{align}
-    W \in \mathbb{R}^{O \times I} \\
+    W &\in \mathbb{R}^{O \times I} \\
+    \mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+    \sigma_{W_{i,\cdot}} &= \sqrt{\frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}} + \epsilon} \\
     \end{align}
+
+    for a 2D-convolution layer $O$ is the number of output channels ($O = C_{out}$)
+    and $I$ is the number of input channels times the kernel size ($I = C_{in} \times k_H \times k_W$)
     """
+
+    # Get $C_{out}$, $C_{in}$ and kernel shape
     c_out, c_in, *kernel_shape = weight.shape
+    # Reshape $W$ to $O \times I$
     weight = weight.view(c_out, -1)
-    std, mean = torch.std_mean(weight, dim=1, keepdim=True)
-    weight = (weight - mean) / (std + eps)
+    # Calculate
+    #
+    # \begin{align}
+    # \mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+    # \sigma^2_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}}
+    # \end{align}
+    var, mean = torch.var_mean(weight, dim=1, keepdim=True)
+    # Normalize
+    # $$\hat{W}_{i,j} = \frac{W_{i,j} - \mu_{W_{i,\cdot}}} {\sigma_{W_{i,\cdot}}}$$
+    weight = (weight - mean) / (torch.sqrt(var + eps))
+    # Change back to original shape and return
     return weight.view(c_out, c_in, *kernel_shape)
