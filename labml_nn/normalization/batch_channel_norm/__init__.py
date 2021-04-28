@@ -7,17 +7,17 @@ summary: >
 
 # Batch-Channel Normalization
 
-This is a [PyTorch](https://pytorch.org) implementation of Batch-Channel Normalization from paper
+This is a [PyTorch](https://pytorch.org) implementation of Batch-Channel Normalization from the paper
  [Micro-Batch Training with Batch-Channel Normalization and Weight Standardization](https://arxiv.org/abs/1903.10520).
 We also have an [annotated implementation of Weight Standardization](../weight_standardization/index.html).
 
-Batch-Channel Normalization does a batch normalization followed
+Batch-Channel Normalization performs batch normalization followed
 by a channel normalization (similar to a [Group Normalization](../group_norm/index.html).
-When the batch-size is small it uses a running mean and variance for
+When the batch size is small a running mean and variance is used for
 batch normalization.
 
-Here's [the training code](../weight_standardization/experiment.html) for training
-a VGG network that use weight standardization to classify CIFAR-10 data.
+Here is [the training code](../weight_standardization/experiment.html) for training
+a VGG network that uses weight standardization to classify CIFAR-10 data.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/weight_standardization/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/011254fe647011ebbb8e0242ac1c0002)
@@ -37,7 +37,7 @@ class BatchChannelNorm(Module):
     This first performs a batch normalization - either [normal batch norm](../batch_norm/index.html)
     or a batch norm with
     estimated mean and variance (exponential mean/variance over multiple batches).
-    Then it does a channel normalization.
+    Then a channel normalization performed.
     """
 
     def __init__(self, channels: int, groups: int,

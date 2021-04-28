@@ -7,12 +7,12 @@ summary: >
 
 # Weight Standardization
 
-This is a [PyTorch](https://pytorch.org) implementation of Weight Standardization from paper
+This is a [PyTorch](https://pytorch.org) implementation of Weight Standardization from the paper
  [Micro-Batch Training with Batch-Channel Normalization and Weight Standardization](https://arxiv.org/abs/1903.10520).
 We also have an [annotated implementation of Batch-Channel Normalization](../batch_channel_norm/index.html).
 
-Batch normalization **gives a smooth the loss landscape** and
-**avoid elimination singularities**.
+Batch normalization **gives a smooth loss landscape** and
+**avoids elimination singularities**.
 Elimination singularities are nodes of the network that become
 useless (e.g. a ReLU that gives 0 all the time).
 
@@ -31,15 +31,15 @@ That is, $L$ is the Lipschitz constant where $L$ is the smallest value that sati
 $\forall a,b \in A: \lVert f(a) - f(b) \rVert \le L \lVert a - b \rVert$
 where $f: A \rightarrow \mathbb{R}^m, A \in \mathbb{R}^n$.
 
-Elimination singularities are avoided because the it keeps the statistics of the outputs similar to the
+Elimination singularities are avoided because it keeps the statistics of the outputs similar to the
 inputs. So as long as the inputs are normally distributed the outputs remain close to normal.
-This avoids outputs of nodes from always falling beyond active range of activation function
+This avoids outputs of nodes from always falling beyond the active range of the activation function
 (e.g. always negative input for a ReLU).
 
-*[Refer the paper for proofs](https://arxiv.org/abs/1903.10520)*.
+*[Refer to the paper for proofs](https://arxiv.org/abs/1903.10520)*.
 
-Here's [the training code](experiment.html) for training
-a VGG network that use weight standardization to classify CIFAR-10 data.
+Here is [the training code](experiment.html) for training
+a VGG network that uses weight standardization to classify CIFAR-10 data.
 This uses a [2D-Convolution Layer with Weight Standardization](../conv2d.html).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/weight_standardization/experiment.ipynb)
