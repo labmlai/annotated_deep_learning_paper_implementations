@@ -63,6 +63,8 @@ implementations.
 * [Layer Normalization](https://nn.labml.ai/normalization/layer_norm/index.html)
 * [Instance Normalization](https://nn.labml.ai/normalization/instance_norm/index.html)
 * [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
+* [Weight Standardization](https://nn.labml.ai/normalization/weight_standardization/index.html)
+* [Batch-Channel Normalization](https://nn.labml.ai/normalization/batch_channel_normalization/index.html)
 
 ### Installation
 
