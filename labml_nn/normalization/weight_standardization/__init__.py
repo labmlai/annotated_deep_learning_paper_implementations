@@ -38,7 +38,6 @@ This avoids outputs of nodes from always falling beyond active range of activati
 
 *[Refer the paper for proofs](https://arxiv.org/abs/1903.10520)*.
 
-
 Here's [the training code](experiment.html) for training
 a VGG network that use weight standardization to classify CIFAR-10 data.
 This uses a [2D-Convolution Layer with Weight Standardization](../conv2d.html).

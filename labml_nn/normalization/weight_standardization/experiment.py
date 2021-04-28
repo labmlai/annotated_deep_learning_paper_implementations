@@ -1,12 +1,12 @@
 """
 ---
-title: CIFAR10 Experiment to try Weight Standardization
+title: CIFAR10 Experiment to try Weight Standardization and Batch-Channel Normalization
 summary: >
-  This trains is a VGG net that uses weight standardization
+  This trains is a VGG net that uses weight standardization  and batch-channel normalization
   to classify CIFAR10 images.
 ---
 
-# CIFAR10 Experiment for Weight Standardization
+# CIFAR10 Experiment to try Weight Standardization and Batch-Channel Normalization
 """
 
 import torch.nn as nn
@@ -20,6 +20,12 @@ from labml_nn.normalization.weight_standardization.conv2d import Conv2d
 
 
 class Model(Module):
+    """
+    ### Model
+
+    A VGG model that use [Weight Standardization](./index.html) and
+     [Batch-Channel Normalization](../batch_channel_norm/index.html).
+    """
     def __init__(self):
         super().__init__()
         layers = []
