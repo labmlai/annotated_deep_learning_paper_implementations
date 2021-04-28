@@ -12,5 +12,5 @@ summary: >
 * [Instance Normalization](instance_norm/index.html)
 * [Group Normalization](group_norm/index.html)
 * [Weight Standardization](weight_standardization/index.html)
-* [Batch-Channel Normalization](batch_channel_normalization/index.html)
+* [Batch-Channel Normalization](batch_channel_norm/index.html)
 """
