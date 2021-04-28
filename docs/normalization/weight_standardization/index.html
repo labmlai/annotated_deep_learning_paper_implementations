@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A PyTorch implementation/tutorial of Weight Standardization."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Weight Standardization"/>
+    <meta name="twitter:description" content="A PyTorch implementation/tutorial of Weight Standardization."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/normalization/weight_standardization/index.html"/>
+    <meta property="og:title" content="Weight Standardization"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Weight Standardization"/>
+    <meta property="og:description" content="A PyTorch implementation/tutorial of Weight Standardization."/>
+
+    <title>Weight Standardization</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/normalization/weight_standardization/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">normalization</a>
+                <a class="parent" href="index.html">weight_standardization</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/normalization/weight_standardization/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>Weight Standardization</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of Weight Standardization from the paper
+ <a href="https://arxiv.org/abs/1903.10520">Micro-Batch Training with Batch-Channel Normalization and Weight Standardization</a>.
+We also have an <a href="../batch_channel_norm/index.html">annotated implementation of Batch-Channel Normalization</a>.</p>
+<p>Batch normalization <strong>gives a smooth loss landscape</strong> and
+<strong>avoids elimination singularities</strong>.
+Elimination singularities are nodes of the network that become
+useless (e.g. a ReLU that gives 0 all the time).</p>
+<p>However, batch normalization doesn&rsquo;t work well when the batch size is too small,
+which happens when training large networks because of device memory limitations.
+The paper introduces Weight Standardization with Batch-Channel Normalization as
+a better alternative.</p>
+<p>Weight Standardization:
+1. Normalizes the gradients
+2. Smoothes the landscape (reduced Lipschitz constant)
+3. Avoids elimination singularities</p>
+<p>The Lipschitz constant is the maximum slope a function has between two points.
+That is, $L$ is the Lipschitz constant where $L$ is the smallest value that satisfies,
+$\forall a,b \in A: \lVert f(a) - f(b) \rVert \le L \lVert a - b \rVert$
+where $f: A \rightarrow \mathbb{R}^m, A \in \mathbb{R}^n$.</p>
+<p>Elimination singularities are avoided because it keeps the statistics of the outputs similar to the
+inputs. So as long as the inputs are normally distributed the outputs remain close to normal.
+This avoids outputs of nodes from always falling beyond the active range of the activation function
+(e.g. always negative input for a ReLU).</p>
+<p><em><a href="https://arxiv.org/abs/1903.10520">Refer to the paper for proofs</a></em>.</p>
+<p>Here is <a href="experiment.html">the training code</a> for training
+a VGG network that uses weight standardization to classify CIFAR-10 data.
+This uses a <a href="../conv2d.html">2D-Convolution Layer with Weight Standardization</a>.</p>
+<p><a href="https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/weight_standardization/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://app.labml.ai/run/f4a783a2a7df11eb921d0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a>
+<a href="https://wandb.ai/vpj/cifar10/runs/3flr4k8w"><img alt="WandB" src="https://img.shields.io/badge/wandb-run-yellow" /></a></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">50</span><span></span><span class="kn">import</span> <span class="nn">torch</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>Weight Standardization</h2>
+<p>
+<script type="math/tex; mode=display">\hat{W}_{i,j} = \frac{W_{i,j} - \mu_{W_{i,\cdot}}} {\sigma_{W_{i,\cdot}}}</script>
+</p>
+<p>where,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+W &\in \mathbb{R}^{O \times I} \\
+\mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+\sigma_{W_{i,\cdot}} &= \sqrt{\frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}} + \epsilon} \\
+\end{align}</script>
+</p>
+<p>for a 2D-convolution layer $O$ is the number of output channels ($O = C_{out}$)
+and $I$ is the number of input channels times the kernel size ($I = C_{in} \times k_H \times k_W$)</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">53</span><span class="k">def</span> <span class="nf">weight_standardization</span><span class="p">(</span><span class="n">weight</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <p>Get $C_{out}$, $C_{in}$ and kernel shape</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">72</span>    <span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">shape</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p>Reshape $W$ to $O \times I$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">74</span>    <span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>Calculate</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\mu_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W_{i,j} \\
+\sigma^2_{W_{i,\cdot}} &= \frac{1}{I} \sum_{j=1}^I W^2_{i,j} - \mu^2_{W_{i,\cdot}}
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">81</span>    <span class="n">var</span><span class="p">,</span> <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var_mean</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Normalize
+<script type="math/tex; mode=display">\hat{W}_{i,j} = \frac{W_{i,j} - \mu_{W_{i,\cdot}}} {\sigma_{W_{i,\cdot}}}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">84</span>    <span class="n">weight</span> <span class="o">=</span> <span class="p">(</span><span class="n">weight</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Change back to original shape and return</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">86</span>    <span class="k">return</span> <span class="n">weight</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="n">c_in</span><span class="p">,</span> <span class="o">*</span><span class="n">kernel_shape</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
