@@ -26,7 +26,9 @@ from labml_helpers.module import Module
 
 class PrepareForMultiHeadAttention(Module):
     """
+    <a id="PrepareMHA">
     ## Prepare for multi-head attention
+    </a>
 
     This module does a linear transformation and splits the vector into given
     number of heads for multi-head attention.
@@ -60,7 +62,9 @@ class PrepareForMultiHeadAttention(Module):
 
 class MultiHeadAttention(Module):
     r"""
+    <a id="MHA">
     ## Multi-Head Attention Module
+    </a>
 
     This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.
 
@@ -91,8 +95,8 @@ class MultiHeadAttention(Module):
         self.heads = heads
 
         # These transform the `query`, `key` and `value` vectors for multi-headed attention.
-        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k,  bias=bias)
-        self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k,  bias=bias)
+        self.query = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=bias)
+        self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=bias)
         self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=True)
 
         # Softmax for attention along the time dimension of `key`
@@ -119,10 +123,10 @@ class MultiHeadAttention(Module):
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
 
     def forward(self, *,
-                 query: torch.Tensor,
-                 key: torch.Tensor,
-                 value: torch.Tensor,
-                 mask: Optional[torch.Tensor] = None):
+                query: torch.Tensor,
+                key: torch.Tensor,
+                value: torch.Tensor,
+                mask: Optional[torch.Tensor] = None):
         """
         `query`, `key` and `value` are the tensors that store
         collection of *query*, *key* and *value* vectors.
@@ -137,10 +141,12 @@ class MultiHeadAttention(Module):
         seq_len, batch_size, _ = query.shape
 
         if mask is not None:
-            # `mask` has shape `[seq_len, seq_len, batch_size]`,
+            # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`,
             # where first dimension is the query dimension.
             # If the query dimension is equal to $1$ it will be broadcasted.
-            assert mask.shape[0] == 1 or mask.shape[0] == mask.shape[1]
+            assert mask.shape[0] == 1 or mask.shape[0] == query.shape[0]
+            assert mask.shape[1] == key.shape[0]
+            assert mask.shape[2] == 1 or mask.shape[2] == query.shape[1]
 
             # Same mask applied to all heads.
             mask = mask.unsqueeze(-1)
@@ -160,7 +166,7 @@ class MultiHeadAttention(Module):
 
         # Apply mask
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
+            scores = scores.masked_fill(mask == 0, float('-inf'))
 
         # $softmax$ attention along the key sequence dimension
         # $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$

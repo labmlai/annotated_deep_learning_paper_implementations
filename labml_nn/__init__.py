@@ -1,5 +1,5 @@
 """
-# [LabML Neural Networks](index.html)
+# [labml.ai Neural Networks](index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
@@ -15,17 +15,17 @@ implementations.
 
 #### ✨ [Transformers](transformers/index.html)
 
-[Transformers module](transformers/index.html)
-contains implementations for
-[multi-headed attention](transformers/mha.html)
-and
-[relative multi-headed attention](transformers/relative_mha.html).
-
+* [Multi-headed attention](transformers/mha.html)
+* [Transformer building blocks](transformers/models.html)
+* [Transformer XL](transformers/xl/index.html)
+    * [Relative multi-headed attention](transformers/xl/relative_mha.html)
+* [Compressive Transformer](transformers/compressive/index.html)
 * [GPT Architecture](transformers/gpt/index.html)
 * [GLU Variants](transformers/glu_variants/simple.html)
 * [kNN-LM: Generalization through Memorization](transformers/knn/index.html)
 * [Feedback Transformer](transformers/feedback/index.html)
 * [Switch Transformer](transformers/switch/index.html)
+* [Fast Weights Transformer](transformers/fast_weights/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 
@@ -61,11 +61,15 @@ and
 #### ✨ [Normalization Layers](https://nn.labml.ai/normalization/index.html)
 * [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)
 * [Layer Normalization](https://nn.labml.ai/normalization/layer_norm/index.html)
+* [Instance Normalization](https://nn.labml.ai/normalization/instance_norm/index.html)
+* [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
+* [Weight Standardization](https://nn.labml.ai/normalization/weight_standardization/index.html)
+* [Batch-Channel Normalization](https://nn.labml.ai/normalization/batch_channel_norm/index.html)
 
 ### Installation
 
 ```bash
-pip install labml_nn
+pip install labml-nn
 ```
 
 ### Citing LabML
@@ -77,7 +81,7 @@ If you use LabML for academic research, please cite the library using the follow
  author = {Varuna Jayasiri, Nipun Wijerathne},
  title = {LabML: A library to organize machine learning experiments},
  year = {2020},
- url = {https://lab-ml.com/},
+ url = {https://nn.labml.ai/},
 }
 ```
 """

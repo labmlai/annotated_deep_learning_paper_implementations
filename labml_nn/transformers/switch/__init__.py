@@ -12,17 +12,18 @@ This is a miniature [PyTorch](https://pytorch.org) implementation of the paper
 Our implementation only has a few million parameters and doesn't do model parallel distributed training.
 It does single GPU training, but we implement the concept of switching as described in the paper.
 
-The Switch Transformer uses different parameters for each token by switching among parameters,
-based on the token. So only a fraction of parameters is chosen for each token, so you
-can have more parameters but less computational cost.
+The Switch Transformer uses different parameters for each token by switching among parameters
+based on the token.
+Therefore, only a fraction of parameters are chosen for each token.
+So you can have more parameters but less computational cost.
 
 The switching happens at the Position-wise Feedforward network (FFN) of each transformer block.
-Position-wise feedforward network is a two sequentially fully connected layers.
+Position-wise feedforward network consists of two sequentially fully connected layers.
 In switch transformer we have multiple FFNs (multiple experts),
 and we chose which one to use based on a router.
-The outputs a set of probabilities for picking a FFN,
-and we pick the one with the highest probability and only evaluates that.
-So essentially the computational cost is same as having a single FFN.
+The output is a set of probabilities for picking a FFN,
+and we pick the one with the highest probability and only evaluate that.
+So essentially the computational cost is the same as having a single FFN.
 In our implementation this doesn't parallelize well when you have many or large FFNs since it's all
 happening on a single GPU.
 In a distributed setup you would have each FFN (each very large) on a different device.
@@ -33,7 +34,7 @@ discusses dropping tokens when routing is not balanced.
 Here's [the training code](experiment.html) and a notebook for training a switch transformer on Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/switch/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=c4656c605b9311eba13d0242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/c4656c605b9311eba13d0242ac1c0002)
 """
 
 import torch
@@ -158,7 +159,7 @@ class SwitchFeedForward(Module):
         # * the final output
         # * number of tokens routed to each expert
         # * sum of probabilities for each expert
-        # * number of tokens dropped
+        # * number of tokens dropped.
         # These are used for the load balancing loss and logging
         return final_output, counts, route_prob.sum(0), len(dropped)
 
@@ -167,7 +168,7 @@ class SwitchTransformerLayer(Module):
     """
     # Switch Transformer Block
 
-    This is same as [normal transformer block](../models.html#TransformerLayer)
+    This is the same as [normal transformer block](../models.html#TransformerLayer)
     with handling extra outputs of switch feedforward module.
     """
     def __init__(self, *,

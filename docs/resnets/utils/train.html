@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="train.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/resnets/utils/train.html"/>
+    <meta property="og:title" content="train.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="train.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>train.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/resnets/utils/train.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">resnets</a>
+                <a class="parent" href="index.html">utils</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/resnets/utils/train.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://join.slack.com/t/labforml/shared_invite/zt-egj9zvq9-Dl3hhZqobexgT7aVKnD14g/"
+                   rel="nofollow">
+                    <img alt="Join Slact"
+                         src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">3</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">4</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">ConcatDataset</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <p>from sklearn.model_selection import KFold
+from torch.utils.data.sampler import SubsetRandomSampler</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">8</span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="lineno">9</span><span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="lineno">10</span><span class="kn">import</span> <span class="nn">os</span>
+<span class="lineno">11</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">ReduceLROnPlateau</span><span class="p">,</span> <span class="n">StepLR</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">16</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">():</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">17</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span> <span class="n">use_lr_schedule</span> <span class="o">=</span><span class="kc">False</span> <span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="lineno">18</span>        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">net</span>
+<span class="lineno">19</span>        <span class="bp">self</span><span class="o">.</span><span class="n">opt</span> <span class="o">=</span> <span class="n">opt</span>
+<span class="lineno">20</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span>
+<span class="lineno">21</span>        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+<span class="lineno">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+<span class="lineno">25</span>
+<span class="lineno">26</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
+<span class="lineno">27</span>        <span class="bp">self</span><span class="o">.</span><span class="n">use_lr_schedule</span> <span class="o">=</span> <span class="n">use_lr_schedule</span>
+<span class="lineno">28</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_lr_schedule</span><span class="p">:</span>
+<span class="lineno">29</span>            <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">ReduceLROnPlateau</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.00001</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>self.scheduler = StepLR(self.opt, step_size=15, gamma=0.1)</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Train loop over epochs. Optinal use testloader to return test accuracy after each epoch</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">33</span>    <span class="k">def</span> <span class="nf">Train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trainloader</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">testloader</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Enable Dropout</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Record loss/accuracies</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">37</span>        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="lineno">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>If testloader is used, loss will be the accuracy</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">41</span>        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span><span class="o">+</span><span class="n">epochs</span><span class="p">):</span>
+<span class="lineno">42</span>            <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">+</span><span class="mi">1</span>
+<span class="lineno">43</span>
+<span class="lineno">44</span>            <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># Enable Dropout</span>
+<span class="lineno">45</span>            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">trainloader</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>Get the inputs; data is a list of [inputs, labels]</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">47</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+<span class="lineno">48</span>                    <span class="n">images</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">49</span>                <span class="k">else</span><span class="p">:</span>
+<span class="lineno">50</span>                    <span class="n">images</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span>
+<span class="lineno">51</span>
+<span class="lineno">52</span>                <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Forward + backward + optimize</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">54</span>                <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+<span class="lineno">55</span>                <span class="n">epoch_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+<span class="lineno">56</span>                <span class="n">epoch_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="lineno">57</span>                <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">58</span>
+<span class="lineno">59</span>                <span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">+=</span> <span class="n">epoch_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="lineno">60</span>
+<span class="lineno">61</span>            <span class="k">if</span> <span class="n">testloader</span><span class="p">:</span>
+<span class="lineno">62</span>                <span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Test</span><span class="p">(</span><span class="n">testloader</span><span class="p">)</span>
+<span class="lineno">63</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">64</span>                <span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">trainloader</span><span class="p">)</span>
+<span class="lineno">65</span>
+<span class="lineno">66</span>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch </span><span class="si">%d</span><span class="s2"> Learning rate </span><span class="si">%.6f</span><span class="s2"> </span><span class="si">%s</span><span class="s2">: </span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+<span class="lineno">67</span>            <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;lr&#39;</span><span class="p">],</span> <span class="s2">&quot;Accuracy&quot;</span> <span class="k">if</span> <span class="n">testloader</span> <span class="k">else</span> <span class="s2">&quot;Loss&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">]))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                <p>learning rate scheduler</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">70</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_lr_schedule</span><span class="p">:</span>
+<span class="lineno">71</span>                <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>self.scheduler.step()</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                <p>Saving best model</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">75</span>            <span class="k">if</span> <span class="n">loss</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">loss</span><span class="p">):</span>
+<span class="lineno">76</span>                <span class="bp">self</span><span class="o">.</span><span class="n">save_best_model</span><span class="p">({</span>
+<span class="lineno">77</span>                    <span class="s1">&#39;epoch&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">,</span>
+<span class="lineno">78</span>                    <span class="s1">&#39;state_dict&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+<span class="lineno">79</span>                    <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
+<span class="lineno">80</span>                <span class="p">})</span>
+<span class="lineno">81</span>
+<span class="lineno">82</span>        <span class="k">return</span> <span class="n">loss</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Testing</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">85</span>    <span class="k">def</span> <span class="nf">Test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">testloader</span><span class="p">,</span> <span class="n">ret</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                <p>Disable Dropout</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">87</span>        <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                <p>Track correct and total</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">correct</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="lineno">91</span>        <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="lineno">92</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+<span class="lineno">93</span>            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">testloader</span><span class="p">:</span>
+<span class="lineno">94</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+<span class="lineno">95</span>                    <span class="n">images</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">96</span>                <span class="k">else</span><span class="p">:</span>
+<span class="lineno">97</span>                    <span class="n">images</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data</span>
+<span class="lineno">98</span>
+<span class="lineno">99</span>                <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+<span class="lineno">100</span>                <span class="n">_</span><span class="p">,</span> <span class="n">predicted</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">101</span>                <span class="n">total</span> <span class="o">+=</span> <span class="n">labels</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">102</span>                <span class="n">correct</span> <span class="o">+=</span> <span class="p">(</span><span class="n">predicted</span> <span class="o">==</span> <span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="lineno">103</span>
+<span class="lineno">104</span>        <span class="k">return</span> <span class="n">correct</span> <span class="o">/</span> <span class="n">total</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">106</span>    <span class="k">def</span> <span class="nf">save_best_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<span class="lineno">107</span>        <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="s2">&quot;./save/</span><span class="si">%s</span><span class="s2">-best-model/&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+<span class="lineno">108</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+<span class="lineno">109</span>            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+<span class="lineno">110</span>        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/model.pt&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">112</span>    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<span class="lineno">113</span>        <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="s2">&quot;./save/</span><span class="si">%s</span><span class="s2">-checkpoints/&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+<span class="lineno">114</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+<span class="lineno">115</span>            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+<span class="lineno">116</span>        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/model_epoch_</span><span class="si">%s</span><span class="s2">.pt&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                <p>torch.save(state, &ldquo;./save/checkpoints/model_epoch_%s.pt&rdquo; % (self.epoch))</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

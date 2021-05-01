@@ -3,7 +3,7 @@
 title: Capsule Networks
 summary: >
   PyTorch implementation and tutorial of Capsule Networks.
-  Capsule networks is neural network architecture that embeds features
+  Capsule network is a neural network architecture that embeds features
   as capsules and routes them with a voting mechanism to next layer of capsules.
 ---
 
@@ -12,22 +12,22 @@ summary: >
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of
 [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
 
-Capsule networks is neural network architecture that embeds features
+Capsule network is a neural network architecture that embeds features
 as capsules and routes them with a voting mechanism to next layer of capsules.
 
 Unlike in other implementations of models, we've included a sample, because
-it is difficult to understand some of the concepts with just the modules.
-[This is the annotated code for a model that use capsules to classify MNIST dataset](mnist.html)
+it is difficult to understand some concepts with just the modules.
+[This is the annotated code for a model that uses capsules to classify MNIST dataset](mnist.html)
 
 This file holds the implementations of the core modules of Capsule Networks.
 
 I used [jindongwang/Pytorch-CapsuleNet](https://github.com/jindongwang/Pytorch-CapsuleNet) to clarify some
 confusions I had with the paper.
 
-Here's a notebook for training a Capsule Networks on MNIST dataset.
+Here's a notebook for training a Capsule Network on MNIST dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/capsule_networks/mnist.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=e7c08e08586711ebb3e30242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/e7c08e08586711ebb3e30242ac1c0002)
 """
 
 import torch.nn as nn
@@ -146,13 +146,13 @@ class MarginLoss(Module):
     \lambda (1 - T_k) \max(0, \lVert\mathbf{v}_k\rVert - m^{-})^2$$
 
     $T_k$ is $1$ if the class $k$ is present and $0$ otherwise.
-    The first component of the loss is $0$ when if the class is not present,
-    and the second component is $0$ is the class is present.
+    The first component of the loss is $0$ when the class is not present,
+    and the second component is $0$ if the class is present.
     The $\max(0, x)$ is used to avoid predictions going to extremes.
     $m^{+}$ is set to be $0.9$ and $m^{-}$ to be $0.1$ in the paper.
 
     The $\lambda$ down-weighting is used to stop the length of all capsules from
-    fallind during the initial phase of training.
+    falling during the initial phase of training.
     """
     def __init__(self, *, n_labels: int, lambda_: float = 0.5, m_positive: float = 0.9, m_negative: float = 0.1):
         super().__init__()

@@ -16,13 +16,13 @@ This is a [PyTorch](https://pytorch.org) implementation of
 * Tricky for RNNs. Do you need different normalizations for each step?
 * Doesn't work with small batch sizes;
 large NLP models are usually trained with small batch sizes.
-* Need to compute means and variances across devices in distributed training
+* Need to compute means and variances across devices in distributed training.
 
 ## Layer Normalization
 
 Layer normalization is a simpler normalization method that works
 on a wider range of settings.
-Layer normalization transformers the inputs to have zero mean and unit variance
+Layer normalization transforms the inputs to have zero mean and unit variance
 across the features.
 *Note that batch normalization fixes the zero mean and unit variance for each element.*
 Layer normalization does it for each batch across all elements.
@@ -106,10 +106,10 @@ class LayerNorm(Module):
 
         # Calculate the mean of all elements;
         # i.e. the means for each element $\mathbb{E}[X]$
-        mean = x.mean(dim=dims, keepdims=True)
+        mean = x.mean(dim=dims, keepdim=True)
         # Calculate the squared mean of all elements;
         # i.e. the means for each element $\mathbb{E}[X^2]$
-        mean_x2 = (x ** 2).mean(dim=dims, keepdims=True)
+        mean_x2 = (x ** 2).mean(dim=dims, keepdim=True)
         # Variance of all element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$
         var = mean_x2 - mean ** 2
 

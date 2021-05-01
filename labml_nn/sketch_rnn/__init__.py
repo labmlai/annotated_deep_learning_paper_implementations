@@ -51,7 +51,7 @@ class StrokesDataset(Dataset):
     """
     ## Dataset
 
-    This class load and pre-process the data.
+    This class loads and pre-processes the data.
     """
 
     def __init__(self, dataset: np.array, max_seq_length: int, scale: Optional[float] = None):
@@ -60,14 +60,14 @@ class StrokesDataset(Dataset):
         It is a sequence of strokes, and each stroke is represented by
         3 integers.
         First two are the displacements along x and y ($\Delta x$, $\Delta y$)
-        And the last integer represents the state of the pen - $1$ if it's touching
+        and the last integer represents the state of the pen, $1$ if it's touching
         the paper and $0$ otherwise.
         """
 
         data = []
         # We iterate through each of the sequences and filter
         for seq in dataset:
-            # Filter if the length of the the sequence of strokes is within our range
+            # Filter if the length of the sequence of strokes is within our range
             if 10 < len(seq) <= max_seq_length:
                 # Clamp $\Delta x$, $\Delta y$ to $[-1000, 1000]$
                 seq = np.minimum(seq, 1000)
@@ -96,7 +96,7 @@ class StrokesDataset(Dataset):
         # $p_2$ is $1$ if the pen doesn't touch the paper in the next step.
         # $p_3$ is $1$ if it is the end of the drawing.
         self.data = torch.zeros(len(data), longest_seq_len + 2, 5, dtype=torch.float)
-        # The mask array is needs only one extra-step since it is for the outputs of the
+        # The mask array needs only one extra-step since it is for the outputs of the
         # decoder, which takes in `data[:-1]` and predicts next step.
         self.mask = torch.zeros(len(data), longest_seq_len + 1)
 
@@ -132,7 +132,7 @@ class BivariateGaussianMixture:
 
     The mixture is represented by $\Pi$ and
     $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$.
-    This class adjust temperatures and creates the categorical and gaussian
+    This class adjusts temperatures and creates the categorical and Gaussian
     distributions from the parameters.
     """
 
@@ -203,7 +203,7 @@ class EncoderRNN(Module):
 
     def __init__(self, d_z: int, enc_hidden_size: int):
         super().__init__()
-        # Create a bidirectional LSTM takes a sequence of
+        # Create a bidirectional LSTM taking a sequence of
         # $(\Delta x, \Delta y, p_1, p_2, p_3)$ as input.
         self.lstm = nn.LSTM(5, enc_hidden_size, bidirectional=True)
         # Head to get $\mu$
@@ -214,13 +214,12 @@ class EncoderRNN(Module):
     def __call__(self, inputs: torch.Tensor, state=None):
         # The hidden state of the bidirectional LSTM is the concatenation of the
         # output of the last token in the forward direction and
-        # and first token in the reverse direction.
-        # Which is what we want.
+        # first token in the reverse direction, which is what we want.
         # $$h_{\rightarrow} = encode_{\rightarrow}(S),
         # h_{\leftarrow} = encode←_{\leftarrow}(S_{reverse}),
         # h = [h_{\rightarrow}; h_{\leftarrow}]$$
         _, (hidden, cell) = self.lstm(inputs.float(), state)
-        # The state has shape `[2, batch_size, hidden_size]`
+        # The state has shape `[2, batch_size, hidden_size]`,
         # where the first dimension is the direction.
         # We rearrange it to get $h = [h_{\rightarrow}; h_{\leftarrow}]$
         hidden = einops.rearrange(hidden, 'fb b h -> b (fb h)')
@@ -255,7 +254,7 @@ class DecoderRNN(Module):
         # `init_state` is the linear transformation for this
         self.init_state = nn.Linear(d_z, 2 * dec_hidden_size)
 
-        # This layer produces outputs for each of of the `n_distributions`.
+        # This layer produces outputs for each of the `n_distributions`.
         # Each distribution needs six parameters
         # $(\hat{\Pi_i}, \mu_{x_i}, \mu_{y_i}, \hat{\sigma_{x_i}}, \hat{\sigma_{y_i}} \hat{\rho_{xy_i}})$
         self.mixtures = nn.Linear(dec_hidden_size, 6 * n_distributions)
@@ -275,8 +274,8 @@ class DecoderRNN(Module):
         if state is None:
             # $[h_0; c_0] = \tanh(W_{z}z + b_z)$
             h, c = torch.split(torch.tanh(self.init_state(z)), self.dec_hidden_size, 1)
-            # `h` and `c` have shapes `[batch_size, lstm_size]`. We want to make them
-            # to shape `[1, batch_size, lstm_size]` because that's the shape used in LSTM.
+            # `h` and `c` have shapes `[batch_size, lstm_size]`. We want to shape them
+            # to `[1, batch_size, lstm_size]` because that's the shape used in LSTM.
             state = (h.unsqueeze(0).contiguous(), c.unsqueeze(0).contiguous())
 
         # Run the LSTM
@@ -292,7 +291,7 @@ class DecoderRNN(Module):
         pi_logits, mu_x, mu_y, sigma_x, sigma_y, rho_xy = \
             torch.split(self.mixtures(outputs), self.n_distributions, 2)
 
-        # Create a bi-variate gaussian mixture
+        # Create a bi-variate Gaussian mixture
         # $\Pi$ and 
         # $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
         # where
@@ -321,7 +320,7 @@ class ReconstructionLoss(Module):
         pi, mix = dist.get_distribution()
         # `target` has shape `[seq_len, batch_size, 5]` where the last dimension is the features
         # $(\Delta x, \Delta y, p_1, p_2, p_3)$.
-        # We want to get $\Delta x, \Delta$ and get the probabilities from each of the distributions
+        # We want to get $\Delta x, \Delta$ y and get the probabilities from each of the distributions
         # in the mixture $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$.
         #
         # `xy` will have shape `[seq_len, batch_size, n_distributions, 2]`
@@ -334,8 +333,8 @@ class ReconstructionLoss(Module):
         probs = torch.sum(pi.probs * torch.exp(mix.log_prob(xy)), 2)
 
         # $$L_s = - \frac{1}{N_{max}} \sum_{i=1}^{N_s} \log \big (p(\Delta x, \Delta y) \big)$$
-        # Although `probs` has $N_{max}$ (`longest_seq_len`) elements the sum is only taken
-        # upto $N_s$ because the rest are masked out.
+        # Although `probs` has $N_{max}$ (`longest_seq_len`) elements, the sum is only taken
+        # upto $N_s$ because the rest is masked out.
         #
         # It might feel like we should be taking the sum and dividing by $N_s$ and not $N_{max}$,
         # but this will give higher weight for individual predictions in shorter sequences.
@@ -390,7 +389,7 @@ class Sampler:
         with torch.no_grad():
             # Sample $N_{max}$ strokes
             for i in range(longest_seq_len):
-                # $[(\Delta x, \Delta y, p_1, p_2, p_3); z] is the input to the decoder$
+                # $[(\Delta x, \Delta y, p_1, p_2, p_3); z]$ is the input to the decoder
                 data = torch.cat([s.view(1, 1, -1), z.unsqueeze(0)], 2)
                 # Get $\Pi$, $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$,
                 # $q$ and the next state from the decoder
@@ -437,14 +436,14 @@ class Sampler:
 
     @staticmethod
     def plot(seq: torch.Tensor):
-        # Take the cumulative sums of $(\Delta x, \Delta y)$ to get $$x, y)$
+        # Take the cumulative sums of $(\Delta x, \Delta y)$ to get $(x, y)$
         seq[:, 0:2] = torch.cumsum(seq[:, 0:2], dim=0)
         # Create a new numpy array of the form $(x, y, q_2)$
         seq[:, 2] = seq[:, 3]
         seq = seq[:, 0:3].detach().cpu().numpy()
 
         # Split the array at points where $q_2$ is $1$.
-        # That is split the array of strokes at the points where the pen is lifted from the paper.
+        # i.e. split the array of strokes at the points where the pen is lifted from the paper.
         # This gives a list of sequence of strokes.
         strokes = np.split(seq, np.where(seq[:, 2] > 0)[0] + 1)
         # Plot each sequence of strokes
@@ -460,7 +459,7 @@ class Configs(TrainValidConfigs):
     """
     ## Configurations
 
-    These are default configurations which can be later adjusted by passing a `dict`.
+    These are default configurations which can later be adjusted by passing a `dict`.
     """
 
     # Device configurations to pick the device to run the experiment
@@ -509,7 +508,7 @@ class Configs(TrainValidConfigs):
         self.encoder = EncoderRNN(self.d_z, self.enc_hidden_size).to(self.device)
         self.decoder = DecoderRNN(self.d_z, self.dec_hidden_size, self.n_distributions).to(self.device)
 
-        # Set optimizer, things like type of optimizer and learning rate are configurable
+        # Set optimizer. Things like type of optimizer and learning rate are configurable
         optimizer = OptimizerConfigs()
         optimizer.parameters = list(self.encoder.parameters()) + list(self.decoder.parameters())
         self.optimizer = optimizer
@@ -519,7 +518,7 @@ class Configs(TrainValidConfigs):
 
         # `npz` file path is `data/sketch/[DATASET NAME].npz`
         path = lab.get_data_path() / 'sketch' / f'{self.dataset_name}.npz'
-        # Load the numpy file.
+        # Load the numpy file
         dataset = np.load(str(path), encoding='latin1', allow_pickle=True)
 
         # Create training dataset

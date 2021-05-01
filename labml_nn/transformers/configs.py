@@ -209,7 +209,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'mha', _mha)
 
 # ### Relative Multi-head Attention
 def _relative_mha(c: TransformerConfigs):
-    from .relative_mha import RelativeMultiHeadAttention
+    from labml_nn.transformers.xl.relative_mha import RelativeMultiHeadAttention
     return RelativeMultiHeadAttention(c.n_heads, c.d_model)
 
 

@@ -12,21 +12,21 @@ using [PyTorch](https://pytorch.org).
 [This blog post](https://blog.otoro.net/2016/09/28/hyper-networks/)
 by David Ha gives a good explanation of HyperNetworks.
 
-We have an experiment that trains a HyperLSTM to predict text on Shakespear dataset.
+We have an experiment that trains a HyperLSTM to predict text on Shakespeare dataset.
 Here's the link to code: [`experiment.py`](experiment.html)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/hypernetworks/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://web.lab-ml.com/run?uuid=9e7f39e047e811ebbaff2b26e3148b3d)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/9e7f39e047e811ebbaff2b26e3148b3d)
 
 HyperNetworks use a smaller network to generate weights of a larger network.
 There are two variants: static hyper-networks and dynamic hyper-networks.
-Static HyperNetworks have smaller network that generates weights (kernels)
+Static HyperNetworks have smaller networks that generate weights (kernels)
 of a convolutional network. Dynamic HyperNetworks generate parameters of a
 recurrent neural network
 for each step. This is an implementation of the latter.
 
 ## Dynamic HyperNetworks
-In an RNN the parameters stay constant for each step.
+In a RNN the parameters stay constant for each step.
 Dynamic HyperNetworks generate different parameters for each step.
 HyperLSTM has the structure of a LSTM but the parameters of
 each step are changed by a smaller LSTM network.
@@ -42,7 +42,7 @@ $z_h$ is usually a linear transformation of the output of the smaller recurrent 
 ### Weight scaling instead of computing
 
 Large recurrent networks have large dynamically computed parameters.
-These are calculated using a linear transformation of feature vector $z$.
+These are calculated using linear transformation of feature vector $z$.
 And this transformation requires an even larger weight tensor.
 That is, when $\color{cyan}{W_h}$ has shape $N_h \times N_h$,
 $W_{hz}$ will be $N_h \times N_h \times N_z$.
@@ -81,7 +81,7 @@ class HyperLSTMCell(Module):
     """
     ## HyperLSTM Cell
 
-    For HyperLSTM the smaller network and the larger networks both have the LSTM structure.
+    For HyperLSTM the smaller network and the larger network both have the LSTM structure.
     This is defined in Appendix A.2.2 in the paper.
     """
 
@@ -92,10 +92,10 @@ class HyperLSTMCell(Module):
         `hyper_size` is the size of the smaller LSTM that alters the weights of the larger outer LSTM.
         `n_z` is the size of the feature vectors used to alter the LSTM weights.
 
-        We use the output of the smaller LSTM to computer $z_h^{i,f,g,o}$, $z_x^{i,f,g,o}$ and
+        We use the output of the smaller LSTM to compute $z_h^{i,f,g,o}$, $z_x^{i,f,g,o}$ and
         $z_b^{i,f,g,o}$ using linear transformations.
         We calculate $d_h^{i,f,g,o}(z_h^{i,f,g,o})$, $d_x^{i,f,g,o}(z_x^{i,f,g,o})$, and
-        $d_b^{i,f,g,o}(z_b^{i,f,g,o})$ from these again using linear transformations.
+        $d_b^{i,f,g,o}(z_b^{i,f,g,o})$ from these, using linear transformations again.
         These are then used to scale the rows of weight and bias tensors of the main LSTM.
 
         📝 Since the computation of $z$ and $d$ are two sequential linear transformations
@@ -105,7 +105,7 @@ class HyperLSTMCell(Module):
         """
         super().__init__()
 
-        # The input to the hyper lstm is
+        # The input to the hyperLSTM is
         # $$
         # \hat{x}_t = \begin{pmatrix}
         # h_{t-1} \\
@@ -115,13 +115,13 @@ class HyperLSTMCell(Module):
         # where $x_t$ is the input and $h_{t-1}$ is the output of the outer LSTM at previous step.
         # So the input size is `hidden_size + input_size`.
         #
-        # The output of hyper lstm is $\hat{h}_t$ and $\hat{c}_t$.
+        # The output of hyperLSTM is $\hat{h}_t$ and $\hat{c}_t$.
         self.hyper = LSTMCell(hidden_size + input_size, hyper_size, layer_norm=True)
 
         # $$z_h^{i,f,g,o} = lin_{h}^{i,f,g,o}(\hat{h}_t)$$
         # 🤔 In the paper it was specified as
         # $$z_h^{i,f,g,o} = lin_{h}^{i,f,g,o}(\hat{h}_{\color{red}{t-1}})$$
-        # I feel that's a typo.
+        # I feel that it's a typo.
         self.z_h = nn.Linear(hyper_size, 4 * n_z)
         # $$z_x^{i,f,g,o} = lin_x^{i,f,g,o}(\hat{h}_t)$$
         self.z_x = nn.Linear(hyper_size, 4 * n_z)

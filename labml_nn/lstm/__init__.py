@@ -30,8 +30,7 @@ class LSTMCell(Module):
     The new short term memory is the $\tanh$ of the long-term memory
     multiplied by the output gate $o$.
 
-    Note that the cell doesn't look at long term memory $c$ when doing the update
-    for the update. It only modifies it.
+    Note that the cell doesn't look at long term memory $c$ when doing the update. It only modifies it.
     Also $c$ never goes through a linear transformation.
     This is what solves vanishing and exploding gradients.
 

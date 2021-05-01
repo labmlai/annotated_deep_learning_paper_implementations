@@ -36,10 +36,10 @@ class MNISTCapsuleNetworkModel(Module):
         # First convolution layer has $256$, $9 \times 9$ convolution kernels
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=256, kernel_size=9, stride=1)
         # The second layer (Primary Capsules) s a convolutional capsule layer with $32$ channels
-        # of convolutional $8D$ capsules ($8$ features per capsule)
+        # of convolutional $8D$ capsules ($8$ features per capsule).
         # That is, each primary capsule contains 8 convolutional units with a 9 × 9 kernel and a stride of 2.
         # In order to implement this we create a convolutional layer with $32 \times 8$ channels and
-        # reshapes and permutate it's output to get the capsules of $8$ features each
+        # reshape and permutate its output to get the capsules of $8$ features each.
         self.conv2 = nn.Conv2d(in_channels=256, out_channels=32 * 8, kernel_size=9, stride=2, padding=0)
         self.squash = Squash()
 
@@ -112,7 +112,7 @@ class Configs(MNISTConfigs, SimpleTrainValidConfigs):
         tracker.set_scalar('loss.*', True)
         tracker.set_scalar('accuracy.*', True)
 
-        # We need to set the metrics calculate them for the epoch for training and validation
+        # We need to set the metrics to calculate them for the epoch for training and validation
         self.state_modules = [self.accuracy]
 
     def step(self, batch: Any, batch_idx: BatchIndex):

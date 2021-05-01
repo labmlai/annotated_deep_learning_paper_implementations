@@ -43,21 +43,21 @@ class RHNCell(Module):
     $\odot$ stands for element-wise multiplication.
 
     Here we have made a couple of changes to notations from the paper.
-    To avoid confusion with time, the gate is represented with $g$,
+    To avoid confusion with time, gate is represented with $g$,
     which was $t$ in the paper.
     To avoid confusion with multiple layers we use $d$ for depth and $D$ for
-    total depth instead of $l$ and $L$ from paper.
+    total depth instead of $l$ and $L$ from the paper.
 
     We have also replaced the weight matrices and bias vectors from the equations with
     linear transforms, because that's how the implementation is going to look like.
 
-    We implement weight tying, as described in paper, $c_d^t = (1 - g_d^t$.
+    We implement weight tying, as described in paper, $c_d^t = 1 - g_d^t$.
     """
 
     def __init__(self, input_size: int, hidden_size: int, depth: int):
         """
         `input_size` is the feature length of the input and `hidden_size` is
-        feature length of the cell.
+        the feature length of the cell.
         `depth` is $D$.
         """
         super().__init__()
