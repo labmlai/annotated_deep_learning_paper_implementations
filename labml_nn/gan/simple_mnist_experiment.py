@@ -15,13 +15,13 @@ import torch.utils.data
 from torchvision import transforms
 
 from labml import tracker, monit, experiment
-from labml.configs import option
+from labml.configs import option, calculate
 from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
-from labml_nn.gan import DiscriminatorLogitsLoss, GeneratorLogitsLoss
+from labml_nn.gan.original import DiscriminatorLogitsLoss, GeneratorLogitsLoss
 
 
 def weights_init(m):
@@ -88,21 +88,17 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     epochs: int = 10
 
     is_save_models = True
-    discriminator: Module
-    generator: Module
+    discriminator: Module = 'mlp'
+    generator: Module = 'mlp'
     generator_optimizer: torch.optim.Adam
     discriminator_optimizer: torch.optim.Adam
-    generator_loss: GeneratorLogitsLoss
-    discriminator_loss: DiscriminatorLogitsLoss
+    generator_loss: GeneratorLogitsLoss = 'original'
+    discriminator_loss: DiscriminatorLogitsLoss = 'original'
     label_smoothing: float = 0.2
     discriminator_k: int = 1
 
     def init(self):
         self.state_modules = []
-        self.generator = Generator().to(self.device)
-        self.discriminator = Discriminator().to(self.device)
-        self.generator_loss = GeneratorLogitsLoss(self.label_smoothing).to(self.device)
-        self.discriminator_loss = DiscriminatorLogitsLoss(self.label_smoothing).to(self.device)
 
         hook_model_outputs(self.mode, self.generator, 'generator')
         hook_model_outputs(self.mode, self.discriminator, 'discriminator')
@@ -196,6 +192,12 @@ def _generator_optimizer(c: Configs):
     # Default of `0.9` fails.
     opt_conf.betas = (0.5, 0.999)
     return opt_conf
+
+
+calculate(Configs.generator, 'mlp', lambda c: Generator().to(c.device))
+calculate(Configs.discriminator, 'mlp', lambda c: Discriminator().to(c.device))
+calculate(Configs.generator_loss, 'original', lambda c: GeneratorLogitsLoss(c.label_smoothing).to(c.device))
+calculate(Configs.discriminator_loss, 'original', lambda c: DiscriminatorLogitsLoss(c.label_smoothing).to(c.device))
 
 
 def main():
