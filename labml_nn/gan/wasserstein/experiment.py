@@ -1,5 +1,5 @@
-# We import the [simple gan experiment]((simple_mnist_experiment.html) and change the
-# generator and discriminator networks
+# We import the [DCGAN experiment]((../dcgan.html) and change the
+# loss functions
 from labml import experiment
 
 from labml.configs import calculate

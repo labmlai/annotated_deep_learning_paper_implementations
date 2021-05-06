@@ -85,6 +85,7 @@ class Discriminator(Module):
 
 class Configs(MNISTConfigs, TrainValidConfigs):
     device: torch.device = DeviceConfigs()
+    dataset_transforms = 'mnist_gan_transforms'
     epochs: int = 10
 
     is_save_models = True
@@ -146,7 +147,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
             loss = self.generator_loss(logits)
 
             # Log stuff
-            tracker.add('generated', generated_images[0:5])
+            tracker.add('generated', generated_images[0:6])
             tracker.add("loss.generator.", loss)
 
             # Train
@@ -161,7 +162,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
 
 
 @option(Configs.dataset_transforms)
-def mnist_transforms():
+def mnist_gan_transforms():
     return transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))
