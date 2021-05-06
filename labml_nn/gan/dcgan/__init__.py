@@ -17,7 +17,7 @@ import torch.nn as nn
 from labml import experiment
 from labml.configs import calculate
 from labml_helpers.module import Module
-from labml_nn.gan.simple_mnist_experiment import Configs
+from labml_nn.gan.original.experiment import Configs
 
 
 class Generator(Module):
@@ -107,7 +107,7 @@ calculate(Configs.discriminator, 'cnn', lambda c: Discriminator().to(c.device))
 
 def main():
     conf = Configs()
-    experiment.create(name='mnist_dcgan', comment='test')
+    experiment.create(name='mnist_dcgan')
     experiment.configs(conf,
                        {'discriminator': 'cnn',
                         'generator': 'cnn',
