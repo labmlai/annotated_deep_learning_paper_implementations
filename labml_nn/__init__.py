@@ -1,5 +1,5 @@
 """
-# [labml.ai Neural Networks](index.html)
+# [labml.ai Annotated PyTorch Paper Implementations](index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
