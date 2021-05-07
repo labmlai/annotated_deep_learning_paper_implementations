@@ -4,6 +4,8 @@ title: Wasserstein GAN (WGAN)
 summary: A simple PyTorch implementation/tutorial of Wasserstein Generative Adversarial Networks (WGAN) loss functions.
 ---
 
+# Wasserstein GAN (WGAN)
+
 This is an implementation of
 [Wasserstein GAN](https://arxiv.org/abs/1701.07875).
 
