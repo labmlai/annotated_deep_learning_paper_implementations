@@ -42,9 +42,10 @@ implementations almost weekly.
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
-* [GAN with a multi-layer perceptron](https://nn.labml.ai/gan/simple_mnist_experiment.html)
-* [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan.html)
-* [Cycle GAN](https://nn.labml.ai/gan/cycle_gan.html)
+* [Original GAN](https://nn.labml.ai/gan/original/index.html)
+* [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan/index.html)
+* [Cycle GAN](https://nn.labml.ai/gan/cycle_gan/index.html)
+* [Wasserstein GAN](https://nn.labml.ai/gan/wasserstein/index.html)
 
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 

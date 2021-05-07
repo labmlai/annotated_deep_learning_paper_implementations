@@ -36,9 +36,10 @@ implementations.
 #### ✨ [Capsule Networks](capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](gan/index.html)
-* [GAN with a multi-layer perceptron](gan/simple_mnist_experiment.html)
-* [GAN with deep convolutional network](gan/dcgan.html)
-* [Cycle GAN](gan/cycle_gan.html)
+* [Original GAN](gan/original/index.html)
+* [GAN with deep convolutional network](gan/dcgan/index.html)
+* [Cycle GAN](gan/cycle_gan/index.html)
+* [Wasserstein GAN](gan/wasserstein/index.html)
 
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
