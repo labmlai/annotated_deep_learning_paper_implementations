@@ -29,8 +29,8 @@ a given joint distribution ($x$ and $y$ are probabilities).
 So $W(\mathbb{P}_r, \mathbb{P}g)$ is equal to the least earth mover distance for
 any joint distribution between the real distribution $\mathbb{P}_r$ and generated distribution $\mathbb{P}_g$.
 
-The paper shows that Jensen-Shannon (JS) divergence and other measures for difference between two probability
-distributions are not smooth. And therefore if we are doing a gradient descent on one of the probability
+The paper shows that Jensen-Shannon (JS) divergence and other measures for the difference between two probability
+distributions are not smooth. And therefore if we are doing gradient descent on one of the probability
 distributions (parameterized) it will not converge.
 
 Based on Kantorovich-Rubinstein duality,
