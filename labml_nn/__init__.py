@@ -40,6 +40,7 @@ implementations.
 * [GAN with deep convolutional network](gan/dcgan/index.html)
 * [Cycle GAN](gan/cycle_gan/index.html)
 * [Wasserstein GAN](gan/wasserstein/index.html)
+* [Wasserstein GAN with Gradient Penalty](gan/wasserstein/gradient_penalty/index.html)
 
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 

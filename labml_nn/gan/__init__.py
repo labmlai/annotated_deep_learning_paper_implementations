@@ -11,4 +11,5 @@ summary: >
 * [GAN with deep convolutional network](dcgan/index.html)
 * [Cycle GAN](cycle_gan/index.html)
 * [Wasserstein GAN](wasserstein/index.html)
+* [Wasserstein GAN with Gradient Penalty](wasserstein/gradient_penalty/index.html)
 """
