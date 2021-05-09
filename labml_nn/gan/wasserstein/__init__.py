@@ -105,6 +105,10 @@ class DiscriminatorLoss(Module):
         """
         * `f_real` is $f_w(x)$
         * `f_fake` is $f_w(g_\theta(z))$
+
+        This returns the a tuple with losses for $f_w(x)$ and $f_w(g_\theta(z))$,
+        which are later added.
+        They are kept separate for logging.
         """
 
         # We use ReLUs to clip the loss to keep $f \in [-1, +1]$ range.

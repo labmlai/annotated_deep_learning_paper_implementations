@@ -84,6 +84,13 @@ class Discriminator(Module):
 
 
 class Configs(MNISTConfigs, TrainValidConfigs):
+    """
+    ## Configurations
+
+    This extends MNIST configurations to get the data loaders and Training and validation loop
+    configurations to simplify our implementation.
+    """
+
     device: torch.device = DeviceConfigs()
     dataset_transforms = 'mnist_gan_transforms'
     epochs: int = 10
@@ -99,6 +106,9 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     discriminator_k: int = 1
 
     def init(self):
+        """
+        Initializations
+        """
         self.state_modules = []
 
         hook_model_outputs(self.mode, self.generator, 'generator')
@@ -107,11 +117,23 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         tracker.set_scalar("loss.discriminator.*", True)
         tracker.set_image("generated", True, 1 / 100)
 
+    def sample_z(self, batch_size: int):
+        """
+        $$z \sim p(z)$$
+        """
+        return torch.randn(batch_size, 100, device=self.device)
+
     def step(self, batch: Any, batch_idx: BatchIndex):
+        """
+        Take a training step
+        """
+
+        # Set model states
         self.generator.train(self.mode.is_train)
         self.discriminator.train(self.mode.is_train)
 
-        data, target = batch[0].to(self.device), batch[1].to(self.device)
+        # Get MNIST images
+        data = batch[0].to(self.device)
 
         # Increment step in training mode
         if self.mode.is_train:
@@ -119,46 +141,65 @@ class Configs(MNISTConfigs, TrainValidConfigs):
 
         # Train the discriminator
         with monit.section("discriminator"):
-            for _ in range(self.discriminator_k):
-                latent = torch.randn(data.shape[0], 100, device=self.device)
-                logits_true = self.discriminator(data)
-                logits_false = self.discriminator(self.generator(latent).detach())
-                loss_true, loss_false = self.discriminator_loss(logits_true, logits_false)
-                loss = loss_true + loss_false
-
-                # Log stuff
-                tracker.add("loss.discriminator.true.", loss_true)
-                tracker.add("loss.discriminator.false.", loss_false)
-                tracker.add("loss.discriminator.", loss)
-
-                # Train
-                if self.mode.is_train:
-                    self.discriminator_optimizer.zero_grad()
-                    loss.backward()
-                    if batch_idx.is_last:
-                        tracker.add('discriminator', self.discriminator)
-                    self.discriminator_optimizer.step()
-
-        # Train the generator
-        with monit.section("generator"):
-            latent = torch.randn(data.shape[0], 100, device=self.device)
-            generated_images = self.generator(latent)
-            logits = self.discriminator(generated_images)
-            loss = self.generator_loss(logits)
-
-            # Log stuff
-            tracker.add('generated', generated_images[0:6])
-            tracker.add("loss.generator.", loss)
+            # Get discriminator loss
+            loss = self.calc_discriminator_loss(data)
 
             # Train
             if self.mode.is_train:
-                self.generator_optimizer.zero_grad()
+                self.discriminator_optimizer.zero_grad()
                 loss.backward()
                 if batch_idx.is_last:
-                    tracker.add('generator', self.generator)
-                self.generator_optimizer.step()
+                    tracker.add('discriminator', self.discriminator)
+                self.discriminator_optimizer.step()
+
+        # Train the generator once in every `discriminator_k`
+        if batch_idx.is_interval(self.discriminator_k):
+            with monit.section("generator"):
+                loss = self.calc_generator_loss(data.shape[0])
+
+                # Train
+                if self.mode.is_train:
+                    self.generator_optimizer.zero_grad()
+                    loss.backward()
+                    if batch_idx.is_last:
+                        tracker.add('generator', self.generator)
+                    self.generator_optimizer.step()
 
         tracker.save()
+
+    def calc_discriminator_loss(self, data):
+        """
+        Calculate discriminator loss
+        """
+        latent = self.sample_z(data.shape[0])
+        logits_true = self.discriminator(data)
+        logits_false = self.discriminator(self.generator(latent).detach())
+        loss_true, loss_false = self.discriminator_loss(logits_true, logits_false)
+        loss = loss_true + loss_false
+
+        # Log stuff
+        tracker.add("loss.discriminator.true.", loss_true)
+        tracker.add("loss.discriminator.false.", loss_false)
+        tracker.add("loss.discriminator.", loss)
+
+        return loss
+
+    def calc_generator_loss(self, batch_size: int):
+        """
+        Calculate generator loss
+        """
+        latent =  self.sample_z(batch_size)
+        generated_images = self.generator(latent)
+        logits = self.discriminator(generated_images)
+        loss = self.generator_loss(logits)
+
+        # Log stuff
+        tracker.add('generated', generated_images[0:6])
+        tracker.add("loss.generator.", loss)
+
+        return loss
+
+
 
 
 @option(Configs.dataset_transforms)
@@ -176,7 +217,7 @@ def _discriminator_optimizer(c: Configs):
     opt_conf.parameters = c.discriminator.parameters()
     opt_conf.learning_rate = 2.5e-4
     # Setting exponent decay rate for first moment of gradient,
-    # $\beta_`$ to `0.5` is important.
+    # $\beta_1$ to `0.5` is important.
     # Default of `0.9` fails.
     opt_conf.betas = (0.5, 0.999)
     return opt_conf
@@ -189,7 +230,7 @@ def _generator_optimizer(c: Configs):
     opt_conf.parameters = c.generator.parameters()
     opt_conf.learning_rate = 2.5e-4
     # Setting exponent decay rate for first moment of gradient,
-    # $\beta_`$ to `0.5` is important.
+    # $\beta_1$ to `0.5` is important.
     # Default of `0.9` fails.
     opt_conf.betas = (0.5, 0.999)
     return opt_conf
