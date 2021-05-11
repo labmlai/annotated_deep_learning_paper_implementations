@@ -46,7 +46,7 @@ class EqualizedLinear(nn.Module):
 
 
 class EqualizedConv2D(nn.Module):
-    def __init__(self, in_features: int, out_features: int, kernel_size: int, padding: int, lr_mul: float = 0.01):
+    def __init__(self, in_features: int, out_features: int, kernel_size: int, padding: int, lr_mul: float = 1.):
         super().__init__()
         self.padding = padding
         self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
