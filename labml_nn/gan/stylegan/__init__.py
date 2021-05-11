@@ -22,7 +22,7 @@ class MappingNetwork(nn.Module):
 
         layers = []
         for i in range(n_layers):
-            layers.append(EqualizedLinear(features, features, lr_mul=0.01))
+            layers.append(EqualizedLinear(features, features, lr_mul=0.1))
             layers.append(nn.LeakyReLU(negative_slope=0.2, inplace=True))
 
         self.net = nn.Sequential(*layers)
@@ -40,23 +40,29 @@ class EqualizedLinear(nn.Module):
 
         he_std = 1 / math.sqrt(in_features)
         self.runtime_coef = lr_mul * he_std
+        self.lr_mul = lr_mul
 
     def __call__(self, x: torch.Tensor):
-        return F.linear(x, self.weight * self.runtime_coef, bias=self.bias * self.runtime_coef)
+        return F.linear(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul)
 
 
-class EqualizedConv2D(nn.Module):
-    def __init__(self, in_features: int, out_features: int, kernel_size: int, padding: int, lr_mul: float = 1.):
+class EqualizedConv2d(nn.Module):
+    def __init__(self, in_features: int, out_features: int,
+                 kernel_size: int, padding: int = 0, stride: int = 1,
+                 lr_mul: float = 1.):
         super().__init__()
+        self.stride = stride
         self.padding = padding
         self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
         self.bias = nn.Parameter(torch.zeros(out_features))
 
         he_std = 1 / math.sqrt(in_features * kernel_size * kernel_size)
         self.runtime_coef = lr_mul * he_std
+        self.lr_mul = lr_mul
 
     def forward(self, x: torch.Tensor):
-        return F.conv2d(x, self.weight * self.runtime_coef, bias=self.bias * self.runtime_coef, padding=self.padding)
+        return F.conv2d(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul,
+                        padding=self.padding, stride=self.stride)
 
 
 class Discriminator(nn.Module):
@@ -64,7 +70,7 @@ class Discriminator(nn.Module):
         super().__init__()
 
         self.from_rgb = nn.Sequential(
-            nn.Conv2d(n_image_features, n_features, 1),
+            EqualizedConv2d(n_image_features, n_features, 1),
             nn.LeakyReLU(0.2, True),
         )
 
@@ -77,7 +83,7 @@ class Discriminator(nn.Module):
 
         self.blocks = nn.Sequential(*blocks)
 
-        self.conv = nn.Conv2d(out_features, out_features, 4)
+        self.conv = EqualizedConv2d(out_features, out_features, 4)
         self.logits = EqualizedLinear(out_features, 1)
 
     def __call__(self, x: torch.Tensor):
@@ -93,12 +99,12 @@ class Discriminator(nn.Module):
 class DiscriminatorBlock(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
-        self.residual = nn.Conv2d(in_features, out_features, kernel_size=1, stride=2)
+        self.residual = EqualizedConv2d(in_features, out_features, kernel_size=1, stride=2)
 
         self.block = nn.Sequential(
-            EqualizedConv2D(in_features, in_features, kernel_size=3, padding=1),
+            EqualizedConv2d(in_features, in_features, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, True),
-            EqualizedConv2D(in_features, out_features, kernel_size=3, padding=1),
+            EqualizedConv2d(in_features, out_features, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, True),
         )
 
@@ -203,11 +209,15 @@ class Conv2dWeightModulate(nn.Module):
         self.filters = out_features
         self.demodulate = demodulate
         self.kernel = kernel_size
-        self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
-        self.eps = eps
+        self.padding = (self.kernel - 1) // 2
 
         he_std = 1 / math.sqrt(in_features * kernel_size * kernel_size)
+        self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
+        # self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) * he_std / lr_mul)
+        self.eps = eps
+
         self.runtime_coef = lr_mul * he_std
+        # self.runtime_coef = lr_mul
 
     def forward(self, x, style):
         b, c, h, w = x.shape
@@ -225,8 +235,7 @@ class Conv2dWeightModulate(nn.Module):
         _, _, *ws = weights.shape
         weights = weights.reshape(b * self.filters, *ws)
 
-        padding = (self.kernel - 1) // 2
-        x = F.conv2d(x, weights, padding=padding, groups=b)
+        x = F.conv2d(x, weights, padding=self.padding, groups=b)
 
         x = x.reshape(-1, self.filters, h, w)
 
@@ -320,8 +329,8 @@ class Configs(BaseConfigs):
     image_size: int = 128
     n_layers: int
     mapping_network_layers: int = 8
-    learning_rate: float = 2e-4
-    mapping_network_learning_rate: float = 2e-4
+    learning_rate: float = 2e-3
+    mapping_network_learning_rate: float = 2e-3
     gradient_accumulate_steps: int = 1
 
     path_length_penalty: PathLengthPenalty
@@ -431,8 +440,8 @@ class Configs(BaseConfigs):
         self.generator_optimizer.step()
         self.mapping_network_optimizer.step()
 
-        if (idx + 1) % 200 == 0:
-            tracker.add('generated', generated_images[:4])
+        if (idx + 1) % 100 == 0:
+            tracker.add('generated', generated_images)
         if (idx + 1) % 2_000 == 0:
             experiment.save_checkpoint()
 
@@ -454,7 +463,6 @@ def main():
     experiment.add_pytorch_models(mapping_network=configs.mapping_network,
                                   generator=configs.generator,
                                   discriminator=configs.discriminator)
-
 
     with experiment.start():
         configs.run()
