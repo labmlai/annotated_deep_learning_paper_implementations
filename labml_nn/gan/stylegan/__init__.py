@@ -431,7 +431,7 @@ class Configs(BaseConfigs):
         self.generator_optimizer.step()
         self.mapping_network_optimizer.step()
 
-        if (idx + 1) % 50 == 0:
+        if (idx + 1) % 1000 == 0:
             tracker.add('generated', generated_images[:4])
             experiment.save_checkpoint()
 
@@ -454,8 +454,6 @@ def main():
                                   generator=configs.generator,
                                   discriminator=configs.discriminator)
 
-
-    experiment.load('55c42084b23311eb8183a94fad85cc84')
 
     with experiment.start():
         configs.run()
