@@ -367,13 +367,19 @@ class Configs(BaseConfigs):
     learning_rate: float = 1e-3
     mapping_network_learning_rate: float = 1e-5
     gradient_accumulate_steps: int = 1
+    betas: Tuple[float, float] = (0.0, 0.99)
 
     path_length_penalty: PathLengthPenalty
 
     dataset: Dataset
     loader: Iterator
 
-    betas: Tuple[float, float] = (0.0, 0.99)
+    lazy_gradient_penalty_interval: int = 4
+    lazy_path_penalty_interval: int = 32
+    lazy_path_penalty_after: int = 5_000
+
+    log_generated_interval: int = 500
+    save_checkpoint_interval: int = 2_000
 
     def init(self):
         self.dataset = Dataset(self.image_size)
@@ -439,7 +445,7 @@ class Configs(BaseConfigs):
             real_loss, fake_loss = self.discriminator_loss(real_output, fake_output)
             disc_loss = real_loss + fake_loss
 
-            if idx % 4 == 0:
+            if (idx + 1) % self.lazy_gradient_penalty_interval == 0:
                 gp = self.gradient_penalty(x, real_output)
                 tracker.add('loss.gp', gp)
                 disc_loss = disc_loss + gp
@@ -460,7 +466,7 @@ class Configs(BaseConfigs):
 
             gen_loss = self.generator_loss(fake_output)
 
-            if idx > 5000 and idx % 32 == 0:
+            if idx > self.lazy_path_penalty_after and (idx + 1) % self.lazy_path_penalty_interval == 0:
                 ppl = self.path_length_penalty(w_style, generated_images)
                 if not torch.isnan(ppl):
                     gen_loss = gen_loss + ppl
@@ -472,9 +478,9 @@ class Configs(BaseConfigs):
         self.generator_optimizer.step()
         self.mapping_network_optimizer.step()
 
-        if (idx + 1) % 500 == 0:
+        if (idx + 1) % self.log_generated_interval == 0:
             tracker.add('generated', generated_images)
-        if (idx + 1) % 2_000 == 0:
+        if (idx + 1) % self.save_checkpoint_interval == 0:
             experiment.save_checkpoint()
 
         tracker.save()
@@ -482,7 +488,7 @@ class Configs(BaseConfigs):
     def run(self):
         for i in monit.loop(150_000):
             self.step(i)
-            if (i + 1) % 200 == 0:
+            if (i + 1) % self.log_generated_interval == 0:
                 tracker.new_line()
 
 
