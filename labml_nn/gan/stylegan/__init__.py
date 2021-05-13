@@ -1,6 +1,6 @@
 import math
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -22,7 +22,7 @@ class MappingNetwork(nn.Module):
 
         layers = []
         for i in range(n_layers):
-            layers.append(EqualizedLinear(features, features, lr_mul=0.1))
+            layers.append(EqualizedLinear(features, features, lr_mul=1.))
             layers.append(nn.LeakyReLU(negative_slope=0.2, inplace=True))
 
         self.net = nn.Sequential(*layers)
@@ -30,39 +30,6 @@ class MappingNetwork(nn.Module):
     def forward(self, x: torch.Tensor):
         x = F.normalize(x, dim=1)
         return self.net(x)
-
-
-class EqualizedLinear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, lr_mul: float = 1.):
-        super().__init__()
-        self.weight = nn.Parameter(torch.randn(out_features, in_features) / lr_mul)
-        self.bias = nn.Parameter(torch.zeros(out_features))
-
-        he_std = 1 / math.sqrt(in_features)
-        self.runtime_coef = lr_mul * he_std
-        self.lr_mul = lr_mul
-
-    def __call__(self, x: torch.Tensor):
-        return F.linear(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul)
-
-
-class EqualizedConv2d(nn.Module):
-    def __init__(self, in_features: int, out_features: int,
-                 kernel_size: int, padding: int = 0, stride: int = 1,
-                 lr_mul: float = 1.):
-        super().__init__()
-        self.stride = stride
-        self.padding = padding
-        self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
-        self.bias = nn.Parameter(torch.zeros(out_features))
-
-        he_std = 1 / math.sqrt(in_features * kernel_size * kernel_size)
-        self.runtime_coef = lr_mul * he_std
-        self.lr_mul = lr_mul
-
-    def forward(self, x: torch.Tensor):
-        return F.conv2d(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul,
-                        padding=self.padding, stride=self.stride)
 
 
 class Discriminator(nn.Module):
@@ -108,12 +75,13 @@ class DiscriminatorBlock(nn.Module):
             nn.LeakyReLU(0.2, True),
         )
 
+        self.down_sample = DownSample(out_features)
         self.scale = 1 / math.sqrt(2)
 
     def forward(self, x):
         residual = self.residual(x)
         x = self.block(x)
-        x = F.interpolate(x, (x.shape[2] // 2, x.shape[3] // 2), mode='bilinear', align_corners=False)
+        x = self.down_sample(x)
 
         return (x + residual) * self.scale
 
@@ -131,9 +99,7 @@ class Generator(nn.Module):
 
         self.blocks = nn.ModuleList(list(reversed(blocks)))
 
-        self.upsample = nn.Upsample(scale_factor=2,
-                                    mode='bilinear',
-                                    align_corners=False)
+        self.up_sample = UpSample()
         self.initial_constant = nn.Parameter(torch.randn((1, in_features, 4, 4)))
 
     def forward(self, styles: torch.Tensor, input_noise: torch.Tensor):
@@ -145,9 +111,8 @@ class Generator(nn.Module):
 
         for i in range(len(self.blocks)):
             if i != 0:
-                x = self.upsample(x)
+                x = self.up_sample(x)
 
-            # or input_noise[:, i]?
             x, rgb = self.blocks[i](x, rgb, styles[:, i], input_noise)
 
         return rgb
@@ -191,14 +156,14 @@ class ToRGB(nn.Module):
         self.to_style = EqualizedLinear(latent_dim, in_features)
 
         self.conv = Conv2dWeightModulate(in_features, 3, kernel_size=1, demodulate=False)
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.up_sample = UpSample()
 
     def forward(self, x, prev_rgb, istyle):
         style = self.to_style(istyle)
         rgb = self.conv(x, style)
 
         if prev_rgb is not None:
-            rgb = rgb + self.upsample(prev_rgb)
+            rgb = rgb + self.up_sample(prev_rgb)
 
         return rgb
 
@@ -213,11 +178,9 @@ class Conv2dWeightModulate(nn.Module):
 
         he_std = 1 / math.sqrt(in_features * kernel_size * kernel_size)
         self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
-        # self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) * he_std / lr_mul)
         self.eps = eps
 
         self.runtime_coef = lr_mul * he_std
-        # self.runtime_coef = lr_mul
 
     def forward(self, x, style):
         b, c, h, w = x.shape
@@ -240,6 +203,78 @@ class Conv2dWeightModulate(nn.Module):
         x = x.reshape(-1, self.filters, h, w)
 
         return x
+
+
+class DownSample(nn.Module):
+    def __init__(self, features: int):
+        super().__init__()
+        self.smooth = Smooth()
+        self.conv = EqualizedConv2d(features, features, kernel_size=3, padding=1, stride=2)
+
+    def forward(self, x: torch.Tensor):
+        return self.conv(self.smooth(x))
+
+
+class UpSample(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.up_sample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.smooth = Smooth()
+
+    def forward(self, x: torch.Tensor):
+        return self.smooth(self.up_sample(x))
+
+
+class Smooth(nn.Module):
+    def __init__(self):
+        super().__init__()
+        kernel = [[1, 2, 1],
+                  [2, 4, 2],
+                  [1, 2, 1]]
+        kernel = torch.tensor([[kernel]], dtype=torch.float)
+        kernel /= kernel.sum()
+        self.kernel = nn.Parameter(kernel, requires_grad=False)
+
+    def forward(self, x: torch.Tensor):
+        b, c, h, w = x.shape
+        x = x.view(-1, 1, h, w)
+
+        x = F.conv2d(x, self.kernel, padding=1)
+
+        return x.view(b, c, h, w)
+
+
+class EqualizedLinear(nn.Module):
+    def __init__(self, in_features: int, out_features: int, lr_mul: float = 1.):
+        super().__init__()
+        self.weight = nn.Parameter(torch.randn(out_features, in_features) / lr_mul)
+        self.bias = nn.Parameter(torch.zeros(out_features))
+
+        he_std = 1 / math.sqrt(in_features)
+        self.runtime_coef = lr_mul * he_std
+        self.lr_mul = lr_mul
+
+    def __call__(self, x: torch.Tensor):
+        return F.linear(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul)
+
+
+class EqualizedConv2d(nn.Module):
+    def __init__(self, in_features: int, out_features: int,
+                 kernel_size: int, padding: int = 0, stride: int = 1,
+                 lr_mul: float = 1.):
+        super().__init__()
+        self.stride = stride
+        self.padding = padding
+        self.weight = nn.Parameter(torch.randn((out_features, in_features, kernel_size, kernel_size)) / lr_mul)
+        self.bias = nn.Parameter(torch.zeros(out_features))
+
+        he_std = 1 / math.sqrt(in_features * kernel_size * kernel_size)
+        self.runtime_coef = lr_mul * he_std
+        self.lr_mul = lr_mul
+
+    def forward(self, x: torch.Tensor):
+        return F.conv2d(x, self.weight * self.runtime_coef, bias=self.bias * self.lr_mul,
+                        padding=self.padding, stride=self.stride)
 
 
 class PathLengthPenalty(nn.Module):
@@ -326,17 +361,19 @@ class Configs(BaseConfigs):
 
     batch_size: int = 24
     d_latent: int = 512
-    image_size: int = 128
+    image_size: int = 32
     n_layers: int
     mapping_network_layers: int = 8
-    learning_rate: float = 2e-3
-    mapping_network_learning_rate: float = 2e-3
+    learning_rate: float = 1e-3
+    mapping_network_learning_rate: float = 1e-5
     gradient_accumulate_steps: int = 1
 
     path_length_penalty: PathLengthPenalty
 
     dataset: Dataset
     loader: Iterator
+
+    betas: Tuple[float, float] = (0.0, 0.99)
 
     def init(self):
         self.dataset = Dataset(self.image_size)
@@ -356,15 +393,15 @@ class Configs(BaseConfigs):
 
         self.discriminator_optimizer = torch.optim.Adam(
             self.discriminator.parameters(),
-            lr=self.learning_rate, betas=(0.5, 0.9)
+            lr=self.learning_rate, betas=self.betas
         )
         self.generator_optimizer = torch.optim.Adam(
             self.generator.parameters(),
-            lr=self.learning_rate, betas=(0.5, 0.9)
+            lr=self.learning_rate, betas=self.betas
         )
         self.mapping_network_optimizer = torch.optim.Adam(
             self.mapping_network.parameters(),
-            lr=self.mapping_network_learning_rate, betas=(0.5, 0.9)
+            lr=self.mapping_network_learning_rate, betas=self.betas
         )
         tracker.set_image("generated", True)
 
@@ -388,12 +425,7 @@ class Configs(BaseConfigs):
         return generated_images, w_style
 
     def step(self, idx):
-        apply_gradient_penalty = idx % 4 == 0
-        apply_path_penalty = idx > 5000 and idx % 32 == 0
-
-        # setup losses
-
-        # train discriminator
+        # Train Discriminator
         self.discriminator_optimizer.zero_grad()
 
         for i in range(self.gradient_accumulate_steps):
@@ -407,7 +439,7 @@ class Configs(BaseConfigs):
             real_loss, fake_loss = self.discriminator_loss(real_output, fake_output)
             disc_loss = real_loss + fake_loss
 
-            if apply_gradient_penalty:
+            if idx % 4 == 0:
                 gp = self.gradient_penalty(x, real_output)
                 tracker.add('loss.gp', gp)
                 disc_loss = disc_loss + gp
@@ -418,7 +450,7 @@ class Configs(BaseConfigs):
 
         self.discriminator_optimizer.step()
 
-        # train generator
+        # Train Generator & Mapping Network
         self.generator_optimizer.zero_grad()
         self.mapping_network_optimizer.zero_grad()
 
@@ -428,7 +460,7 @@ class Configs(BaseConfigs):
 
             gen_loss = self.generator_loss(fake_output)
 
-            if apply_path_penalty:
+            if idx > 5000 and idx % 32 == 0:
                 ppl = self.path_length_penalty(w_style, generated_images)
                 if not torch.isnan(ppl):
                     gen_loss = gen_loss + ppl
@@ -440,7 +472,7 @@ class Configs(BaseConfigs):
         self.generator_optimizer.step()
         self.mapping_network_optimizer.step()
 
-        if (idx + 1) % 100 == 0:
+        if (idx + 1) % 500 == 0:
             tracker.add('generated', generated_images)
         if (idx + 1) % 2_000 == 0:
             experiment.save_checkpoint()
@@ -457,7 +489,10 @@ class Configs(BaseConfigs):
 def main():
     configs = Configs()
     experiment.create(name='stylegan')
-    experiment.configs(configs)
+    experiment.configs(configs, {
+        'device.cuda_device': 0,
+        'image_size': 32,
+    })
 
     configs.init()
     experiment.add_pytorch_models(mapping_network=configs.mapping_network,
