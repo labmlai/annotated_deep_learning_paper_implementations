@@ -1,18 +1,85 @@
 """
-# Progressive GAN
-<a href="progrssive_gan.svg" target="_blank">
-<img class="diagram" src="progressive_gan.svg" style="max-width:90%" />
-</a>
+# Style GAN2
 
-# Style GAN
+This is a [PyTorch](https://pytorch.org) implementation of the paper [Analyzing and Improving the Image Quality of StyleGAN](https://arxiv.org/abs/1912.04958) which introduces **Style GAN2**. Style GAN2 is an improvement over **Style GAN** from the paper [A Style-Based Generator Architecture for Generative Adversarial Networks](https://arxiv.org/abs/1812.04948). And Style GAN is based on **Progressive GAN** from the paper
+[Progressive Growing of GANs for Improved Quality, Stability, and Variation](https://arxiv.org/abs/1710.10196). All three papers are from same set of authors from [NVIDIA AI](https://twitter.com/NVIDIAAI).
+
+*Our implementation is a minimalistic Style GAN2 model training code. Only single GPU training is supported to keep the implementation simple. We managed to shrink it to keep it at a little more than 350 lines of code.*
+
+We'll first introduce the three papers at a high level.
+
+## Generative Adversarial Networks
+
+Generative adversarial networks have two components; the generator and the discriminator. The generator network takes a random latent vector ($z \in \mathcal{Z}$) and tries to generate a realistic image. The discriminator network tries to differentiate the real images from generated images. When we train the two networks together the generator starts generating images indistinguishable from real images.
+
+## Progressive GAN
+
+Progressive GAN generate high-resolution images ($1080 \times 1080$) of size. It does so by *progressively* increasing the image size. First, it trains a network that produces a $4 \times 4$ image, then $8 \times 8$ , then an $16 \times 16$  image, and so on upto the desired image resolution.
+
+At each resolution the generator network produces an image in latent space which is converted into RGB,
+with a $1 \times 1$  convolution. When we progress from a lower resolution to a higher resolution (say from $4 \times 4$  to $8 \times 8$ ) we scale the latent image by $2\times$ and add a new block (two $3 \times 3$  convolution layers) and a new $1 \times 1$  layer to get RGB. The transition is done smoothly by adding a residual connection to the $2\times$ scaled $4 \times 4$  RGB image. The weight of this residual connection is slowly reduced, to let the new block to take over.
+
+The discriminator is a mirror image of the generator network. The progressive growing of the disciminator is done similarly.
+
+![progressive_gan.svg](progressive_gan.svg)
+
+They use **minibatch standard deviation** to increase variation and **equalized learning rate** which we discussed below in the implementation. They also use **pixel-wise normalization** where at each pixel the feature vector is normalized. They apply this to all the convlution layer outputs (except RGB).
+
+
+## Style GAN
+
+Style GAN improves the generator of Progressive GAN keeping the discriminator architecture same.
+
+#### Mapping Network
+
+It maps the random latent vector ($z \in \mathcal{Z}$)i nto a different latent space ($w \in \mathcal{W}$), with a 8-layer neural network. This gives a intemediate latent space $\mathcal{W}$ where the factors of variations are more linear (disentangled).
+
+#### AdaIN
+
+Then $w$ is transformed into two vectors (***styles***) per layer, $i$, $y_i = (y_{s,i}, y_{b,i}) = f_{A_i}(w)$ and used for scaling and shifting (biasing) in each layer with $\text{AdaIN}$ operator (normalize and scale):
+$$
+\text{AdaIN}(x_i, y_i) = y_{s, i} \frac{x_i - \mu(x_i)}{\sigma(x_i)} + y_{b,i}
+$$
+
+#### Style Mixing
+
+To prevent the generator from assuming adjacent styles are correlated, they randomly use different styles for different blocks. That is, they sample two latent vectors $(z_1, z_2)$ and corresponding $(w_1, w_2)$ and use $w_1$ based styles for some blocks and $w_2$ based styles for some blacks randomly.
+
+#### Stocastic Variation
+
+Noise is made available to each block which helps generator create more realistic images. Noise is scaled per channel by a learned weight.
+
+#### Bilinear Up and Down Sampling
+
+All the up and down sampling operations are accompanied by bilinear smoothing.
+
 ![style_gan.svg](style_gan.svg)
 
+## Style GAN 2
 
-# Style GAN2
-![style_gan2.svg](style_gan2.svg)
+Style GAN 2 changes both the generator and the discriminator of Style GAN.
 
-# Style GAN2 Discriminator
-![style_gan2_disc.svg](style_gan2_disc.svg)
+#### Weight Modulation and Demodulation
+
+They remove the $\text{AdaIN}$ operator and replace it weight modulation and demodulation step. This is supposed to improve what they call droplet artifacts that are present in generated images, which are caused by the normalization in $\text{AdaIN}$ operator. Style vector per layer is calculated from $w_i \in \mathcal{W}$ as $s_i = f_{A_i}(w_i)$.
+
+Then the convolution weights $w$ are modulated as follows. ($w$ here on refers to weights not intermediate latent space, we are sticking to the same notation as the paper.)
+$$
+w'_{i, j, k} = s_i \cdot w_{i, j, k} \\
+$$
+Then it's demodulated by normalizing,
+$$
+w''_{i,j,k} = \frac{w'_{i,j,k}}{\sqrt{\sum_{i,k}{w'_{i, j, k}}^2 + \epsilon}}
+$$
+where $i$ is the input channel, $j$ is the output channel, and $k$ is the kernel index.
+
+#### Path Length Regularization
+
+Path length regularization encourages a fixed-size step in $\mathcal{W}$ to result in a non-zero, fixed-magnitude change in generated image.
+
+#### No Progressive Growing
+
+StyleGAN2 uses residual connections (with downsampling) in the discriminator and skip connections in the generator with upsampling (the RGB outputs from each layer are added - no residual connections in feature maps). They show that with experiemnts that the contribution of low resolution layers is higher at beginning of the training and then high-resolution layers take over.
 """
 
 import math
@@ -50,6 +117,9 @@ class MappingNetwork(nn.Module):
 
 
 class Discriminator(nn.Module):
+    """
+    ![style_gan2_disc.svg](style_gan2_disc.svg)
+    """
     def __init__(self, n_layers, n_image_features=3, n_features=32, max_features=512):
         super().__init__()
 
@@ -104,6 +174,9 @@ class DiscriminatorBlock(nn.Module):
 
 
 class Generator(nn.Module):
+    """
+    ![style_gan2.svg](style_gan2.svg)
+    """
     def __init__(self, n_layers, d_latent, n_features=32, max_features=512):
         super().__init__()
 
