@@ -1,3 +1,20 @@
+"""
+# Progressive GAN
+<a href="progrssive_gan.svg" target="_blank">
+<img class="diagram" src="progressive_gan.svg" style="max-width:90%" />
+</a>
+
+# Style GAN
+![style_gan.svg](style_gan.svg)
+
+
+# Style GAN2
+![style_gan2.svg](style_gan2.svg)
+
+# Style GAN2 Discriminator
+![style_gan2_disc.svg](style_gan2_disc.svg)
+"""
+
 import math
 from pathlib import Path
 from typing import Any, Iterator, Tuple

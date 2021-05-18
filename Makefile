@@ -23,13 +23,10 @@ uninstall: ## Uninstall
 
 docs: ## Render annotated HTML
 	find ./docs/ -name "*.html" -type f -delete
+	find ./docs/ -name "*.svg" -type f -delete
 	python utils/sitemap.py
+	python utils/diagrams.py
 	cd labml_nn; pylit --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs -w *
-
-pages-old: ## Copy to lab-ml site
-	cd labml_nn; pylit --remove_empty_sections --title_md -t ../../../pylit/templates/nn_old -d ../html/labml_nn *
-	@cd ../pages; git pull
-	cp -r html/* ../pages/
 
 help: ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
