@@ -494,13 +494,23 @@ class DiscriminatorBlock(nn.Module):
     <a id="discriminator_black"></a>
 
     ### Discriminator Block
+
+    ![Discriminator block](discriminator_block.svg)
+
+    Discriminator block consists of two $3 \times 3$ convolutions with a residual connection.
     """
 
     def __init__(self, in_features, out_features):
+        """
+        * `in_features` is the number of features in the input feature map
+        * `out_features` is the number of features in the output feature map
+        """
         super().__init__()
+        # Down-sampling and $1 \times 1$ convolution layer for the residual connection
         self.residual = nn.Sequential(DownSample(),
                                       EqualizedConv2d(in_features, out_features, kernel_size=1))
 
+        # Two $3 \times 3$ convolutions
         self.block = nn.Sequential(
             EqualizedConv2d(in_features, in_features, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, True),
@@ -508,117 +518,280 @@ class DiscriminatorBlock(nn.Module):
             nn.LeakyReLU(0.2, True),
         )
 
+        # Down-sampling layer
         self.down_sample = DownSample()
+
+        # Scaling factor $\frac{1}{\sqrt 2}$ after adding the residual
         self.scale = 1 / math.sqrt(2)
 
     def forward(self, x):
+        # Get the residual connection
         residual = self.residual(x)
+
+        # Convolutions
         x = self.block(x)
+        # Down-sample
         x = self.down_sample(x)
 
+        # Add the residual and scale
         return (x + residual) * self.scale
 
 
 class MiniBatchStdDev(nn.Module):
+    """
+    <a id="mini_batch_std_dev"></a>
+
+    ### Mini-batch Standard Deviation
+
+    Mini-batch standard deviation calculates the standard deviation
+    across a mini-batch (or a sub groups within the mini-batch)
+    for each feature in the feature map. Then it takes the mean of all
+    the standard deviations and append it to the feature map as one extra feature.
+    """
+
     def __init__(self, group_size: int = 4):
+        """
+        * `group_size` is the number of samples to calculate standard deviation across.
+        """
         super().__init__()
         self.group_size = group_size
 
     def forward(self, x: torch.Tensor):
+        """
+        * `x` is the feature map
+        """
+        # Check if the batch size is divisible by the group size
         assert x.shape[0] % self.group_size == 0
-        std = torch.sqrt(x.view(self.group_size, -1).var(dim=0) + 1e-8)
+        # Split the samples into groups of `group_size`, we flatten the feature map to a single dimension
+        # since we want to calculate the standard deviation for each feature.
+        grouped = x.view(self.group_size, -1)
+        # Calculate the standard deviation for each feature among `group_size` samples
+        # $$\mu_{i} = \frac{1}{N} \sum_g x_{g,i} \\
+        #   \sigma_{i} = \sqrt{\frac{1}{N} \sum_g (x_{g,i} - \mu_i)^2  + \epsilon}$$
+        std = torch.sqrt(grouped.var(dim=0) + 1e-8)
+        # Get the mean standard deviation
         std = std.mean().view(1, 1, 1, 1)
+        # Expand the standard deviation to append to the feature map
         b, _, h, w = x.shape
-        return torch.cat([x, std.expand(b, -1, h, w)], dim=1)
+        std = std.expand(b, -1, h, w)
+        # Append (concatenate) the standard deviations to the feature map
+        return torch.cat([x, std], dim=1)
 
 
 class DownSample(nn.Module):
+    """
+    <a id="down_sample"></a>
+    ### Down-sample
+
+    The down-sample operation [smoothens](#smooth) each feature channel and
+     scale $2 \times$ using bilinear interpolation.
+    This is based on paper
+     [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
+    """
+
     def __init__(self):
         super().__init__()
+        # Smoothing layer
         self.smooth = Smooth()
 
     def forward(self, x: torch.Tensor):
+        # Smoothing or blurring
         x = self.smooth(x)
-        x = F.interpolate(x, (x.shape[2] // 2, x.shape[3] // 2), mode='bilinear', align_corners=False)
-        return x
+        # Scaled down
+        return F.interpolate(x, (x.shape[2] // 2, x.shape[3] // 2), mode='bilinear', align_corners=False)
 
 
 class UpSample(nn.Module):
+    """
+    <a id="up_sample"></a>
+    ### Up-sample
+
+    The up-sample operation scales the image up by $2 \times$ and [smoothens](#smooth) each feature channel.
+    This is based on paper
+     [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
+    """
+
     def __init__(self):
         super().__init__()
+        # Up-sampling layer
         self.up_sample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        # Smoothing layer
         self.smooth = Smooth()
 
     def forward(self, x: torch.Tensor):
+        # Up-sample and smoothen
         return self.smooth(self.up_sample(x))
 
 
 class Smooth(nn.Module):
+    """
+    <a id="smooth"></a>
+
+    ### Smoothing Layer
+
+    This layer blurs each channel
+    """
+
     def __init__(self):
         super().__init__()
+        # Blurring kernel
         kernel = [[1, 2, 1],
                   [2, 4, 2],
                   [1, 2, 1]]
+        # Convert the kernel to a PyTorch tensor
         kernel = torch.tensor([[kernel]], dtype=torch.float)
+        # Normalize the kernel
         kernel /= kernel.sum()
+        # Save kernel as a fixed parameter (no gradient updates)
         self.kernel = nn.Parameter(kernel, requires_grad=False)
+        # Padding layer
         self.pad = nn.ReplicationPad2d(1)
 
     def forward(self, x: torch.Tensor):
+        # Get shape of the input feature map
         b, c, h, w = x.shape
+        # Reshape for smoothening
         x = x.view(-1, 1, h, w)
 
+        # Add padding
         x = self.pad(x)
+
+        # Smoothen (blur) with the kernel
         x = F.conv2d(x, self.kernel)
 
+        # Reshape and return
         return x.view(b, c, h, w)
 
 
 class EqualizedLinear(nn.Module):
     """
     <a id="equalized_linear"></a>
+
     ## Learning-rate Equalized Linear Layer
+
+    This uses [learning-rate equalized weights]($equalized_weights) for a linear layer.
     """
 
-    def __init__(self, in_features: int, out_features: int, lr_mul: float = 1., bias: float = 0.):
+    def __init__(self, in_features: int, out_features: int, bias: float = 0.):
+        """
+        * `in_features` is the number of features in the input feature map
+        * `out_features` is the number of features in the output feature map
+        * `bias` is the bias initialization constant
+        """
+
         super().__init__()
-        self.weight = EqualizedWeight([out_features, in_features], lr_mul)
+        # [Learning-rate equalized weights]($equalized_weights)
+        self.weight = EqualizedWeight([out_features, in_features])
+        # Bias
         self.bias = nn.Parameter(torch.ones(out_features) * bias)
 
-        self.lr_mul = lr_mul
-
     def forward(self, x: torch.Tensor):
-        return F.linear(x, self.weight(), bias=self.bias * self.lr_mul)
+        # Linear transformation
+        return F.linear(x, self.weight(), bias=self.bias)
 
 
 class EqualizedConv2d(nn.Module):
-    def __init__(self, in_features: int, out_features: int,
-                 kernel_size: int, padding: int = 0, stride: int = 1,
-                 lr_mul: float = 1.,
-                 bias: float = 0.):
-        super().__init__()
-        self.stride = stride
-        self.padding = padding
-        self.weight = EqualizedWeight([out_features, in_features, kernel_size, kernel_size], lr_mul)
-        self.bias = nn.Parameter(torch.ones(out_features) * bias)
+    """
+    <a id="equalized_conv2d"></a>
 
-        self.lr_mul = lr_mul
+    ## Learning-rate Equalized 2D Convolution Layer
+
+    This uses [learning-rate equalized weights]($equalized_weights) for a convolution layer.
+    """
+
+    def __init__(self, in_features: int, out_features: int,
+                 kernel_size: int, padding: int = 0):
+        """
+        * `in_features` is the number of features in the input feature map
+        * `out_features` is the number of features in the output feature map
+        * `kernel_size` is the size of the convolution kernel
+        * `padding` is the padding to be added on both sides of each size dimension
+        """
+        super().__init__()
+        # Padding size
+        self.padding = padding
+        # [Learning-rate equalized weights]($equalized_weights)
+        self.weight = EqualizedWeight([out_features, in_features, kernel_size, kernel_size])
+        # Bias
+        self.bias = nn.Parameter(torch.ones(out_features))
 
     def forward(self, x: torch.Tensor):
-        return F.conv2d(x, self.weight(), bias=self.bias * self.lr_mul,
-                        padding=self.padding, stride=self.stride)
+        # Convolution
+        return F.conv2d(x, self.weight(), bias=self.bias, padding=self.padding)
 
 
 class EqualizedWeight(nn.Module):
-    def __init__(self, shape: List[int], lr_mul=1.):
+    """
+    <a id="equalized_weight"></a>
+
+    ## Learning-rate Equalized Weights Parameter
+
+    This is based on equalized learning rate introduced in Progressive GAN paper.
+    Instead of initializing weights at $\mathcal{N}(0,c)$ they initialize weights
+    to $\mathcal{N}(0, 1)$ and then multiply them by $c$ when using it.
+    $$w_i = c \hat{w}_i$$
+
+    The gradients on stored parameters $\hat{w}$ get multiplied by $c$ but this doesn't have
+    and affect since optimizers such as Adam normalizes them by a running mean of the squared gradients.
+
+    The optimizer updates on $\hat{w}$ are proportionate to the learning rate $\lambda$.
+    But the effective weights $w$ get updated proportionate to $c \lambda$.
+    Without equalized learning rate, the effective weights will get updated proportionate to just $\lambda$.
+
+    So we are effectively scaling the learning rate by $c$ for this weight parameters.
+    """
+
+    def __init__(self, shape: List[int]):
+        """
+        * `shape` is the shape of the weight parameter
+        """
         super().__init__()
 
-        he_std = 1 / math.sqrt(np.prod(shape[1:]))
-        self.weight = nn.Parameter(torch.randn(shape) / lr_mul)
-        self.runtime_coef = lr_mul * he_std
+        # He initialization constant
+        self.c = 1 / math.sqrt(np.prod(shape[1:]))
+        # Initialize the weights with $\mathcal{N}(0, 1)$
+        self.weight = nn.Parameter(torch.randn(shape))
+        # Weight multiplication coefficient
 
     def forward(self):
+        # Multiply the weights by $c$ and return
         return self.weight * self.runtime_coef
+
+
+class GradientPenalty(nn.Module):
+    """
+    ## Gradient Penalty
+
+    
+    """
+
+    def forward(self, x: torch.Tensor, f: torch.Tensor):
+        """
+        * `x` is $x \sim \mathbb{P}_r$
+        * `f` is $D(x)$
+
+        $\hat{x} \leftarrow x$
+        since we set $\epsilon = 1$ for this implementation.
+        """
+
+        # Get batch size
+        batch_size = x.shape[0]
+
+        # Calculate gradients of $D(x)$ with respect to $x$.
+        # `grad_outputs` is set to ones since we want the gradients of $D(x)$,
+        # and we need to create and retain graph since we have to compute gradients
+        # with respect to weight on this loss.
+        gradients, *_ = torch.autograd.grad(outputs=f,
+                                            inputs=x,
+                                            grad_outputs=f.new_ones(f.shape),
+                                            create_graph=True)
+
+        # Reshape gradients to calculate the norm
+        gradients = gradients.reshape(batch_size, -1)
+        # Calculate the norm $\Vert \nabla_{\hat{x}} D(\hat{x}) \Vert_2$
+        norm = gradients.norm(2, dim=-1)
+        # Return the loss $\big(\Vert \nabla_{\hat{x}} D(\hat{x}) \Vert_2 - 1\big)^2$
+        return torch.mean(norm ** 2)
 
 
 class PathLengthPenalty(nn.Module):
@@ -682,40 +855,6 @@ def cycle(iterable):
     while True:
         for i in iterable:
             yield i
-
-
-class GradientPenalty(nn.Module):
-    """
-    ## Gradient Penalty
-    """
-
-    def forward(self, x: torch.Tensor, f: torch.Tensor):
-        """
-        * `x` is $x \sim \mathbb{P}_r$
-        * `f` is $D(x)$
-
-        $\hat{x} \leftarrow x$
-        since we set $\epsilon = 1$ for this implementation.
-        """
-
-        # Get batch size
-        batch_size = x.shape[0]
-
-        # Calculate gradients of $D(x)$ with respect to $x$.
-        # `grad_outputs` is set to ones since we want the gradients of $D(x)$,
-        # and we need to create and retain graph since we have to compute gradients
-        # with respect to weight on this loss.
-        gradients, *_ = torch.autograd.grad(outputs=f,
-                                            inputs=x,
-                                            grad_outputs=f.new_ones(f.shape),
-                                            create_graph=True)
-
-        # Reshape gradients to calculate the norm
-        gradients = gradients.reshape(batch_size, -1)
-        # Calculate the norm $\Vert \nabla_{\hat{x}} D(\hat{x}) \Vert_2$
-        norm = gradients.norm(2, dim=-1)
-        # Return the loss $\big(\Vert \nabla_{\hat{x}} D(\hat{x}) \Vert_2 - 1\big)^2$
-        return torch.mean(norm ** 2)
 
 
 class Configs(BaseConfigs):
