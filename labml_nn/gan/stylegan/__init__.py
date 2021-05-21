@@ -54,6 +54,10 @@ The progressive growing of the disciminator is done similarly.
 
 ![progressive_gan.svg](progressive_gan.svg)
 
+*<small>$2\times$ and $0.5\times$ denote feature map resolution scaling and scaling.
+$4\times4$, $8\times4$, ... denote feature map resolution at the generator or discriminator block.
+Each discriminator and generator block consists of 2 convolution layers with leaky ReLU activations.</small>*
+
 They use **minibatch standard deviation** to increase variation and
  **equalized learning rate** which we discussed below in the implementation.
 They also use **pixel-wise normalization** where at each pixel the feature vector is normalized.
@@ -96,6 +100,10 @@ Noise is scaled per channel by a learned weight.
 All the up and down sampling operations are accompanied by bilinear smoothing.
 
 ![style_gan.svg](style_gan.svg)
+
+*<small>$A$ denote linear layer.
+$B$ denote broadcast and scaling operation (noise is single channel).
+Style GAN also uses progressive growing like Progressive GAN</small>*
 
 ## Style GAN 2
 
@@ -143,6 +151,7 @@ from torch import nn
 
 class MappingNetwork(nn.Module):
     """
+    <a id="mapping_network"></a>
     ## Mapping Network
 
     ![Mapping Network](mapping_network.svg)
@@ -180,9 +189,14 @@ class MappingNetwork(nn.Module):
 
 class Generator(nn.Module):
     """
+    <a id="generator"></a>
     ## StyleGAN2 Generator
 
     ![Generator](style_gan2.svg)
+
+    *<small>$A$ denote linear layer.
+    $B$ denote broadcast and scaling operation (noise is single channel).
+    [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
 
     The generator starts with a learned constant.
     Then it has a series of blocks. The feature map resolution is doubled at each block
@@ -260,6 +274,10 @@ class GeneratorBlock(nn.Module):
 
     ![Generator block](generator_block.svg)
 
+    *<small>$A$ denote linear layer.
+    $B$ denote broadcast and scaling operation (noise is single channel).
+    [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
+
     The the generator block consists of two [style blocks](#style_block) ($3 \times 3$ convlutions with style modulation)
     and a rgb output.
     """
@@ -307,6 +325,9 @@ class StyleBlock(nn.Module):
 
     ![Style block](style_block.svg)
 
+    *<small>$A$ denote linear layer.
+    $B$ denote broadcast and scaling operation (noise is single channel).</small>*
+
     Style block has a weight modulation convolution layer.
     """
 
@@ -349,9 +370,12 @@ class StyleBlock(nn.Module):
 
 class ToRGB(nn.Module):
     """
+    <a id="to_rgb"></a>
     ### To RGB
 
     ![To RGB](to_rgb.svg)
+
+    *<small>$A$ denote linear layer.</small>*
 
     Generates an RGB image from a feature map using $1 \times 1$ convolution.
     """
@@ -458,6 +482,7 @@ class Conv2dWeightModulate(nn.Module):
 
 class Discriminator(nn.Module):
     """
+    <a id="discriminator"></a>
     ## Style GAN2 Discriminator
 
     ![Discriminator](style_gan2_disc.svg)
@@ -526,7 +551,6 @@ class Discriminator(nn.Module):
 class DiscriminatorBlock(nn.Module):
     """
     <a id="discriminator_black"></a>
-
     ### Discriminator Block
 
     ![Discriminator block](discriminator_block.svg)
@@ -660,7 +684,6 @@ class UpSample(nn.Module):
 class Smooth(nn.Module):
     """
     <a id="smooth"></a>
-
     ### Smoothing Layer
 
     This layer blurs each channel
@@ -700,7 +723,6 @@ class Smooth(nn.Module):
 class EqualizedLinear(nn.Module):
     """
     <a id="equalized_linear"></a>
-
     ## Learning-rate Equalized Linear Layer
 
     This uses [learning-rate equalized weights]($equalized_weights) for a linear layer.
@@ -727,7 +749,6 @@ class EqualizedLinear(nn.Module):
 class EqualizedConv2d(nn.Module):
     """
     <a id="equalized_conv2d"></a>
-
     ## Learning-rate Equalized 2D Convolution Layer
 
     This uses [learning-rate equalized weights]($equalized_weights) for a convolution layer.
@@ -757,7 +778,6 @@ class EqualizedConv2d(nn.Module):
 class EqualizedWeight(nn.Module):
     """
     <a id="equalized_weight"></a>
-
     ## Learning-rate Equalized Weights Parameter
 
     This is based on equalized learning rate introduced in Progressive GAN paper.
@@ -794,6 +814,7 @@ class EqualizedWeight(nn.Module):
 
 class GradientPenalty(nn.Module):
     """
+    <a id="gradient_penalty"></a>
     ## Gradient Penalty
 
     This is the $R_1$ regularization penality from paper
@@ -834,6 +855,7 @@ class GradientPenalty(nn.Module):
 
 class PathLengthPenalty(nn.Module):
     """
+    <a id="path_length_penalty"></a>
     ## Path Length Penalty
 
     This regularization encourages a fixed-size step in $w$ to result in a fixed-magnitude
