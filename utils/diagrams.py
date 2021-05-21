@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 from xml.dom import minidom
@@ -252,7 +253,7 @@ def main():
             dest_path.parent.mkdir(parents=True)
 
         with monit.section(str(p)):
-            parse(source_path, dest_path)
+            shutil.copy(str(source_path), str(dest_path))
 
 
 if __name__ == '__main__':

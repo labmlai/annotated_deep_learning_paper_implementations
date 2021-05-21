@@ -18,9 +18,14 @@ All three papers are from same set of authors from [NVIDIA AI](https://twitter.c
 
 *Our implementation is a minimalistic Style GAN2 model training code.
 Only single GPU training is supported to keep the implementation simple.
-We managed to shrink it to keep it at less than 350 lines of code, including the training loop.*
+We managed to shrink it to keep it at less than 500 lines of code, including the training loop.*
 
 🏃 Here's the training code: [`experiment.py`](experiment.html).
+
+![Generated Images](generated_64.png)
+
+*<small>These are $64 \times 64$ images generated after training for about 80K steps.</small>*
+
 
 We'll first introduce the three papers at a high level.
 

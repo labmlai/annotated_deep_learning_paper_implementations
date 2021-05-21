@@ -9,12 +9,18 @@ summary: >
 
 This is the training code for [Style GAN 2](index.html) model.
 
+![Generated Images](generated_64.png)
+
+*<small>These are $64 \times 64$ images generated after training for about 80K steps.</small>*
+
 *Our implementation is a minimalistic Style GAN2 model training code.
 Only single GPU training is supported to keep the implementation simple.
-We managed to shrink it to keep it at less than 350 lines of code, including the training loop.*
+We managed to shrink it to keep it at less than 500 lines of code, including the training loop.*
 
-*If you want training code with fp16 and data distributed parallel training
-take a look at [lucidrains/stylegan2-pytorch](https://github.com/lucidrains/stylegan2-pytorch).*
+*Without DDP (distributed data parallel) and multi-gpu training it will not be possible to train the model
+for large resolutions (128+).
+If you want training code with fp16 and DDP take a look at
+[lucidrains/stylegan2-pytorch](https://github.com/lucidrains/stylegan2-pytorch).*
 
 We trained this on [CelebA-HQ dataset](https://github.com/tkarras/progressive_growing_of_gans).
 You can find the download instruction in this
