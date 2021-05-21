@@ -20,7 +20,7 @@ All three papers are from the same authors from [NVIDIA AI](https://twitter.com/
 Only single GPU training is supported to keep the implementation simple.
 We managed to shrink it to keep it at less than 500 lines of code, including the training loop.*
 
-🏃 Here's the training code: [`experiment.py`](experiment.html).
+**🏃 Here's the training code: [`experiment.py`](experiment.html).**
 
 ![Generated Images](generated_64.png)
 
@@ -106,8 +106,8 @@ All the up and down-sampling operations are accompanied by bilinear smoothing.
 
 ![style_gan.svg](style_gan.svg)
 
-*<small>$A$ denotes linear layer.
-$B$ denotes broadcast and scaling operation (noise is a single channel).
+*<small>$A$ denotes a linear layer.
+$B$ denotes a broadcast and scaling operation (noise is a single channel).
 Style GAN also uses progressive growing like Progressive GAN</small>*
 
 ## Style GAN 2
@@ -162,7 +162,7 @@ class MappingNetwork(nn.Module):
 
     ![Mapping Network](mapping_network.svg)
 
-    This is a MLP with 8 linear layers.
+    This is an MLP with 8 linear layers.
     The mapping network maps the latent vector $z \in \mathcal{W}$
     to an intermediate latent space $w \in \mathcal{W}$.
     $\mathcal{W}$ space will be disentangled from the image space
@@ -200,13 +200,13 @@ class Generator(nn.Module):
 
     ![Generator](style_gan2.svg)
 
-    *<small>$A$ denote linear layer.
-    $B$ denote broadcast and scaling operation (noise is single channel).
+    *<small>$A$ denotes a linear layer.
+    $B$ denotes a broadcast and scaling operation (noise is a single channel).
     [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
 
     The generator starts with a learned constant.
     Then it has a series of blocks. The feature map resolution is doubled at each block
-    Each block outputs a RGB image and they are scaled up and summed to get the final RGB image.
+    Each block outputs an RGB image and they are scaled up and summed to get the final RGB image.
     """
 
     def __init__(self, log_resolution: int, d_latent: int, n_features: int = 32, max_features: int = 512):
@@ -280,12 +280,12 @@ class GeneratorBlock(nn.Module):
 
     ![Generator block](generator_block.svg)
 
-    *<small>$A$ denote linear layer.
-    $B$ denote broadcast and scaling operation (noise is single channel).
+    *<small>$A$ denotes a linear layer.
+    $B$ denotes a broadcast and scaling operation (noise is a single channel).
     [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
 
-    The the generator block consists of two [style blocks](#style_block) ($3 \times 3$ convlutions with style modulation)
-    and a rgb output.
+    The generator block consists of two [style blocks](#style_block) ($3 \times 3$ convolutions with style modulation)
+    and an RGB output.
     """
 
     def __init__(self, d_latent: int, in_features: int, out_features: int):
@@ -331,8 +331,8 @@ class StyleBlock(nn.Module):
 
     ![Style block](style_block.svg)
 
-    *<small>$A$ denote linear layer.
-    $B$ denote broadcast and scaling operation (noise is single channel).</small>*
+    *<small>$A$ denotes a linear layer.
+    $B$ denotes a broadcast and scaling operation (noise is single channel).</small>*
 
     Style block has a weight modulation convolution layer.
     """
@@ -381,7 +381,7 @@ class ToRGB(nn.Module):
 
     ![To RGB](to_rgb.svg)
 
-    *<small>$A$ denote linear layer.</small>*
+    *<small>$A$ denotes a linear layer.</small>*
 
     Generates an RGB image from a feature map using $1 \times 1$ convolution.
     """
@@ -493,9 +493,9 @@ class Discriminator(nn.Module):
 
     ![Discriminator](style_gan2_disc.svg)
 
-    Discriminator first transforms the image to a feature map of same resolution and then
+    Discriminator first transforms the image to a feature map of the same resolution and then
     runs it through a series of blocks with residual connections.
-    The resolution is down sampled by $2 \times$ at each block, while doubling the
+    The resolution is down-sampled by $2 \times$ at each block while doubling the
     number of features.
     """
 
@@ -608,9 +608,9 @@ class MiniBatchStdDev(nn.Module):
     ### Mini-batch Standard Deviation
 
     Mini-batch standard deviation calculates the standard deviation
-    across a mini-batch (or a sub groups within the mini-batch)
+    across a mini-batch (or a subgroups within the mini-batch)
     for each feature in the feature map. Then it takes the mean of all
-    the standard deviations and append it to the feature map as one extra feature.
+    the standard deviations and appends it to the feature map as one extra feature.
     """
 
     def __init__(self, group_size: int = 4):
@@ -649,7 +649,7 @@ class DownSample(nn.Module):
 
     The down-sample operation [smoothens](#smooth) each feature channel and
      scale $2 \times$ using bilinear interpolation.
-    This is based on paper
+    This is based on the paper
      [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
     """
 
@@ -671,7 +671,7 @@ class UpSample(nn.Module):
     ### Up-sample
 
     The up-sample operation scales the image up by $2 \times$ and [smoothens](#smooth) each feature channel.
-    This is based on paper
+    This is based on the paper
      [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
     """
 
@@ -786,19 +786,19 @@ class EqualizedWeight(nn.Module):
     <a id="equalized_weight"></a>
     ## Learning-rate Equalized Weights Parameter
 
-    This is based on equalized learning rate introduced in Progressive GAN paper.
+    This is based on equalized learning rate introduced in the Progressive GAN paper.
     Instead of initializing weights at $\mathcal{N}(0,c)$ they initialize weights
     to $\mathcal{N}(0, 1)$ and then multiply them by $c$ when using it.
     $$w_i = c \hat{w}_i$$
 
     The gradients on stored parameters $\hat{w}$ get multiplied by $c$ but this doesn't have
-    and affect since optimizers such as Adam normalizes them by a running mean of the squared gradients.
+    an affect since optimizers such as Adam normalize them by a running mean of the squared gradients.
 
     The optimizer updates on $\hat{w}$ are proportionate to the learning rate $\lambda$.
-    But the effective weights $w$ get updated proportionate to $c \lambda$.
-    Without equalized learning rate, the effective weights will get updated proportionate to just $\lambda$.
+    But the effective weights $w$ get updated proportionately to $c \lambda$.
+    Without equalized learning rate, the effective weights will get updated proportionately to just $\lambda$.
 
-    So we are effectively scaling the learning rate by $c$ for this weight parameters.
+    So we are effectively scaling the learning rate by $c$ for these weight parameters.
     """
 
     def __init__(self, shape: List[int]):
@@ -823,7 +823,7 @@ class GradientPenalty(nn.Module):
     <a id="gradient_penalty"></a>
     ## Gradient Penalty
 
-    This is the $R_1$ regularization penality from paper
+    This is the $R_1$ regularization penality from the paper
     [Which Training Methods for GANs do actually Converge?](https://arxiv.org/abs/1801.04406).
 
     $$R_1(\psi) = \frac{\gamma}{2} \mathbb{E}_{p_\mathcal{D}(x)}

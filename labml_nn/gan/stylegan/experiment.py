@@ -149,7 +149,7 @@ class Configs(BaseConfigs):
     # Instead of calculating the regularization losses, the paper proposes lazy regularization
     # where the regularization terms are calculated once in a while.
     # This improves the training efficiency a lot.
-    #
+
     # The interval at which to compute gradient penalty
     lazy_gradient_penalty_interval: int = 4
     # Path length penalty calculation interval
@@ -232,16 +232,16 @@ class Configs(BaseConfigs):
 
         This samples $z$ randomly and get $w$ from the mapping network.
 
-        We also apply style mixing sometimes where we generate two latents
+        We also apply style mixing sometimes where we generate two latent variables
         $z_1$ and $z_2$ and get corresponding $w_1$ and $w_2$.
-        Then we randomly sample a cross over point and apply $w_1$ to
-        the generator blocks before the cross over point and
+        Then we randomly sample a cross-over point and apply $w_1$ to
+        the generator blocks before the cross-over point and
         $w_2$ to the blocks after.
         """
 
         # Mix styles
         if torch.rand(()).item() < self.style_mixing_prob:
-            # Random cross over point
+            # Random cross-over point
             cross_over_point = int(torch.rand(()).item() * self.n_gen_blocks)
             # Sample $z_1$ and $z_2$
             z2 = torch.randn(batch_size, self.d_latent).to(self.device)
