@@ -15,6 +15,11 @@ We managed to shrink it to keep it at less than 350 lines of code, including the
 
 *If you want training code with fp16 and data distributed parallel training
 take a look at [lucidrains/stylegan2-pytorch](https://github.com/lucidrains/stylegan2-pytorch).*
+
+We trained this on [CelebA-HQ dataset](https://github.com/tkarras/progressive_growing_of_gans).
+You can find the download instruction in this
+[discussion on fast.ai](https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3).
+Save the images inside [`data/stylegan` folder](#dataset_path).
 """
 
 import math
@@ -156,6 +161,7 @@ class Configs(BaseConfigs):
     # Whether to log model layer outputs
     log_layer_outputs: bool = False
 
+    # <a id="dataset_path"></a>
     # We trained this on [CelebA-HQ dataset](https://github.com/tkarras/progressive_growing_of_gans).
     # You can find the download instruction in this
     # [discussion on fast.ai](https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3).

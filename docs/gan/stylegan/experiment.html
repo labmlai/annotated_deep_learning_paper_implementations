@@ -79,24 +79,28 @@ Only single GPU training is supported to keep the implementation simple.
 We managed to shrink it to keep it at less than 350 lines of code, including the training loop.</em></p>
 <p><em>If you want training code with fp16 and data distributed parallel training
 take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidrains/stylegan2-pytorch</a>.</em></p>
+<p>We trained this on <a href="https://github.com/tkarras/progressive_growing_of_gans">CelebA-HQ dataset</a>.
+You can find the download instruction in this
+<a href="https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3">discussion on fast.ai</a>.
+Save the images inside <a href="#dataset_path"><code>data/stylegan</code> folder</a>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">20</span><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="lineno">21</span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="lineno">22</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="lineno">23</span>
-<span class="lineno">24</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">25</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
-<span class="lineno">26</span><span class="kn">import</span> <span class="nn">torchvision</span>
-<span class="lineno">27</span><span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+                <div class="highlight"><pre><span class="lineno">25</span><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Tuple</span>
 <span class="lineno">28</span>
-<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">experiment</span>
-<span class="lineno">30</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span>
-<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml_helpers.device</span> <span class="kn">import</span> <span class="n">DeviceConfigs</span>
-<span class="lineno">32</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">ModeState</span><span class="p">,</span> <span class="n">hook_model_outputs</span>
-<span class="lineno">33</span><span class="kn">from</span> <span class="nn">labml_nn.gan.stylegan</span> <span class="kn">import</span> <span class="n">Discriminator</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">MappingNetwork</span><span class="p">,</span> <span class="n">GradientPenalty</span><span class="p">,</span> <span class="n">PathLengthPenalty</span>
-<span class="lineno">34</span><span class="kn">from</span> <span class="nn">labml_nn.gan.wasserstein</span> <span class="kn">import</span> <span class="n">DiscriminatorLoss</span><span class="p">,</span> <span class="n">GeneratorLoss</span>
-<span class="lineno">35</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">cycle_dataloader</span></pre></div>
+<span class="lineno">29</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">30</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">31</span><span class="kn">import</span> <span class="nn">torchvision</span>
+<span class="lineno">32</span><span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="lineno">33</span>
+<span class="lineno">34</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">experiment</span>
+<span class="lineno">35</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span>
+<span class="lineno">36</span><span class="kn">from</span> <span class="nn">labml_helpers.device</span> <span class="kn">import</span> <span class="n">DeviceConfigs</span>
+<span class="lineno">37</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">ModeState</span><span class="p">,</span> <span class="n">hook_model_outputs</span>
+<span class="lineno">38</span><span class="kn">from</span> <span class="nn">labml_nn.gan.stylegan</span> <span class="kn">import</span> <span class="n">Discriminator</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">MappingNetwork</span><span class="p">,</span> <span class="n">GradientPenalty</span><span class="p">,</span> <span class="n">PathLengthPenalty</span>
+<span class="lineno">39</span><span class="kn">from</span> <span class="nn">labml_nn.gan.wasserstein</span> <span class="kn">import</span> <span class="n">DiscriminatorLoss</span><span class="p">,</span> <span class="n">GeneratorLoss</span>
+<span class="lineno">40</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">cycle_dataloader</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -108,7 +112,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
 <p>This loads the training dataset and resize it to the give image size.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">38</span><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">43</span><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -122,7 +126,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
 </ul>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">45</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">50</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -133,7 +137,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">50</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">55</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -144,7 +148,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Get the paths of all <code>jpg</code> files</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">53</span>        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;**/*.jpg&#39;</span><span class="p">)]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;**/*.jpg&#39;</span><span class="p">)]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -155,7 +159,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Transformation</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">61</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -166,7 +170,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Resize the image</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">58</span>            <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">(</span><span class="n">image_size</span><span class="p">),</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">63</span>            <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">(</span><span class="n">image_size</span><span class="p">),</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -177,8 +181,8 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Convert to PyTorch tensor</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">60</span>            <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
-<span class="lineno">61</span>        <span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">65</span>            <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+<span class="lineno">66</span>        <span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -189,7 +193,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Number of images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">63</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">68</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -200,7 +204,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">65</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">70</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -211,7 +215,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p>Get the the <code>index</code>-th image</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">67</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -222,9 +226,9 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">69</span>        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-<span class="lineno">70</span>        <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-<span class="lineno">71</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">img</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+<span class="lineno">75</span>        <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="lineno">76</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">img</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -235,7 +239,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <h2>Configurations</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">74</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">79</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -248,7 +252,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
  picks up an available CUDA device or defaults to CPU.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">82</span>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">DeviceConfigs</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">87</span>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">DeviceConfigs</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -259,7 +263,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p><a href="index.html#discriminator">StyleGAN2 Discriminator</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">85</span>    <span class="n">discriminator</span><span class="p">:</span> <span class="n">Discriminator</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">90</span>    <span class="n">discriminator</span><span class="p">:</span> <span class="n">Discriminator</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -270,7 +274,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p><a href="index.html#generator">StyleGAN2 Generator</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">87</span>    <span class="n">generator</span><span class="p">:</span> <span class="n">Generator</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">92</span>    <span class="n">generator</span><span class="p">:</span> <span class="n">Generator</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -281,7 +285,7 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
                 <p><a href="index.html#mapping_network">Mapping network</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">89</span>    <span class="n">mapping_network</span><span class="p">:</span> <span class="n">MappingNetwork</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">94</span>    <span class="n">mapping_network</span><span class="p">:</span> <span class="n">MappingNetwork</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -293,8 +297,8 @@ take a look at <a href="https://github.com/lucidrains/stylegan2-pytorch">lucidra
 We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">93</span>    <span class="n">discriminator_loss</span><span class="p">:</span> <span class="n">DiscriminatorLoss</span>
-<span class="lineno">94</span>    <span class="n">generator_loss</span><span class="p">:</span> <span class="n">GeneratorLoss</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">98</span>    <span class="n">discriminator_loss</span><span class="p">:</span> <span class="n">DiscriminatorLoss</span>
+<span class="lineno">99</span>    <span class="n">generator_loss</span><span class="p">:</span> <span class="n">GeneratorLoss</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -305,9 +309,9 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Optimizers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">97</span>    <span class="n">generator_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
-<span class="lineno">98</span>    <span class="n">discriminator_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
-<span class="lineno">99</span>    <span class="n">mapping_network_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">102</span>    <span class="n">generator_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
+<span class="lineno">103</span>    <span class="n">discriminator_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
+<span class="lineno">104</span>    <span class="n">mapping_network_optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -318,7 +322,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p><a href="index.html#gradient_penalty">Gradient Penalty Regularization Loss</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">102</span>    <span class="n">gradient_penalty</span> <span class="o">=</span> <span class="n">GradientPenalty</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">107</span>    <span class="n">gradient_penalty</span> <span class="o">=</span> <span class="n">GradientPenalty</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -329,7 +333,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Gradient penalty coefficient $\gamma$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">104</span>    <span class="n">gradient_penalty_coefficient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">109</span>    <span class="n">gradient_penalty_coefficient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -340,7 +344,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p><a href="index.html#path_length_penalty">Path length penalty</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">107</span>    <span class="n">path_length_penalty</span><span class="p">:</span> <span class="n">PathLengthPenalty</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">112</span>    <span class="n">path_length_penalty</span><span class="p">:</span> <span class="n">PathLengthPenalty</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -351,7 +355,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Data loader</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">110</span>    <span class="n">loader</span><span class="p">:</span> <span class="n">Iterator</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">115</span>    <span class="n">loader</span><span class="p">:</span> <span class="n">Iterator</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -362,7 +366,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Batch size</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">113</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">118</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -373,7 +377,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Dimensionality of $z$ and $w$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">115</span>    <span class="n">d_latent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">120</span>    <span class="n">d_latent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -384,7 +388,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Height/width of the image</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">117</span>    <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">122</span>    <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -395,7 +399,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Number of layers in the mapping network</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">119</span>    <span class="n">mapping_network_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">124</span>    <span class="n">mapping_network_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-27'>
@@ -406,7 +410,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Generator &amp; Discriminator learning rate</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">121</span>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">126</span>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-28'>
@@ -417,7 +421,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Mapping network learning rate ($100 \times$ lower than the others)</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">123</span>    <span class="n">mapping_network_learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">128</span>    <span class="n">mapping_network_learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-29'>
@@ -428,7 +432,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Number of steps to accumulate gradients on. Use this to increase the effective batch size.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">125</span>    <span class="n">gradient_accumulate_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">130</span>    <span class="n">gradient_accumulate_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-30'>
@@ -439,7 +443,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>$\beta_1$ and $\beta_2$ for Adam optimizer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">127</span>    <span class="n">adam_betas</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">132</span>    <span class="n">adam_betas</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-31'>
@@ -450,7 +454,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Probability of mixing styles</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">129</span>    <span class="n">style_mixing_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">134</span>    <span class="n">style_mixing_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-32'>
@@ -461,7 +465,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Total number of training steps</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">132</span>    <span class="n">training_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">150_000</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">137</span>    <span class="n">training_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">150_000</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-33'>
@@ -472,7 +476,7 @@ We use <a href="../wasserstein/index.html">Wasserstein loss</a></p>
                 <p>Number of blocks in the generator (calculated based on image resolution)</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">135</span>    <span class="n">n_gen_blocks</span><span class="p">:</span> <span class="nb">int</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">140</span>    <span class="n">n_gen_blocks</span><span class="p">:</span> <span class="nb">int</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-34'>
@@ -487,7 +491,7 @@ This improves the training efficiency a lot.</p>
 <p>The interval at which to compute gradient penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">143</span>    <span class="n">lazy_gradient_penalty_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">148</span>    <span class="n">lazy_gradient_penalty_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-35'>
@@ -498,7 +502,7 @@ This improves the training efficiency a lot.</p>
                 <p>Path length penalty calculation interval</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">145</span>    <span class="n">lazy_path_penalty_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">150</span>    <span class="n">lazy_path_penalty_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-36'>
@@ -509,7 +513,7 @@ This improves the training efficiency a lot.</p>
                 <p>Skip calculating path length penalty during the initial phase of training</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">147</span>    <span class="n">lazy_path_penalty_after</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5_000</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">152</span>    <span class="n">lazy_path_penalty_after</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5_000</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-37'>
@@ -520,7 +524,7 @@ This improves the training efficiency a lot.</p>
                 <p>How often to log generated images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">150</span>    <span class="n">log_generated_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">155</span>    <span class="n">log_generated_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-38'>
@@ -531,7 +535,7 @@ This improves the training efficiency a lot.</p>
                 <p>How often to save model checkpoints</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">152</span>    <span class="n">save_checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2_000</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">157</span>    <span class="n">save_checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2_000</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-39'>
@@ -542,7 +546,7 @@ This improves the training efficiency a lot.</p>
                 <p>Training mode state for logging activations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">155</span>    <span class="n">mode</span><span class="p">:</span> <span class="n">ModeState</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">160</span>    <span class="n">mode</span><span class="p">:</span> <span class="n">ModeState</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-40'>
@@ -553,7 +557,7 @@ This improves the training efficiency a lot.</p>
                 <p>Whether to log model layer outputs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">157</span>    <span class="n">log_layer_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">162</span>    <span class="n">log_layer_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-41'>
@@ -561,13 +565,14 @@ This improves the training efficiency a lot.</p>
                 <div class='section-link'>
                     <a href='#section-41'>#</a>
                 </div>
-                <p>We trained this on <a href="https://github.com/tkarras/progressive_growing_of_gans">CelebA-HQ dataset</a>.
+                <p><a id="dataset_path"></a>
+We trained this on <a href="https://github.com/tkarras/progressive_growing_of_gans">CelebA-HQ dataset</a>.
 You can find the download instruction in this
 <a href="https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3">discussion on fast.ai</a>.
 Save the images inside <code>data/stylegan</code> folder.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">163</span>    <span class="n">dataset_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;stylegan2&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">169</span>    <span class="n">dataset_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;stylegan2&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-42'>
@@ -578,7 +583,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <h3>Initialize</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">165</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">171</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-43'>
@@ -589,7 +594,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create dataset</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">170</span>        <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">176</span>        <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-44'>
@@ -600,8 +605,8 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create data loader</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">172</span>        <span class="n">dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-<span class="lineno">173</span>                                                 <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">178</span>        <span class="n">dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<span class="lineno">179</span>                                                 <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-45'>
@@ -612,7 +617,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Continuous <a href="../../utils.html#cycle_dataloader">cyclic loader</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">175</span>        <span class="bp">self</span><span class="o">.</span><span class="n">loader</span> <span class="o">=</span> <span class="n">cycle_dataloader</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">181</span>        <span class="bp">self</span><span class="o">.</span><span class="n">loader</span> <span class="o">=</span> <span class="n">cycle_dataloader</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-46'>
@@ -623,7 +628,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>$\log_2$ of image resolution</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">178</span>        <span class="n">log_resolution</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">184</span>        <span class="n">log_resolution</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-47'>
@@ -634,8 +639,8 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create discriminator and generator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">181</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span> <span class="o">=</span> <span class="n">Discriminator</span><span class="p">(</span><span class="n">log_resolution</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-<span class="lineno">182</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">log_resolution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">187</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span> <span class="o">=</span> <span class="n">Discriminator</span><span class="p">(</span><span class="n">log_resolution</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">log_resolution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-48'>
@@ -646,7 +651,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Get number of generator blocks for creating style and noise inputs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">184</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">n_blocks</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">n_blocks</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-49'>
@@ -657,7 +662,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create mapping network</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">186</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span> <span class="o">=</span> <span class="n">MappingNetwork</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_layers</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">192</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span> <span class="o">=</span> <span class="n">MappingNetwork</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_layers</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-50'>
@@ -668,7 +673,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create path length penalty loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">path_length_penalty</span> <span class="o">=</span> <span class="n">PathLengthPenalty</span><span class="p">(</span><span class="mf">0.99</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">194</span>        <span class="bp">self</span><span class="o">.</span><span class="n">path_length_penalty</span> <span class="o">=</span> <span class="n">PathLengthPenalty</span><span class="p">(</span><span class="mf">0.99</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-51'>
@@ -679,10 +684,10 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Add model hooks to monitor layer outputs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">191</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_layer_outputs</span><span class="p">:</span>
-<span class="lineno">192</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">,</span> <span class="s1">&#39;discriminator&#39;</span><span class="p">)</span>
-<span class="lineno">193</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span> <span class="s1">&#39;generator&#39;</span><span class="p">)</span>
-<span class="lineno">194</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">,</span> <span class="s1">&#39;mapping_network&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">197</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_layer_outputs</span><span class="p">:</span>
+<span class="lineno">198</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">,</span> <span class="s1">&#39;discriminator&#39;</span><span class="p">)</span>
+<span class="lineno">199</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span> <span class="s1">&#39;generator&#39;</span><span class="p">)</span>
+<span class="lineno">200</span>            <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">,</span> <span class="s1">&#39;mapping_network&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-52'>
@@ -693,8 +698,8 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Discriminator and generator losses</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">197</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_loss</span> <span class="o">=</span> <span class="n">DiscriminatorLoss</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-<span class="lineno">198</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator_loss</span> <span class="o">=</span> <span class="n">GeneratorLoss</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">203</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_loss</span> <span class="o">=</span> <span class="n">DiscriminatorLoss</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">204</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator_loss</span> <span class="o">=</span> <span class="n">GeneratorLoss</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-53'>
@@ -705,18 +710,18 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Create optimizers</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">201</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-<span class="lineno">202</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
-<span class="lineno">203</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
-<span class="lineno">204</span>        <span class="p">)</span>
-<span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-<span class="lineno">206</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
-<span class="lineno">207</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
-<span class="lineno">208</span>        <span class="p">)</span>
-<span class="lineno">209</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-<span class="lineno">210</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
-<span class="lineno">211</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
-<span class="lineno">212</span>        <span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">207</span>        <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+<span class="lineno">208</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+<span class="lineno">209</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
+<span class="lineno">210</span>        <span class="p">)</span>
+<span class="lineno">211</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+<span class="lineno">212</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+<span class="lineno">213</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
+<span class="lineno">214</span>        <span class="p">)</span>
+<span class="lineno">215</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+<span class="lineno">216</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+<span class="lineno">217</span>            <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_learning_rate</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adam_betas</span>
+<span class="lineno">218</span>        <span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-54'>
@@ -727,7 +732,7 @@ Save the images inside <code>data/stylegan</code> folder.</p>
                 <p>Set tracker configurations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">215</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_image</span><span class="p">(</span><span class="s2">&quot;generated&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">221</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_image</span><span class="p">(</span><span class="s2">&quot;generated&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-55'>
@@ -744,7 +749,7 @@ the generator blocks before the cross over point and
 $w_2$ to the blocks after.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">217</span>    <span class="k">def</span> <span class="nf">get_w</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">223</span>    <span class="k">def</span> <span class="nf">get_w</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-56'>
@@ -755,7 +760,7 @@ $w_2$ to the blocks after.</p>
                 <p>Mix styles</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">231</span>        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(())</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">style_mixing_prob</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">237</span>        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(())</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">style_mixing_prob</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-57'>
@@ -766,7 +771,7 @@ $w_2$ to the blocks after.</p>
                 <p>Random cross over point</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">233</span>            <span class="n">cross_over_point</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(())</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">239</span>            <span class="n">cross_over_point</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(())</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-58'>
@@ -777,8 +782,8 @@ $w_2$ to the blocks after.</p>
                 <p>Sample $z_1$ and $z_2$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">235</span>            <span class="n">z2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-<span class="lineno">236</span>            <span class="n">z1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">241</span>            <span class="n">z2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">242</span>            <span class="n">z1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-59'>
@@ -789,8 +794,8 @@ $w_2$ to the blocks after.</p>
                 <p>Get $w_1$ and $w_2$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">238</span>            <span class="n">w1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span>
-<span class="lineno">239</span>            <span class="n">w2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z2</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">244</span>            <span class="n">w1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span>
+<span class="lineno">245</span>            <span class="n">w2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z2</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-60'>
@@ -801,9 +806,9 @@ $w_2$ to the blocks after.</p>
                 <p>Expand $w_1$ and $w_2$ for the generator blocks and concatenate</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">241</span>            <span class="n">w1</span> <span class="o">=</span> <span class="n">w1</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">cross_over_point</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">242</span>            <span class="n">w2</span> <span class="o">=</span> <span class="n">w2</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span> <span class="o">-</span> <span class="n">cross_over_point</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">243</span>            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">247</span>            <span class="n">w1</span> <span class="o">=</span> <span class="n">w1</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">cross_over_point</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">248</span>            <span class="n">w2</span> <span class="o">=</span> <span class="n">w2</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span> <span class="o">-</span> <span class="n">cross_over_point</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">249</span>            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-61'>
@@ -814,7 +819,7 @@ $w_2$ to the blocks after.</p>
                 <p>Without mixing</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">245</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">251</span>        <span class="k">else</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-62'>
@@ -825,7 +830,7 @@ $w_2$ to the blocks after.</p>
                 <p>Sample $z$ and $z$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">247</span>            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">253</span>            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_latent</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-63'>
@@ -836,7 +841,7 @@ $w_2$ to the blocks after.</p>
                 <p>Get $w$ and $w$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">249</span>            <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">255</span>            <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-64'>
@@ -847,7 +852,7 @@ $w_2$ to the blocks after.</p>
                 <p>Expand $w$ for the generator blocks</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">251</span>            <span class="k">return</span> <span class="n">w</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">257</span>            <span class="k">return</span> <span class="n">w</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-65'>
@@ -859,7 +864,7 @@ $w_2$ to the blocks after.</p>
 <p>This generates noise for each <a href="index.html#generator_block">generator block</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">253</span>    <span class="k">def</span> <span class="nf">get_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">259</span>    <span class="k">def</span> <span class="nf">get_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-66'>
@@ -870,7 +875,7 @@ $w_2$ to the blocks after.</p>
                 <p>List to store noise</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">260</span>        <span class="n">noise</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">266</span>        <span class="n">noise</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-67'>
@@ -881,7 +886,7 @@ $w_2$ to the blocks after.</p>
                 <p>Noise resolution starts from $4$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">262</span>        <span class="n">resolution</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">268</span>        <span class="n">resolution</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-68'>
@@ -892,7 +897,7 @@ $w_2$ to the blocks after.</p>
                 <p>Generate noise for each generator block</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">265</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">271</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_gen_blocks</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-69'>
@@ -903,8 +908,8 @@ $w_2$ to the blocks after.</p>
                 <p>The first block has only one $3 \times 3$ convolution</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">267</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">268</span>                <span class="n">n1</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">273</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">274</span>                <span class="n">n1</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-70'>
@@ -915,8 +920,8 @@ $w_2$ to the blocks after.</p>
                 <p>Generate noise to add after the first convolution layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">270</span>            <span class="k">else</span><span class="p">:</span>
-<span class="lineno">271</span>                <span class="n">n1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">276</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">277</span>                <span class="n">n1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-71'>
@@ -927,7 +932,7 @@ $w_2$ to the blocks after.</p>
                 <p>Generate noise to add after the second convolution layer</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">273</span>            <span class="n">n2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">279</span>            <span class="n">n2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">resolution</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-72'>
@@ -938,7 +943,7 @@ $w_2$ to the blocks after.</p>
                 <p>Add noise tensors to the list</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">276</span>            <span class="n">noise</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">282</span>            <span class="n">noise</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-73'>
@@ -949,7 +954,7 @@ $w_2$ to the blocks after.</p>
                 <p>Next block has $2 \times$ resolution</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">279</span>            <span class="n">resolution</span> <span class="o">*=</span> <span class="mi">2</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">285</span>            <span class="n">resolution</span> <span class="o">*=</span> <span class="mi">2</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-74'>
@@ -960,7 +965,7 @@ $w_2$ to the blocks after.</p>
                 <p>Return noise tensors</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">282</span>        <span class="k">return</span> <span class="n">noise</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">288</span>        <span class="k">return</span> <span class="n">noise</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-75'>
@@ -972,7 +977,7 @@ $w_2$ to the blocks after.</p>
 <p>This generate images using the generator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">284</span>    <span class="k">def</span> <span class="nf">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">290</span>    <span class="k">def</span> <span class="nf">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-76'>
@@ -983,7 +988,7 @@ $w_2$ to the blocks after.</p>
                 <p>Get $w$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">292</span>        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_w</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">298</span>        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_w</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-77'>
@@ -994,7 +999,7 @@ $w_2$ to the blocks after.</p>
                 <p>Get noise</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">294</span>        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_noise</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">300</span>        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_noise</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-78'>
@@ -1005,7 +1010,7 @@ $w_2$ to the blocks after.</p>
                 <p>Generate images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">297</span>        <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">303</span>        <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-79'>
@@ -1016,7 +1021,7 @@ $w_2$ to the blocks after.</p>
                 <p>Return images and $w$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">300</span>        <span class="k">return</span> <span class="n">images</span><span class="p">,</span> <span class="n">w</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">306</span>        <span class="k">return</span> <span class="n">images</span><span class="p">,</span> <span class="n">w</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-80'>
@@ -1027,7 +1032,7 @@ $w_2$ to the blocks after.</p>
                 <h3>Training Step</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">302</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">308</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-81'>
@@ -1038,7 +1043,7 @@ $w_2$ to the blocks after.</p>
                 <p>Train the discriminator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">308</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Discriminator&#39;</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">314</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Discriminator&#39;</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-82'>
@@ -1049,7 +1054,7 @@ $w_2$ to the blocks after.</p>
                 <p>Reset gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">310</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">316</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-83'>
@@ -1060,7 +1065,7 @@ $w_2$ to the blocks after.</p>
                 <p>Accumulate gradients for <code>gradient_accumulate_steps</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">313</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gradient_accumulate_steps</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">319</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gradient_accumulate_steps</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-84'>
@@ -1071,7 +1076,7 @@ $w_2$ to the blocks after.</p>
                 <p>Update <code>mode</code>. Set whether to log activation</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">315</span>                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">321</span>                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-85'>
@@ -1082,7 +1087,7 @@ $w_2$ to the blocks after.</p>
                 <p>Sample images from generator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">317</span>                    <span class="n">generated_images</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">323</span>                    <span class="n">generated_images</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-86'>
@@ -1093,7 +1098,7 @@ $w_2$ to the blocks after.</p>
                 <p>Discriminator classification for generated images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">319</span>                    <span class="n">fake_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">generated_images</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">325</span>                    <span class="n">fake_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">generated_images</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-87'>
@@ -1104,7 +1109,7 @@ $w_2$ to the blocks after.</p>
                 <p>Get real images from the data loader</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">322</span>                    <span class="n">real_images</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">328</span>                    <span class="n">real_images</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-88'>
@@ -1115,8 +1120,8 @@ $w_2$ to the blocks after.</p>
                 <p>We need to calculate gradients w.r.t. real images for gradient penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">324</span>                    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">325</span>                        <span class="n">real_images</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">330</span>                    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">331</span>                        <span class="n">real_images</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-89'>
@@ -1127,7 +1132,7 @@ $w_2$ to the blocks after.</p>
                 <p>Discriminator classification for real images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">327</span>                    <span class="n">real_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">real_images</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">333</span>                    <span class="n">real_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">real_images</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-90'>
@@ -1138,8 +1143,8 @@ $w_2$ to the blocks after.</p>
                 <p>Get discriminator loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">330</span>                    <span class="n">real_loss</span><span class="p">,</span> <span class="n">fake_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_loss</span><span class="p">(</span><span class="n">real_output</span><span class="p">,</span> <span class="n">fake_output</span><span class="p">)</span>
-<span class="lineno">331</span>                    <span class="n">disc_loss</span> <span class="o">=</span> <span class="n">real_loss</span> <span class="o">+</span> <span class="n">fake_loss</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">336</span>                    <span class="n">real_loss</span><span class="p">,</span> <span class="n">fake_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_loss</span><span class="p">(</span><span class="n">real_output</span><span class="p">,</span> <span class="n">fake_output</span><span class="p">)</span>
+<span class="lineno">337</span>                    <span class="n">disc_loss</span> <span class="o">=</span> <span class="n">real_loss</span> <span class="o">+</span> <span class="n">fake_loss</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-91'>
@@ -1150,7 +1155,7 @@ $w_2$ to the blocks after.</p>
                 <p>Add gradient penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">334</span>                    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">340</span>                    <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-92'>
@@ -1161,8 +1166,8 @@ $w_2$ to the blocks after.</p>
                 <p>Calculate and log gradient penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">336</span>                        <span class="n">gp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty</span><span class="p">(</span><span class="n">real_images</span><span class="p">,</span> <span class="n">real_output</span><span class="p">)</span>
-<span class="lineno">337</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.gp&#39;</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">342</span>                        <span class="n">gp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty</span><span class="p">(</span><span class="n">real_images</span><span class="p">,</span> <span class="n">real_output</span><span class="p">)</span>
+<span class="lineno">343</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.gp&#39;</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-93'>
@@ -1173,7 +1178,7 @@ $w_2$ to the blocks after.</p>
                 <p>Multiply by coefficient and add gradient penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">339</span>                        <span class="n">disc_loss</span> <span class="o">=</span> <span class="n">disc_loss</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty_coefficient</span> <span class="o">*</span> <span class="n">gp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">345</span>                        <span class="n">disc_loss</span> <span class="o">=</span> <span class="n">disc_loss</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty_coefficient</span> <span class="o">*</span> <span class="n">gp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_gradient_penalty_interval</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-94'>
@@ -1184,7 +1189,7 @@ $w_2$ to the blocks after.</p>
                 <p>Compute gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">342</span>                    <span class="n">disc_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">348</span>                    <span class="n">disc_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-95'>
@@ -1195,9 +1200,9 @@ $w_2$ to the blocks after.</p>
                 <p>Log discriminator loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">345</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.discriminator&#39;</span><span class="p">,</span> <span class="n">disc_loss</span><span class="p">)</span>
-<span class="lineno">346</span>
-<span class="lineno">347</span>            <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">351</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.discriminator&#39;</span><span class="p">,</span> <span class="n">disc_loss</span><span class="p">)</span>
+<span class="lineno">352</span>
+<span class="lineno">353</span>            <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-96'>
@@ -1208,7 +1213,7 @@ $w_2$ to the blocks after.</p>
                 <p>Log discriminator model parameters occasionally</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">349</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;discriminator&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">355</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;discriminator&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-97'>
@@ -1219,7 +1224,7 @@ $w_2$ to the blocks after.</p>
                 <p>Clip gradients for stabilization</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">352</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">358</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-98'>
@@ -1230,7 +1235,7 @@ $w_2$ to the blocks after.</p>
                 <p>Take optimizer step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">354</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">360</span>            <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-99'>
@@ -1241,7 +1246,7 @@ $w_2$ to the blocks after.</p>
                 <p>Train the generator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">357</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Generator&#39;</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">363</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Generator&#39;</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-100'>
@@ -1252,8 +1257,8 @@ $w_2$ to the blocks after.</p>
                 <p>Reset gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">359</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-<span class="lineno">360</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">365</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="lineno">366</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-101'>
@@ -1264,7 +1269,7 @@ $w_2$ to the blocks after.</p>
                 <p>Accumulate gradients for <code>gradient_accumulate_steps</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">363</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gradient_accumulate_steps</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">369</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gradient_accumulate_steps</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-102'>
@@ -1275,7 +1280,7 @@ $w_2$ to the blocks after.</p>
                 <p>Sample images from generator</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">365</span>                <span class="n">generated_images</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">371</span>                <span class="n">generated_images</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-103'>
@@ -1286,7 +1291,7 @@ $w_2$ to the blocks after.</p>
                 <p>Discriminator classification for generated images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">367</span>                <span class="n">fake_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">generated_images</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">373</span>                <span class="n">fake_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">generated_images</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-104'>
@@ -1297,7 +1302,7 @@ $w_2$ to the blocks after.</p>
                 <p>Get generator loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">370</span>                <span class="n">gen_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_loss</span><span class="p">(</span><span class="n">fake_output</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">376</span>                <span class="n">gen_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_loss</span><span class="p">(</span><span class="n">fake_output</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-105'>
@@ -1308,7 +1313,7 @@ $w_2$ to the blocks after.</p>
                 <p>Add path length penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">373</span>                <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_path_penalty_after</span> <span class="ow">and</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_path_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">379</span>                <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_path_penalty_after</span> <span class="ow">and</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_path_penalty_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-106'>
@@ -1319,7 +1324,7 @@ $w_2$ to the blocks after.</p>
                 <p>Calculate path length penalty</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">375</span>                    <span class="n">plp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_length_penalty</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">generated_images</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">381</span>                    <span class="n">plp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_length_penalty</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">generated_images</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-107'>
@@ -1330,9 +1335,9 @@ $w_2$ to the blocks after.</p>
                 <p>Ignore if <code>nan</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">377</span>                    <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">plp</span><span class="p">):</span>
-<span class="lineno">378</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.plp&#39;</span><span class="p">,</span> <span class="n">plp</span><span class="p">)</span>
-<span class="lineno">379</span>                        <span class="n">gen_loss</span> <span class="o">=</span> <span class="n">gen_loss</span> <span class="o">+</span> <span class="n">plp</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">383</span>                    <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">plp</span><span class="p">):</span>
+<span class="lineno">384</span>                        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.plp&#39;</span><span class="p">,</span> <span class="n">plp</span><span class="p">)</span>
+<span class="lineno">385</span>                        <span class="n">gen_loss</span> <span class="o">=</span> <span class="n">gen_loss</span> <span class="o">+</span> <span class="n">plp</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-108'>
@@ -1343,7 +1348,7 @@ $w_2$ to the blocks after.</p>
                 <p>Calculate gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">382</span>                <span class="n">gen_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">388</span>                <span class="n">gen_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-109'>
@@ -1354,9 +1359,9 @@ $w_2$ to the blocks after.</p>
                 <p>Log generator loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">385</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.generator&#39;</span><span class="p">,</span> <span class="n">gen_loss</span><span class="p">)</span>
-<span class="lineno">386</span>
-<span class="lineno">387</span>            <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">391</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss.generator&#39;</span><span class="p">,</span> <span class="n">gen_loss</span><span class="p">)</span>
+<span class="lineno">392</span>
+<span class="lineno">393</span>            <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-110'>
@@ -1367,8 +1372,8 @@ $w_2$ to the blocks after.</p>
                 <p>Log discriminator model parameters occasionally</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">389</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;generator&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">)</span>
-<span class="lineno">390</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;mapping_network&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">395</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;generator&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">)</span>
+<span class="lineno">396</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;mapping_network&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-111'>
@@ -1379,8 +1384,8 @@ $w_2$ to the blocks after.</p>
                 <p>Clip gradients for stabilization</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">393</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="lineno">394</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">399</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="lineno">400</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-112'>
@@ -1391,8 +1396,8 @@ $w_2$ to the blocks after.</p>
                 <p>Take optimizer step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">397</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-<span class="lineno">398</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">403</span>            <span class="bp">self</span><span class="o">.</span><span class="n">generator_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">404</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mapping_network_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-113'>
@@ -1403,8 +1408,8 @@ $w_2$ to the blocks after.</p>
                 <p>Log generated images</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">401</span>        <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">402</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;generated&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">generated_images</span><span class="p">[:</span><span class="mi">6</span><span class="p">],</span> <span class="n">real_images</span><span class="p">[:</span><span class="mi">3</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">407</span>        <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">408</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;generated&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">generated_images</span><span class="p">[:</span><span class="mi">6</span><span class="p">],</span> <span class="n">real_images</span><span class="p">[:</span><span class="mi">3</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-114'>
@@ -1415,8 +1420,8 @@ $w_2$ to the blocks after.</p>
                 <p>Save model checkpoints</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">404</span>        <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">405</span>            <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">410</span>        <span class="k">if</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">411</span>            <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-115'>
@@ -1427,7 +1432,7 @@ $w_2$ to the blocks after.</p>
                 <p>Flush tracker</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">408</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">414</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-116'>
@@ -1438,7 +1443,7 @@ $w_2$ to the blocks after.</p>
                 <h2>Train model</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">410</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">416</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-117'>
@@ -1449,7 +1454,7 @@ $w_2$ to the blocks after.</p>
                 <p>Loop for <code>training_steps</code></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">416</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_steps</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">422</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_steps</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-118'>
@@ -1460,7 +1465,7 @@ $w_2$ to the blocks after.</p>
                 <p>Take a training step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">418</span>            <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">424</span>            <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-119'>
@@ -1471,8 +1476,8 @@ $w_2$ to the blocks after.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">420</span>            <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">421</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">426</span>            <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_generated_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">427</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-120'>
@@ -1483,7 +1488,7 @@ $w_2$ to the blocks after.</p>
                 <h3>Train StyleGAN2</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">424</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">430</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-121'>
@@ -1494,7 +1499,7 @@ $w_2$ to the blocks after.</p>
                 <p>Create an experiment</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">430</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;stylegan2&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">436</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;stylegan2&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-122'>
@@ -1505,7 +1510,7 @@ $w_2$ to the blocks after.</p>
                 <p>Create configurations object</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">432</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">438</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-123'>
@@ -1516,11 +1521,11 @@ $w_2$ to the blocks after.</p>
                 <p>Set configurations and override some</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">435</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="p">{</span>
-<span class="lineno">436</span>        <span class="s1">&#39;device.cuda_device&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-<span class="lineno">437</span>        <span class="s1">&#39;image_size&#39;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
-<span class="lineno">438</span>        <span class="s1">&#39;log_generated_interval&#39;</span><span class="p">:</span> <span class="mi">200</span>
-<span class="lineno">439</span>    <span class="p">})</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">441</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="p">{</span>
+<span class="lineno">442</span>        <span class="s1">&#39;device.cuda_device&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="lineno">443</span>        <span class="s1">&#39;image_size&#39;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+<span class="lineno">444</span>        <span class="s1">&#39;log_generated_interval&#39;</span><span class="p">:</span> <span class="mi">200</span>
+<span class="lineno">445</span>    <span class="p">})</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-124'>
@@ -1531,7 +1536,7 @@ $w_2$ to the blocks after.</p>
                 <p>Initialize</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">442</span>    <span class="n">configs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">448</span>    <span class="n">configs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-125'>
@@ -1542,9 +1547,9 @@ $w_2$ to the blocks after.</p>
                 <p>Set models for saving and loading</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">444</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">(</span><span class="n">mapping_network</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">,</span>
-<span class="lineno">445</span>                                  <span class="n">generator</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span>
-<span class="lineno">446</span>                                  <span class="n">discriminator</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">discriminator</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">450</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">(</span><span class="n">mapping_network</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">mapping_network</span><span class="p">,</span>
+<span class="lineno">451</span>                                  <span class="n">generator</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">generator</span><span class="p">,</span>
+<span class="lineno">452</span>                                  <span class="n">discriminator</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">discriminator</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-126'>
@@ -1555,7 +1560,7 @@ $w_2$ to the blocks after.</p>
                 <p>Start the experiment</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">449</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">455</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-127'>
@@ -1566,7 +1571,7 @@ $w_2$ to the blocks after.</p>
                 <p>Run the training loop</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">451</span>        <span class="n">configs</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">457</span>        <span class="n">configs</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-128'>
@@ -1577,8 +1582,8 @@ $w_2$ to the blocks after.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">454</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">455</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">460</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">461</span>    <span class="n">main</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>
