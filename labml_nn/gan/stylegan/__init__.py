@@ -14,7 +14,7 @@ Style GAN2 is an improvement over **Style GAN** from the paper
  [A Style-Based Generator Architecture for Generative Adversarial Networks](https://arxiv.org/abs/1812.04948).
 And Style GAN is based on **Progressive GAN** from the paper
  [Progressive Growing of GANs for Improved Quality, Stability, and Variation](https://arxiv.org/abs/1710.10196).
-All three papers are from same set of authors from [NVIDIA AI](https://twitter.com/NVIDIAAI).
+All three papers are from the same authors from [NVIDIA AI](https://twitter.com/NVIDIAAI).
 
 *Our implementation is a minimalistic Style GAN2 model training code.
 Only single GPU training is supported to keep the implementation simple.
@@ -39,12 +39,12 @@ When we train the two networks together the generator starts generating images i
 
 ## Progressive GAN
 
-Progressive GAN generate high-resolution images ($1080 \times 1080$) of size.
+Progressive GAN generates high-resolution images ($1080 \times 1080$) of size.
 It does so by *progressively* increasing the image size.
 First, it trains a network that produces a $4 \times 4$ image, then $8 \times 8$ ,
- then an $16 \times 16$  image, and so on upto the desired image resolution.
+ then an $16 \times 16$  image, and so on up to the desired image resolution.
 
-At each resolution the generator network produces an image in latent space which is converted into RGB,
+At each resolution, the generator network produces an image in latent space which is converted into RGB,
 with a $1 \times 1$  convolution.
 When we progress from a lower resolution to a higher resolution
  (say from $4 \times 4$  to $8 \times 8$ ) we scale the latent image by $2\times$
@@ -52,10 +52,10 @@ When we progress from a lower resolution to a higher resolution
  and a new $1 \times 1$  layer to get RGB.
 The transition is done smoothly by adding a residual connection to
  the $2\times$ scaled $4 \times 4$  RGB image.
-The weight of this residual connection is slowly reduced, to let the new block to take over.
+The weight of this residual connection is slowly reduced, to let the new block take over.
 
 The discriminator is a mirror image of the generator network.
-The progressive growing of the disciminator is done similarly.
+The progressive growth of the discriminator is done similarly.
 
 ![progressive_gan.svg](progressive_gan.svg)
 
@@ -66,19 +66,19 @@ Each discriminator and generator block consists of 2 convolution layers with lea
 They use **minibatch standard deviation** to increase variation and
  **equalized learning rate** which we discussed below in the implementation.
 They also use **pixel-wise normalization** where at each pixel the feature vector is normalized.
-They apply this to all the convlution layer outputs (except RGB).
+They apply this to all the convolution layer outputs (except RGB).
 
 
 ## Style GAN
 
-Style GAN improves the generator of Progressive GAN keeping the discriminator architecture same.
+Style GAN improves the generator of Progressive GAN keeping the discriminator architecture the same.
 
 #### Mapping Network
 
 It maps the random latent vector ($z \in \mathcal{Z}$)
  into a different latent space ($w \in \mathcal{W}$),
- with a 8-layer neural network.
-This gives a intemediate latent space $\mathcal{W}$
+ with an 8-layer neural network.
+This gives an intermediate latent space $\mathcal{W}$
 where the factors of variations are more linear (disentangled).
 
 #### AdaIN
@@ -95,19 +95,19 @@ To prevent the generator from assuming adjacent styles are correlated,
 That is, they sample two latent vectors $(z_1, z_2)$ and corresponding $(w_1, w_2)$ and
  use $w_1$ based styles for some blocks and $w_2$ based styles for some blacks randomly.
 
-#### Stocastic Variation
+#### Stochastic Variation
 
-Noise is made available to each block which helps generator create more realistic images.
+Noise is made available to each block which helps the generator create more realistic images.
 Noise is scaled per channel by a learned weight.
 
 #### Bilinear Up and Down Sampling
 
-All the up and down sampling operations are accompanied by bilinear smoothing.
+All the up and down-sampling operations are accompanied by bilinear smoothing.
 
 ![style_gan.svg](style_gan.svg)
 
-*<small>$A$ denote linear layer.
-$B$ denote broadcast and scaling operation (noise is single channel).
+*<small>$A$ denotes linear layer.
+$B$ denotes broadcast and scaling operation (noise is a single channel).
 Style GAN also uses progressive growing like Progressive GAN</small>*
 
 ## Style GAN 2
@@ -116,7 +116,8 @@ Style GAN 2 changes both the generator and the discriminator of Style GAN.
 
 #### Weight Modulation and Demodulation
 
-They remove the $\text{AdaIN}$ operator and replace it weight modulation and demodulation step.
+They remove the $\text{AdaIN}$ operator and replace it with
+ the weight modulation and demodulation step.
 This is supposed to improve what they call droplet artifacts that are present in generated images,
  which are caused by the normalization in $\text{AdaIN}$ operator.
 Style vector per layer is calculated from $w_i \in \mathcal{W}$ as $s_i = f_{A_i}(w_i)$.
@@ -133,14 +134,14 @@ where $i$ is the input channel, $j$ is the output channel, and $k$ is the kernel
 #### Path Length Regularization
 
 Path length regularization encourages a fixed-size step in $\mathcal{W}$ to result in a non-zero,
- fixed-magnitude change in generated image.
+ fixed-magnitude change in the generated image.
 
 #### No Progressive Growing
 
 StyleGAN2 uses residual connections (with down-sampling) in the discriminator and skip connections
  in the generator with up-sampling
   (the RGB outputs from each layer are added - no residual connections in feature maps).
-They show that with experiemnts that the contribution of low resolution layers is higher
+They show that with experiments that the contribution of low-resolution layers is higher
  at beginning of the training and then high-resolution layers take over.
 """
 
