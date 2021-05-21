@@ -47,6 +47,7 @@ implementations almost weekly.
 * [Cycle GAN](https://nn.labml.ai/gan/cycle_gan/index.html)
 * [Wasserstein GAN](https://nn.labml.ai/gan/wasserstein/index.html)
 * [Wasserstein GAN with Gradient Penalty](https://nn.labml.ai/gan/wasserstein/gradient_penalty/index.html)
+* [Style GAN 2](https://nn.labml.ai/gan/stylegan/index.html)
 
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
