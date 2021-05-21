@@ -252,7 +252,7 @@ class Generator(nn.Module):
         # The first style block
         x = self.style_block(x, w[0], input_noise[0][1])
         # Get first rgb image
-        rgb = self.to_rgb(x, None, w[0])
+        rgb = self.to_rgb(x, w[0])
 
         # Evaluate rest of the blocks
         for i in range(1, self.n_blocks):
@@ -809,7 +809,7 @@ class EqualizedWeight(nn.Module):
 
     def forward(self):
         # Multiply the weights by $c$ and return
-        return self.weight * self.runtime_coef
+        return self.weight * self.c
 
 
 class GradientPenalty(nn.Module):
