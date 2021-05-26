@@ -177,7 +177,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
 @option(NLPAutoRegressionConfigs.optimizer)
 def _optimizer(c: NLPAutoRegressionConfigs):
     """
-    ### Default optimizer configurations
+    ### Default [optimizer configurations](../optimizers/configs.html)
     """
 
     optimizer = OptimizerConfigs()

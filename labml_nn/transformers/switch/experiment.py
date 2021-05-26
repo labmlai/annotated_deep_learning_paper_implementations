@@ -53,6 +53,8 @@ class Configs(NLPAutoRegressionConfigs):
     """
     ## Configurations
 
+    This extends [`NLPAutoRegressionConfigs`](../../experiments/nlp_autoregression.html).
+
     The default configs can and will be over-ridden when we start the experiment
     """
 

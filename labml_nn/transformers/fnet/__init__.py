@@ -27,12 +27,15 @@ $$
 \mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
 $$
 
-where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and $\mathcal{R}$ stands for the real component
-in complex numbers.
+where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and
+$\mathcal{R}$ stands for the real component in complex numbers.
 
 This is very simple to implement on PyTorch - just 1 line of code.
 The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
 Fourier transformation.
+
+Here is [training code](experiment.html) for using a FNet based model for classifying
+[AG News](https://paperswithcode.com/dataset/ag-news).
 """
 
 from typing import Optional

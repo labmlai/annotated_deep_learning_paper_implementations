@@ -90,17 +90,19 @@ The accuracy loss of using this over self-attention is about 92% for
 \mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
 </script>
 </p>
-<p>where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and $\mathcal{R}$ stands for the real component
-in complex numbers.</p>
+<p>where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and
+$\mathcal{R}$ stands for the real component in complex numbers.</p>
 <p>This is very simple to implement on PyTorch - just 1 line of code.
 The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
 Fourier transformation.</p>
+<p>Here is <a href="experiment.html">training code</a> for using a FNet based model for classifying
+<a href="https://paperswithcode.com/dataset/ag-news">AG News</a>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">38</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="lineno">39</span>
-<span class="lineno">40</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">41</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">41</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">42</span>
+<span class="lineno">43</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -118,7 +120,7 @@ Fourier transformation.</p>
 replace it.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">44</span><span class="k">class</span> <span class="nc">FNetMix</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">47</span><span class="k">class</span> <span class="nc">FNetMix</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -133,7 +135,7 @@ $\text{query}$,$\text{key}$, and $\text{value}$ and a mask.</p>
 Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <code>[seq_len, batch_size, d_model]</code>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">57</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">60</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -144,7 +146,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
                 <p>$\text{query}$,$\text{key}$, and $\text{value}$ all should be equal to $x$ for token mixing</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">69</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">72</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -155,7 +157,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
                 <p>Token mixing doesn&rsquo;t support masking. i.e. all tokens will see all other token embeddings.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">71</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">74</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -166,7 +168,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
                 <p>Assign to <code>x</code> for clarity</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">77</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -181,7 +183,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
 <a href="https://pytorch.org/docs/stable/complex_numbers.html">complex numbers</a>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">81</span>        <span class="n">fft_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">fft_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -194,7 +196,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">fft_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">fft_hidden</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">fft_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">fft_hidden</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -207,7 +209,7 @@ Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <co
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">88</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fft_seq</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">91</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fft_seq</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>

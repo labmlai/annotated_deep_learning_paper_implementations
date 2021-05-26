@@ -1,3 +1,17 @@
+"""
+---
+title: FNet Experiment
+summary: This experiment trains a FNet based model on AG News dataset.
+---
+
+# [FNet](index.html) Experiment
+
+This is an annotated PyTorch experiment to train a [FNet model](index.html).
+
+This is based on
+[general training loop and configurations for AG News classification task](../../experiments/nlp_classification.html).
+"""
+
 import torch
 from torch import nn
 

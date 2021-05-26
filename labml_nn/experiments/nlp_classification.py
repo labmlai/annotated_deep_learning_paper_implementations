@@ -1,10 +1,20 @@
+"""
+---
+title: NLP classification trainer
+summary: >
+  This is a reusable trainer for classification tasks
+---
+
+# NLP model trainer for classification
+"""
+
 from collections import Counter
 from typing import Callable
 
 import torch
 import torchtext
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab
 
 from labml import lab, tracker, monit
@@ -17,6 +27,15 @@ from labml_nn.optimizers.configs import OptimizerConfigs
 
 
 class NLPClassificationConfigs(TrainValidConfigs):
+    """
+    <a id="NLPClassificationConfigs">
+    ## Trainer configurations
+    </a>
+
+    This has the basic configurations for NLP classification task training.
+    All the properties are configurable.
+    """
+
     # Optimizer
     optimizer: torch.optim.Adam
     # Training device
@@ -117,7 +136,7 @@ class NLPClassificationConfigs(TrainValidConfigs):
 @option(NLPClassificationConfigs.optimizer)
 def _optimizer(c: NLPClassificationConfigs):
     """
-    ### Default optimizer configurations
+    ### Default [optimizer configurations](../optimizers/configs.html)
     """
 
     optimizer = OptimizerConfigs()
@@ -157,7 +176,7 @@ def character_tokenizer(x: str):
 @option(NLPClassificationConfigs.tokenizer)
 def character():
     """
-    ### Character level tokenizer configuration
+    Character level tokenizer configuration
     """
     return character_tokenizer
 
@@ -171,41 +190,50 @@ def _n_tokens(c: NLPClassificationConfigs):
 
 
 class CollateFunc:
-    def __init__(self, tokenizer, vocab: Vocab, seq_len: int, padding: int, classifier_token: int):
+    """
+    ## Function to load data into batches
+    """
+
+    def __init__(self, tokenizer, vocab: Vocab, seq_len: int, padding_token: int, classifier_token: int):
+        """
+        * `tokenizer` is the tokenizer function
+        * `vocab` is the vocabulary
+        * `seq_len` is the length of the sequence
+        * `padding_token` is the token used for padding when the `seq_len` is larger than the text length
+        * `classifier_token` is the `[CLS]` token which we set at end of the input
+        """
         self.classifier_token = classifier_token
-        self.padding = padding
+        self.padding_token = padding_token
         self.seq_len = seq_len
         self.vocab = vocab
         self.tokenizer = tokenizer
 
     def __call__(self, batch):
-        label_list = []
-        padded = torch.full((self.seq_len, len(batch)), self.padding, dtype=torch.long)
+        """
+        * `batch` is the batch of data collected by the `DataLoader`
+        """
 
+        # Input data tensor, initialized with `padding_token`
+        data = torch.full((self.seq_len, len(batch)), self.padding_token, dtype=torch.long)
+        # Empty labels tensor
+        labels = torch.zeros(len(batch), dtype=torch.long)
+
+        # Loop through the samples
         for (i, (_label, _text)) in enumerate(batch):
-            label_list.append(int(_label) - 1)
+            # Set the label
+            labels[i] = int(_label) - 1
+            # Tokenize the input text
             _text = [self.vocab[token] for token in self.tokenizer(_text)]
+            # Truncate upto `seq_len`
             _text = _text[:self.seq_len]
+            # Transpose and add to data
+            data[:len(_text), i] = data.new_tensor(_text)
 
-            padded[:len(_text), i] = padded.new_tensor(_text)
+        # Set the final token in the sequence to `[CLS]`
+        data[-1, :] = self.classifier_token
 
-        padded[-1, :] = self.classifier_token
-        label_list = torch.tensor(label_list, dtype=torch.long)
-        return padded, label_list
-
-
-class AGNewsDataset(Dataset):
-    def __init__(self, dataset):
-        self.data = [d for d in dataset]
-
-    def __getitem__(self, item):
-        return self.data[item]
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def __len__(self):
-        return len(self.data)
+        #
+        return data, labels
 
 
 @option([NLPClassificationConfigs.n_classes,
@@ -213,21 +241,43 @@ class AGNewsDataset(Dataset):
          NLPClassificationConfigs.train_loader,
          NLPClassificationConfigs.valid_loader])
 def ag_news(c: NLPClassificationConfigs):
-    train, valid = torchtext.datasets.AG_NEWS(root=str(lab.get_data_path() / 'ag_news'), split=('train', 'test'))
-    with monit.section('Load data'):
-        train, valid = AGNewsDataset(train), AGNewsDataset(valid)
+    """
+    ### AG News dataset
 
+    This loads the AG News dataset and the set the values for
+     `n_classes', `vocab`, `train_loader`, and `valid_loader`.
+    """
+
+    # Get training and validation datasets
+    train, valid = torchtext.datasets.AG_NEWS(root=str(lab.get_data_path() / 'ag_news'), split=('train', 'test'))
+
+    # Load data to memory
+    with monit.section('Load data'):
+        from labml_nn.utils import MapStyleDataset
+
+        # Create [map-style datasets](../utils.html#map_style_dataset)
+        train, valid = MapStyleDataset(train), MapStyleDataset(valid)
+
+    # Get tokenizer
     tokenizer = c.tokenizer
+
+    # Create a counter
     counter = Counter()
+    # Collect tokens from training dataset
     for (label, line) in train:
         counter.update(tokenizer(line))
+    # Collect tokens from validation dataset
     for (label, line) in valid:
         counter.update(tokenizer(line))
+    # Create vocabulary
     vocab = Vocab(counter, min_freq=1)
 
+    # Create training data loader
     train_loader = DataLoader(train, batch_size=c.batch_size, shuffle=True,
                               collate_fn=CollateFunc(tokenizer, vocab, c.seq_len, len(vocab), len(vocab) + 1))
+    # Create validation data loader
     valid_loader = DataLoader(valid, batch_size=c.batch_size, shuffle=True,
                               collate_fn=CollateFunc(tokenizer, vocab, c.seq_len, len(vocab), len(vocab) + 1))
 
+    # Return `n_classes', `vocab`, `train_loader`, and `valid_loader`
     return 4, vocab, train_loader, valid_loader
