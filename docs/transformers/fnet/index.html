@@ -3,24 +3,24 @@
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content=""/>
+    <meta name="description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
 
     <meta name="twitter:card" content="summary"/>
     <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
-    <meta name="twitter:title" content="__init__.py"/>
-    <meta name="twitter:description" content=""/>
+    <meta name="twitter:title" content="FNet - Mixing Tokens with Fourier Transforms"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
     <meta name="twitter:site" content="@labmlai"/>
     <meta name="twitter:creator" content="@labmlai"/>
 
     <meta property="og:url" content="https://nn.labml.ai/transformers/fnet/index.html"/>
-    <meta property="og:title" content="__init__.py"/>
+    <meta property="og:title" content="FNet - Mixing Tokens with Fourier Transforms"/>
     <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
     <meta property="og:site_name" content="LabML Neural Networks"/>
     <meta property="og:type" content="object"/>
-    <meta property="og:title" content="__init__.py"/>
-    <meta property="og:description" content=""/>
+    <meta property="og:title" content="FNet - Mixing Tokens with Fourier Transforms"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
 
-    <title>__init__.py</title>
+    <title>FNet - Mixing Tokens with Fourier Transforms</title>
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/transformers/fnet/index.html"/>
@@ -68,40 +68,72 @@
         </div>
     </div>
     <div class='section' id='section-0'>
-            <div class='docs'>
+        <div class='docs doc-strings'>
                 <div class='section-link'>
                     <a href='#section-0'>#</a>
                 </div>
-                
+                <h1>FNet: Mixing Tokens with Fourier Transforms</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
+<a href="https://arxiv.org/abs/2105.03824">FNet: Mixing Tokens with Fourier Transforms</a>.</p>
+<p>This paper replaces the <a href="../mha.html">self-attention layer</a> with two
+<a href="https://en.wikipedia.org/wiki/Discrete_Fourier_transform">fourier transforms</a> to
+<em>mix</em> tokens.
+This is a $7 \times$ efficient than the self-attention.
+The accuracy loss of using this over self-attention is about 92% for
+<a href="https://paperswithcode.com/method/bert">BERT</a> on
+<a href="https://paperswithcode.com/dataset/glue">GLUE benchmark</a>.</p>
+<h2>Mixing tokens with two Fourier transforms</h2>
+<p>We apply Fourier transform along the hidden dimension (embedding dimension)
+ and then along the sequence dimension.</p>
+<p>
+<script type="math/tex; mode=display">
+\mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
+</script>
+</p>
+<p>where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and $\mathcal{R}$ stands for the real component
+in complex numbers.</p>
+<p>This is very simple to implement on PyTorch - just 1 line of code.
+The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
+Fourier transformation.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="lineno">2</span>
-<span class="lineno">3</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">4</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">38</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">39</span>
+<span class="lineno">40</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">41</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
-            <div class='docs'>
+        <div class='docs doc-strings'>
                 <div class='section-link'>
                     <a href='#section-1'>#</a>
                 </div>
-                
+                <h2>FNet - Mix tokens</h2>
+<p>This module simply implements
+<script type="math/tex; mode=display">
+\mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
+</script>
+</p>
+<p>The structure of this module is made similar to a <a href="../mha.html">standard attention module</a> so that we can simply
+replace it.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">7</span><span class="k">class</span> <span class="nc">FNet</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">44</span><span class="k">class</span> <span class="nc">FNetMix</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
-            <div class='docs'>
+        <div class='docs doc-strings'>
                 <div class='section-link'>
                     <a href='#section-2'>#</a>
                 </div>
-                
+                <p>The <a href="../mha.html">normal attention module</a> can be fed with different token embeddings for
+$\text{query}$,$\text{key}$, and $\text{value}$ and a mask.</p>
+<p>We follow the same function signature so that we can replace it directly.</p>
+<p>For FNet mixing, <script type="math/tex; mode=display">x = \text{query} = \text{key} = \text{value}</script> and masking is not possible.
+Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <code>[seq_len, batch_size, d_model]</code>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">8</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">9</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">57</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -109,19 +141,73 @@
                 <div class='section-link'>
                     <a href='#section-3'>#</a>
                 </div>
-                
+                <p>$\text{query}$,$\text{key}$, and $\text{value}$ all should be equal to $x$ for token mixing</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">11</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="lineno">12</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span>
-<span class="lineno">13</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span>
-<span class="lineno">14</span>
-<span class="lineno">15</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span>
-<span class="lineno">16</span>
-<span class="lineno">17</span>        <span class="n">fft_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="lineno">18</span>        <span class="n">fft_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">fft_hidden</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="lineno">19</span>
-<span class="lineno">20</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fft_seq</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">69</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>Token mixing doesn&rsquo;t support masking. i.e. all tokens will see all other token embeddings.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">71</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>Assign to <code>x</code> for clarity</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>Apply the Fourier transform along the hidden (embedding) dimension
+<script type="math/tex; mode=display">\mathcal{F}_\text{hidden} (x)</script>
+</p>
+<p>The output of the Fourier transform is a tensor of
+<a href="https://pytorch.org/docs/stable/complex_numbers.html">complex numbers</a>.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">81</span>        <span class="n">fft_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Apply the Fourier transform along the sequence dimension
+<script type="math/tex; mode=display">\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big)</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">fft_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">fft_hidden</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Get the real component
+<script type="math/tex; mode=display">\mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">88</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fft_seq</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>
