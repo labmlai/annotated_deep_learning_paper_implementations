@@ -26,6 +26,7 @@ implementations.
 * [Feedback Transformer](transformers/feedback/index.html)
 * [Switch Transformer](transformers/switch/index.html)
 * [Fast Weights Transformer](transformers/fast_weights/index.html)
+* [FNet](transformers/fnet/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 

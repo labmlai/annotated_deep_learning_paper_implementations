@@ -11,9 +11,9 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 [FNet: Mixing Tokens with Fourier Transforms](https://arxiv.org/abs/2105.03824).
 
 This paper replaces the [self-attention layer](../mha.html) with two
-[fourier transforms](https://en.wikipedia.org/wiki/Discrete_Fourier_transform) to
+[Fourier transforms](https://en.wikipedia.org/wiki/Discrete_Fourier_transform) to
 *mix* tokens.
-This is a $7 \times$ efficient than the self-attention.
+This is a $7 \times$ more efficient than self-attention.
 The accuracy loss of using this over self-attention is about 92% for
 [BERT](https://paperswithcode.com/method/bert) on
 [GLUE benchmark](https://paperswithcode.com/dataset/glue).
@@ -34,7 +34,7 @@ This is very simple to implement on PyTorch - just 1 line of code.
 The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
 Fourier transformation.
 
-Here is [training code](experiment.html) for using a FNet based model for classifying
+Here is [the training code](experiment.html) for using a FNet based model for classifying
 [AG News](https://paperswithcode.com/dataset/ag-news).
 """
 

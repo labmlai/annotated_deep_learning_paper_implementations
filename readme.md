@@ -32,6 +32,7 @@ implementations almost weekly.
 * [Feedback Transformer](https://nn.labml.ai/transformers/feedback/index.html)
 * [Switch Transformer](https://nn.labml.ai/transformers/switch/index.html)
 * [Fast Weights Transformer](https://nn.labml.ai/transformers/fast_weights/index.html)
+* [FNet](https://nn.labml.ai/transformers/fnet/index.html)
 
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 
