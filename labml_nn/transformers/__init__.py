@@ -57,6 +57,11 @@ It does single GPU training but we implement the concept of switching as describ
 
 This is an implementation of the paper
 [Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://arxiv.org/abs/2102.11174).
+
+## [FNet: Mixing Tokens with Fourier Transforms](fnet/index.html)
+
+This is an implementation of the paper
+[FNet: Mixing Tokens with Fourier Transforms](https://arxiv.org/abs/2105.03824).
 """
 
 from .configs import TransformerConfigs

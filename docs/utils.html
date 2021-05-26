@@ -75,7 +75,9 @@
             <div class='code'>
                 <div class="highlight"><pre><span class="lineno">10</span><span></span><span class="kn">import</span> <span class="nn">copy</span>
 <span class="lineno">11</span>
-<span class="lineno">12</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">M</span><span class="p">,</span> <span class="n">TypedModuleList</span></pre></div>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">IterableDataset</span>
+<span class="lineno">13</span>
+<span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">M</span><span class="p">,</span> <span class="n">TypedModuleList</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -87,7 +89,7 @@
 <p>Make a <code>nn.ModuleList</code> with clones of a given module</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">15</span><span class="k">def</span> <span class="nf">clone_module_list</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">M</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypedModuleList</span><span class="p">[</span><span class="n">M</span><span class="p">]:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">17</span><span class="k">def</span> <span class="nf">clone_module_list</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">M</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypedModuleList</span><span class="p">[</span><span class="n">M</span><span class="p">]:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -98,7 +100,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">21</span>    <span class="k">return</span> <span class="n">TypedModuleList</span><span class="p">([</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">23</span>    <span class="k">return</span> <span class="n">TypedModuleList</span><span class="p">([</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -111,7 +113,7 @@
 <p>Infinite loader that recycles the data loader after each epoch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">24</span><span class="k">def</span> <span class="nf">cycle_dataloader</span><span class="p">(</span><span class="n">data_loader</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">26</span><span class="k">def</span> <span class="nf">cycle_dataloader</span><span class="p">(</span><span class="n">data_loader</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -122,9 +124,113 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">31</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-<span class="lineno">32</span>        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
-<span class="lineno">33</span>            <span class="k">yield</span> <span class="n">batch</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">33</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="lineno">34</span>        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+<span class="lineno">35</span>            <span class="k">yield</span> <span class="n">batch</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p><a id="map_style_dataset"></a></p>
+<h2>Map Style Dataset</h2>
+<p>This converts an <a href="https://pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset"><code>IterableDataset</code></a>
+to a <a href="https://pytorch.org/docs/stable/data.html#map-style-datasets">map-style dataset</a>
+so that we can shuffle the dataset.</p>
+<p><em>This only works when the dataset size is small and can be held in memory.</em></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">38</span><span class="k">class</span> <span class="nc">MapStyleDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">50</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">IterableDataset</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Load the data to memory</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">52</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Get a sample by index</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">54</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">56</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Create an iterator</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">58</span>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">60</span>        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>Size of the dataset</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">62</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">64</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>
