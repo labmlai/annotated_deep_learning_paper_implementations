@@ -24,6 +24,9 @@ from labml_nn.transformers import TransformerConfigs
 
 
 class TransformerClassifier(nn.Module):
+    """
+    # Transformer based classifier model
+    """
     def __init__(self, encoder: Encoder, src_embed: Module, generator: nn.Linear):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
@@ -41,7 +44,11 @@ class TransformerClassifier(nn.Module):
         x = self.src_embed(x)
         # Transformer encoder
         x = self.encoder(x, None)
-        # Get logits
+        # Get logits for classification.
+        #
+        # We set the `[CLS]` token at the last position of the sequence.
+        # This is extracted by `x[-1]`, where `x` is of
+        # shape `[seq_len, batch_size, d_model]`
         x = self.generator(x[-1])
 
         # Return results
@@ -54,16 +61,16 @@ class Configs(NLPClassificationConfigs):
     ## Configurations
 
     This inherits from
-    [`NLPAutoRegressionConfigs`](../../experiments/nlp_autoregression.html#NLPAutoRegressionConfigs)
+    [`NLPClassificationConfigs`](../../experiments/nlp_classification.html)
     """
 
-    # GPT model
+    # Classification model
     model: TransformerClassifier
     # Transformer
     transformer: TransformerConfigs
 
 
-@option(Configs.transformer, 'GPT')
+@option(Configs.transformer)
 def _transformer_configs(c: Configs):
     """
     ### Transformer configurations
@@ -81,15 +88,20 @@ def _transformer_configs(c: Configs):
 
 
 @option(TransformerConfigs.encoder_attn)
-def fnet(c: TransformerConfigs):
-    from labml_nn.transformers.fnet import FNet
-    return FNet()
+def fnet_mix():
+    """
+    Create `FNetMix` module that can replace the self-attention in
+    [transformer encoder layer](../models.html#TransformerLayer)
+.
+    """
+    from labml_nn.transformers.fnet import FNetMix
+    return FNetMix()
 
 
 @option(Configs.model)
 def _model(c: Configs):
     """
-    Create GPT model and initialize weights
+    Create classification model
     """
     m = TransformerClassifier(c.transformer.encoder,
                               c.transformer.src_embed,
@@ -100,12 +112,12 @@ def _model(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name="gpt")
+    experiment.create(name="fnet")
     # Create configs
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        # Use character level tokenizer
+        # Use world level tokenizer
         'tokenizer': 'basic_english',
 
         # Train for $32$ epochs
@@ -114,18 +126,17 @@ def main():
         # per epoch
         'inner_iterations': 10,
 
-        # Transformer configurations
+        # Transformer configurations (same as defaults)
         'transformer.d_model': 512,
         'transformer.ffn.d_ff': 2048,
         'transformer.n_heads': 8,
         'transformer.n_layers': 6,
 
-        'transformer.encoder_attn': 'fnet',
+        # Use [FNet](index.html) instead of self-attention
+        'transformer.encoder_attn': 'fnet_mix',
 
+        # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
-        # 'optimizer.learning_rate': 1.25e-4,
-
-        # 'seq_len': 768,
     })
 
     # Set models for saving and loading
