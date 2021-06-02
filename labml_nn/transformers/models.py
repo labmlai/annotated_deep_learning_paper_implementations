@@ -101,10 +101,10 @@ class TransformerLayer(Module):
         self.is_save_ff_input = False
 
     def forward(self, *,
-                 x: torch.Tensor,
-                 mask: torch.Tensor,
-                 src: torch.Tensor = None,
-                 src_mask: torch.Tensor = None):
+                x: torch.Tensor,
+                mask: torch.Tensor,
+                src: torch.Tensor = None,
+                src_mask: torch.Tensor = None):
         # Normalize the vectors before doing self attention
         z = self.norm_self_attn(x)
         # Run through self attention, i.e. keys and values are from self
