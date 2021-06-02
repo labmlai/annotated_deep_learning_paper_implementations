@@ -62,6 +62,11 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [FNet: Mixing Tokens with Fourier Transforms](https://arxiv.org/abs/2105.03824).
+
+## [Attention Free Transformer](aft/index.html)
+
+This is an implementation of the paper
+[An Attention Free Transformer](https://papers.labml.ai/paper/2105.14103).
 """
 
 from .configs import TransformerConfigs
