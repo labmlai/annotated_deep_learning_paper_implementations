@@ -132,11 +132,13 @@ def main():
         'transformer.n_heads': 8,
         'transformer.n_layers': 6,
 
-        # Use [FNet](index.html) instead of self-attention
+        # Use [FNet](index.html) instead of self-a
+        # ttention
         'transformer.encoder_attn': 'fnet_mix',
 
         # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
+        'optimizer.learning_rate': 1.,
     })
 
     # Set models for saving and loading
