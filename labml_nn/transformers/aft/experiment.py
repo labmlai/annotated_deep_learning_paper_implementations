@@ -1,3 +1,18 @@
+"""
+---
+title: Attention Free Transformer (AFT) Experiment
+summary: This experiment trains an Attention Free Transformer (AFT) based model on Tiny Shakespeare dataset.
+---
+
+# [Attention Free Transformer (AFT)](index.html) Experiment
+
+This is an annotated PyTorch experiment to train a [AFT model](index.html).
+
+This is based on
+[general training loop and configurations for auto-regressive NLP task](../../experiments/nlp_autoregression.html).
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6348e504c3a511eba9529daa283fb495)
+"""
 import torch
 
 from labml import experiment
@@ -53,7 +68,7 @@ class Configs(NLPAutoRegressionConfigs):
     # Transformer
     transformer: TransformerConfigs
 
-    local_span: int = 32
+    local_window_size: int = 32
 
 
 @option(Configs.transformer, 'Transformer')
@@ -68,8 +83,9 @@ def _transformer_configs(c: Configs):
     # Set the vocabulary sizes for embeddings and generating logits
     conf.n_src_vocab = c.n_tokens
     conf.n_tgt_vocab = c.n_tokens
+    # Replace self-attention with an [AFT Local Module](index.html)
     from labml_nn.transformers.aft import AFTLocalAutoregressive
-    conf.encoder_attn = AFTLocalAutoregressive(c.d_model, c.seq_len, c.local_span)
+    conf.encoder_attn = AFTLocalAutoregressive(c.d_model, c.seq_len, c.local_window_size)
 
     #
     return conf
@@ -78,7 +94,7 @@ def _transformer_configs(c: Configs):
 @option(Configs.model)
 def _model(c: Configs):
     """
-    Create GPT model and initialize weights
+    Create an auto-regressive model
     """
     m = AutoregressiveTransformer(c.transformer.encoder,
                                   c.transformer.src_embed,
@@ -89,7 +105,7 @@ def _model(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name="transformer")
+    experiment.create(name="aft")
     # Create configs
     conf = Configs()
     # Override configurations
