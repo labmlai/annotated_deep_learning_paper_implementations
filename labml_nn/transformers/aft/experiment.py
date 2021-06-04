@@ -93,6 +93,8 @@ def _transformer_configs(c: Configs):
     # Set the vocabulary sizes for embeddings and generating logits
     conf.n_src_vocab = c.n_tokens
     conf.n_tgt_vocab = c.n_tokens
+    # Set the embedding size
+    conf.d_model = c.d_model
     # Replace self-attention with an [AFT Local Module](index.html)
     from labml_nn.transformers.aft import AFTLocal
     conf.encoder_attn = AFTLocal(c.d_model, c.seq_len, c.local_window_size)
@@ -139,10 +141,12 @@ def main():
         # per epoch
         'inner_iterations': 10,
 
+        # Embedding size
         'd_model': 128,
-        'transformer.d_model': 128,
+        # FFN hidden dimension size
         'transformer.ffn.d_ff': 256,
 
+        # Optimizer
         'optimizer.optimizer': 'Noam',
         'optimizer.learning_rate': 1.,
     })
