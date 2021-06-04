@@ -154,8 +154,8 @@ class AFTLocal(Module):
         # So we subtract $\max(x_i)$ to stabilize the computation.
         #
         # Here the maximum is the higher of $\max(K_{t'} + w_{t,t'})$ and $\max(K_{t'})$
-        max_key = key.max(dim=0)[0]
-        max_w = pos_bias.max(dim=0)[0]
+        max_key = key.max(dim=0, keepdims=True)[0]
+        max_pos_bias = pos_bias.max(dim=1,  keepdims=True)[0]
 
         # \begin{align}
         # Y_t &= \sigma(Q_t) \odot
@@ -177,12 +177,12 @@ class AFTLocal(Module):
         #
 
         exp_key = torch.exp(key - max_key)
-        exp_w = torch.exp(pos_bias - max_w)
+        exp_pos_bias = torch.exp(pos_bias - max_pos_bias)
 
         # The numerator part $\sum_{t'=1}^{t-s} \exp(K_{t'}) \odot V_{t'}$
         # The denominator part $\sum_{t'=1}^{t-s} \exp(K_{t'})$
-        num = torch.einsum('ijb,jbd->ibd', exp_w, exp_key * value)
-        den = torch.einsum('ijb,jbd->ibd', exp_w, exp_key)
+        num = torch.einsum('ijb,jbd->ibd', exp_pos_bias, exp_key * value)
+        den = torch.einsum('ijb,jbd->ibd', exp_pos_bias, exp_key)
 
         # Output $Y$
         y = self.activation(query) * num / den
