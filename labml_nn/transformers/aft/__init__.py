@@ -128,7 +128,7 @@ class AFTLocal(Module):
         # Initialize to ones
         local_mask = torch.ones(seq_len, seq_len, dtype=torch.bool)
         # Make $t' - t \ge s$ zero
-        local_mask = torch.tril(local_mask, local_mask - 1)
+        local_mask = torch.tril(local_mask, local_window_size - 1)
         # Make $t - t' \ge s$ zero
         local_mask = torch.triu(local_mask, -(local_window_size - 1))
 
