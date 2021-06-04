@@ -94,8 +94,8 @@ def _transformer_configs(c: Configs):
     conf.n_src_vocab = c.n_tokens
     conf.n_tgt_vocab = c.n_tokens
     # Replace self-attention with an [AFT Local Module](index.html)
-    from labml_nn.transformers.aft import AFTLocalAutoregressive
-    conf.encoder_attn = AFTLocalAutoregressive(c.d_model, c.seq_len, c.local_window_size)
+    from labml_nn.transformers.aft import AFTLocal
+    conf.encoder_attn = AFTLocal(c.d_model, c.seq_len, c.local_window_size)
 
     #
     return conf

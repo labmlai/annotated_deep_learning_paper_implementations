@@ -66,7 +66,7 @@ from torch import nn
 from labml_helpers.module import Module
 
 
-class AFTLocalAutoregressive(Module):
+class AFTLocal(Module):
     """
     ### AFT Local Operation for Auto-Regression
 
@@ -78,7 +78,7 @@ class AFTLocalAutoregressive(Module):
      {\sum_{t'=1}^t \exp(K_{t'} + w_{t,t'})}$$
     """
 
-    def __init__(self, d_model: int, seq_len: int, s: int, bias: bool = True):
+    def __init__(self, d_model: int, seq_len: int, local_window_size: int, bias: bool = True):
         """
         * `d_model` is the number of features in the `query`, `key` and `value` vectors.
         * `seq_len` is $T$
@@ -89,7 +89,7 @@ class AFTLocalAutoregressive(Module):
         super().__init__()
 
         # Local window size $s$
-        self.s = s
+        self.local_window_size = local_window_size
         # These transform the `query`, `key` and `value` vectors.
         self.query = nn.Linear(d_model, d_model, bias=bias)
         self.key = nn.Linear(d_model, d_model, bias=bias)
@@ -97,17 +97,17 @@ class AFTLocalAutoregressive(Module):
         # Pair-wise positional biases $w \in \mathbb{R}^{T \times T}$
         self.pos_bias = nn.Parameter(torch.zeros(seq_len, seq_len), requires_grad=True)
         # Local mask
-        self.local_mask = nn.Parameter(self.create_local_mask(seq_len, s), requires_grad=False)
+        self.local_mask = nn.Parameter(self.create_local_mask(seq_len, local_window_size), requires_grad=False)
         # Activation $\sigma$
         self.activation = nn.Sigmoid()
         # Output layer
         self.output = nn.Linear(d_model, d_model)
 
     @staticmethod
-    def create_local_mask(seq_len, s):
+    def create_local_mask(seq_len, local_window_size):
         local_mask = torch.ones(seq_len, seq_len, dtype=torch.bool)
         local_mask = torch.tril(local_mask)
-        local_mask = torch.triu(local_mask, -(s - 1))
+        local_mask = torch.triu(local_mask, -(local_window_size - 1))
 
         return local_mask
 
@@ -193,7 +193,7 @@ class AFTLocalAutoregressive(Module):
 
 def _test_local_mask():
     from labml.logger import inspect
-    inspect(AFTLocalAutoregressive.create_local_mask(10, 4))
+    inspect(AFTLocal.create_local_mask(10, 4))
 
 
 #
