@@ -20,6 +20,7 @@ from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import TransformerConfigs, Encoder
+from labml_nn.transformers.utils import subsequent_mask
 
 
 class AutoregressiveTransformer(Module):
@@ -42,11 +43,20 @@ class AutoregressiveTransformer(Module):
         self.encoder = encoder
         self.generator = generator
 
+        # The mask will be initialized on the first call
+        self.mask = None
+
     def forward(self, x: torch.Tensor):
+        # Create subsequent mask if mask is not initialized
+        # or if the size of the mask is different
+        if self.mask is None or self.mask.size(0) != len(x):
+            # Subsequent mask, will mask out tokens from seeing future tokens
+            self.mask = subsequent_mask(len(x)).to(x.device)
+
         # Get the token embeddings with positional encodings
         x = self.src_embed(x)
         # Transformer encoder
-        x = self.encoder(x, None)
+        x = self.encoder(x, self.mask)
         # Get logits
         x = self.generator(x)
 
@@ -83,9 +93,11 @@ def _transformer_configs(c: Configs):
     # Set the vocabulary sizes for embeddings and generating logits
     conf.n_src_vocab = c.n_tokens
     conf.n_tgt_vocab = c.n_tokens
+    # Set the embedding size
+    conf.d_model = c.d_model
     # Replace self-attention with an [AFT Local Module](index.html)
-    from labml_nn.transformers.aft import AFTLocalAutoregressive
-    conf.encoder_attn = AFTLocalAutoregressive(c.d_model, c.seq_len, c.local_window_size)
+    from labml_nn.transformers.aft import AFTLocal
+    conf.encoder_attn = AFTLocal(c.d_model, c.seq_len, c.local_window_size)
 
     #
     return conf
@@ -129,10 +141,12 @@ def main():
         # per epoch
         'inner_iterations': 10,
 
+        # Embedding size
         'd_model': 128,
-        'transformer.d_model': 128,
+        # FFN hidden dimension size
         'transformer.ffn.d_ff': 256,
 
+        # Optimizer
         'optimizer.optimizer': 'Noam',
         'optimizer.learning_rate': 1.,
     })
