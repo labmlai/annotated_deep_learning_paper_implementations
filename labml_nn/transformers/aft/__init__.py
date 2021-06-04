@@ -96,10 +96,20 @@ class AFTLocalAutoregressive(Module):
         self.value = nn.Linear(d_model, d_model, bias=bias)
         # Pair-wise positional biases $w \in \mathbb{R}^{T \times T}$
         self.pos_bias = nn.Parameter(torch.zeros(seq_len, seq_len), requires_grad=True)
+        # Local mask
+        self.local_mask = nn.Parameter(self.create_local_mask(seq_len, s), requires_grad=False)
         # Activation $\sigma$
         self.activation = nn.Sigmoid()
         # Output layer
         self.output = nn.Linear(d_model, d_model)
+
+    @staticmethod
+    def create_local_mask(seq_len, s):
+        local_mask = torch.ones(seq_len, seq_len, dtype=torch.bool)
+        local_mask = torch.tril(local_mask)
+        local_mask = torch.triu(local_mask, -(s - 1))
+
+        return local_mask
 
     def forward(self, *,
                 query: torch.Tensor,
@@ -118,9 +128,21 @@ class AFTLocalAutoregressive(Module):
         # `query`, `key` and `value`  have shape `[seq_len, batch_size, d_model]`
         seq_len, _, _ = query.shape
 
+        if mask is not None:
+            # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`,
+            # where first dimension is the query dimension.
+            # If the query dimension is equal to $1$ it will be broadcasted.
+            assert mask.shape[0] == 1 or mask.shape[0] == query.shape[0]
+            assert mask.shape[1] == key.shape[0]
+            assert mask.shape[2] == 1 or mask.shape[2] == query.shape[1]
+
         query = self.query(query)
         key = self.key(key)
         value = self.value(value)
+
+        pos_bias = self.pos_bias[:seq_len, :seq_len] * self.local_mask[:seq_len, :seq_len]
+        pos_bias = pos_bias.unsqueeze(-1)
+        pos_bias.masked_fill_(~mask, float('-inf'))
 
         # We subtract $\max(K_{t'} + w_{t,t'})$ before calculating the exponents to stabilize
         # the softmax calculation.
@@ -132,12 +154,8 @@ class AFTLocalAutoregressive(Module):
         # So we subtract $\max(x_i)$ to stabilize the computation.
         #
         # Here the maximum is the higher of $\max(K_{t'} + w_{t,t'})$ and $\max(K_{t'})$
-        max_logit = torch.max(
-            # $\max(K_{t'})$
-            key.max(dim=0)[0],
-            # $\max(K_{t'} + w_{t,t'})$
-            (key + self.pos_bias[:seq_len, :seq_len].max(dim=0)[0].view(-1, 1, 1)).max(dim=0)[0]
-        )[0]
+        max_key = key.max(dim=0)[0]
+        max_w = pos_bias.max(dim=0)[0]
 
         # \begin{align}
         # Y_t &= \sigma(Q_t) \odot
@@ -158,38 +176,26 @@ class AFTLocalAutoregressive(Module):
         # \end{align}
         #
 
+        exp_key = torch.exp(key - max_key)
+        exp_w = torch.exp(pos_bias - max_w)
+
         # The numerator part $\sum_{t'=1}^{t-s} \exp(K_{t'}) \odot V_{t'}$
-        num = key.new_zeros(key.shape[1:])
         # The denominator part $\sum_{t'=1}^{t-s} \exp(K_{t'})$
-        den = key.new_zeros(key.shape[1:])
+        num = torch.einsum('ijb,jbd->ibd', exp_w, exp_key * value)
+        den = torch.einsum('ijb,jbd->ibd', exp_w, exp_key)
+
         # Output $Y$
-        y = key.new_zeros(key.shape)
-        # Iterate $t \in [0, T]$
-        for t in range(seq_len):
-            # $t - s + 1$
-            f = t - self.s + 1
-            # This actually mean $t - s \ge 1$ since we are indexing from $1$ in the math equations and
-            # indexing from $0$ in code
-            if f >= 1:
-                # $\exp(K_{t-s}$
-                exp_l = torch.exp(key[f - 1] - max_logit)
-                # Update numerator and denominator parts
-                num = num + exp_l * value[f - 1]
-                den = den + exp_l
-            # Start from the beginning if the local window size falls beyond
-            f = max(0, f)
-            # $\exp(K_{t'} + w_{t,t'})$
-            exp_l = torch.exp(key[f: t + 1] + self.pos_bias[t, f: t + 1].view(-1, 1, 1) - max_logit.squeeze(0))
-            # Numerator
-            # $$\sum_{t'=1}^{t-s} \exp(K_{t'}) \odot V_{t'} + \sum_{t'=t-s+1}^t \exp(K_{t'} + w_{t,t'}) \odot V_{t'}$$
-            n = num + (exp_l * value[f: t + 1]).sum(dim=0)
-            # Denominator
-            # $$\sum_{t'=1}^{t-s} \exp(K_{t'}) + \sum_{t'=t-s+1}^t \exp(K_{t'} + w_{t,t'})$$
-            d = den + exp_l.sum(dim=0)
-            # $$Y_t = \sigma(Q_t) \odot
-            #      \frac{\sum_{t'=1}^{t-s} \exp(K_{t'}) \odot V_{t'} + \sum_{t'=t-s+1}^t \exp(K_{t'} + w_{t,t'}) \odot V_{t'}}
-            #      {\sum_{t'=1}^{t-s} \exp(K_{t'}) + \sum_{t'=t-s+1}^t \exp(K_{t'} + w_{t,t'})} $$
-            y[t] = self.activation(query[t]) * n / d
+        y = self.activation(query) * num / den
 
         # Output layer
         return self.output(y)
+
+
+def _test_local_mask():
+    from labml.logger import inspect
+    inspect(AFTLocalAutoregressive.create_local_mask(10, 4))
+
+
+#
+if __name__ == '__main__':
+    _test_local_mask()
