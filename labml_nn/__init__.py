@@ -28,6 +28,7 @@ implementations.
 * [Fast Weights Transformer](transformers/fast_weights/index.html)
 * [FNet](transformers/fnet/index.html)
 * [Attention Free Transformer](transformers/aft/index.html)
+* [Masked Language Model](transformers/mlm/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 

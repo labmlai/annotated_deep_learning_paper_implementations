@@ -34,6 +34,7 @@ implementations almost weekly.
 * [Fast Weights Transformer](https://nn.labml.ai/transformers/fast_weights/index.html)
 * [FNet](https://nn.labml.ai/transformers/fnet/index.html)
 * [Attention Free Transformer](https://nn.labml.ai/transformers/aft/index.html)
+* [Masked Language Model](https://nn.labml.ai/transformers/mlm/index.html)
 
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 

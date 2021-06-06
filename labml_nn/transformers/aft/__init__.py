@@ -2,7 +2,7 @@
 ---
 title: An Attention Free Transformer
 summary: >
-  This is an annotated implementation/tutorial the AFT (Attention Free Transformer) in PyTorch.
+  This is an annotated implementation/tutorial of the AFT (Attention Free Transformer) in PyTorch.
 ---
 
 # An Attention Free Transformer

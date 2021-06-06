@@ -67,6 +67,11 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [An Attention Free Transformer](https://papers.labml.ai/paper/2105.14103).
+
+## [Masked Language Model](mlm/index.html)
+
+This is an implementation of Masked Language Model used for pre-training in paper
+[BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805).
 """
 
 from .configs import TransformerConfigs
