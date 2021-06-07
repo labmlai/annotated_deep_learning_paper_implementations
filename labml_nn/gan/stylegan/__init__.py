@@ -399,7 +399,7 @@ class ToRGB(nn.Module):
         # Weight modulated convolution layer without demodulation
         self.conv = Conv2dWeightModulate(features, 3, kernel_size=1, demodulate=False)
         # Bias
-        self.bias = nn.Parameter(torch.zeros(1))
+        self.bias = nn.Parameter(torch.zeros(3))
         # Activation function
         self.activation = nn.LeakyReLU(0.2, True)
 
