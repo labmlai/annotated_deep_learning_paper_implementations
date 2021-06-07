@@ -7,6 +7,8 @@ summary: This experiment trains a gMLP based model on Tiny Shakespeare dataset.
 # [Pay Attention to MLPs (gMLP)](index.html) Experiment
 
 This is an annotated PyTorch experiment to train a [gMLP model](index.html).
+The paper also applies a Stochastic Depth regularization where some layers are removed randomly during training.
+We have not implemented that here.
 
 This is based on
 [training loop and configurations for a simple transformer auto-regressive NLP task](../basic/autoregressive_experiment.html).
