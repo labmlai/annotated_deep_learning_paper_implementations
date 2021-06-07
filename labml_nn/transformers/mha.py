@@ -1,17 +1,20 @@
 """
 ---
-title: Multi-Headed Attention
+title: Multi-Headed Attention (MHA)
 summary: >
   This implements the Multi-Headed Attention used in transformers
-  using PyTorch with explainations.
+  using PyTorch with explanations.
 ---
 
-# Multi-Headed Attention
+# Multi-Headed Attention (MHA)
 
 This is a tutorial/implementation of multi-headed attention
 from paper [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 in [PyTorch](https://pytorch.org/).
-The implementation is inspired from [Annotated Transformer](https://nlp.seas.harvard.edu/2018/04/03/attention.html)
+The implementation is inspired from [Annotated Transformer](https://nlp.seas.harvard.edu/2018/04/03/attention.html).
+
+Here is the [training code](basic/autoregressive_experiment.html) that uses a basic transformer
+with MHA for NLP auto-regression.
 """
 
 import math
