@@ -72,6 +72,11 @@ This is an implementation of the paper
 
 This is an implementation of Masked Language Model used for pre-training in paper
 [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805).
+
+## [Pay Attention to MLPs (gMLP)](gmlp/index.html)
+
+This is an implementation of the paper
+[Pay Attention to MLPs](https://papers.labml.ai/paper/2105.08050).
 """
 
 from .configs import TransformerConfigs

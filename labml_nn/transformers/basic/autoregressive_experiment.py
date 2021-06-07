@@ -1,16 +1,30 @@
+"""
+---
+title: Transformer Auto-Regression Experiment
+summary: >
+  This trains a simple transformer model on NLP auto-regression.
+---
+
+# Transformer Auto-Regression Experiment
+
+This trains a simple transformer introduced in [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
+on an NLP auto-regression task (with Tiny Shakespeare dataset).
+"""
+
 import torch
-from torch import nn
 
 from labml import experiment
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
-from labml_nn.optimizers.configs import OptimizerConfigs
 from labml_nn.transformers import TransformerConfigs, Encoder
 from labml_nn.transformers.utils import subsequent_mask
 
 
 class AutoregressiveTransformer(Module):
+    """
+    ## Auto-Regressive model
+    """
     def __init__(self, encoder: Encoder, src_embed: Module, generator: Module):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
@@ -107,19 +121,21 @@ def main():
         # Use Tiny Shakespeare dataset
         'text': 'tiny_shakespeare',
 
-        # Use a context size of $128$
+        # Use a context size of $256$
         'seq_len': 256,
-        # Train for $32$ epochs
+        # Train for $128$ epochs
         'epochs': 128,
-        # Batch size $128$
+        # Batch size $32$
         'batch_size': 32,
         # Switch between training and validation for $10$ times
         # per epoch
         'inner_iterations': 10,
 
+        # Model size
         'd_model': 128,
         'transformer.ffn.d_ff': 256,
 
+        # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
         'optimizer.learning_rate': 1.,
     })
