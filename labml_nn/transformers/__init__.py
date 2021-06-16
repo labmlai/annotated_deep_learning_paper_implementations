@@ -73,6 +73,11 @@ This is an implementation of the paper
 This is an implementation of Masked Language Model used for pre-training in paper
 [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805).
 
+## [MLP-Mixer: An all-MLP Architecture for Vision](mlp_mixer/index.html)
+
+This is an implementation of the paper
+[MLP-Mixer: An all-MLP Architecture for Vision](https://papers.labml.ai/paper/2105.01601).
+
 ## [Pay Attention to MLPs (gMLP)](gmlp/index.html)
 
 This is an implementation of the paper

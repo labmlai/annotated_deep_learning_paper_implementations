@@ -35,6 +35,7 @@ implementations almost weekly.
 * [FNet](https://nn.labml.ai/transformers/fnet/index.html)
 * [Attention Free Transformer](https://nn.labml.ai/transformers/aft/index.html)
 * [Masked Language Model](https://nn.labml.ai/transformers/mlm/index.html)
+* [MLP-Mixer: An all-MLP Architecture for Vision](https://nn.labml.ai/transformers/mlp_mixer/index.html)
 * [Pay Attention to MLPs (gMLP)](https://nn.labml.ai/transformers/gmlp/index.html)
 
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
