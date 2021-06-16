@@ -25,16 +25,23 @@ class Configs(MLMConfigs):
     [Masked Language Models](../mlm.index.html).
     """
 
-    # Configurable [Feed-Forward Network](../feed_forward.html) for mixing
-    mix_ffn: FeedForwardConfigs
+    # Configurable [Feed-Forward Network](../feed_forward.html) for the MLP
+    mix_mlp: FeedForwardConfigs
 
 
-@option(Configs.mix_ffn)
-def _mix_ffn_configs(c: Configs):
+@option(Configs.mix_mlp)
+def _mix_mlp_configs(c: Configs):
+    """
+    The mixing MLP configurations
+    """
+
     conf = FeedForwardConfigs()
+    # Size of the MLP is the sequence length, because it is applied across tokens
     conf.d_model = c.seq_len
+    # The paper suggests $GELU$ activation
     conf.activation = 'GELU'
 
+    #
     return conf
 
 
@@ -54,7 +61,7 @@ def _transformer_configs(c: Configs):
     conf.d_model = c.d_model
     # Change attention module to [MLPMixer](index.html)
     from labml_nn.transformers.mlp_mixer import MLPMixer
-    conf.encoder_attn = MLPMixer(c.mix_ffn.ffn)
+    conf.encoder_attn = MLPMixer(c.mix_mlp.ffn)
 
     #
     return conf
@@ -62,7 +69,7 @@ def _transformer_configs(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name="mlm")
+    experiment.create(name="mlp_mixer_mlm")
     # Create configs
     conf = Configs()
     # Override configurations
@@ -79,15 +86,15 @@ def main():
         # per epoch
         'inner_iterations': 1,
 
-        # Transformer configurations (same as defaults)
+        # Transformer configurations
         'd_model': 128,
         'transformer.ffn.d_ff': 256,
         'transformer.n_heads': 8,
         'transformer.n_layers': 6,
         'transformer.ffn.activation': 'GELU',
 
-        # Mixer feed-forward network configurations
-        'mix_ffn.d_ff': 128,
+        # Mixer MLP hidden layer size
+        'mix_mlp.d_ff': 128,
 
         # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',

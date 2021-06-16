@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of MLP-Mixer: An all-MLP Architecture for Vision in PyTorch."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="MLP-Mixer: An all-MLP Architecture for Vision"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of MLP-Mixer: An all-MLP Architecture for Vision in PyTorch."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/mlp_mixer/index.html"/>
+    <meta property="og:title" content="MLP-Mixer: An all-MLP Architecture for Vision"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="MLP-Mixer: An all-MLP Architecture for Vision"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of MLP-Mixer: An all-MLP Architecture for Vision in PyTorch."/>
+
+    <title>MLP-Mixer: An all-MLP Architecture for Vision</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/mlp_mixer/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">mlp_mixer</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/transformers/mlp_mixer/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>MLP-Mixer: An all-MLP Architecture for Vision</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
+<a href="https://papers.labml.ai/paper/2105.01601">MLP-Mixer: An all-MLP Architecture for Vision</a>.</p>
+<p>This paper applies the model on vision tasks.
+The model is similar to a transformer with attention layer being replaced by a MLP
+that is applied across the patches (or tokens in case of a NLP task).</p>
+<p>Our implementation of MLP Mixer is a drop in replacement for the <a href="../mha.html">self-attention layer</a>
+in <a href="../models.html">our transformer implementation</a>.
+So it&rsquo;s just a couple of lines of code, transposing the tensor to apply the MLP
+across the sequence dimension.</p>
+<p>Although the paper applied MLP Mixer on vision tasks,
+we tried it on a <a href="../mlm/index.html">masked language model</a>.
+<a href="experiment.html">Here is the experiment code</a>.</p>
+<p><a href="https://app.labml.ai/run/994263d2cdb511eb961e872301f0dbab"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">29</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">30</span>
+<span class="lineno">31</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">32</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <h2>MLP Mixer</h2>
+<p>This module is a drop-in replacement for <a href="../mha.html">self-attention layer</a>.
+It transposes the input tensor before feeding it to the MLP and transposes back,
+so that the MLP is applied across the sequence dimension (across tokens or image patches) instead
+of the feature dimension.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">35</span><span class="k">class</span> <span class="nc">MLPMixer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <ul>
+<li><code>ffn</code> is the MLP module.</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">45</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mlp</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">49</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">mlp</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>The <a href="../mha.html">normal attention module</a> can be fed with different token embeddings for
+$\text{query}$,$\text{key}$, and $\text{value}$ and a mask.</p>
+<p>We follow the same function signature so that we can replace it directly.</p>
+<p>For MLP mixing, <script type="math/tex; mode=display">x = \text{query} = \text{key} = \text{value}</script> and masking is not possible.
+Shape of <code>query</code> (and <code>key</code> and <code>value</code>) is <code>[seq_len, batch_size, d_model]</code>.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">52</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                <p>$\text{query}$,$\text{key}$, and $\text{value}$ all should be the same</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">64</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p>MLP mixer doesn&rsquo;t support masking. i.e. all tokens will see all other token embeddings.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">66</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                <p>Assign to <code>x</code> for clarity</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">69</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Transpose so that the last dimension is the sequence dimension.
+New shape is <code>[d_model, batch_size, seq_len]</code></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">73</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                <p>Apply the MLP across tokens</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">75</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Transpose back into original form</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">77</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">80</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
