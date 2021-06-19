@@ -16,6 +16,15 @@ The paper uses this technique to solve Texas Hold'em Poker.
 We tried to keep our Python implementation easy-to-understand like a tutorial; therefore
 it is not very efficient.
 We run it on [a very simple imperfect information game called Kuhn poker](kuhn.html).
+
+Counterfactual Regret minimization, in each iteration,
+ explores the full game tree by trying all player actions.
+It samples chance events only once per iteration.
+Chance events are things like dealing cards; they are kept constant for each game tree exploration.
+Then it calculates the *regret* of not taking each action, and following the current strategy.
+Then it updates the strategy based on these regrets for the next iteration.
+Finally it computes the average of the strategies throughout the iterations.
+This becomes very close to the Nash equilibrium.
 """
 
 from typing import NewType, Dict, List, Callable, cast, Optional
@@ -34,6 +43,9 @@ class History:
     """
     <a id="History"></a>
     ## History
+
+    History $h \in H$ is a sequence of actions including chance events,
+     and $H$ is the set of all histories.
     """
 
     def is_terminal(self):
@@ -79,6 +91,9 @@ class History:
     def player(self) -> Player:
         """
         Get current player, denoted by $P(h)$, where $P$ is known as **Player function**.
+
+        If $P(h) = c$ it means that current event is a chance $c$ event.
+        Something like dealing cards, or opening common cards in poker.
         """
         raise NotImplementedError()
 
@@ -94,7 +109,6 @@ class History:
         """
         raise NotImplementedError()
 
-
 class InfoSet:
     """
     <a id="InfoSet"></a>
@@ -107,26 +121,55 @@ class InfoSet:
     opposing player while $I_i$ will not have them.
 
     $\mathcal{I}_i$ is known as the **information partition** of player $i$.
+
+    Here we introduce a few other notations.
+
+    <a id="Strategy"></a>
+    ## Strategy
+
+    **Strategy of player** $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
+    where $\Sigma_i$ is the set of all strategies for player $i$.
+    Strategy on $t$-th iteration is denoted by $\sigma^t_i$.
+
+    $\sigma$ is the **strategy profile** which consists of strategies of all players
+     $\sigma_1, \sigma_2, \ldots$
+
+    $\sigma_{-i}$ is strategies of all players except $\sigma_i$
+
+    <a id="HistoryProbability"></a>
+    ## Probability of History
+
+    $\pi^\sigma(h)$ is the probability of reaching the history $h$ with strategy profile $\sigma$.
+    $\pi^\sigma(h)_{-i}$ is the probability of reaching $h$ without player $i$'s contribution;
+     i.e. player $i$ took the actions to follow $h$ with a probability of $1$.
+
+    $$\pi^\sigma(I) = \sum_{h \in I} \pi^\sigma(h)$$
+
+    for information set $I$, is the probability of reaching information set $I$ with
+    strategy profile $\sigma$.
+
+    ## Nash Equilibrium
+
+    Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
+    by changing her strategy alone.
+
+    For two players, Nash equilibrium is a [strategy profile](#Strategy) where
+
+    \begin{align}
+    u_1(\sigma) &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
+    u_2(\sigma) &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
+    \end{align}
+
+    where $u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy profile $\sigma$.
+
+    $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
     """
 
     # Unique key identifying the information set
     key: str
-    # **Strategy of player** $i$, $\sigma_i$ which is a distribution over actions $A(I_i)$
+    # $\sigma_i$, the strategy of player $i$
     strategy: Dict[Action, float]
     # Current regret of each action $A(I_i)$,
-    #
-    # $$r^t_i(a) = \max_{\sigma^*_i} u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t)$$
-    # where,
-    #
-    # * $\sigma^t_i$ is the current strategy of player $i$,
-    # * $\sigma^t$ is the **strategy profile** which consists of strategies of all players
-    #  $\sigma^t_1, \sigma^t_2, ...$
-    # * $\sigma^t_{-i}$ is strategies of all players except $\sigma^t_i$
-    # * $u_i(\sigma^t)$ is the overall utility of player $i$
-    # $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
-    # where $u_i(h)$ is the [terminal utility](#terminal_utility)
-    # and $\pi^\sigma(h)$ is the probability of $h$ occurring if players chose actions
-    # according to $\sigma$.
     current_regret: Dict[Action, float]
     # Total regret of each action $A(I_i)$
     regret: Dict[Action, float]
@@ -216,6 +259,20 @@ class InfoSet:
 
 
 class CFR:
+    """
+    $$r^t_i(a) = \max_{\sigma^*_i} u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t)$$
+    where,
+
+    * $\sigma^t_i$ is the current strategy of player $i$,
+    * $\sigma^t$ is the **strategy profile** which consists of strategies of all players
+     $\sigma^t_1, \sigma^t_2, ...$
+    * $\sigma^t_{-i}$ is strategies of all players except $\sigma^t_i$
+    * $u_i(\sigma^t)$ is the overall utility of player $i$
+    $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
+    where $u_i(h)$ is the [terminal utility](#terminal_utility)
+    and $\pi^\sigma(h)$ is the probability of $h$ occurring if players chose actions
+    according to $\sigma$.
+    """
     update_get_cfv: 'UpdateAndGetCounterFactualValue'
     track_frequency: int
     info_sets: Dict[str, InfoSet]
