@@ -3,24 +3,24 @@
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content=""/>
+    <meta name="description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
 
     <meta name="twitter:card" content="summary"/>
     <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
-    <meta name="twitter:title" content="__init__.py"/>
-    <meta name="twitter:description" content=""/>
+    <meta name="twitter:title" content="Regret Minimization in Games with Incomplete Information"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
     <meta name="twitter:site" content="@labmlai"/>
     <meta name="twitter:creator" content="@labmlai"/>
 
     <meta property="og:url" content="https://nn.labml.ai/cfr/index.html"/>
-    <meta property="og:title" content="__init__.py"/>
+    <meta property="og:title" content="Regret Minimization in Games with Incomplete Information"/>
     <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
     <meta property="og:site_name" content="LabML Neural Networks"/>
     <meta property="og:type" content="object"/>
-    <meta property="og:title" content="__init__.py"/>
-    <meta property="og:description" content=""/>
+    <meta property="og:title" content="Regret Minimization in Games with Incomplete Information"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial the FNet in PyTorch."/>
 
-    <title>__init__.py</title>
+    <title>Regret Minimization in Games with Incomplete Information</title>
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/cfr/index.html"/>
@@ -62,21 +62,45 @@
         </div>
     </div>
     <div class='section' id='section-0'>
-            <div class='docs'>
+        <div class='docs doc-strings'>
                 <div class='section-link'>
                     <a href='#section-0'>#</a>
                 </div>
-                
+                <h1>FNet: Mixing Tokens with Fourier Transforms</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
+<a href="https://arxiv.org/abs/2105.03824">FNet: Mixing Tokens with Fourier Transforms</a>.</p>
+<p>This paper replaces the <a href="../mha.html">self-attention layer</a> with two
+<a href="https://en.wikipedia.org/wiki/Discrete_Fourier_transform">Fourier transforms</a> to
+<em>mix</em> tokens.
+This is a $7 \times$ more efficient than self-attention.
+The accuracy loss of using this over self-attention is about 92% for
+<a href="https://paperswithcode.com/method/bert">BERT</a> on
+<a href="https://paperswithcode.com/dataset/glue">GLUE benchmark</a>.</p>
+<h2>Mixing tokens with two Fourier transforms</h2>
+<p>We apply Fourier transform along the hidden dimension (embedding dimension)
+ and then along the sequence dimension.</p>
+<p>
+<script type="math/tex; mode=display">
+\mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
+</script>
+</p>
+<p>where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and
+$\mathcal{R}$ stands for the real component in complex numbers.</p>
+<p>This is very simple to implement on PyTorch - just 1 line of code.
+The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
+Fourier transformation.</p>
+<p>Here is <a href="experiment.html">the training code</a> for using a FNet based model for classifying
+<a href="https://paperswithcode.com/dataset/ag-news">AG News</a>.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="lineno">2</span>
-<span class="lineno">3</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span>
-<span class="lineno">4</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span>
-<span class="lineno">5</span><span class="kn">from</span> <span class="nn">labml_helpers.training_loop</span> <span class="kn">import</span> <span class="n">TrainingLoop</span>
-<span class="lineno">6</span>
-<span class="lineno">7</span><span class="n">Action</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-<span class="lineno">8</span><span class="n">Player</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Player&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">41</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="lineno">42</span>
+<span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span>
+<span class="lineno">45</span><span class="kn">from</span> <span class="nn">labml_helpers.training_loop</span> <span class="kn">import</span> <span class="n">TrainingLoop</span>
+<span class="lineno">46</span>
+<span class="lineno">47</span><span class="n">Action</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+<span class="lineno">48</span><span class="n">Player</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Player&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -87,12 +111,12 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">11</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">:</span>
-<span class="lineno">12</span>    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
-<span class="lineno">13</span>    <span class="n">regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
-<span class="lineno">14</span>    <span class="n">current_regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
-<span class="lineno">15</span>    <span class="n">average_strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
-<span class="lineno">16</span>    <span class="n">strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">51</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">:</span>
+<span class="lineno">52</span>    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+<span class="lineno">53</span>    <span class="n">regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="lineno">54</span>    <span class="n">current_regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="lineno">55</span>    <span class="n">average_strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="lineno">56</span>    <span class="n">strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -103,12 +127,12 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">18</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="lineno">19</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
-<span class="lineno">20</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">21</span>        <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">58</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="lineno">59</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+<span class="lineno">60</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">61</span>        <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">62</span>        <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">63</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -119,8 +143,8 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">25</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span>
-<span class="lineno">26</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">65</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span>
+<span class="lineno">66</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -131,289 +155,289 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">28</span>    <span class="nd">@staticmethod</span>
-<span class="lineno">29</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span>
-<span class="lineno">30</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">31</span>
-<span class="lineno">32</span>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">33</span>        <span class="k">return</span> <span class="p">{</span>
-<span class="lineno">34</span>            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-<span class="lineno">35</span>            <span class="s1">&#39;regret&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">,</span>
-<span class="lineno">36</span>            <span class="s1">&#39;average_strategy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">,</span>
-<span class="lineno">37</span>        <span class="p">}</span>
-<span class="lineno">38</span>
-<span class="lineno">39</span>    <span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span>
-<span class="lineno">40</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;regret&#39;</span><span class="p">]</span>
-<span class="lineno">41</span>        <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;average_strategy&#39;</span><span class="p">]</span>
-<span class="lineno">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
-<span class="lineno">43</span>
-<span class="lineno">44</span>    <span class="k">def</span> <span class="nf">calculate_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">45</span>        <span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<span class="lineno">46</span>        <span class="n">regret_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-<span class="lineno">47</span>        <span class="k">if</span> <span class="n">regret_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">48</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">regret_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<span class="lineno">49</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">50</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">))</span>
-<span class="lineno">51</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<span class="lineno">52</span>
-<span class="lineno">53</span>    <span class="k">def</span> <span class="nf">get_average_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">54</span>        <span class="n">cum_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">55</span>        <span class="n">strategy_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cum_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-<span class="lineno">56</span>        <span class="k">if</span> <span class="n">strategy_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">57</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">strategy_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<span class="lineno">58</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">59</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="p">))</span>
-<span class="lineno">60</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<span class="lineno">61</span>
-<span class="lineno">62</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">63</span>        <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">64</span>
-<span class="lineno">65</span>    <span class="k">def</span> <span class="nf">update_regrets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">66</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<span class="lineno">67</span>            <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">v</span>
-<span class="lineno">68</span>
-<span class="lineno">69</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <div class="highlight"><pre><span class="lineno">68</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">69</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span>
 <span class="lineno">70</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 <span class="lineno">71</span>
-<span class="lineno">72</span>
-<span class="lineno">73</span><span class="k">class</span> <span class="nc">History</span><span class="p">:</span>
-<span class="lineno">74</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">75</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">76</span>
-<span class="lineno">77</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="lineno">78</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">79</span>
-<span class="lineno">80</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="lineno">81</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">82</span>
-<span class="lineno">83</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span>
-<span class="lineno">84</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">85</span>
-<span class="lineno">86</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="lineno">87</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-<span class="lineno">88</span>
-<span class="lineno">89</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InfoSet</span><span class="p">:</span>
-<span class="lineno">90</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">91</span>
-<span class="lineno">92</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="lineno">93</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">94</span>
-<span class="lineno">95</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
-<span class="lineno">96</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">97</span>
-<span class="lineno">98</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">99</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-<span class="lineno">100</span>
+<span class="lineno">72</span>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">73</span>        <span class="k">return</span> <span class="p">{</span>
+<span class="lineno">74</span>            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+<span class="lineno">75</span>            <span class="s1">&#39;regret&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">,</span>
+<span class="lineno">76</span>            <span class="s1">&#39;average_strategy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">,</span>
+<span class="lineno">77</span>        <span class="p">}</span>
+<span class="lineno">78</span>
+<span class="lineno">79</span>    <span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span>
+<span class="lineno">80</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;regret&#39;</span><span class="p">]</span>
+<span class="lineno">81</span>        <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;average_strategy&#39;</span><span class="p">]</span>
+<span class="lineno">82</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
+<span class="lineno">83</span>
+<span class="lineno">84</span>    <span class="k">def</span> <span class="nf">calculate_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">85</span>        <span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="lineno">86</span>        <span class="n">regret_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="lineno">87</span>        <span class="k">if</span> <span class="n">regret_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">88</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">regret_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="lineno">89</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">90</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">))</span>
+<span class="lineno">91</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="lineno">92</span>
+<span class="lineno">93</span>    <span class="k">def</span> <span class="nf">get_average_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">94</span>        <span class="n">cum_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">average_strategy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">95</span>        <span class="n">strategy_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cum_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="lineno">96</span>        <span class="k">if</span> <span class="n">strategy_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">97</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">strategy_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="lineno">98</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">99</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="p">))</span>
+<span class="lineno">100</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 <span class="lineno">101</span>
-<span class="lineno">102</span><span class="k">class</span> <span class="nc">UpdateRegrets</span><span class="p">:</span>
-<span class="lineno">103</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">va</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">104</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">105</span>            <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span>
-<span class="lineno">106</span>
-<span class="lineno">107</span>        <span class="n">I</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
+<span class="lineno">102</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">104</span>
+<span class="lineno">105</span>    <span class="k">def</span> <span class="nf">update_regrets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">106</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_regret</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">107</span>            <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">v</span>
 <span class="lineno">108</span>
-<span class="lineno">109</span>
-<span class="lineno">110</span><span class="k">class</span> <span class="nc">UpdateInfoSets</span><span class="p">:</span>
-<span class="lineno">111</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
-<span class="lineno">112</span>        <span class="k">pass</span>
-<span class="lineno">113</span>
-<span class="lineno">114</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
-<span class="lineno">115</span>        <span class="k">pass</span>
+<span class="lineno">109</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">110</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">111</span>
+<span class="lineno">112</span>
+<span class="lineno">113</span><span class="k">class</span> <span class="nc">History</span><span class="p">:</span>
+<span class="lineno">114</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">115</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 <span class="lineno">116</span>
-<span class="lineno">117</span>
-<span class="lineno">118</span><span class="k">class</span> <span class="nc">OfflineUpdateRegrets</span><span class="p">(</span><span class="n">UpdateRegrets</span><span class="p">):</span>
-<span class="lineno">119</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">va</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">120</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">121</span>            <span class="n">I</span><span class="o">.</span><span class="n">current_regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span>
+<span class="lineno">117</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="lineno">118</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">119</span>
+<span class="lineno">120</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="lineno">121</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 <span class="lineno">122</span>
-<span class="lineno">123</span>
-<span class="lineno">124</span><span class="k">class</span> <span class="nc">OfflineUpdateInfoSets</span><span class="p">(</span><span class="n">UpdateInfoSets</span><span class="p">):</span>
-<span class="lineno">125</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
-<span class="lineno">126</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<span class="lineno">127</span>            <span class="n">I</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">()</span>
-<span class="lineno">128</span>            <span class="n">I</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
-<span class="lineno">129</span>
-<span class="lineno">130</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
-<span class="lineno">131</span>        <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-<span class="lineno">132</span>            <span class="n">I</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-<span class="lineno">133</span>
+<span class="lineno">123</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span>
+<span class="lineno">124</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">125</span>
+<span class="lineno">126</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="lineno">127</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<span class="lineno">128</span>
+<span class="lineno">129</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InfoSet</span><span class="p">:</span>
+<span class="lineno">130</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">131</span>
+<span class="lineno">132</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="lineno">133</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 <span class="lineno">134</span>
-<span class="lineno">135</span><span class="k">class</span> <span class="nc">UpdateAndGetCounterFactualValue</span><span class="p">:</span>
-<span class="lineno">136</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">):</span>
-<span class="lineno">137</span>        <span class="k">return</span> <span class="n">v</span>
-<span class="lineno">138</span>
-<span class="lineno">139</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">140</span>        <span class="k">pass</span>
+<span class="lineno">135</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span>
+<span class="lineno">136</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">137</span>
+<span class="lineno">138</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">139</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">140</span>
 <span class="lineno">141</span>
-<span class="lineno">142</span>
-<span class="lineno">143</span><span class="k">class</span> <span class="nc">UpdateAverageStrategy</span><span class="p">:</span>
-<span class="lineno">144</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="lineno">145</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">146</span>            <span class="n">I</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
-<span class="lineno">147</span>
+<span class="lineno">142</span><span class="k">class</span> <span class="nc">UpdateRegrets</span><span class="p">:</span>
+<span class="lineno">143</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">va</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">144</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">145</span>            <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span>
+<span class="lineno">146</span>
+<span class="lineno">147</span>        <span class="n">I</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
 <span class="lineno">148</span>
-<span class="lineno">149</span><span class="k">class</span> <span class="nc">InfoSetTracker</span><span class="p">:</span>
-<span class="lineno">150</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">151</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;strategy.*&#39;</span><span class="p">)</span>
-<span class="lineno">152</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;average_strategy.*&#39;</span><span class="p">)</span>
-<span class="lineno">153</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;regret.*&#39;</span><span class="p">)</span>
-<span class="lineno">154</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;current_regret.*&#39;</span><span class="p">)</span>
-<span class="lineno">155</span>
-<span class="lineno">156</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
-<span class="lineno">157</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">):</span>
-<span class="lineno">158</span>            <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-<span class="lineno">159</span>                <span class="n">avg_strategy</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">get_average_strategy</span><span class="p">()</span>
-<span class="lineno">160</span>                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">161</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span>
-<span class="lineno">162</span>                        <span class="sa">f</span><span class="s1">&#39;strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">163</span>                        <span class="sa">f</span><span class="s1">&#39;average_strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">avg_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">164</span>                        <span class="sa">f</span><span class="s1">&#39;regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">165</span>                        <span class="sa">f</span><span class="s1">&#39;current_regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">current_regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
-<span class="lineno">166</span>                    <span class="p">})</span>
-<span class="lineno">167</span>
-<span class="lineno">168</span>
-<span class="lineno">169</span><span class="k">class</span> <span class="nc">CFR</span><span class="p">:</span>
-<span class="lineno">170</span>    <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">UpdateAndGetCounterFactualValue</span>
-<span class="lineno">171</span>    <span class="n">track_frequency</span><span class="p">:</span> <span class="nb">int</span>
-<span class="lineno">172</span>    <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]</span>
-<span class="lineno">173</span>    <span class="n">is_online_update</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="lineno">174</span>    <span class="n">n_players</span><span class="p">:</span> <span class="nb">int</span>
-<span class="lineno">175</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
-<span class="lineno">176</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span>
-<span class="lineno">177</span>
-<span class="lineno">178</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">179</span>                 <span class="n">create_new_history</span><span class="p">,</span>
-<span class="lineno">180</span>                 <span class="n">epochs</span><span class="p">,</span>
-<span class="lineno">181</span>                 <span class="n">training_loop</span><span class="p">:</span> <span class="n">TrainingLoop</span><span class="p">,</span>
-<span class="lineno">182</span>                 <span class="n">update_regrets</span><span class="p">:</span> <span class="n">UpdateRegrets</span><span class="p">,</span>
-<span class="lineno">183</span>                 <span class="n">update_infosets</span><span class="p">:</span> <span class="n">UpdateInfoSets</span><span class="p">,</span>
-<span class="lineno">184</span>                 <span class="n">update_average_strategy</span><span class="p">:</span> <span class="n">UpdateAverageStrategy</span><span class="p">,</span>
-<span class="lineno">185</span>                 <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">UpdateAndGetCounterFactualValue</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="lineno">186</span>                 <span class="n">n_players</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<span class="lineno">187</span>                 <span class="n">track_frequency</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<span class="lineno">188</span>                 <span class="n">save_frequency</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-<span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_average_strategy</span> <span class="o">=</span> <span class="n">update_average_strategy</span>
-<span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">training_loop</span> <span class="o">=</span> <span class="n">training_loop</span>
-<span class="lineno">191</span>        <span class="k">if</span> <span class="n">update_get_cfv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<span class="lineno">192</span>            <span class="n">update_get_cfv</span> <span class="o">=</span> <span class="n">UpdateAndGetCounterFactualValue</span><span class="p">()</span>
-<span class="lineno">193</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span> <span class="o">=</span> <span class="n">update_get_cfv</span>
-<span class="lineno">194</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_regrets</span> <span class="o">=</span> <span class="n">update_regrets</span>
-<span class="lineno">195</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span> <span class="o">=</span> <span class="n">update_infosets</span>
-<span class="lineno">196</span>        <span class="bp">self</span><span class="o">.</span><span class="n">save_frequency</span> <span class="o">=</span> <span class="n">save_frequency</span>
-<span class="lineno">197</span>        <span class="bp">self</span><span class="o">.</span><span class="n">track_frequency</span> <span class="o">=</span> <span class="n">track_frequency</span>
-<span class="lineno">198</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_players</span> <span class="o">=</span> <span class="n">n_players</span>
-<span class="lineno">199</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
-<span class="lineno">200</span>        <span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span> <span class="o">=</span> <span class="n">create_new_history</span>
-<span class="lineno">201</span>        <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="lineno">202</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span> <span class="o">=</span> <span class="n">InfoSetTracker</span><span class="p">()</span>
-<span class="lineno">203</span>
-<span class="lineno">204</span>    <span class="k">def</span> <span class="nf">cfr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="lineno">205</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">():</span>
-<span class="lineno">206</span>            <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">terminal_utility</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-<span class="lineno">207</span>        <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_chance</span><span class="p">():</span>
-<span class="lineno">208</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">sample_chance</span><span class="p">()</span>
-<span class="lineno">209</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span>
-<span class="lineno">210</span>
-<span class="lineno">211</span>        <span class="n">info_set_key</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">()</span>
-<span class="lineno">212</span>        <span class="k">if</span> <span class="n">info_set_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">:</span>
-<span class="lineno">213</span>            <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">new_info_set</span><span class="p">()</span>
-<span class="lineno">214</span>        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span>
-<span class="lineno">215</span>        <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="lineno">216</span>        <span class="n">va</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">149</span>
+<span class="lineno">150</span><span class="k">class</span> <span class="nc">UpdateInfoSets</span><span class="p">:</span>
+<span class="lineno">151</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
+<span class="lineno">152</span>        <span class="k">pass</span>
+<span class="lineno">153</span>
+<span class="lineno">154</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
+<span class="lineno">155</span>        <span class="k">pass</span>
+<span class="lineno">156</span>
+<span class="lineno">157</span>
+<span class="lineno">158</span><span class="k">class</span> <span class="nc">OfflineUpdateRegrets</span><span class="p">(</span><span class="n">UpdateRegrets</span><span class="p">):</span>
+<span class="lineno">159</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">va</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">160</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">161</span>            <span class="n">I</span><span class="o">.</span><span class="n">current_regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span>
+<span class="lineno">162</span>
+<span class="lineno">163</span>
+<span class="lineno">164</span><span class="k">class</span> <span class="nc">OfflineUpdateInfoSets</span><span class="p">(</span><span class="n">UpdateInfoSets</span><span class="p">):</span>
+<span class="lineno">165</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
+<span class="lineno">166</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">167</span>            <span class="n">I</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">()</span>
+<span class="lineno">168</span>            <span class="n">I</span><span class="o">.</span><span class="n">calculate_policy</span><span class="p">()</span>
+<span class="lineno">169</span>
+<span class="lineno">170</span>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
+<span class="lineno">171</span>        <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="lineno">172</span>            <span class="n">I</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="lineno">173</span>
+<span class="lineno">174</span>
+<span class="lineno">175</span><span class="k">class</span> <span class="nc">UpdateAndGetCounterFactualValue</span><span class="p">:</span>
+<span class="lineno">176</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">):</span>
+<span class="lineno">177</span>        <span class="k">return</span> <span class="n">v</span>
+<span class="lineno">178</span>
+<span class="lineno">179</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">180</span>        <span class="k">pass</span>
+<span class="lineno">181</span>
+<span class="lineno">182</span>
+<span class="lineno">183</span><span class="k">class</span> <span class="nc">UpdateAverageStrategy</span><span class="p">:</span>
+<span class="lineno">184</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">InfoSet</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">185</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">186</span>            <span class="n">I</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">average_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+<span class="lineno">187</span>
+<span class="lineno">188</span>
+<span class="lineno">189</span><span class="k">class</span> <span class="nc">InfoSetTracker</span><span class="p">:</span>
+<span class="lineno">190</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">191</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">192</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;average_strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">193</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;regret.*&#39;</span><span class="p">)</span>
+<span class="lineno">194</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;current_regret.*&#39;</span><span class="p">)</span>
+<span class="lineno">195</span>
+<span class="lineno">196</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span>
+<span class="lineno">197</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">):</span>
+<span class="lineno">198</span>            <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="lineno">199</span>                <span class="n">avg_strategy</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">get_average_strategy</span><span class="p">()</span>
+<span class="lineno">200</span>                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">201</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span>
+<span class="lineno">202</span>                        <span class="sa">f</span><span class="s1">&#39;strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">203</span>                        <span class="sa">f</span><span class="s1">&#39;average_strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">avg_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">204</span>                        <span class="sa">f</span><span class="s1">&#39;regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">205</span>                        <span class="sa">f</span><span class="s1">&#39;current_regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">current_regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+<span class="lineno">206</span>                    <span class="p">})</span>
+<span class="lineno">207</span>
+<span class="lineno">208</span>
+<span class="lineno">209</span><span class="k">class</span> <span class="nc">CFR</span><span class="p">:</span>
+<span class="lineno">210</span>    <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">UpdateAndGetCounterFactualValue</span>
+<span class="lineno">211</span>    <span class="n">track_frequency</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">212</span>    <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]</span>
+<span class="lineno">213</span>    <span class="n">is_online_update</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="lineno">214</span>    <span class="n">n_players</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">215</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
+<span class="lineno">216</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span>
 <span class="lineno">217</span>
-<span class="lineno">218</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">219</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">():</span>
-<span class="lineno">220</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">pi_neg_i</span><span class="p">)</span>
-<span class="lineno">221</span>            <span class="k">else</span><span class="p">:</span>
-<span class="lineno">222</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">])</span>
-<span class="lineno">223</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
-<span class="lineno">224</span>
-<span class="lineno">225</span>        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-<span class="lineno">226</span>
-<span class="lineno">227</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">()</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span>
-<span class="lineno">228</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">)</span>
-<span class="lineno">229</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span>
-<span class="lineno">230</span>
-<span class="lineno">231</span>        <span class="k">return</span> <span class="n">v</span>
-<span class="lineno">232</span>
-<span class="lineno">233</span>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">234</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_loop</span><span class="p">:</span>
-<span class="lineno">235</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span><span class="o">.</span><span class="n">clear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
-<span class="lineno">236</span>
-<span class="lineno">237</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_players</span><span class="p">):</span>
-<span class="lineno">238</span>                <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">(),</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="lineno">239</span>
-<span class="lineno">240</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
-<span class="lineno">241</span>
-<span class="lineno">242</span>            <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">218</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">219</span>                 <span class="n">create_new_history</span><span class="p">,</span>
+<span class="lineno">220</span>                 <span class="n">epochs</span><span class="p">,</span>
+<span class="lineno">221</span>                 <span class="n">training_loop</span><span class="p">:</span> <span class="n">TrainingLoop</span><span class="p">,</span>
+<span class="lineno">222</span>                 <span class="n">update_regrets</span><span class="p">:</span> <span class="n">UpdateRegrets</span><span class="p">,</span>
+<span class="lineno">223</span>                 <span class="n">update_infosets</span><span class="p">:</span> <span class="n">UpdateInfoSets</span><span class="p">,</span>
+<span class="lineno">224</span>                 <span class="n">update_average_strategy</span><span class="p">:</span> <span class="n">UpdateAverageStrategy</span><span class="p">,</span>
+<span class="lineno">225</span>                 <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">UpdateAndGetCounterFactualValue</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="lineno">226</span>                 <span class="n">n_players</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="lineno">227</span>                 <span class="n">track_frequency</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="lineno">228</span>                 <span class="n">save_frequency</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<span class="lineno">229</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_average_strategy</span> <span class="o">=</span> <span class="n">update_average_strategy</span>
+<span class="lineno">230</span>        <span class="bp">self</span><span class="o">.</span><span class="n">training_loop</span> <span class="o">=</span> <span class="n">training_loop</span>
+<span class="lineno">231</span>        <span class="k">if</span> <span class="n">update_get_cfv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">232</span>            <span class="n">update_get_cfv</span> <span class="o">=</span> <span class="n">UpdateAndGetCounterFactualValue</span><span class="p">()</span>
+<span class="lineno">233</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span> <span class="o">=</span> <span class="n">update_get_cfv</span>
+<span class="lineno">234</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_regrets</span> <span class="o">=</span> <span class="n">update_regrets</span>
+<span class="lineno">235</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span> <span class="o">=</span> <span class="n">update_infosets</span>
+<span class="lineno">236</span>        <span class="bp">self</span><span class="o">.</span><span class="n">save_frequency</span> <span class="o">=</span> <span class="n">save_frequency</span>
+<span class="lineno">237</span>        <span class="bp">self</span><span class="o">.</span><span class="n">track_frequency</span> <span class="o">=</span> <span class="n">track_frequency</span>
+<span class="lineno">238</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_players</span> <span class="o">=</span> <span class="n">n_players</span>
+<span class="lineno">239</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
+<span class="lineno">240</span>        <span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span> <span class="o">=</span> <span class="n">create_new_history</span>
+<span class="lineno">241</span>        <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">242</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span> <span class="o">=</span> <span class="n">InfoSetTracker</span><span class="p">()</span>
 <span class="lineno">243</span>
-<span class="lineno">244</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-<span class="lineno">245</span>
-<span class="lineno">246</span>        <span class="n">logger</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
-<span class="lineno">247</span>
-<span class="lineno">248</span>
-<span class="lineno">249</span><span class="k">class</span> <span class="nc">CFRConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span>
-<span class="lineno">250</span>    <span class="n">update_regrets</span><span class="p">:</span> <span class="n">UpdateRegrets</span>
-<span class="lineno">251</span>    <span class="n">update_infosets</span><span class="p">:</span> <span class="n">UpdateInfoSets</span>
-<span class="lineno">252</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
-<span class="lineno">253</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_00_000</span>
-<span class="lineno">254</span>    <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UpdateAndGetCounterFactualValue</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="lineno">255</span>    <span class="n">track_frequency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span>
-<span class="lineno">256</span>    <span class="n">save_frequency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span>
-<span class="lineno">257</span>    <span class="n">cfr</span><span class="p">:</span> <span class="n">CFR</span> <span class="o">=</span> <span class="s1">&#39;simple_cfr&#39;</span>
-<span class="lineno">258</span>    <span class="n">loop</span><span class="p">:</span> <span class="n">TrainingLoop</span>
-<span class="lineno">259</span>    <span class="n">update_average_strategy</span><span class="p">:</span> <span class="n">UpdateAverageStrategy</span>
-<span class="lineno">260</span>
-<span class="lineno">261</span>
-<span class="lineno">262</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">loop</span><span class="p">)</span>
-<span class="lineno">263</span><span class="k">def</span> <span class="nf">training_loop</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span>
-<span class="lineno">264</span>    <span class="k">return</span> <span class="n">TrainingLoop</span><span class="p">(</span>
-<span class="lineno">265</span>        <span class="n">loop_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
-<span class="lineno">266</span>        <span class="n">loop_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-<span class="lineno">267</span>        <span class="n">is_save_models</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="lineno">268</span>        <span class="n">log_new_line_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
-<span class="lineno">269</span>        <span class="n">log_write_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
-<span class="lineno">270</span>        <span class="n">save_models_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">save_frequency</span><span class="p">,</span>
-<span class="lineno">271</span>        <span class="n">is_loop_on_interrupt</span><span class="o">=</span><span class="kc">True</span>
-<span class="lineno">272</span>    <span class="p">)</span>
-<span class="lineno">273</span>
-<span class="lineno">274</span>
-<span class="lineno">275</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">cfr</span><span class="p">)</span>
-<span class="lineno">276</span><span class="k">def</span> <span class="nf">simple_cfr</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span>
-<span class="lineno">277</span>    <span class="k">return</span> <span class="n">CFR</span><span class="p">(</span><span class="n">create_new_history</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">,</span>
-<span class="lineno">278</span>               <span class="n">epochs</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
-<span class="lineno">279</span>               <span class="n">training_loop</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">loop</span><span class="p">,</span>
-<span class="lineno">280</span>               <span class="n">update_get_cfv</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="p">,</span>
-<span class="lineno">281</span>               <span class="n">track_frequency</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
-<span class="lineno">282</span>               <span class="n">save_frequency</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">save_frequency</span><span class="p">,</span>
-<span class="lineno">283</span>               <span class="n">update_average_strategy</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">,</span>
-<span class="lineno">284</span>               <span class="n">update_regrets</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span>
-<span class="lineno">285</span>               <span class="n">update_infosets</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">)</span>
-<span class="lineno">286</span>
+<span class="lineno">244</span>    <span class="k">def</span> <span class="nf">cfr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="lineno">245</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">():</span>
+<span class="lineno">246</span>            <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">terminal_utility</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="lineno">247</span>        <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_chance</span><span class="p">():</span>
+<span class="lineno">248</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">sample_chance</span><span class="p">()</span>
+<span class="lineno">249</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span>
+<span class="lineno">250</span>
+<span class="lineno">251</span>        <span class="n">info_set_key</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">()</span>
+<span class="lineno">252</span>        <span class="k">if</span> <span class="n">info_set_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">:</span>
+<span class="lineno">253</span>            <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">new_info_set</span><span class="p">()</span>
+<span class="lineno">254</span>        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span>
+<span class="lineno">255</span>        <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">256</span>        <span class="n">va</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">257</span>
+<span class="lineno">258</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">259</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">():</span>
+<span class="lineno">260</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">pi_neg_i</span><span class="p">)</span>
+<span class="lineno">261</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">262</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">])</span>
+<span class="lineno">263</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+<span class="lineno">264</span>
+<span class="lineno">265</span>        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+<span class="lineno">266</span>
+<span class="lineno">267</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">()</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span>
+<span class="lineno">268</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">)</span>
+<span class="lineno">269</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span>
+<span class="lineno">270</span>
+<span class="lineno">271</span>        <span class="k">return</span> <span class="n">v</span>
+<span class="lineno">272</span>
+<span class="lineno">273</span>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">274</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_loop</span><span class="p">:</span>
+<span class="lineno">275</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span><span class="o">.</span><span class="n">clear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">276</span>
+<span class="lineno">277</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_players</span><span class="p">):</span>
+<span class="lineno">278</span>                <span class="bp">self</span><span class="o">.</span><span class="n">cfr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">(),</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">279</span>
+<span class="lineno">280</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">281</span>
+<span class="lineno">282</span>            <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">283</span>
+<span class="lineno">284</span>            <span class="bp">self</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="lineno">285</span>
+<span class="lineno">286</span>        <span class="n">logger</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
 <span class="lineno">287</span>
-<span class="lineno">288</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span> <span class="s1">&#39;online&#39;</span><span class="p">)</span>
-<span class="lineno">289</span><span class="k">def</span> <span class="nf">online_update_regrets</span><span class="p">():</span>
-<span class="lineno">290</span>    <span class="k">return</span> <span class="n">UpdateRegrets</span><span class="p">()</span>
-<span class="lineno">291</span>
-<span class="lineno">292</span>
-<span class="lineno">293</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">,</span> <span class="s1">&#39;online&#39;</span><span class="p">)</span>
-<span class="lineno">294</span><span class="k">def</span> <span class="nf">online_update_infosets</span><span class="p">():</span>
-<span class="lineno">295</span>    <span class="k">return</span> <span class="n">UpdateInfoSets</span><span class="p">()</span>
-<span class="lineno">296</span>
-<span class="lineno">297</span>
-<span class="lineno">298</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span> <span class="s1">&#39;offline&#39;</span><span class="p">)</span>
-<span class="lineno">299</span><span class="k">def</span> <span class="nf">offline_update_regrets</span><span class="p">():</span>
-<span class="lineno">300</span>    <span class="k">return</span> <span class="n">OfflineUpdateRegrets</span><span class="p">()</span>
+<span class="lineno">288</span>
+<span class="lineno">289</span><span class="k">class</span> <span class="nc">CFRConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span>
+<span class="lineno">290</span>    <span class="n">update_regrets</span><span class="p">:</span> <span class="n">UpdateRegrets</span>
+<span class="lineno">291</span>    <span class="n">update_infosets</span><span class="p">:</span> <span class="n">UpdateInfoSets</span>
+<span class="lineno">292</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
+<span class="lineno">293</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_00_000</span>
+<span class="lineno">294</span>    <span class="n">update_get_cfv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UpdateAndGetCounterFactualValue</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">295</span>    <span class="n">track_frequency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span>
+<span class="lineno">296</span>    <span class="n">save_frequency</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span>
+<span class="lineno">297</span>    <span class="n">cfr</span><span class="p">:</span> <span class="n">CFR</span> <span class="o">=</span> <span class="s1">&#39;simple_cfr&#39;</span>
+<span class="lineno">298</span>    <span class="n">loop</span><span class="p">:</span> <span class="n">TrainingLoop</span>
+<span class="lineno">299</span>    <span class="n">update_average_strategy</span><span class="p">:</span> <span class="n">UpdateAverageStrategy</span>
+<span class="lineno">300</span>
 <span class="lineno">301</span>
-<span class="lineno">302</span>
-<span class="lineno">303</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">,</span> <span class="s1">&#39;offline&#39;</span><span class="p">)</span>
-<span class="lineno">304</span><span class="k">def</span> <span class="nf">offline_update_infosets</span><span class="p">():</span>
-<span class="lineno">305</span>    <span class="k">return</span> <span class="n">OfflineUpdateInfoSets</span><span class="p">()</span>
-<span class="lineno">306</span>
-<span class="lineno">307</span>
-<span class="lineno">308</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">)</span>
-<span class="lineno">309</span><span class="k">def</span> <span class="nf">simple_update_average_strategy</span><span class="p">():</span>
-<span class="lineno">310</span>    <span class="k">return</span> <span class="n">UpdateAverageStrategy</span><span class="p">()</span></pre></div>
+<span class="lineno">302</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">loop</span><span class="p">)</span>
+<span class="lineno">303</span><span class="k">def</span> <span class="nf">training_loop</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span>
+<span class="lineno">304</span>    <span class="k">return</span> <span class="n">TrainingLoop</span><span class="p">(</span>
+<span class="lineno">305</span>        <span class="n">loop_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+<span class="lineno">306</span>        <span class="n">loop_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="lineno">307</span>        <span class="n">is_save_models</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="lineno">308</span>        <span class="n">log_new_line_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
+<span class="lineno">309</span>        <span class="n">log_write_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
+<span class="lineno">310</span>        <span class="n">save_models_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">save_frequency</span><span class="p">,</span>
+<span class="lineno">311</span>        <span class="n">is_loop_on_interrupt</span><span class="o">=</span><span class="kc">True</span>
+<span class="lineno">312</span>    <span class="p">)</span>
+<span class="lineno">313</span>
+<span class="lineno">314</span>
+<span class="lineno">315</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">cfr</span><span class="p">)</span>
+<span class="lineno">316</span><span class="k">def</span> <span class="nf">simple_cfr</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span>
+<span class="lineno">317</span>    <span class="k">return</span> <span class="n">CFR</span><span class="p">(</span><span class="n">create_new_history</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">,</span>
+<span class="lineno">318</span>               <span class="n">epochs</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+<span class="lineno">319</span>               <span class="n">training_loop</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">loop</span><span class="p">,</span>
+<span class="lineno">320</span>               <span class="n">update_get_cfv</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_get_cfv</span><span class="p">,</span>
+<span class="lineno">321</span>               <span class="n">track_frequency</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">track_frequency</span><span class="p">,</span>
+<span class="lineno">322</span>               <span class="n">save_frequency</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">save_frequency</span><span class="p">,</span>
+<span class="lineno">323</span>               <span class="n">update_average_strategy</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">,</span>
+<span class="lineno">324</span>               <span class="n">update_regrets</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span>
+<span class="lineno">325</span>               <span class="n">update_infosets</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">)</span>
+<span class="lineno">326</span>
+<span class="lineno">327</span>
+<span class="lineno">328</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span> <span class="s1">&#39;online&#39;</span><span class="p">)</span>
+<span class="lineno">329</span><span class="k">def</span> <span class="nf">online_update_regrets</span><span class="p">():</span>
+<span class="lineno">330</span>    <span class="k">return</span> <span class="n">UpdateRegrets</span><span class="p">()</span>
+<span class="lineno">331</span>
+<span class="lineno">332</span>
+<span class="lineno">333</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">,</span> <span class="s1">&#39;online&#39;</span><span class="p">)</span>
+<span class="lineno">334</span><span class="k">def</span> <span class="nf">online_update_infosets</span><span class="p">():</span>
+<span class="lineno">335</span>    <span class="k">return</span> <span class="n">UpdateInfoSets</span><span class="p">()</span>
+<span class="lineno">336</span>
+<span class="lineno">337</span>
+<span class="lineno">338</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_regrets</span><span class="p">,</span> <span class="s1">&#39;offline&#39;</span><span class="p">)</span>
+<span class="lineno">339</span><span class="k">def</span> <span class="nf">offline_update_regrets</span><span class="p">():</span>
+<span class="lineno">340</span>    <span class="k">return</span> <span class="n">OfflineUpdateRegrets</span><span class="p">()</span>
+<span class="lineno">341</span>
+<span class="lineno">342</span>
+<span class="lineno">343</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_infosets</span><span class="p">,</span> <span class="s1">&#39;offline&#39;</span><span class="p">)</span>
+<span class="lineno">344</span><span class="k">def</span> <span class="nf">offline_update_infosets</span><span class="p">():</span>
+<span class="lineno">345</span>    <span class="k">return</span> <span class="n">OfflineUpdateInfoSets</span><span class="p">()</span>
+<span class="lineno">346</span>
+<span class="lineno">347</span>
+<span class="lineno">348</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">update_average_strategy</span><span class="p">)</span>
+<span class="lineno">349</span><span class="k">def</span> <span class="nf">simple_update_average_strategy</span><span class="p">():</span>
+<span class="lineno">350</span>    <span class="k">return</span> <span class="n">UpdateAverageStrategy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     </div>

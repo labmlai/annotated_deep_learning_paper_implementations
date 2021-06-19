@@ -1,8 +1,8 @@
 """
 ---
-title: FNet - Mixing Tokens with Fourier Transforms
+title: "FNet: Mixing Tokens with Fourier Transforms"
 summary: >
-  This is an annotated implementation/tutorial the FNet in PyTorch.
+  This is an annotated implementation/tutorial of FNet in PyTorch.
 ---
 
 # FNet: Mixing Tokens with Fourier Transforms
