@@ -2,40 +2,20 @@
 ---
 title: Regret Minimization in Games with Incomplete Information
 summary: >
-  This is an annotated implementation/tutorial the FNet in PyTorch.
+  This is an annotated implementation/tutorial of Regret Minimization in Games with Incomplete Information
 ---
 
-# FNet: Mixing Tokens with Fourier Transforms
+# Regret Minimization in Games with Incomplete Information
 
-This is a [PyTorch](https://pytorch.org) implementation of the paper
-[FNet: Mixing Tokens with Fourier Transforms](https://arxiv.org/abs/2105.03824).
+The paper
+[Regret Minimization in Games with Incomplete Information](http://martin.zinkevich.org/publications/regretpoker.pdf)
+introduces notion counterfactual regret and how minimizing counterfactual regret through self-play
+can be used to reach Nash equilibrium.
+The paper uses this technique to solve Texas Hold'em Poker.
 
-This paper replaces the [self-attention layer](../mha.html) with two
-[Fourier transforms](https://en.wikipedia.org/wiki/Discrete_Fourier_transform) to
-*mix* tokens.
-This is a $7 \times$ more efficient than self-attention.
-The accuracy loss of using this over self-attention is about 92% for
-[BERT](https://paperswithcode.com/method/bert) on
-[GLUE benchmark](https://paperswithcode.com/dataset/glue).
-
-## Mixing tokens with two Fourier transforms
-
-We apply Fourier transform along the hidden dimension (embedding dimension)
- and then along the sequence dimension.
-
-$$
-\mathcal{R}\big(\mathcal{F}_\text{seq} \big(\mathcal{F}_\text{hidden} (x) \big) \big)
-$$
-
-where $x$ is the embedding input, $\mathcal{F}$ stands for the fourier transform and
-$\mathcal{R}$ stands for the real component in complex numbers.
-
-This is very simple to implement on PyTorch - just 1 line of code.
-The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the
-Fourier transformation.
-
-Here is [the training code](experiment.html) for using a FNet based model for classifying
-[AG News](https://paperswithcode.com/dataset/ag-news).
+We tried to keep our Python implementation easy-to-understand like a tutorial; therefore
+it is not very efficient.
+We run it on [a very simple imperfect information game called Kuhn poker](kuhn.html).
 """
 
 from typing import NewType, Dict, List, Callable, cast, Optional
@@ -44,32 +24,139 @@ from labml import monit, tracker, logger
 from labml.configs import BaseConfigs, option
 from labml_helpers.training_loop import TrainingLoop
 
-Action = NewType('Action', str)
+# A player $i \in N$ where $N$ is the set of players
 Player = NewType('Player', int)
+# Action $a$, $A(h) = \{a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History)
+Action = NewType('Action', str)
+
+
+class History:
+    """
+    <a id="History"></a>
+    ## History
+    """
+
+    def is_terminal(self):
+        """
+        Whether it's a terminal history; i.e. game over.
+        $$h \in Z$$ where $Z \subseteq H$ is the set of of terminal histories.
+        """
+        raise NotImplementedError()
+
+    def terminal_utility(self, i: Player) -> float:
+        """
+        <a id="terminal_utility"></a>
+        Utility of player $i$ for a terminal history.
+
+        $$u_i(h)$$ where $h \in Z$
+        """
+        raise NotImplementedError()
+
+    def is_chance(self) -> bool:
+        """
+        Whether the next step is a chance step; something like dealing a new card.
+        """
+        raise NotImplementedError()
+
+    def __add__(self, action: Action):
+        """
+        Add an action to the history.
+        """
+        raise NotImplementedError()
+
+    def info_set_key(self) -> str:
+        """
+        Get [information set](#InfoSet) for the current player
+        """
+        raise NotImplementedError
+
+    def new_info_set(self) -> 'InfoSet':
+        """
+        Create a new [information set](#InfoSet) for the current player
+        """
+        raise NotImplementedError()
+
+    def player(self) -> Player:
+        """
+        Get current player, denoted by $P(h)$, where $P$ is known as **Player function**.
+        """
+        raise NotImplementedError()
+
+    def sample_chance(self) -> Action:
+        """
+        Sample a chance (if the current step is a chance action)
+        """
+        raise NotImplementedError()
+
+    def __repr__(self):
+        """
+        Human readable representation
+        """
+        raise NotImplementedError()
 
 
 class InfoSet:
+    """
+    <a id="InfoSet"></a>
+    ## Information Set $I_i$
+
+    **Information set** $I_i \in \mathcal{I}_i$ for player $i$
+    is a similar to a history $h \in H$
+    but only contain the actions visible to player $i$.
+    That is, the history $h$ will contain actions/event such as cards dealt to the
+    opposing player while $I_i$ will not have them.
+
+    $\mathcal{I}_i$ is known as the **information partition** of player $i$.
+    """
+
+    # Unique key identifying the information set
     key: str
-    regret: Dict[Action, float]
-    current_regret: Dict[Action, float]
-    average_strategy: Dict[Action, float]
+    # **Strategy of player** $i$, $\sigma_i$ which is a distribution over actions $A(I_i)$
     strategy: Dict[Action, float]
+    # Current regret of each action $A(I_i)$,
+    #
+    # $$r^t_i(a) = \max_{\sigma^*_i} u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t)$$
+    # where,
+    #
+    # * $\sigma^t_i$ is the current strategy of player $i$,
+    # * $\sigma^t$ is the **strategy profile** which consists of strategies of all players
+    #  $\sigma^t_1, \sigma^t_2, ...$
+    # * $\sigma^t_{-i}$ is strategies of all players except $\sigma^t_i$
+    # * $u_i(\sigma^t)$ is the overall utility of player $i$
+    # $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
+    # where $u_i(h)$ is the [terminal utility](#terminal_utility)
+    # and $\pi^\sigma(h)$ is the probability of $h$ occurring if players chose actions
+    # according to $\sigma$.
+    current_regret: Dict[Action, float]
+    # Total regret of each action $A(I_i)$
+    regret: Dict[Action, float]
+    # Average strategy
+    average_strategy: Dict[Action, float]
 
     def __init__(self, key: str):
         self.key = key
         self.regret = {a: 0 for a in self.actions()}
         self.current_regret = {a: 0 for a in self.actions()}
         self.average_strategy = {a: 0 for a in self.actions()}
-        self.calculate_policy()
+        self.calculate_strategy()
 
     def actions(self) -> List[Action]:
+        """
+        Actions $A(I_i)$
+        """
         raise NotImplementedError()
 
     @staticmethod
     def from_dict(data: Dict[str, any]) -> 'InfoSet':
+        """
+        Load information set from a saved dictionary
+        """
         raise NotImplementedError()
 
     def to_dict(self):
+        """
+        Save the information set to a dictionary
+        """
         return {
             'key': self.key,
             'regret': self.regret,
@@ -77,11 +164,17 @@ class InfoSet:
         }
 
     def load_dict(self, data: Dict[str, any]):
+        """
+        Load data from a saved dictionary
+        """
         self.regret = data['regret']
         self.average_strategy = data['average_strategy']
-        self.calculate_policy()
+        self.calculate_strategy()
 
-    def calculate_policy(self):
+    def calculate_strategy(self):
+        """
+        ## Calculate strategy
+        """
         regret = {a: max(r, 0) for a, r in self.regret.items()}
         regret_sum = sum(regret.values())
         if regret_sum > 0:
@@ -91,6 +184,9 @@ class InfoSet:
             self.strategy = {a: 1 / count for a, r in regret.items()}
 
     def get_average_strategy(self):
+        """
+        ## Get normalized average strategy
+        """
         cum_strategy = {a: self.average_strategy.get(a, 0.) for a in self.actions()}
         strategy_sum = sum(cum_strategy.values())
         if strategy_sum > 0:
@@ -100,114 +196,27 @@ class InfoSet:
             return {a: 1 / count for a, r in cum_strategy.items()}
 
     def clear(self):
+        """
+        Clear current regrets
+        """
         self.current_regret = {a: 0 for a in self.actions()}
 
     def update_regrets(self):
+        """
+        Update regrets with current regrets
+        """
         for k, v in self.current_regret.items():
             self.regret[k] += v
 
     def __repr__(self):
+        """
+        Human readable representation
+        """
         raise NotImplementedError()
-
-
-class History:
-    def is_terminal(self):
-        raise NotImplementedError()
-
-    def terminal_utility(self, i: Player) -> float:
-        raise NotImplementedError()
-
-    def is_chance(self) -> bool:
-        raise NotImplementedError()
-
-    def __add__(self, action: Action):
-        raise NotImplementedError()
-
-    def info_set_key(self) -> str:
-        raise NotImplementedError
-
-    def new_info_set(self) -> InfoSet:
-        raise NotImplementedError()
-
-    def player(self) -> int:
-        raise NotImplementedError()
-
-    def sample_chance(self) -> Action:
-        raise NotImplementedError()
-
-    def __repr__(self):
-        raise NotImplementedError()
-
-
-class UpdateRegrets:
-    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
-        for a in I.actions():
-            I.regret[a] += pi_neg_i * (va[a] - v)
-
-        I.calculate_policy()
-
-
-class UpdateInfoSets:
-    def __call__(self, info_sets: Dict[str, InfoSet]):
-        pass
-
-    def clear(self, info_sets: Dict[str, InfoSet]):
-        pass
-
-
-class OfflineUpdateRegrets(UpdateRegrets):
-    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
-        for a in I.actions():
-            I.current_regret[a] += pi_neg_i * (va[a] - v)
-
-
-class OfflineUpdateInfoSets(UpdateInfoSets):
-    def __call__(self, info_sets: Dict[str, InfoSet]):
-        for k, I in info_sets.items():
-            I.update_regrets()
-            I.calculate_policy()
-
-    def clear(self, info_sets: Dict[str, InfoSet]):
-        for I in info_sets.values():
-            I.clear()
-
-
-class UpdateAndGetCounterFactualValue:
-    def __call__(self, h: History, v: float, i: Player):
-        return v
-
-    def train(self):
-        pass
-
-
-class UpdateAverageStrategy:
-    def __call__(self, I: InfoSet, pi_i: float):
-        for a in I.actions():
-            I.average_strategy[a] = I.average_strategy[a] + pi_i * I.strategy[a]
-
-
-class InfoSetTracker:
-    def __init__(self):
-        tracker.set_histogram(f'strategy.*')
-        tracker.set_histogram(f'average_strategy.*')
-        tracker.set_histogram(f'regret.*')
-        tracker.set_histogram(f'current_regret.*')
-
-    def __call__(self, info_sets: Dict[str, InfoSet]):
-        with monit.section("Track"):
-            for I in info_sets.values():
-                avg_strategy = I.get_average_strategy()
-                for a in I.actions():
-                    tracker.add({
-                        f'strategy.{I.key}.{a}': I.strategy[a],
-                        f'average_strategy.{I.key}.{a}': avg_strategy[a],
-                        f'regret.{I.key}.{a}': I.regret[a],
-                        f'current_regret.{I.key}.{a}': I.current_regret[a]
-                    })
 
 
 class CFR:
-    update_get_cfv: UpdateAndGetCounterFactualValue
+    update_get_cfv: 'UpdateAndGetCounterFactualValue'
     track_frequency: int
     info_sets: Dict[str, InfoSet]
     is_online_update: bool
@@ -219,10 +228,10 @@ class CFR:
                  create_new_history,
                  epochs,
                  training_loop: TrainingLoop,
-                 update_regrets: UpdateRegrets,
-                 update_infosets: UpdateInfoSets,
-                 update_average_strategy: UpdateAverageStrategy,
-                 update_get_cfv: UpdateAndGetCounterFactualValue = None,
+                 update_regrets: 'UpdateRegrets',
+                 update_infosets: 'UpdateInfoSets',
+                 update_average_strategy: 'UpdateAverageStrategy',
+                 update_get_cfv: 'UpdateAndGetCounterFactualValue' = None,
                  n_players=2,
                  track_frequency=10,
                  save_frequency=10):
@@ -284,6 +293,73 @@ class CFR:
             self.update_get_cfv.train()
 
         logger.inspect(self.info_sets)
+
+
+class UpdateRegrets:
+    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
+        for a in I.actions():
+            I.regret[a] += pi_neg_i * (va[a] - v)
+
+        I.calculate_strategy()
+
+
+class UpdateInfoSets:
+    def __call__(self, info_sets: Dict[str, InfoSet]):
+        pass
+
+    def clear(self, info_sets: Dict[str, InfoSet]):
+        pass
+
+
+class OfflineUpdateRegrets(UpdateRegrets):
+    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
+        for a in I.actions():
+            I.current_regret[a] += pi_neg_i * (va[a] - v)
+
+
+class OfflineUpdateInfoSets(UpdateInfoSets):
+    def __call__(self, info_sets: Dict[str, InfoSet]):
+        for k, I in info_sets.items():
+            I.update_regrets()
+            I.calculate_strategy()
+
+    def clear(self, info_sets: Dict[str, InfoSet]):
+        for I in info_sets.values():
+            I.clear()
+
+
+class UpdateAndGetCounterFactualValue:
+    def __call__(self, h: History, v: float, i: Player):
+        return v
+
+    def train(self):
+        pass
+
+
+class UpdateAverageStrategy:
+    def __call__(self, I: InfoSet, pi_i: float):
+        for a in I.actions():
+            I.average_strategy[a] = I.average_strategy[a] + pi_i * I.strategy[a]
+
+
+class InfoSetTracker:
+    def __init__(self):
+        tracker.set_histogram(f'strategy.*')
+        tracker.set_histogram(f'average_strategy.*')
+        tracker.set_histogram(f'regret.*')
+        tracker.set_histogram(f'current_regret.*')
+
+    def __call__(self, info_sets: Dict[str, InfoSet]):
+        with monit.section("Track"):
+            for I in info_sets.values():
+                avg_strategy = I.get_average_strategy()
+                for a in I.actions():
+                    tracker.add({
+                        f'strategy.{I.key}.{a}': I.strategy[a],
+                        f'average_strategy.{I.key}.{a}': avg_strategy[a],
+                        f'regret.{I.key}.{a}': I.regret[a],
+                        f'current_regret.{I.key}.{a}': I.current_regret[a]
+                    })
 
 
 class CFRConfigs(BaseConfigs):
