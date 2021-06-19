@@ -169,14 +169,24 @@ class InfoSet:
     key: str
     # $\sigma_i$, the strategy of player $i$
     strategy: Dict[Action, float]
-    # Current regret of each action $A(I_i)$,
+    # Current regret of not taking each action $A(I_i)$,
+    #
+    # $$\pi^{\sigma^t}_{-i} (I) \Big( u_i(\sigma_t |_{I \rightarrow a}, I) - u_i(\sigma^t, I) \Big)$$
+    # where $\sigma_t |_{I \rightarrow a}$ is the same as strategy $\sigma_t$ but always taking action $a$
+    # at $I$.
     current_regret: Dict[Action, float]
-    # Total regret of each action $A(I_i)$
+    # Total regret of not taking each action $A(I_i)$,
+    #
+    # $$R^T_i(I, a) = \frac{1}{T} \sum_{t=1}^T
+    # \pi^{\sigma^t}_{-i} (I) \Big( u_i(\sigma_t |_{I \rightarrow a}, I) - u_i(\sigma^t, I) \Big)$$
     regret: Dict[Action, float]
     # Average strategy
     average_strategy: Dict[Action, float]
 
     def __init__(self, key: str):
+        """
+        Initialize
+        """
         self.key = key
         self.regret = {a: 0 for a in self.actions()}
         self.current_regret = {a: 0 for a in self.actions()}
@@ -217,13 +227,32 @@ class InfoSet:
     def calculate_strategy(self):
         """
         ## Calculate strategy
+
+        Strategy of time $T + 1$ is,
+
+        \begin{align}
+        \sigma_i^{T+1}(I)(a) =
+        \begin{cases}
+        \frac{R^{T,+}_i(I, a)}{\sum_{a'\in A(I)}R^{T,+}_i(I, a')},  & \text{if} \sum_{a'\in A(I)}R^{T,+}_i(I, a') \gt 0 \\
+        \frac{1}{\lvert A(I) \rvert}, & \text{otherwise}
+        \end{cases}
+        \end{align}
+
+        where $R^{T,+}_i(I, a) = \max \Big(R^T_i(I, a), 0 \Big)$
         """
+        # $$R^{T,+}_i(I, a) = \max \Big(R^T_i(I, a), 0 \Big)$$
         regret = {a: max(r, 0) for a, r in self.regret.items()}
+        # $$\sum_{a'\in A(I)}R^{T,+}_i(I, a')$$
         regret_sum = sum(regret.values())
+        # if $\sum_{a'\in A(I)}R^{T,+}_i(I, a') \gt 0$
         if regret_sum > 0:
+            # \frac{R^{T,+}_i(I, a)}{\sum_{a'\in A(I)}R^{T,+}_i(I, a')}
             self.strategy = {a: r / regret_sum for a, r in regret.items()}
+        # Otherwise
         else:
+            # $\lvert A(I) \rvert$
             count = len(list(a for a in self.regret))
+            # $\frac{1}{\lvert A(I) \rvert}$
             self.strategy = {a: 1 / count for a, r in regret.items()}
 
     def get_average_strategy(self):
@@ -233,7 +262,7 @@ class InfoSet:
         cum_strategy = {a: self.average_strategy.get(a, 0.) for a in self.actions()}
         strategy_sum = sum(cum_strategy.values())
         if strategy_sum > 0:
-            return {a: r / strategy_sum for a, r in cum_strategy.items()}
+            return {a: s / strategy_sum for a, s in cum_strategy.items()}
         else:
             count = len(list(a for a in cum_strategy))
             return {a: 1 / count for a, r in cum_strategy.items()}
