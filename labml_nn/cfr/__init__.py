@@ -1,20 +1,20 @@
 """
 ---
-title: Regret Minimization in Games with Incomplete Information
+title: Regret Minimization in Games with Incomplete Information (CFR)
 summary: >
   This is an annotated implementation/tutorial of Regret Minimization in Games with Incomplete Information
 ---
 
-# Regret Minimization in Games with Incomplete Information
+# Regret Minimization in Games with Incomplete Information (CFR)
 
 The paper
 [Regret Minimization in Games with Incomplete Information](http://martin.zinkevich.org/publications/regretpoker.pdf)
 introduces notion counterfactual regret and how minimizing counterfactual regret through self-play
 can be used to reach Nash equilibrium.
+The algorithm is called Counterfactural Regret Minization (**CFR**).
 The paper uses this technique to solve Texas Hold'em Poker.
 
-We tried to keep our Python implementation easy-to-understand like a tutorial; therefore
-it is not very efficient.
+We tried to keep our Python implementation easy-to-understand like a tutorial.
 We run it on [a very simple imperfect information game called Kuhn poker](kuhn.html).
 
 ## Introduction
@@ -136,7 +136,8 @@ replaced with $\sigma^*_i$.
 The average strategy is the average of strategies followed in each round,
  for all $I \in \mathcal{I}, a \in A(I)$
 
-$$\bar{\sigma}^T_i(I)(a) = \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\sigma^t(I)(a)}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
+$$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
 
 That is the mean regret of not playing with the optimal strategy.
 
@@ -186,12 +187,75 @@ u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1
 That is, $2\epsilon$-Nash equilibrium. You can similarly prove for games with more than 2 players.
 
 So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
-"""
-from typing import NewType, Dict, List, Callable, cast, Optional
 
-from labml import monit, tracker, logger
+### Counterfactual regret
+
+**Counterfactual value** $\color{pink}{v_i(\sigma, I)}$ is the expected utility for player $i$ if the information $I$
+is reached multiplied by $\pi^\sigma_{-i}(I)$ the probability of reaching $I$.
+without player $i$'s contribution (if player $i$ took the actions leading to $I$ with a probability of $1$).
+So this is like the expected utility if player $i$ tried to reach $I$.
+
+$$\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)$$
+
+where $Z_I$ is the set of terminal histories reachable from $I$ and
+$z[I]$ is the prefix of history $z$ upto the information set $I$.
+$\pi^\sigma(z[I], z)$ is the probability of reaching z from $z[I]$.
+
+**Immediate counterfactual regret** is,
+
+$$R^T_{i,imm}(I) = \frac{1}{T} \max_{a \in A{I}} \sum_{t=1}^T
+\pi^{\sigma^t}_{-i} (I) \Big(
+\color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
+\Big)$$
+
+where $\sigma |_{I \rightarrow a}$ is the strategy profile $\sigma$ with the modification
+of always taking action $a$ at information set $I$.
+
+The paper proves that (Theorem 3),
+
+$$R^T_i \le \sum_{I \in \mathcal{I}} R^{T,+}_{i,imm}(I)$$
+where $$R^{T,+}_{i,imm}(I) = \max(R^T_{i,imm}(I), 0)$$
+
+<a id="RegretMatching"></a>
+### Regret Matching
+
+The strategy is calculated using regret matching.
+
+The regret for each information set and action pair $\color{orange}{R^T_i(I, a)}$ is maintained,
+
+\begin{align}
+\color{coral}{r^t_i(I, a)} &=
+ \pi^{\sigma^t}_{-i} (I) \Big(
+ \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
+ \Big) \\
+\color{orange}{R^T_i(I, a)} &=
+ \frac{1}{T} \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
+\end{align}
+
+and the strategy is calculated with regret matching,
+
+\begin{align}
+\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+\begin{cases}
+\frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}},
+  & \text{if} \sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')} \gt 0 \\
+\frac{1}{\lvert A(I) \rvert},
+ & \text{otherwise}
+\end{cases}
+\end{align}
+
+where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$
+
+So we maintain $\color{orange}{R^T_i(I, a)}$ and update
+ the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
+Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.
+
+*Let's dive into the code!*
+"""
+from typing import NewType, Dict, List, Callable, cast
+
+from labml import monit, tracker, logger, experiment
 from labml.configs import BaseConfigs, option
-from labml_helpers.training_loop import TrainingLoop
 
 # A player $i \in N$ where $N$ is the set of players
 Player = NewType('Player', int)
@@ -269,6 +333,7 @@ class History:
         """
         raise NotImplementedError()
 
+
 class InfoSet:
     """
     <a id="InfoSet"></a>
@@ -277,21 +342,30 @@ class InfoSet:
 
     # Unique key identifying the information set
     key: str
-    # $\sigma_i$, the strategy of player $i$
+    # $\sigma_i$, the [strategy](#Strategy) of player $i$
     strategy: Dict[Action, float]
-    # Current regret of not taking each action $A(I_i)$,
-    #
-    # $$\pi^{\sigma^t}_{-i} (I) \Big( u_i(\sigma_t |_{I \rightarrow a}, I) - u_i(\sigma^t, I) \Big)$$
-    # where $\sigma_t |_{I \rightarrow a}$ is the same as strategy $\sigma_t$ but always taking action $a$
-    # at $I$.
-    current_regret: Dict[Action, float]
     # Total regret of not taking each action $A(I_i)$,
     #
-    # $$R^T_i(I, a) = \frac{1}{T} \sum_{t=1}^T
-    # \pi^{\sigma^t}_{-i} (I) \Big( u_i(\sigma_t |_{I \rightarrow a}, I) - u_i(\sigma^t, I) \Big)$$
+    # \begin{align}
+    # \color{coral}{r^t_i(I, a)} &=
+    #  \pi^{\sigma^t}_{-i} (I) \Big(
+    #  \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
+    #  \Big) \\
+    # \color{orange}{R^T_i(I, a)} &=
+    #  \frac{1}{T} \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
+    # \end{align}
+    #
+    # We maintain $T \color{orange}{R^T_i(I, a)}$ instead of $\color{orange}{R^T_i(I, a)}$
+    # since $\frac{1}{T}$ term cancels out anyway when computing strategy
+    # $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$
     regret: Dict[Action, float]
-    # Average strategy
-    average_strategy: Dict[Action, float]
+    # We maintain the cumulative strategy
+    # $$\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}$$
+    # to compute overall average strategy
+    #
+    # $$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+    #  \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
+    cumulative_strategy: Dict[Action, float]
 
     def __init__(self, key: str):
         """
@@ -299,8 +373,7 @@ class InfoSet:
         """
         self.key = key
         self.regret = {a: 0 for a in self.actions()}
-        self.current_regret = {a: 0 for a in self.actions()}
-        self.average_strategy = {a: 0 for a in self.actions()}
+        self.cumulative_strategy = {a: 0 for a in self.actions()}
         self.calculate_strategy()
 
     def actions(self) -> List[Action]:
@@ -323,7 +396,7 @@ class InfoSet:
         return {
             'key': self.key,
             'regret': self.regret,
-            'average_strategy': self.average_strategy,
+            'average_strategy': self.cumulative_strategy,
         }
 
     def load_dict(self, data: Dict[str, any]):
@@ -331,64 +404,71 @@ class InfoSet:
         Load data from a saved dictionary
         """
         self.regret = data['regret']
-        self.average_strategy = data['average_strategy']
+        self.cumulative_strategy = data['average_strategy']
         self.calculate_strategy()
 
     def calculate_strategy(self):
         """
         ## Calculate strategy
 
-        Strategy of time $T + 1$ is,
+        Calculate current strategy using [regret matching](#RegretMatching).
 
         \begin{align}
-        \sigma_i^{T+1}(I)(a) =
+        \color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
         \begin{cases}
-        \frac{R^{T,+}_i(I, a)}{\sum_{a'\in A(I)}R^{T,+}_i(I, a')},  & \text{if} \sum_{a'\in A(I)}R^{T,+}_i(I, a') \gt 0 \\
-        \frac{1}{\lvert A(I) \rvert}, & \text{otherwise}
+        \frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}},
+          & \text{if} \sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')} \gt 0 \\
+        \frac{1}{\lvert A(I) \rvert},
+         & \text{otherwise}
         \end{cases}
         \end{align}
 
-        where $R^{T,+}_i(I, a) = \max \Big(R^T_i(I, a), 0 \Big)$
+        where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$
         """
-        # $$R^{T,+}_i(I, a) = \max \Big(R^T_i(I, a), 0 \Big)$$
+        # $$\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$$
         regret = {a: max(r, 0) for a, r in self.regret.items()}
-        # $$\sum_{a'\in A(I)}R^{T,+}_i(I, a')$$
+        # $$\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}$$
         regret_sum = sum(regret.values())
-        # if $\sum_{a'\in A(I)}R^{T,+}_i(I, a') \gt 0$
+        # if $\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')} \gt 0$,
         if regret_sum > 0:
-            # \frac{R^{T,+}_i(I, a)}{\sum_{a'\in A(I)}R^{T,+}_i(I, a')}
+            # $$\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+            # \frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}}$$
             self.strategy = {a: r / regret_sum for a, r in regret.items()}
-        # Otherwise
+        # Otherwise,
         else:
             # $\lvert A(I) \rvert$
             count = len(list(a for a in self.regret))
-            # $\frac{1}{\lvert A(I) \rvert}$
+            # $$\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+            # \frac{1}{\lvert A(I) \rvert}$$
             self.strategy = {a: 1 / count for a, r in regret.items()}
 
     def get_average_strategy(self):
         """
-        ## Get normalized average strategy
+        ## Get average strategy
+
+        $$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+         \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}
+         {\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
         """
-        cum_strategy = {a: self.average_strategy.get(a, 0.) for a in self.actions()}
+        # $$\sum_{t=1}^T \pi_i^{\sigma^t}(I) \color{lightgreen}{\sigma^t(I)(a)}$$
+        cum_strategy = {a: self.cumulative_strategy.get(a, 0.) for a in self.actions()}
+        # $$\sum_{t=1}^T \pi_i^{\sigma^t}(I) =
+        # \sum_{a \in A(I)} \sum_{t=1}^T
+        # \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}$$
         strategy_sum = sum(cum_strategy.values())
+        # If $\sum_{t=1}^T \pi_i^{\sigma^t}(I) > 0$,
         if strategy_sum > 0:
+            # $$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+            #  \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}
+            #  {\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
             return {a: s / strategy_sum for a, s in cum_strategy.items()}
+        # Otherwise,
         else:
+            # $\lvert A(I) \rvert$
             count = len(list(a for a in cum_strategy))
+            # $$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+            # \frac{1}{\lvert A(I) \rvert}$$
             return {a: 1 / count for a, r in cum_strategy.items()}
-
-    def clear(self):
-        """
-        Clear current regrets
-        """
-        self.current_regret = {a: 0 for a in self.actions()}
-
-    def update_regrets(self):
-        """
-        Update regrets with current regrets
-        """
-        for k, v in self.current_regret.items():
-            self.regret[k] += v
 
     def __repr__(self):
         """
@@ -399,59 +479,28 @@ class InfoSet:
 
 class CFR:
     """
-    $$r^t_i(a) = \max_{\sigma^*_i} u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t)$$
-    where,
-
-    * $\sigma^t_i$ is the current strategy of player $i$,
-    * $\sigma^t$ is the **strategy profile** which consists of strategies of all players
-     $\sigma^t_1, \sigma^t_2, ...$
-    * $\sigma^t_{-i}$ is strategies of all players except $\sigma^t_i$
-    * $u_i(\sigma^t)$ is the overall utility of player $i$
-    $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
-    where $u_i(h)$ is the [terminal utility](#terminal_utility)
-    and $\pi^\sigma(h)$ is the probability of $h$ occurring if players chose actions
-    according to $\sigma$.
+    ## Counterfactual Regret Minimization (CFR) Algorithm
     """
-    update_get_cfv: 'UpdateAndGetCounterFactualValue'
-    track_frequency: int
+
+    # $\mathcal{I}$ set of all information sets.
     info_sets: Dict[str, InfoSet]
-    is_online_update: bool
-    n_players: int
-    create_new_history: Callable[[], History]
-    epochs: int
 
     def __init__(self, *,
-                 create_new_history,
-                 epochs,
-                 training_loop: TrainingLoop,
-                 update_regrets: 'UpdateRegrets',
-                 update_infosets: 'UpdateInfoSets',
-                 update_average_strategy: 'UpdateAverageStrategy',
-                 update_get_cfv: 'UpdateAndGetCounterFactualValue' = None,
-                 n_players=2,
-                 track_frequency=10,
-                 save_frequency=10):
-        self.update_average_strategy = update_average_strategy
-        self.training_loop = training_loop
-        if update_get_cfv is None:
-            update_get_cfv = UpdateAndGetCounterFactualValue()
-        self.update_get_cfv = update_get_cfv
-        self.update_regrets = update_regrets
-        self.update_infosets = update_infosets
-        self.save_frequency = save_frequency
-        self.track_frequency = track_frequency
+                 create_new_history: Callable[[], History],
+                 epochs: int,
+                 n_players: int = 2):
         self.n_players = n_players
         self.epochs = epochs
         self.create_new_history = create_new_history
         self.info_sets = {}
         self.tracker = InfoSetTracker()
 
-    def cfr(self, h: History, i: Player, pi_i: float, pi_neg_i: float) -> float:
+    def walk_tree(self, h: History, i: Player, pi_i: float, pi_neg_i: float) -> float:
         if h.is_terminal():
             return h.terminal_utility(i)
         elif h.is_chance():
             a = h.sample_chance()
-            return self.cfr(h + a, i, pi_i, pi_neg_i)
+            return self.walk_tree(h + a, i, pi_i, pi_neg_i)
 
         info_set_key = h.info_set_key()
         if info_set_key not in self.info_sets:
@@ -462,80 +511,33 @@ class CFR:
 
         for a in I.actions():
             if i == h.player():
-                va[a] = self.cfr(h + a, i, pi_i * I.strategy[a], pi_neg_i)
+                va[a] = self.walk_tree(h + a, i, pi_i * I.strategy[a], pi_neg_i)
             else:
-                va[a] = self.cfr(h + a, i, pi_i, pi_neg_i * I.strategy[a])
+                va[a] = self.walk_tree(h + a, i, pi_i, pi_neg_i * I.strategy[a])
             v = v + I.strategy[a] * va[a]
 
-        v = self.update_get_cfv(h, v, i)
-
         if h.player() == i:
-            self.update_average_strategy(I, pi_i)
-            self.update_regrets(I, va, v, pi_neg_i)
+            for a in I.actions():
+                I.cumulative_strategy[a] = I.cumulative_strategy[a] + pi_i * I.strategy[a]
+            for a in I.actions():
+                I.regret[a] += pi_neg_i * (va[a] - v)
+
+            I.calculate_strategy()
 
         return v
 
     def solve(self):
-        for _ in self.training_loop:
-            self.update_infosets.clear(self.info_sets)
-
+        for t in monit.loop(self.epochs):
             for i in range(self.n_players):
-                self.cfr(self.create_new_history(), cast(Player, i), 1, 1)
-
-            self.update_infosets(self.info_sets)
+                self.walk_tree(self.create_new_history(), cast(Player, i), 1, 1)
 
             self.tracker(self.info_sets)
-
-            self.update_get_cfv.train()
+            tracker.save()
+            if (t + 1) % 1_000 == 0:
+                experiment.save_checkpoint()
+                tracker.new_line()
 
         logger.inspect(self.info_sets)
-
-
-class UpdateRegrets:
-    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
-        for a in I.actions():
-            I.regret[a] += pi_neg_i * (va[a] - v)
-
-        I.calculate_strategy()
-
-
-class UpdateInfoSets:
-    def __call__(self, info_sets: Dict[str, InfoSet]):
-        pass
-
-    def clear(self, info_sets: Dict[str, InfoSet]):
-        pass
-
-
-class OfflineUpdateRegrets(UpdateRegrets):
-    def __call__(self, I: InfoSet, va: Dict[Action, float], v: float, pi_neg_i: float):
-        for a in I.actions():
-            I.current_regret[a] += pi_neg_i * (va[a] - v)
-
-
-class OfflineUpdateInfoSets(UpdateInfoSets):
-    def __call__(self, info_sets: Dict[str, InfoSet]):
-        for k, I in info_sets.items():
-            I.update_regrets()
-            I.calculate_strategy()
-
-    def clear(self, info_sets: Dict[str, InfoSet]):
-        for I in info_sets.values():
-            I.clear()
-
-
-class UpdateAndGetCounterFactualValue:
-    def __call__(self, h: History, v: float, i: Player):
-        return v
-
-    def train(self):
-        pass
-
-
-class UpdateAverageStrategy:
-    def __call__(self, I: InfoSet, pi_i: float):
-        for a in I.actions():
-            I.average_strategy[a] = I.average_strategy[a] + pi_i * I.strategy[a]
 
 
 class InfoSetTracker:
@@ -543,7 +545,6 @@ class InfoSetTracker:
         tracker.set_histogram(f'strategy.*')
         tracker.set_histogram(f'average_strategy.*')
         tracker.set_histogram(f'regret.*')
-        tracker.set_histogram(f'current_regret.*')
 
     def __call__(self, info_sets: Dict[str, InfoSet]):
         with monit.section("Track"):
@@ -554,69 +555,16 @@ class InfoSetTracker:
                         f'strategy.{I.key}.{a}': I.strategy[a],
                         f'average_strategy.{I.key}.{a}': avg_strategy[a],
                         f'regret.{I.key}.{a}': I.regret[a],
-                        f'current_regret.{I.key}.{a}': I.current_regret[a]
                     })
 
 
 class CFRConfigs(BaseConfigs):
-    update_regrets: UpdateRegrets
-    update_infosets: UpdateInfoSets
     create_new_history: Callable[[], History]
     epochs: int = 1_00_000
-    update_get_cfv: Optional[UpdateAndGetCounterFactualValue] = None
-    track_frequency: int = 1_000
-    save_frequency: int = 1_000
     cfr: CFR = 'simple_cfr'
-    loop: TrainingLoop
-    update_average_strategy: UpdateAverageStrategy
-
-
-@option(CFRConfigs.loop)
-def training_loop(c: CFRConfigs):
-    return TrainingLoop(
-        loop_count=c.epochs,
-        loop_step=1,
-        is_save_models=True,
-        log_new_line_interval=c.track_frequency,
-        log_write_interval=c.track_frequency,
-        save_models_interval=c.save_frequency,
-        is_loop_on_interrupt=True
-    )
 
 
 @option(CFRConfigs.cfr)
 def simple_cfr(c: CFRConfigs):
     return CFR(create_new_history=c.create_new_history,
-               epochs=c.epochs,
-               training_loop=c.loop,
-               update_get_cfv=c.update_get_cfv,
-               track_frequency=c.track_frequency,
-               save_frequency=c.save_frequency,
-               update_average_strategy=c.update_average_strategy,
-               update_regrets=c.update_regrets,
-               update_infosets=c.update_infosets)
-
-
-@option(CFRConfigs.update_regrets, 'online')
-def online_update_regrets():
-    return UpdateRegrets()
-
-
-@option(CFRConfigs.update_infosets, 'online')
-def online_update_infosets():
-    return UpdateInfoSets()
-
-
-@option(CFRConfigs.update_regrets, 'offline')
-def offline_update_regrets():
-    return OfflineUpdateRegrets()
-
-
-@option(CFRConfigs.update_infosets, 'offline')
-def offline_update_infosets():
-    return OfflineUpdateInfoSets()
-
-
-@option(CFRConfigs.update_average_strategy)
-def simple_update_average_strategy():
-    return UpdateAverageStrategy()
+               epochs=c.epochs)

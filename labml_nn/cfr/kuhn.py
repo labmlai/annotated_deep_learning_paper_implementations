@@ -24,9 +24,9 @@ class InfoSet(_InfoSet):
         return ACTIONS
 
     def __repr__(self):
-        total = sum(r for r in self.average_strategy.values())
+        total = sum(r for r in self.cumulative_strategy.values())
         total = max(total, 1e-6)
-        bet = self.average_strategy['b'] / total
+        bet = self.cumulative_strategy['b'] / total
         return f'{bet * 100: .1f}%'
 
 
@@ -108,10 +108,8 @@ def _cnh():
 
 
 def main():
-    experiment.create(name='kuhn_poker', writers={'sqlite'})
+    experiment.create(name='kuhn_poker', writers={'sqlite', 'screen'})
     conf = Configs()
-    conf.update_regrets = 'online'
-    conf.update_infosets = 'online'
     experiment.configs(conf)
     experiment.add_model_savers({'info_sets': InfoSetSaver(conf.cfr.info_sets)})
     with experiment.start():
