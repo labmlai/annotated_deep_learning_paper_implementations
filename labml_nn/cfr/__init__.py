@@ -17,6 +17,8 @@ We tried to keep our Python implementation easy-to-understand like a tutorial; t
 it is not very efficient.
 We run it on [a very simple imperfect information game called Kuhn poker](kuhn.html).
 
+## Introduction
+
 Counterfactual Regret minimization, in each iteration,
  explores the full game tree by trying all player actions.
 It samples chance events only once per iteration.
@@ -25,8 +27,166 @@ Then it calculates the *regret* of not taking each action, and following the cur
 Then it updates the strategy based on these regrets for the next iteration.
 Finally it computes the average of the strategies throughout the iterations.
 This becomes very close to the Nash equilibrium.
-"""
 
+We will first introduce the mathematical notation and theory.
+It was difficult to have the theory introduced in-line with code.
+
+### Player
+
+A player is denoted by $i \in N$, where $N$ is the set of players.
+
+### [History](#History)
+
+History $h \in H$ is a sequence of actions including chance events,
+ and $H$ is the set of all histories.
+
+$Z \subseteq H$ is the set of of terminal histories (game over).
+
+### Action
+
+Action $a$, $A(h) = \{a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History).
+
+### [Information Set $I_i$](#InfoSet)
+
+**Information set** $I_i \in \mathcal{I}_i$ for player $i$
+is a similar to a history $h \in H$
+but only contain the actions visible to player $i$.
+That is, the history $h$ will contain actions/event such as cards dealt to the
+opposing player while $I_i$ will not have them.
+
+$\mathcal{I}_i$ is known as the **information partition** of player $i$.
+
+<a id="Strategy"></a>
+### Strategy
+
+**Strategy of player** $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
+where $\Sigma_i$ is the set of all strategies for player $i$.
+Strategy on $t$-th iteration is denoted by $\sigma^t_i$.
+
+Strategy is defined as a probability for taking an action $a$ in for a given information set $I$,
+
+$$\sigma_i(I)(a)$$
+
+$\sigma$ is the **strategy profile** which consists of strategies of all players
+ $\sigma_1, \sigma_2, \ldots$
+
+$\sigma_{-i}$ is strategies of all players except $\sigma_i$
+
+<a id="HistoryProbability"></a>
+### Probability of History
+
+$\pi^\sigma(h)$ is the probability of reaching the history $h$ with strategy profile $\sigma$.
+$\pi^\sigma(h)_{-i}$ is the probability of reaching $h$ without player $i$'s contribution;
+ i.e. player $i$ took the actions to follow $h$ with a probability of $1$.
+
+$$\pi^\sigma(I) = \sum_{h \in I} \pi^\sigma(h)$$
+
+for information set $I$, is the probability of reaching information set $I$ with
+strategy profile $\sigma$.
+
+### Utility (Pay off)
+
+The [terminal utility](#terminal_utility) is the utility (or pay off)
+ of a player $i$ for a terminal history $h$.
+
+$$u_i(h)$$ where $h \in Z$
+
+$u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy profile $\sigma$.
+
+$$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
+
+### Nash Equilibrium
+
+Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
+by changing her strategy alone.
+
+For two players, Nash equilibrium is a [strategy profile](#Strategy) where
+
+\begin{align}
+u_1(\sigma) &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
+u_2(\sigma) &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
+\end{align}
+
+$\epsilon$-Nash equilibrium is,
+
+\begin{align}
+u_1(\sigma) + \epsilon &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
+u_2(\sigma)  + \epsilon &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
+\end{align}
+
+### Regret Minimization
+
+Regret is the utility (or pay off) that the player didn't get because
+ she didn't follow the optimal strategy or took the best action.
+
+Average overall regret for Player $i$ is, the average regret of not following the
+optimal strategy in all $T$ rounds of game play.
+
+$$R^T_i = \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
+\Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big)$$
+
+where $\sigma^t$ is the strategy profile of all players in round $t$,
+and
+
+$$(\sigma^*_i, \sigma^t_{-i})$$
+
+is the strategy profile $\sigma^t$ with player $i$'s strategy
+replaced with $\sigma^*_i$.
+
+The average strategy is the average of strategies followed in each round,
+ for all $I \in \mathcal{I}, a \in A(I)$
+
+$$\bar{\sigma}^T_i(I)(a) = \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\sigma^t(I)(a)}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
+
+That is the mean regret of not playing with the optimal strategy.
+
+If $R^T_i < \epsilon$ for all players then $\bar{\sigma}^T_i(I)(a)$ is a
+$2\epsilon$-Nash equilibrium.
+
+\begin{align}
+R^T_i &< \epsilon \\
+R^T_i &= \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
+\Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big) \\
+&= \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T u_i(\sigma^*_i, \sigma^t_{-i})
+- \frac{1}{T} \sum_{t=1}^T u_i(\sigma^t) < \epsilon
+\end{align}
+
+Since $u_1 = -u_2$ because it's a zero-sum game, we can add $R^T_1$ and $R^T_i$ and the
+second term will cancel out.
+
+\begin{align}
+2\epsilon &>
+\frac{1}{T} \max_{\sigma^*_1 \in \Sigma_1} \sum_{t=1}^T u_1(\sigma^*_1, \sigma^t_{-1}) +
+\frac{1}{T} \max_{\sigma^*_2 \in \Sigma_2} \sum_{t=1}^T u_2(\sigma^*_2, \sigma^t_{-2})
+\end{align}
+
+The average of utilities over a set of strategies is equal to the utility of the average strategy.
+
+$$\frac{1}{T} \sum_{t=1}^T u_i(\sigma^t) = u_i(\bar{\sigma}^T)$$
+
+Therefore,
+\begin{align}
+2\epsilon &>
+\max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +
+\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2})
+\end{align}
+
+From definition of $\max$,
+$$\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2}) \ge u_2(\bar{\sigma}^T)
+ = -u_1(\bar{\sigma}^T)$$
+
+Then,
+\begin{align}
+2\epsilon &>
+\max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +
+-u_1(\bar{\sigma}^T) \\
+u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1})
+\end{align}
+
+That is, $2\epsilon$-Nash equilibrium. You can similarly prove for games with more than 2 players.
+
+So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
+"""
 from typing import NewType, Dict, List, Callable, cast, Optional
 
 from labml import monit, tracker, logger
@@ -51,7 +211,7 @@ class History:
     def is_terminal(self):
         """
         Whether it's a terminal history; i.e. game over.
-        $$h \in Z$$ where $Z \subseteq H$ is the set of of terminal histories.
+        $h \in Z$
         """
         raise NotImplementedError()
 
@@ -59,14 +219,29 @@ class History:
         """
         <a id="terminal_utility"></a>
         Utility of player $i$ for a terminal history.
+        $u_i(h)$ where $h \in Z$
+        """
+        raise NotImplementedError()
 
-        $$u_i(h)$$ where $h \in Z$
+    def player(self) -> Player:
+        """
+        Get current player, denoted by $P(h)$, where $P$ is known as **Player function**.
+
+        If $P(h) = c$ it means that current event is a chance $c$ event.
+        Something like dealing cards, or opening common cards in poker.
         """
         raise NotImplementedError()
 
     def is_chance(self) -> bool:
         """
         Whether the next step is a chance step; something like dealing a new card.
+        $P(h) = c$
+        """
+        raise NotImplementedError()
+
+    def sample_chance(self) -> Action:
+        """
+        Sample a chance when $P(h) = c$.
         """
         raise NotImplementedError()
 
@@ -88,21 +263,6 @@ class History:
         """
         raise NotImplementedError()
 
-    def player(self) -> Player:
-        """
-        Get current player, denoted by $P(h)$, where $P$ is known as **Player function**.
-
-        If $P(h) = c$ it means that current event is a chance $c$ event.
-        Something like dealing cards, or opening common cards in poker.
-        """
-        raise NotImplementedError()
-
-    def sample_chance(self) -> Action:
-        """
-        Sample a chance (if the current step is a chance action)
-        """
-        raise NotImplementedError()
-
     def __repr__(self):
         """
         Human readable representation
@@ -113,56 +273,6 @@ class InfoSet:
     """
     <a id="InfoSet"></a>
     ## Information Set $I_i$
-
-    **Information set** $I_i \in \mathcal{I}_i$ for player $i$
-    is a similar to a history $h \in H$
-    but only contain the actions visible to player $i$.
-    That is, the history $h$ will contain actions/event such as cards dealt to the
-    opposing player while $I_i$ will not have them.
-
-    $\mathcal{I}_i$ is known as the **information partition** of player $i$.
-
-    Here we introduce a few other notations.
-
-    <a id="Strategy"></a>
-    ## Strategy
-
-    **Strategy of player** $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
-    where $\Sigma_i$ is the set of all strategies for player $i$.
-    Strategy on $t$-th iteration is denoted by $\sigma^t_i$.
-
-    $\sigma$ is the **strategy profile** which consists of strategies of all players
-     $\sigma_1, \sigma_2, \ldots$
-
-    $\sigma_{-i}$ is strategies of all players except $\sigma_i$
-
-    <a id="HistoryProbability"></a>
-    ## Probability of History
-
-    $\pi^\sigma(h)$ is the probability of reaching the history $h$ with strategy profile $\sigma$.
-    $\pi^\sigma(h)_{-i}$ is the probability of reaching $h$ without player $i$'s contribution;
-     i.e. player $i$ took the actions to follow $h$ with a probability of $1$.
-
-    $$\pi^\sigma(I) = \sum_{h \in I} \pi^\sigma(h)$$
-
-    for information set $I$, is the probability of reaching information set $I$ with
-    strategy profile $\sigma$.
-
-    ## Nash Equilibrium
-
-    Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
-    by changing her strategy alone.
-
-    For two players, Nash equilibrium is a [strategy profile](#Strategy) where
-
-    \begin{align}
-    u_1(\sigma) &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
-    u_2(\sigma) &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
-    \end{align}
-
-    where $u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy profile $\sigma$.
-
-    $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
     """
 
     # Unique key identifying the information set
