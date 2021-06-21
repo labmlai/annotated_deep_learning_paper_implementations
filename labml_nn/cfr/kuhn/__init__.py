@@ -5,9 +5,9 @@ summary: >
   This is an annotated implementation/tutorial of CFR on Kuhn Poker
 ---
 
-# [CFR](index.html) on Kuhn Poker
+# [Counterfactual Regret Minimization (CFR)](../index.html) on Kuhn Poker
 
-This applies [CFR](index.html) to Kuhn poker.
+This applies [Counterfactual Regret Minimization (CFR)](../index.html) to Kuhn poker.
 
 [Kuhn Poker](https://en.wikipedia.org/wiki/Kuhn_poker) is a two player 3-card betting game.
 The players are dealt one card each out of Ace, King and Queen (no suits).
@@ -28,7 +28,7 @@ Here's some example games:
 * `QKbp` - Player 1 gets Q. Player 2 gets K. Player 1 bets a chip. Player 2 passes (folds). Player 1 gets the pot of $4$ because Player 2 folded.
 * `QAbb` - Player 1 gets Q. Player 2 gets A. Player 1 bets a chip. Player 2 also bets (calls). Player 2 wins the pot of $4$.
 
-He we extend the `InfoSet` class and `History` class defined in [`index.py`](index.html)
+He we extend the `InfoSet` class and `History` class defined in [`__init__.py`](../index.html)
 with Kuhn Poker specifics.
 
 
@@ -53,7 +53,7 @@ PLAYERS = cast(List[Player], [0, 1])
 
 class InfoSet(_InfoSet):
     """
-    ## [Information set](index.html#InfoSet)
+    ## [Information set](../index.html#InfoSet)
     """
 
     @staticmethod
@@ -79,7 +79,7 @@ class InfoSet(_InfoSet):
 
 class History(_History):
     """
-    ## [History](index.html#History)
+    ## [History](../index.html#History)
 
     This defines when a game ends, calculates the utility and sample chance events (dealing cards).
 

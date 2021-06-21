@@ -69,12 +69,12 @@
                 <h1>Regret Minimization in Games with Incomplete Information (CFR)</h1>
 <p>The paper
 <a href="http://martin.zinkevich.org/publications/regretpoker.pdf">Regret Minimization in Games with Incomplete Information</a>
-introduces notion counterfactual regret and how minimizing counterfactual regret through self-play
+introduces counterfactual regret and how minimizing counterfactual regret through self-play
 can be used to reach Nash equilibrium.
-The algorithm is called Counterfactural Regret Minization (<strong>CFR</strong>).
+The algorithm is called Counterfactual Regret Minimization (<strong>CFR</strong>).
 The paper uses this technique to solve Texas Hold&rsquo;em Poker.</p>
 <p>We tried to keep our Python implementation easy-to-understand like a tutorial.
-We run it on <a href="kuhn.html">a very simple imperfect information game called Kuhn poker</a>.</p>
+We run it on <a href="kuhn/index.html">a very simple imperfect information game called Kuhn poker</a>.</p>
 <h2>Introduction</h2>
 <p>Counterfactual Regret minimization, in each iteration,
  explores the full game tree by trying all player actions.
@@ -82,25 +82,26 @@ It samples chance events only once per iteration.
 Chance events are things like dealing cards; they are kept constant for each game tree exploration.
 Then it calculates the <em>regret</em> of not taking each action, and following the current strategy.
 Then it updates the strategy based on these regrets for the next iteration.
-Finally it computes the average of the strategies throughout the iterations.
+Finally, it computes the average of the strategies throughout the iterations.
 This becomes very close to the Nash equilibrium.</p>
-<p>We will first introduce the mathematical notation and theory.
-It was difficult to have the theory introduced in-line with code.</p>
+<p>We will first introduce the mathematical notation and theory.</p>
 <h3>Player</h3>
 <p>A player is denoted by $i \in N$, where $N$ is the set of players.</p>
 <h3><a href="#History">History</a></h3>
 <p>History $h \in H$ is a sequence of actions including chance events,
  and $H$ is the set of all histories.</p>
-<p>$Z \subseteq H$ is the set of of terminal histories (game over).</p>
+<p>$Z \subseteq H$ is the set of terminal histories (game over).</p>
 <h3>Action</h3>
 <p>Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal <a href="#History">history</a>.</p>
 <h3><a href="#InfoSet">Information Set $I_i$</a></h3>
 <p><strong>Information set</strong> $I_i \in \mathcal{I}_i$ for player $i$
-is a similar to a history $h \in H$
-but only contain the actions visible to player $i$.
-That is, the history $h$ will contain actions/event such as cards dealt to the
+is similar to a history $h \in H$
+but only contains the actions visible to player $i$.
+That is, the history $h$ will contain actions/events such as cards dealt to the
 opposing player while $I_i$ will not have them.</p>
 <p>$\mathcal{I}_i$ is known as the <strong>information partition</strong> of player $i$.</p>
+<p>$h \in I$ is the set of all histories that belong to a given information set;
+i.e. all those histories look the same in the eye of the player.</p>
 <p><a id="Strategy"></a></p>
 <h3>Strategy</h3>
 <p><strong>Strategy of player</strong> $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
@@ -136,8 +137,8 @@ That is,
 </p>
 <p><a id="NashEquilibrium"></a></p>
 <h3>Nash Equilibrium</h3>
-<p>Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
-by changing her strategy alone.</p>
+<p>Nash equilibrium is a state where none of the players can increase their expected utility (or payoff)
+by changing their strategy alone.</p>
 <p>For two players, Nash equilibrium is a <a href="#Strategy">strategy profile</a> where</p>
 <p>
 <script type="math/tex; mode=display">\begin{align}
@@ -155,13 +156,13 @@ u_2(\sigma)  + \epsilon &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'
 <h3>Regret Minimization</h3>
 <p>Regret is the utility (or pay off) that the player didn&rsquo;t get because
  she didn&rsquo;t follow the optimal strategy or took the best action.</p>
-<p>Average overall regret for Player $i$ is, the average regret of not following the
-optimal strategy in all $T$ rounds of game play.</p>
+<p>Average overall regret for Player $i$ is the average regret of not following the
+optimal strategy in all $T$ rounds of iterations.</p>
 <p>
 <script type="math/tex; mode=display">R^T_i = \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
 \Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big)</script>
 </p>
-<p>where $\sigma^t$ is the strategy profile of all players in round $t$,
+<p>where $\sigma^t$ is the strategy profile of all players in iteration $t$,
 and</p>
 <p>
 <script type="math/tex; mode=display">(\sigma^*_i, \sigma^t_{-i})</script>
@@ -206,7 +207,7 @@ second term will cancel out.</p>
 \max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2})
 \end{align}</script>
 </p>
-<p>From definition of $\max$,
+<p>From the definition of $\max$,
 <script type="math/tex; mode=display">\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2}) \ge u_2(\bar{\sigma}^T)
  = -u_1(\bar{\sigma}^T)</script>
 </p>
@@ -218,7 +219,8 @@ second term will cancel out.</p>
 u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1})
 \end{align}</script>
 </p>
-<p>That is, $2\epsilon$-Nash equilibrium. You can similarly prove for games with more than 2 players.</p>
+<p>This is $2\epsilon$-Nash equilibrium.
+You can similarly prove for games with more than 2 players.</p>
 <p>So we need to minimize $R^T_i$ to get close to a Nash equilibrium.</p>
 <p><a id="CounterfactualRegret"></a></p>
 <h3>Counterfactual regret</h3>
@@ -228,7 +230,7 @@ u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1
 <script type="math/tex; mode=display">\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)</script>
 </p>
 <p>where $Z_I$ is the set of terminal histories reachable from $I$,
-and $z[I]$ is the prefix of $z$ upto $I$.
+and $z[I]$ is the prefix of $z$ up to $I$.
 $\pi^\sigma(z[I], z)$ is the probability of reaching z from $z[I]$.</p>
 <p><strong>Immediate counterfactual regret</strong> is,</p>
 <p>
@@ -315,15 +317,15 @@ We calculate an estimate of regrets</p>
 </p>
 <p>And use that to update $\color{orange}{R^T_i(I, a)}$ and calculate
  the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
-Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.</p>
-<p>Here is a <a href="kuhn.html">Kuhn Poker</a> implementation to try CFR on Kuhn Poker.</p>
+Finally, we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.</p>
+<p>Here is a <a href="kuhn/index.html">Kuhn Poker</a> implementation to try CFR on Kuhn Poker.</p>
 <p><em>Let&rsquo;s dive into the code!</em></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">308</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span>
-<span class="lineno">309</span>
-<span class="lineno">310</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">experiment</span>
-<span class="lineno">311</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">311</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span>
+<span class="lineno">312</span>
+<span class="lineno">313</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">experiment</span>
+<span class="lineno">314</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -334,7 +336,7 @@ Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i
                 <p>A player $i \in N$ where $N$ is the set of players</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">314</span><span class="n">Player</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Player&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">317</span><span class="n">Player</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Player&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -345,7 +347,7 @@ Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i
                 <p>Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal <a href="#History">history</a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">316</span><span class="n">Action</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">319</span><span class="n">Action</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -360,7 +362,7 @@ Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i
 <p>This class should be extended with game specific logic.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">319</span><span class="k">class</span> <span class="nc">History</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">322</span><span class="k">class</span> <span class="nc">History</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -372,7 +374,7 @@ Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i
 $h \in Z$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">330</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">333</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -383,7 +385,7 @@ $h \in Z$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">335</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">338</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -396,7 +398,7 @@ Utility of player $i$ for a terminal history.
 $u_i(h)$ where $h \in Z$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">337</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">340</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -407,7 +409,7 @@ $u_i(h)$ where $h \in Z$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">343</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">346</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -420,7 +422,7 @@ $u_i(h)$ where $h \in Z$</p>
 Something like dealing cards, or opening common cards in poker.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">345</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">348</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -431,7 +433,7 @@ Something like dealing cards, or opening common cards in poker.</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">352</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">355</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -443,7 +445,7 @@ Something like dealing cards, or opening common cards in poker.</p>
 $P(h) = c$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">354</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">357</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -454,7 +456,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">359</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">362</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -465,7 +467,7 @@ $P(h) = c$</p>
                 <p>Sample a chance when $P(h) = c$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">361</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">364</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -476,7 +478,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">365</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">368</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -487,7 +489,7 @@ $P(h) = c$</p>
                 <p>Add an action to the history.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">367</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">370</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -498,7 +500,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">371</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">374</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -509,7 +511,7 @@ $P(h) = c$</p>
                 <p>Get <a href="#InfoSet">information set</a> for the current player</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">373</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">376</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -520,7 +522,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">377</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">380</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -531,7 +533,7 @@ $P(h) = c$</p>
                 <p>Create a new <a href="#InfoSet">information set</a> for the current player</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">379</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">382</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -542,7 +544,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">383</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">386</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -553,7 +555,7 @@ $P(h) = c$</p>
                 <p>Human readable representation</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">385</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">388</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -564,7 +566,7 @@ $P(h) = c$</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">389</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">392</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -576,7 +578,7 @@ $P(h) = c$</p>
 <h2>Information Set $I_i$</h2>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">392</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">395</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -587,7 +589,7 @@ $P(h) = c$</p>
                 <p>Unique key identifying the information set</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">399</span>    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">402</span>    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -598,7 +600,7 @@ $P(h) = c$</p>
                 <p>$\sigma_i$, the <a href="#Strategy">strategy</a> of player $i$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">401</span>    <span class="n">strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">404</span>    <span class="n">strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -622,7 +624,7 @@ since $\frac{1}{T}$ term cancels out anyway when computing strategy
 $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">416</span>    <span class="n">regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">419</span>    <span class="n">regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -639,7 +641,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">423</span>    <span class="n">cumulative_strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">426</span>    <span class="n">cumulative_strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-27'>
@@ -650,7 +652,7 @@ to compute overall average strategy</p>
                 <p>Initialize</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">425</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">428</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-28'>
@@ -661,10 +663,10 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">429</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
-<span class="lineno">430</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">431</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
-<span class="lineno">432</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">432</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+<span class="lineno">433</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">434</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">435</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-29'>
@@ -675,7 +677,7 @@ to compute overall average strategy</p>
                 <p>Actions $A(I_i)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">434</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">437</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-30'>
@@ -686,7 +688,7 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">438</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">441</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-31'>
@@ -697,8 +699,8 @@ to compute overall average strategy</p>
                 <p>Load information set from a saved dictionary</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">440</span>    <span class="nd">@staticmethod</span>
-<span class="lineno">441</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">443</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">444</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-32'>
@@ -709,7 +711,7 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">445</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">448</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-33'>
@@ -720,7 +722,7 @@ to compute overall average strategy</p>
                 <p>Save the information set to a dictionary</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">447</span>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">450</span>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-34'>
@@ -731,11 +733,11 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">451</span>        <span class="k">return</span> <span class="p">{</span>
-<span class="lineno">452</span>            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
-<span class="lineno">453</span>            <span class="s1">&#39;regret&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">,</span>
-<span class="lineno">454</span>            <span class="s1">&#39;average_strategy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">,</span>
-<span class="lineno">455</span>        <span class="p">}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">454</span>        <span class="k">return</span> <span class="p">{</span>
+<span class="lineno">455</span>            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+<span class="lineno">456</span>            <span class="s1">&#39;regret&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">,</span>
+<span class="lineno">457</span>            <span class="s1">&#39;average_strategy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">,</span>
+<span class="lineno">458</span>        <span class="p">}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-35'>
@@ -746,7 +748,7 @@ to compute overall average strategy</p>
                 <p>Load data from a saved dictionary</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">457</span>    <span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">460</span>    <span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-36'>
@@ -757,9 +759,9 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">461</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;regret&#39;</span><span class="p">]</span>
-<span class="lineno">462</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;average_strategy&#39;</span><span class="p">]</span>
-<span class="lineno">463</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">464</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;regret&#39;</span><span class="p">]</span>
+<span class="lineno">465</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;average_strategy&#39;</span><span class="p">]</span>
+<span class="lineno">466</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-37'>
@@ -783,7 +785,7 @@ to compute overall average strategy</p>
 <p>where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">465</span>    <span class="k">def</span> <span class="nf">calculate_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">468</span>    <span class="k">def</span> <span class="nf">calculate_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-38'>
@@ -796,7 +798,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">484</span>        <span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">487</span>        <span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-39'>
@@ -809,7 +811,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">486</span>        <span class="n">regret_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">489</span>        <span class="n">regret_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-40'>
@@ -820,7 +822,7 @@ to compute overall average strategy</p>
                 <p>if $\sum_{a&rsquo;\in A(I)}\color{orange}{R^{T,+}_i(I, a&rsquo;)} \gt 0$,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">488</span>        <span class="k">if</span> <span class="n">regret_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">491</span>        <span class="k">if</span> <span class="n">regret_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-41'>
@@ -834,7 +836,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">491</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">regret_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">494</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">regret_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-42'>
@@ -845,7 +847,7 @@ to compute overall average strategy</p>
                 <p>Otherwise,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">493</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">496</span>        <span class="k">else</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-43'>
@@ -856,7 +858,7 @@ to compute overall average strategy</p>
                 <p>$\lvert A(I) \rvert$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">495</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">498</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-44'>
@@ -870,7 +872,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">498</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">501</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-45'>
@@ -886,7 +888,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">500</span>    <span class="k">def</span> <span class="nf">get_average_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">503</span>    <span class="k">def</span> <span class="nf">get_average_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-46'>
@@ -899,7 +901,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">509</span>        <span class="n">cum_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">512</span>        <span class="n">cum_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-47'>
@@ -914,7 +916,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">513</span>        <span class="n">strategy_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cum_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">516</span>        <span class="n">strategy_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cum_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-48'>
@@ -925,7 +927,7 @@ to compute overall average strategy</p>
                 <p>If $\sum_{t=1}^T \pi_i^{\sigma^t}(I) &gt; 0$,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">515</span>        <span class="k">if</span> <span class="n">strategy_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">518</span>        <span class="k">if</span> <span class="n">strategy_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-49'>
@@ -940,7 +942,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">519</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">s</span> <span class="o">/</span> <span class="n">strategy_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">522</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">s</span> <span class="o">/</span> <span class="n">strategy_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-50'>
@@ -951,7 +953,7 @@ to compute overall average strategy</p>
                 <p>Otherwise,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">521</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">524</span>        <span class="k">else</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-51'>
@@ -962,7 +964,7 @@ to compute overall average strategy</p>
                 <p>$\lvert A(I) \rvert$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">523</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="p">))</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">526</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="p">))</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-52'>
@@ -976,7 +978,7 @@ to compute overall average strategy</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">526</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">529</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-53'>
@@ -987,7 +989,7 @@ to compute overall average strategy</p>
                 <p>Human readable representation</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">528</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">531</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-54'>
@@ -998,7 +1000,7 @@ to compute overall average strategy</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">532</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">535</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-55'>
@@ -1014,7 +1016,7 @@ since we are doing chance sampling and it cancels out when calculating
 strategy (common in numerator and denominator).</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">535</span><span class="k">class</span> <span class="nc">CFR</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">538</span><span class="k">class</span> <span class="nc">CFR</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-56'>
@@ -1025,7 +1027,7 @@ strategy (common in numerator and denominator).</p>
                 <p>$\mathcal{I}$ set of all information sets.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">548</span>    <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">551</span>    <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-57'>
@@ -1040,10 +1042,10 @@ strategy (common in numerator and denominator).</p>
 </ul>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">550</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">551</span>                 <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">],</span>
-<span class="lineno">552</span>                 <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">553</span>                 <span class="n">n_players</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">553</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">554</span>                 <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">],</span>
+<span class="lineno">555</span>                 <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">556</span>                 <span class="n">n_players</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-58'>
@@ -1054,9 +1056,9 @@ strategy (common in numerator and denominator).</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">559</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_players</span> <span class="o">=</span> <span class="n">n_players</span>
-<span class="lineno">560</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
-<span class="lineno">561</span>        <span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span> <span class="o">=</span> <span class="n">create_new_history</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">562</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_players</span> <span class="o">=</span> <span class="n">n_players</span>
+<span class="lineno">563</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
+<span class="lineno">564</span>        <span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span> <span class="o">=</span> <span class="n">create_new_history</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-59'>
@@ -1067,7 +1069,7 @@ strategy (common in numerator and denominator).</p>
                 <p>A dictionary for $\mathcal{I}$ set of all information sets</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">563</span>        <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">566</span>        <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-60'>
@@ -1078,7 +1080,7 @@ strategy (common in numerator and denominator).</p>
                 <p>Tracker for analytics</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">565</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span> <span class="o">=</span> <span class="n">InfoSetTracker</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">568</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span> <span class="o">=</span> <span class="n">InfoSetTracker</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-61'>
@@ -1089,7 +1091,7 @@ strategy (common in numerator and denominator).</p>
                 <p>Returns the information set $I$ of the current player for a given history $h$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">567</span>    <span class="k">def</span> <span class="nf">_get_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">570</span>    <span class="k">def</span> <span class="nf">_get_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-62'>
@@ -1100,10 +1102,10 @@ strategy (common in numerator and denominator).</p>
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">571</span>        <span class="n">info_set_key</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">()</span>
-<span class="lineno">572</span>        <span class="k">if</span> <span class="n">info_set_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">:</span>
-<span class="lineno">573</span>            <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">new_info_set</span><span class="p">()</span>
-<span class="lineno">574</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">574</span>        <span class="n">info_set_key</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">()</span>
+<span class="lineno">575</span>        <span class="k">if</span> <span class="n">info_set_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">:</span>
+<span class="lineno">576</span>            <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">new_info_set</span><span class="p">()</span>
+<span class="lineno">577</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-63'>
@@ -1127,7 +1129,7 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
 <p>While walking the tee it updates the total regrets $\color{orange}{R^T_i(I, a)}$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">576</span>    <span class="k">def</span> <span class="nf">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">579</span>    <span class="k">def</span> <span class="nf">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-64'>
@@ -1138,8 +1140,8 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
                 <p>If it&rsquo;s a terminal history $h \in Z$ return the terminal utility $u_i(h)$.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">597</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">():</span>
-<span class="lineno">598</span>            <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">terminal_utility</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">600</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">():</span>
+<span class="lineno">601</span>            <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">terminal_utility</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-65'>
@@ -1150,9 +1152,9 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
                 <p>If it&rsquo;s a chance event $P(h) = c$ sample a and go to next step.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">600</span>        <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_chance</span><span class="p">():</span>
-<span class="lineno">601</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">sample_chance</span><span class="p">()</span>
-<span class="lineno">602</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">603</span>        <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_chance</span><span class="p">():</span>
+<span class="lineno">604</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">sample_chance</span><span class="p">()</span>
+<span class="lineno">605</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-66'>
@@ -1163,7 +1165,7 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
                 <p>Get current player&rsquo;s information set for $h$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">605</span>        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_info_set</span><span class="p">(</span><span class="n">h</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">608</span>        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_info_set</span><span class="p">(</span><span class="n">h</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-67'>
@@ -1174,7 +1176,7 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
                 <p>To store $\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">607</span>        <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">610</span>        <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-68'>
@@ -1187,7 +1189,7 @@ where $Z_h$ is the set of terminal histories with prefix $h$</p>
 for each action $a \in A(h)$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">611</span>        <span class="n">va</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">614</span>        <span class="n">va</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-69'>
@@ -1198,7 +1200,7 @@ for each action $a \in A(h)$</p>
                 <p>Iterate through all actions</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">614</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">617</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-70'>
@@ -1209,7 +1211,7 @@ for each action $a \in A(h)$</p>
                 <p>If the current player is $i$,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">616</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">():</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">619</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">():</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-71'>
@@ -1225,7 +1227,7 @@ for each action $a \in A(h)$</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">621</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">624</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-72'>
@@ -1236,7 +1238,7 @@ for each action $a \in A(h)$</p>
                 <p>Otherwise,</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">623</span>            <span class="k">else</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">626</span>            <span class="k">else</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-73'>
@@ -1252,7 +1254,7 @@ for each action $a \in A(h)$</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">628</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">])</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">631</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">])</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-74'>
@@ -1268,7 +1270,7 @@ for each action $a \in A(h)$</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">633</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">636</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-75'>
@@ -1280,7 +1282,7 @@ for each action $a \in A(h)$</p>
 update the cumulative strategies and total regrets</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">637</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">()</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">640</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">()</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-76'>
@@ -1295,8 +1297,8 @@ update the cumulative strategies and total regrets</p>
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">642</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">643</span>                <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">645</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">646</span>                <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-77'>
@@ -1320,8 +1322,8 @@ T \color{orange}{R^T_i(I, a)} &=
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">656</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">657</span>                <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">659</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">660</span>                <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-78'>
@@ -1332,7 +1334,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Update the strategy $\color{lightgreen}{\sigma^t(I)(a)}$</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">660</span>            <span class="n">I</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">663</span>            <span class="n">I</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-79'>
@@ -1345,7 +1347,7 @@ T \color{orange}{R^T_i(I, a)} &=
 </p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">664</span>        <span class="k">return</span> <span class="n">v</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">667</span>        <span class="k">return</span> <span class="n">v</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-80'>
@@ -1357,7 +1359,7 @@ T \color{orange}{R^T_i(I, a)} &=
 <p>This updates the strategies for $T$ iterations.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">666</span>    <span class="k">def</span> <span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">669</span>    <span class="k">def</span> <span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-81'>
@@ -1368,7 +1370,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Loop for <code>epochs</code> times</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">674</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">677</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-82'>
@@ -1379,8 +1381,8 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Walk tree and update regrets for each player</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">676</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_players</span><span class="p">):</span>
-<span class="lineno">677</span>                <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">(),</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">679</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_players</span><span class="p">):</span>
+<span class="lineno">680</span>                <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">(),</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-83'>
@@ -1391,8 +1393,8 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Track data for analytics</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">680</span>            <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
-<span class="lineno">681</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">683</span>            <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">684</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-84'>
@@ -1403,9 +1405,9 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Save checkpoints every $1,000$ iterations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">684</span>            <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">685</span>                <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span>
-<span class="lineno">686</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">687</span>            <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">688</span>                <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span>
+<span class="lineno">689</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-85'>
@@ -1416,7 +1418,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Print the information sets</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">689</span>        <span class="n">logger</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">692</span>        <span class="n">logger</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-86'>
@@ -1428,7 +1430,7 @@ T \color{orange}{R^T_i(I, a)} &=
 <p>This is a small helper class to track data from information sets</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">692</span><span class="k">class</span> <span class="nc">InfoSetTracker</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">695</span><span class="k">class</span> <span class="nc">InfoSetTracker</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-87'>
@@ -1439,7 +1441,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Set tracking indicators</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">698</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">701</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-88'>
@@ -1450,9 +1452,9 @@ T \color{orange}{R^T_i(I, a)} &=
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">702</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;strategy.*&#39;</span><span class="p">)</span>
-<span class="lineno">703</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;average_strategy.*&#39;</span><span class="p">)</span>
-<span class="lineno">704</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;regret.*&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">705</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">706</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;average_strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">707</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;regret.*&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-89'>
@@ -1463,7 +1465,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Track the data from all information sets</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">706</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">709</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-90'>
@@ -1474,15 +1476,15 @@ T \color{orange}{R^T_i(I, a)} &=
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">710</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">):</span>
-<span class="lineno">711</span>            <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-<span class="lineno">712</span>                <span class="n">avg_strategy</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">get_average_strategy</span><span class="p">()</span>
-<span class="lineno">713</span>                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
-<span class="lineno">714</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span>
-<span class="lineno">715</span>                        <span class="sa">f</span><span class="s1">&#39;strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">716</span>                        <span class="sa">f</span><span class="s1">&#39;average_strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">avg_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">717</span>                        <span class="sa">f</span><span class="s1">&#39;regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
-<span class="lineno">718</span>                    <span class="p">})</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">713</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">):</span>
+<span class="lineno">714</span>            <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="lineno">715</span>                <span class="n">avg_strategy</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">get_average_strategy</span><span class="p">()</span>
+<span class="lineno">716</span>                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">717</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span>
+<span class="lineno">718</span>                        <span class="sa">f</span><span class="s1">&#39;strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">719</span>                        <span class="sa">f</span><span class="s1">&#39;average_strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">avg_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">720</span>                        <span class="sa">f</span><span class="s1">&#39;regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">721</span>                    <span class="p">})</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-91'>
@@ -1493,7 +1495,7 @@ T \color{orange}{R^T_i(I, a)} &=
                 <h3>Configurable CFR module</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">721</span><span class="k">class</span> <span class="nc">CFRConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">724</span><span class="k">class</span> <span class="nc">CFRConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-92'>
@@ -1504,9 +1506,9 @@ T \color{orange}{R^T_i(I, a)} &=
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">725</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
-<span class="lineno">726</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_00_000</span>
-<span class="lineno">727</span>    <span class="n">cfr</span><span class="p">:</span> <span class="n">CFR</span> <span class="o">=</span> <span class="s1">&#39;simple_cfr&#39;</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">728</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
+<span class="lineno">729</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_00_000</span>
+<span class="lineno">730</span>    <span class="n">cfr</span><span class="p">:</span> <span class="n">CFR</span> <span class="o">=</span> <span class="s1">&#39;simple_cfr&#39;</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-93'>
@@ -1517,8 +1519,8 @@ T \color{orange}{R^T_i(I, a)} &=
                 <p>Initialize <strong>CFR</strong> algorithm</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">730</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">cfr</span><span class="p">)</span>
-<span class="lineno">731</span><span class="k">def</span> <span class="nf">simple_cfr</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">733</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">cfr</span><span class="p">)</span>
+<span class="lineno">734</span><span class="k">def</span> <span class="nf">simple_cfr</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-94'>
@@ -1529,8 +1531,8 @@ T \color{orange}{R^T_i(I, a)} &=
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">735</span>    <span class="k">return</span> <span class="n">CFR</span><span class="p">(</span><span class="n">create_new_history</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">,</span>
-<span class="lineno">736</span>               <span class="n">epochs</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">738</span>    <span class="k">return</span> <span class="n">CFR</span><span class="p">(</span><span class="n">create_new_history</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">,</span>
+<span class="lineno">739</span>               <span class="n">epochs</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>

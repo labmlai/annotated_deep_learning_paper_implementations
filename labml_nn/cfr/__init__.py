@@ -9,13 +9,13 @@ summary: >
 
 The paper
 [Regret Minimization in Games with Incomplete Information](http://martin.zinkevich.org/publications/regretpoker.pdf)
-introduces notion counterfactual regret and how minimizing counterfactual regret through self-play
+introduces counterfactual regret and how minimizing counterfactual regret through self-play
 can be used to reach Nash equilibrium.
-The algorithm is called Counterfactural Regret Minization (**CFR**).
+The algorithm is called Counterfactual Regret Minimization (**CFR**).
 The paper uses this technique to solve Texas Hold'em Poker.
 
 We tried to keep our Python implementation easy-to-understand like a tutorial.
-We run it on [a very simple imperfect information game called Kuhn poker](kuhn.html).
+We run it on [a very simple imperfect information game called Kuhn poker](kuhn/index.html).
 
 ## Introduction
 
@@ -25,11 +25,10 @@ It samples chance events only once per iteration.
 Chance events are things like dealing cards; they are kept constant for each game tree exploration.
 Then it calculates the *regret* of not taking each action, and following the current strategy.
 Then it updates the strategy based on these regrets for the next iteration.
-Finally it computes the average of the strategies throughout the iterations.
+Finally, it computes the average of the strategies throughout the iterations.
 This becomes very close to the Nash equilibrium.
 
 We will first introduce the mathematical notation and theory.
-It was difficult to have the theory introduced in-line with code.
 
 ### Player
 
@@ -40,7 +39,7 @@ A player is denoted by $i \in N$, where $N$ is the set of players.
 History $h \in H$ is a sequence of actions including chance events,
  and $H$ is the set of all histories.
 
-$Z \subseteq H$ is the set of of terminal histories (game over).
+$Z \subseteq H$ is the set of terminal histories (game over).
 
 ### Action
 
@@ -49,12 +48,15 @@ Action $a$, $A(h) = \{a: (h, a) \in H}$ where $h \in H$ is a non-terminal [histo
 ### [Information Set $I_i$](#InfoSet)
 
 **Information set** $I_i \in \mathcal{I}_i$ for player $i$
-is a similar to a history $h \in H$
-but only contain the actions visible to player $i$.
-That is, the history $h$ will contain actions/event such as cards dealt to the
+is similar to a history $h \in H$
+but only contains the actions visible to player $i$.
+That is, the history $h$ will contain actions/events such as cards dealt to the
 opposing player while $I_i$ will not have them.
 
 $\mathcal{I}_i$ is known as the **information partition** of player $i$.
+
+$h \in I$ is the set of all histories that belong to a given information set;
+i.e. all those histories look the same in the eye of the player.
 
 <a id="Strategy"></a>
 ### Strategy
@@ -100,8 +102,8 @@ $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
 <a id="NashEquilibrium"></a>
 ### Nash Equilibrium
 
-Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
-by changing her strategy alone.
+Nash equilibrium is a state where none of the players can increase their expected utility (or payoff)
+by changing their strategy alone.
 
 For two players, Nash equilibrium is a [strategy profile](#Strategy) where
 
@@ -122,13 +124,13 @@ u_2(\sigma)  + \epsilon &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'
 Regret is the utility (or pay off) that the player didn't get because
  she didn't follow the optimal strategy or took the best action.
 
-Average overall regret for Player $i$ is, the average regret of not following the
-optimal strategy in all $T$ rounds of game play.
+Average overall regret for Player $i$ is the average regret of not following the
+optimal strategy in all $T$ rounds of iterations.
 
 $$R^T_i = \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
 \Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big)$$
 
-where $\sigma^t$ is the strategy profile of all players in round $t$,
+where $\sigma^t$ is the strategy profile of all players in iteration $t$,
 and
 
 $$(\sigma^*_i, \sigma^t_{-i})$$
@@ -175,7 +177,7 @@ Therefore,
 \max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2})
 \end{align}
 
-From definition of $\max$,
+From the definition of $\max$,
 $$\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2}) \ge u_2(\bar{\sigma}^T)
  = -u_1(\bar{\sigma}^T)$$
 
@@ -187,7 +189,8 @@ Then,
 u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1})
 \end{align}
 
-That is, $2\epsilon$-Nash equilibrium. You can similarly prove for games with more than 2 players.
+This is $2\epsilon$-Nash equilibrium.
+You can similarly prove for games with more than 2 players.
 
 So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
 
@@ -200,7 +203,7 @@ So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
 $$\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)$$
 
 where $Z_I$ is the set of terminal histories reachable from $I$,
-and $z[I]$ is the prefix of $z$ upto $I$.
+and $z[I]$ is the prefix of $z$ up to $I$.
 $\pi^\sigma(z[I], z)$ is the probability of reaching z from $z[I]$.
 
 **Immediate counterfactual regret** is,
@@ -299,9 +302,9 @@ $$
 
 And use that to update $\color{orange}{R^T_i(I, a)}$ and calculate
  the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
-Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.
+Finally, we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.
 
-Here is a [Kuhn Poker](kuhn.html) implementation to try CFR on Kuhn Poker.
+Here is a [Kuhn Poker](kuhn/index.html) implementation to try CFR on Kuhn Poker.
 
 *Let's dive into the code!*
 """
