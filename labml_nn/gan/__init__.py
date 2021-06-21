@@ -12,5 +12,5 @@ summary: >
 * [Cycle GAN](cycle_gan/index.html)
 * [Wasserstein GAN](wasserstein/index.html)
 * [Wasserstein GAN with Gradient Penalty](wasserstein/gradient_penalty/index.html)
-* [Style GAN 2](stylegan/index.html)
+* [StyleGAN 2](stylegan/index.html)
 """

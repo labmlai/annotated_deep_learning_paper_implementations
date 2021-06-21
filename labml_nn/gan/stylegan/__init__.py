@@ -1,22 +1,22 @@
 """
 ---
-title: Style GAN 2
+title: StyleGAN 2
 summary: >
  An annotated PyTorch implementation of StyleGAN2.
 ---
 
-# Style GAN 2
+# StyleGAN 2
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
  [Analyzing and Improving the Image Quality of StyleGAN](https://arxiv.org/abs/1912.04958)
- which introduces **Style GAN2**.
-Style GAN2 is an improvement over **Style GAN** from the paper
+ which introduces **StyleGAN 2**.
+StyleGAN 2 is an improvement over **StyleGAN** from the paper
  [A Style-Based Generator Architecture for Generative Adversarial Networks](https://arxiv.org/abs/1812.04948).
-And Style GAN is based on **Progressive GAN** from the paper
+And StyleGAN is based on **Progressive GAN** from the paper
  [Progressive Growing of GANs for Improved Quality, Stability, and Variation](https://arxiv.org/abs/1710.10196).
 All three papers are from the same authors from [NVIDIA AI](https://twitter.com/NVIDIAAI).
 
-*Our implementation is a minimalistic Style GAN2 model training code.
+*Our implementation is a minimalistic StyleGAN 2 model training code.
 Only single GPU training is supported to keep the implementation simple.
 We managed to shrink it to keep it at less than 500 lines of code, including the training loop.*
 
@@ -69,9 +69,9 @@ They also use **pixel-wise normalization** where at each pixel the feature vecto
 They apply this to all the convolution layer outputs (except RGB).
 
 
-## Style GAN
+## StyleGAN
 
-Style GAN improves the generator of Progressive GAN keeping the discriminator architecture the same.
+StyleGAN improves the generator of Progressive GAN keeping the discriminator architecture the same.
 
 #### Mapping Network
 
@@ -108,11 +108,11 @@ All the up and down-sampling operations are accompanied by bilinear smoothing.
 
 *<small>$A$ denotes a linear layer.
 $B$ denotes a broadcast and scaling operation (noise is a single channel).
-Style GAN also uses progressive growing like Progressive GAN</small>*
+StyleGAN also uses progressive growing like Progressive GAN</small>*
 
-## Style GAN 2
+## StyleGAN 2
 
-Style GAN 2 changes both the generator and the discriminator of Style GAN.
+StyleGAN 2 changes both the generator and the discriminator of StyleGAN.
 
 #### Weight Modulation and Demodulation
 
@@ -489,7 +489,7 @@ class Conv2dWeightModulate(nn.Module):
 class Discriminator(nn.Module):
     """
     <a id="discriminator"></a>
-    ## Style GAN2 Discriminator
+    ## StyleGAN 2 Discriminator
 
     ![Discriminator](style_gan2_disc.svg)
 

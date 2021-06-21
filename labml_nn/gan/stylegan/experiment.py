@@ -1,19 +1,19 @@
 """
 ---
-title: Style GAN 2 Model Training
+title: StyleGAN 2 Model Training
 summary: >
  An annotated PyTorch implementation of StyleGAN2 model training code.
 ---
 
-# [Style GAN 2](index.html) Model Training
+# [StyleGAN 2](index.html) Model Training
 
-This is the training code for [Style GAN 2](index.html) model.
+This is the training code for [StyleGAN 2](index.html) model.
 
 ![Generated Images](generated_64.png)
 
 *<small>These are $64 \times 64$ images generated after training for about 80K steps.</small>*
 
-*Our implementation is a minimalistic Style GAN2 model training code.
+*Our implementation is a minimalistic StyleGAN 2 model training code.
 Only single GPU training is supported to keep the implementation simple.
 We managed to shrink it to keep it at less than 500 lines of code, including the training loop.*
 

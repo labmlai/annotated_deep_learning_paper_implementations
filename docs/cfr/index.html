@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of Regret Minimization in Games with Incomplete Information"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Regret Minimization in Games with Incomplete Information (CFR)"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of Regret Minimization in Games with Incomplete Information"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/cfr/index.html"/>
+    <meta property="og:title" content="Regret Minimization in Games with Incomplete Information (CFR)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Regret Minimization in Games with Incomplete Information (CFR)"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of Regret Minimization in Games with Incomplete Information"/>
+
+    <title>Regret Minimization in Games with Incomplete Information (CFR)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/cfr/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">cfr</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/lab-ml/labml_nn/tree/master/labml_nn/cfr/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/lab-ml/nn?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-0'>#</a>
+                </div>
+                <h1>Regret Minimization in Games with Incomplete Information (CFR)</h1>
+<p>The paper
+<a href="http://martin.zinkevich.org/publications/regretpoker.pdf">Regret Minimization in Games with Incomplete Information</a>
+introduces counterfactual regret and how minimizing counterfactual regret through self-play
+can be used to reach Nash equilibrium.
+The algorithm is called Counterfactual Regret Minimization (<strong>CFR</strong>).</p>
+<p>The paper
+<a href="http://mlanctot.info/files/papers/nips09mccfr.pdf">Monte Carlo Sampling for Regret Minimization in Extensive Games</a>
+introduces Monte Carlo Counterfactual Regret Minimization (<strong>MCCFR</strong>),
+where we sample from the game tree and estimate the regrets.</p>
+<p>We tried to keep our Python implementation easy-to-understand like a tutorial.
+We run it on <a href="kuhn/index.html">a very simple imperfect information game called Kuhn poker</a>.</p>
+<p><a href="https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/cfr/kuhn/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<h2>Introduction</h2>
+<p>We implement Monte Carlo Counterfactual Regret Minimization (MCCFR) with chance sampling (CS).
+It iteratively, explores part of the game tree by trying all player actions,
+but sampling chance events.
+Chance events are things like dealing cards; they are kept sampled once per iteration.
+Then it calculates, for each action, the <em>regret</em> of following the current strategy instead of taking that action.
+Then it updates the strategy based on these regrets for the next iteration, using regret matching.
+Finally, it computes the average of the strategies throughout the iterations,
+which is very close to the Nash equilibrium if we ran enough iterations.</p>
+<p>We will first introduce the mathematical notation and theory.</p>
+<h3>Player</h3>
+<p>A player is denoted by $i \in N$, where $N$ is the set of players.</p>
+<h3><a href="#History">History</a></h3>
+<p>History $h \in H$ is a sequence of actions including chance events,
+ and $H$ is the set of all histories.</p>
+<p>$Z \subseteq H$ is the set of terminal histories (game over).</p>
+<h3>Action</h3>
+<p>Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal <a href="#History">history</a>.</p>
+<h3><a href="#InfoSet">Information Set $I_i$</a></h3>
+<p><strong>Information set</strong> $I_i \in \mathcal{I}_i$ for player $i$
+is similar to a history $h \in H$
+but only contains the actions visible to player $i$.
+That is, the history $h$ will contain actions/events such as cards dealt to the
+opposing player while $I_i$ will not have them.</p>
+<p>$\mathcal{I}_i$ is known as the <strong>information partition</strong> of player $i$.</p>
+<p>$h \in I$ is the set of all histories that belong to a given information set;
+i.e. all those histories look the same in the eye of the player.</p>
+<p><a id="Strategy"></a></p>
+<h3>Strategy</h3>
+<p><strong>Strategy of player</strong> $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
+where $\Sigma_i$ is the set of all strategies for player $i$.
+Strategy on $t$-th iteration is denoted by $\sigma^t_i$.</p>
+<p>Strategy is defined as a probability for taking an action $a$ in for a given information set $I$,</p>
+<p>
+<script type="math/tex; mode=display">\sigma_i(I)(a)</script>
+</p>
+<p>$\sigma$ is the <strong>strategy profile</strong> which consists of strategies of all players
+ $\sigma_1, \sigma_2, \ldots$</p>
+<p>$\sigma_{-i}$ is strategies of all players except $\sigma_i$</p>
+<p><a id="HistoryProbability"></a></p>
+<h3>Probability of History</h3>
+<p>$\pi^\sigma(h)$ is the probability of reaching the history $h$ with strategy profile $\sigma$.
+$\pi^\sigma(h)_{-i}$ is the probability of reaching $h$ without player $i$&rsquo;s contribution;
+ i.e. player $i$ took the actions to follow $h$ with a probability of $1$.</p>
+<p>$\pi^\sigma(h)_{i}$ is the probability of reaching $h$ with only player $i$&rsquo;s contribution.
+That is,
+<script type="math/tex; mode=display">\pi^\sigma(h) = \pi^\sigma(h)_{i} \pi^\sigma(h)_{-i}</script>
+</p>
+<p>Probability of reaching a information set $I$ is,
+<script type="math/tex; mode=display">\pi^\sigma(I) = \sum_{h \in I} \pi^\sigma(h)</script>
+</p>
+<h3>Utility (Pay off)</h3>
+<p>The <a href="#terminal_utility">terminal utility</a> is the utility (or pay off)
+ of a player $i$ for a terminal history $h$.</p>
+<p>
+<script type="math/tex; mode=display">u_i(h)</script> where $h \in Z$</p>
+<p>$u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy profile $\sigma$.</p>
+<p>
+<script type="math/tex; mode=display">u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)</script>
+</p>
+<p><a id="NashEquilibrium"></a></p>
+<h3>Nash Equilibrium</h3>
+<p>Nash equilibrium is a state where none of the players can increase their expected utility (or payoff)
+by changing their strategy alone.</p>
+<p>For two players, Nash equilibrium is a <a href="#Strategy">strategy profile</a> where</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+u_1(\sigma) &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
+u_2(\sigma) &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
+\end{align}</script>
+</p>
+<p>$\epsilon$-Nash equilibrium is,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+u_1(\sigma) + \epsilon &\ge \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2) \\
+u_2(\sigma)  + \epsilon &\ge \max_{\sigma'_2 \in \Sigma_2} u_1(\sigma_1, \sigma'_2) \\
+\end{align}</script>
+</p>
+<h3>Regret Minimization</h3>
+<p>Regret is the utility (or pay off) that the player didn&rsquo;t get because
+ she didn&rsquo;t follow the optimal strategy or took the best action.</p>
+<p>Average overall regret for Player $i$ is the average regret of not following the
+optimal strategy in all $T$ rounds of iterations.</p>
+<p>
+<script type="math/tex; mode=display">R^T_i = \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
+\Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big)</script>
+</p>
+<p>where $\sigma^t$ is the strategy profile of all players in iteration $t$,
+and</p>
+<p>
+<script type="math/tex; mode=display">(\sigma^*_i, \sigma^t_{-i})</script>
+</p>
+<p>is the strategy profile $\sigma^t$ with player $i$&rsquo;s strategy
+replaced with $\sigma^*_i$.</p>
+<p>The average strategy is the average of strategies followed in each round,
+ for all $I \in \mathcal{I}, a \in A(I)$</p>
+<p>
+<script type="math/tex; mode=display">\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}</script>
+</p>
+<p>That is the mean regret of not playing with the optimal strategy.</p>
+<p>If $R^T_i &lt; \epsilon$ for all players then $\bar{\sigma}^T_i(I)(a)$ is a
+$2\epsilon$-Nash equilibrium.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+R^T_i &< \epsilon \\
+R^T_i &= \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T
+\Big( u_i(\sigma^*_i, \sigma^t_{-i}) - u_i(\sigma^t) \Big) \\
+&= \frac{1}{T} \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T u_i(\sigma^*_i, \sigma^t_{-i})
+- \frac{1}{T} \sum_{t=1}^T u_i(\sigma^t) < \epsilon
+\end{align}</script>
+</p>
+<p>Since $u_1 = -u_2$ because it&rsquo;s a zero-sum game, we can add $R^T_1$ and $R^T_i$ and the
+second term will cancel out.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+2\epsilon &>
+\frac{1}{T} \max_{\sigma^*_1 \in \Sigma_1} \sum_{t=1}^T u_1(\sigma^*_1, \sigma^t_{-1}) +
+\frac{1}{T} \max_{\sigma^*_2 \in \Sigma_2} \sum_{t=1}^T u_2(\sigma^*_2, \sigma^t_{-2})
+\end{align}</script>
+</p>
+<p>The average of utilities over a set of strategies is equal to the utility of the average strategy.</p>
+<p>
+<script type="math/tex; mode=display">\frac{1}{T} \sum_{t=1}^T u_i(\sigma^t) = u_i(\bar{\sigma}^T)</script>
+</p>
+<p>Therefore,
+<script type="math/tex; mode=display">\begin{align}
+2\epsilon &>
+\max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +
+\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2})
+\end{align}</script>
+</p>
+<p>From the definition of $\max$,
+<script type="math/tex; mode=display">\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2}) \ge u_2(\bar{\sigma}^T)
+ = -u_1(\bar{\sigma}^T)</script>
+</p>
+<p>Then,
+<script type="math/tex; mode=display">\begin{align}
+2\epsilon &>
+\max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +
+-u_1(\bar{\sigma}^T) \\
+u_1(\bar{\sigma}^T) + 2\epsilon &> \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1})
+\end{align}</script>
+</p>
+<p>This is $2\epsilon$-Nash equilibrium.
+You can similarly prove for games with more than 2 players.</p>
+<p>So we need to minimize $R^T_i$ to get close to a Nash equilibrium.</p>
+<p><a id="CounterfactualRegret"></a></p>
+<h3>Counterfactual regret</h3>
+<p><strong>Counterfactual value</strong> $\color{pink}{v_i(\sigma, I)}$ is the expected utility for player $i$ if
+ if player $i$ tried to reach $I$ (took the actions leading to $I$ with a probability of $1$).</p>
+<p>
+<script type="math/tex; mode=display">\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)</script>
+</p>
+<p>where $Z_I$ is the set of terminal histories reachable from $I$,
+and $z[I]$ is the prefix of $z$ up to $I$.
+$\pi^\sigma(z[I], z)$ is the probability of reaching z from $z[I]$.</p>
+<p><strong>Immediate counterfactual regret</strong> is,</p>
+<p>
+<script type="math/tex; mode=display">R^T_{i,imm}(I) = \max_{a \in A{I}} R^T_{i,imm}(I, a)</script>
+</p>
+<p>where</p>
+<p>
+<script type="math/tex; mode=display">R^T_{i,imm}(I) = \frac{1}{T} \sum_{t=1}^T
+\Big(
+\color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
+\Big)</script>
+</p>
+<p>where $\sigma |_{I \rightarrow a}$ is the strategy profile $\sigma$ with the modification
+of always taking action $a$ at information set $I$.</p>
+<p>The <a href="http://martin.zinkevich.org/publications/regretpoker.pdf">paper</a> proves that (Theorem 3),</p>
+<p>
+<script type="math/tex; mode=display">R^T_i \le \sum_{I \in \mathcal{I}} R^{T,+}_{i,imm}(I)</script>
+where <script type="math/tex; mode=display">R^{T,+}_{i,imm}(I) = \max(R^T_{i,imm}(I), 0)</script>
+</p>
+<p><a id="RegretMatching"></a></p>
+<h3>Regret Matching</h3>
+<p>The strategy is calculated using regret matching.</p>
+<p>The regret for each information set and action pair $\color{orange}{R^T_i(I, a)}$ is maintained,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\color{coral}{r^t_i(I, a)} &=
+ \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
+ \\
+\color{orange}{R^T_i(I, a)} &=
+ \frac{1}{T} \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
+\end{align}</script>
+</p>
+<p>and the strategy is calculated with regret matching,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+\begin{cases}
+\frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}},
+  & \text{if} \sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')} \gt 0 \\
+\frac{1}{\lvert A(I) \rvert},
+ & \text{otherwise}
+\end{cases}
+\end{align}</script>
+</p>
+<p>where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$</p>
+<p>The paper
+The paper
+<a href="http://martin.zinkevich.org/publications/regretpoker.pdf">Regret Minimization in Games with Incomplete Information</a>
+proves that if the strategy is selected according to above equation
+$R^T_i$ gets smaller proportionate to $\frac{1}{\sqrt T}$, and
+therefore reaches $\epsilon$-<a href="#NashEquilibrium">Nash equilibrium</a>.</p>
+<p><a id="MCCFR"></a></p>
+<h3>Monte Carlo CFR (MCCFR)</h3>
+<p>Computing $\color{coral}{r^t_i(I, a)}$ requires expanding the full game tree
+on each iteration.</p>
+<p>The paper
+<a href="http://mlanctot.info/files/papers/nips09mccfr.pdf">Monte Carlo Sampling for Regret Minimization in Extensive Games</a>
+shows we can sample from the game tree and estimate the regrets.</p>
+<p>$\mathcal{Q} = {Q_1, \ldots, Q_r}$ is a set of subsets of $Z$ ($Q_j \subseteq Z$) where
+we look at only a single block $Q_j$ in an iteration.
+Union of all subsets spans $Z$ ($Q_1 \cap \ldots \cap Q_r = Z$).
+$q_j$ is the probability of picking block $Q_j$.</p>
+<p>$q(z)$ is the probability of picking $z$ in current iteration; i.e. $q(z) = \sum_{j:z \in Q_j} q_j$ -
+the sum of $q_j$ where $z \in Q_j$.</p>
+<p>Then we get <strong>sampled counterfactual value</strong> fro block $j$,</p>
+<p>
+<script type="math/tex; mode=display">\color{pink}{\tilde{v}(\sigma, I|j)} =
+ \sum_{z \in Q_j} \frac{1}{q(z)}
+ \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)</script>
+</p>
+<p>The paper shows that</p>
+<p>
+<script type="math/tex; mode=display">\mathbb{E}_{j \sim q_j} \Big[ \color{pink}{\tilde{v}(\sigma, I|j)} \Big]
+= \color{pink}{v_i(\sigma, I)}</script>
+</p>
+<p>with a simple proof.</p>
+<p>Therefore we can sample a part of the game tree and calculate the regrets.
+We calculate an estimate of regrets</p>
+<p>
+<script type="math/tex; mode=display">
+\color{coral}{\tilde{r}^t_i(I, a)} =
+ \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{\tilde{v}_i(\sigma^t, I)}
+</script>
+</p>
+<p>And use that to update $\color{orange}{R^T_i(I, a)}$ and calculate
+ the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
+Finally, we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.</p>
+<p>Here is a <a href="kuhn/index.html">Kuhn Poker</a> implementation to try CFR on Kuhn Poker.</p>
+<p><em>Let&rsquo;s dive into the code!</em></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">317</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">cast</span>
+<span class="lineno">318</span>
+<span class="lineno">319</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">experiment</span>
+<span class="lineno">320</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-1'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-1'>#</a>
+                </div>
+                <p>A player $i \in N$ where $N$ is the set of players</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">323</span><span class="n">Player</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Player&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-2'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-2'>#</a>
+                </div>
+                <p>Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal <a href="#History">history</a></p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">325</span><span class="n">Action</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Action&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-3'>#</a>
+                </div>
+                <p><a id="History"></a></p>
+<h2>History</h2>
+<p>History $h \in H$ is a sequence of actions including chance events,
+ and $H$ is the set of all histories.</p>
+<p>This class should be extended with game specific logic.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">328</span><span class="k">class</span> <span class="nc">History</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-4'>#</a>
+                </div>
+                <p>Whether it&rsquo;s a terminal history; i.e. game over.
+$h \in Z$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">339</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-5'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-5'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">344</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-6'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-6'>#</a>
+                </div>
+                <p><a id="terminal_utility"></a>
+Utility of player $i$ for a terminal history.
+$u_i(h)$ where $h \in Z$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">346</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-7'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-7'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">352</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-8'>#</a>
+                </div>
+                <p>Get current player, denoted by $P(h)$, where $P$ is known as <strong>Player function</strong>.</p>
+<p>If $P(h) = c$ it means that current event is a chance $c$ event.
+Something like dealing cards, or opening common cards in poker.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">354</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-9'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-9'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">361</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-10'>#</a>
+                </div>
+                <p>Whether the next step is a chance step; something like dealing a new card.
+$P(h) = c$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">363</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-11'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-11'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">368</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-12'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-12'>#</a>
+                </div>
+                <p>Sample a chance when $P(h) = c$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">370</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-13'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-13'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">374</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-14'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-14'>#</a>
+                </div>
+                <p>Add an action to the history.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">376</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-15'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-15'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">380</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-16'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-16'>#</a>
+                </div>
+                <p>Get <a href="#InfoSet">information set</a> for the current player</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">382</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-17'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-17'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">386</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-18'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-18'>#</a>
+                </div>
+                <p>Create a new <a href="#InfoSet">information set</a> for the current player</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">388</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-19'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-19'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">392</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-20'>#</a>
+                </div>
+                <p>Human readable representation</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">394</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-21'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-21'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">398</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-22'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-22'>#</a>
+                </div>
+                <p><a id="InfoSet"></a></p>
+<h2>Information Set $I_i$</h2>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">401</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-23'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-23'>#</a>
+                </div>
+                <p>Unique key identifying the information set</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">408</span>    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-24'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-24'>#</a>
+                </div>
+                <p>$\sigma_i$, the <a href="#Strategy">strategy</a> of player $i$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">410</span>    <span class="n">strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-25'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-25'>#</a>
+                </div>
+                <p>Total regret of not taking each action $A(I_i)$,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\color{coral}{\tilde{r}^t_i(I, a)} &=
+ \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} -
+ \color{pink}{\tilde{v}_i(\sigma^t, I)}
+\\
+\color{orange}{R^T_i(I, a)} &=
+ \frac{1}{T} \sum_{t=1}^T \color{coral}{\tilde{r}^t_i(I, a)}
+\end{align}</script>
+</p>
+<p>We maintain $T \color{orange}{R^T_i(I, a)}$ instead of $\color{orange}{R^T_i(I, a)}$
+since $\frac{1}{T}$ term cancels out anyway when computing strategy
+$\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">425</span>    <span class="n">regret</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-26'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-26'>#</a>
+                </div>
+                <p>We maintain the cumulative strategy
+<script type="math/tex; mode=display">\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}</script>
+to compute overall average strategy</p>
+<p>
+<script type="math/tex; mode=display">\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">432</span>    <span class="n">cumulative_strategy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Action</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-27'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-27'>#</a>
+                </div>
+                <p>Initialize</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">434</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-28'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-28'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">438</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+<span class="lineno">439</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">440</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span>
+<span class="lineno">441</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-29'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-29'>#</a>
+                </div>
+                <p>Actions $A(I_i)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">443</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-30'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-30'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">447</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-31'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-31'>#</a>
+                </div>
+                <p>Load information set from a saved dictionary</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">449</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">450</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-32'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-32'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">454</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-33'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-33'>#</a>
+                </div>
+                <p>Save the information set to a dictionary</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">456</span>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-34'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-34'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">460</span>        <span class="k">return</span> <span class="p">{</span>
+<span class="lineno">461</span>            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+<span class="lineno">462</span>            <span class="s1">&#39;regret&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">,</span>
+<span class="lineno">463</span>            <span class="s1">&#39;average_strategy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">,</span>
+<span class="lineno">464</span>        <span class="p">}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-35'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-35'>#</a>
+                </div>
+                <p>Load data from a saved dictionary</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">466</span>    <span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-36'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-36'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">470</span>        <span class="bp">self</span><span class="o">.</span><span class="n">regret</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;regret&#39;</span><span class="p">]</span>
+<span class="lineno">471</span>        <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;average_strategy&#39;</span><span class="p">]</span>
+<span class="lineno">472</span>        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-37'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-37'>#</a>
+                </div>
+                <h2>Calculate strategy</h2>
+<p>Calculate current strategy using <a href="#RegretMatching">regret matching</a>.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+\begin{cases}
+\frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}},
+  & \text{if} \sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')} \gt 0 \\
+\frac{1}{\lvert A(I) \rvert},
+ & \text{otherwise}
+\end{cases}
+\end{align}</script>
+</p>
+<p>where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">474</span>    <span class="k">def</span> <span class="nf">calculate_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-38'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-38'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">493</span>        <span class="n">regret</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-39'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-39'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">495</span>        <span class="n">regret_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-40'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-40'>#</a>
+                </div>
+                <p>if $\sum_{a&rsquo;\in A(I)}\color{orange}{R^{T,+}_i(I, a&rsquo;)} \gt 0$,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">497</span>        <span class="k">if</span> <span class="n">regret_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-41'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-41'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+\frac{\color{orange}{R^{T,+}_i(I, a)}}{\sum_{a'\in A(I)}\color{orange}{R^{T,+}_i(I, a')}}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">500</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">r</span> <span class="o">/</span> <span class="n">regret_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-42'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-42'>#</a>
+                </div>
+                <p>Otherwise,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">502</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-43'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-43'>#</a>
+                </div>
+                <p>$\lvert A(I) \rvert$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">504</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regret</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-44'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-44'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\color{lightgreen}{\sigma_i^{T+1}(I)(a)} =
+\frac{1}{\lvert A(I) \rvert}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">507</span>            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">regret</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-45'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-45'>#</a>
+                </div>
+                <h2>Get average strategy</h2>
+<p>
+<script type="math/tex; mode=display">\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}
+ {\sum_{t=1}^T \pi_i^{\sigma^t}(I)}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">509</span>    <span class="k">def</span> <span class="nf">get_average_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-46'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-46'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\sum_{t=1}^T \pi_i^{\sigma^t}(I) \color{lightgreen}{\sigma^t(I)(a)}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">518</span>        <span class="n">cum_strategy</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-47'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-47'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\sum_{t=1}^T \pi_i^{\sigma^t}(I) =
+\sum_{a \in A(I)} \sum_{t=1}^T
+\pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">522</span>        <span class="n">strategy_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cum_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-48'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-48'>#</a>
+                </div>
+                <p>If $\sum_{t=1}^T \pi_i^{\sigma^t}(I) &gt; 0$,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">524</span>        <span class="k">if</span> <span class="n">strategy_sum</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-49'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-49'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}
+ {\sum_{t=1}^T \pi_i^{\sigma^t}(I)}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">528</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="n">s</span> <span class="o">/</span> <span class="n">strategy_sum</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-50'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-50'>#</a>
+                </div>
+                <p>Otherwise,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">530</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-51'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-51'>#</a>
+                </div>
+                <p>$\lvert A(I) \rvert$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">532</span>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="p">))</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-52'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-52'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
+\frac{1}{\lvert A(I) \rvert}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">535</span>            <span class="k">return</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">count</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cum_strategy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-53'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-53'>#</a>
+                </div>
+                <p>Human readable representation</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">537</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-54'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-54'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">541</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-55'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-55'>#</a>
+                </div>
+                <h2>Counterfactual Regret Minimization (CFR) Algorithm</h2>
+<p>We do chance sampling (<strong>CS</strong>) where all the chance events (nodes) are sampled and
+all other events (nodes) are explored.</p>
+<p>We can ignore the term $q(z)$ since it&rsquo;s the same for all terminal histories
+since we are doing chance sampling and it cancels out when calculating
+strategy (common in numerator and denominator).</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">544</span><span class="k">class</span> <span class="nc">CFR</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-56'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-56'>#</a>
+                </div>
+                <p>$\mathcal{I}$ set of all information sets.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">557</span>    <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-57'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-57'>#</a>
+                </div>
+                <ul>
+<li><code>create_new_history</code> creates a new empty history</li>
+<li><code>epochs</code> is the number of iterations to train on $T$</li>
+<li><code>n_players</code> is the number of players</li>
+</ul>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">559</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">560</span>                 <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">],</span>
+<span class="lineno">561</span>                 <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">562</span>                 <span class="n">n_players</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-58'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-58'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">568</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_players</span> <span class="o">=</span> <span class="n">n_players</span>
+<span class="lineno">569</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
+<span class="lineno">570</span>        <span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span> <span class="o">=</span> <span class="n">create_new_history</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-59'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-59'>#</a>
+                </div>
+                <p>A dictionary for $\mathcal{I}$ set of all information sets</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">572</span>        <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-60'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-60'>#</a>
+                </div>
+                <p>Tracker for analytics</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">574</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span> <span class="o">=</span> <span class="n">InfoSetTracker</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-61'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-61'>#</a>
+                </div>
+                <p>Returns the information set $I$ of the current player for a given history $h$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">576</span>    <span class="k">def</span> <span class="nf">_get_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-62'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-62'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">580</span>        <span class="n">info_set_key</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">()</span>
+<span class="lineno">581</span>        <span class="k">if</span> <span class="n">info_set_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">:</span>
+<span class="lineno">582</span>            <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">new_info_set</span><span class="p">()</span>
+<span class="lineno">583</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">[</span><span class="n">info_set_key</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-63'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-63'>#</a>
+                </div>
+                <h3>Walk Tree</h3>
+<p>This function walks the game tree.</p>
+<ul>
+<li><code>h</code> is the current history $h$</li>
+<li><code>i</code> is the player $i$ that we are computing regrets of</li>
+<li><a href="#HistoryProbability"><code>pi_i</code></a> is
+ $\pi^{\sigma^t}_i(h)$</li>
+<li><a href="#HistoryProbability"><code>pi_neg_i</code></a> is
+ $\pi^{\sigma^t}_{-i}(h)$</li>
+</ul>
+<p>It returns the expected utility, for the history $h$
+<script type="math/tex; mode=display">\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)</script>
+where $Z_h$ is the set of terminal histories with prefix $h$</p>
+<p>While walking the tee it updates the total regrets $\color{orange}{R^T_i(I, a)}$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">585</span>    <span class="k">def</span> <span class="nf">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">History</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-64'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-64'>#</a>
+                </div>
+                <p>If it&rsquo;s a terminal history $h \in Z$ return the terminal utility $u_i(h)$.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">606</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">():</span>
+<span class="lineno">607</span>            <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">terminal_utility</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-65'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-65'>#</a>
+                </div>
+                <p>If it&rsquo;s a chance event $P(h) = c$ sample a and go to next step.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">609</span>        <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_chance</span><span class="p">():</span>
+<span class="lineno">610</span>            <span class="n">a</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">sample_chance</span><span class="p">()</span>
+<span class="lineno">611</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-66'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-66'>#</a>
+                </div>
+                <p>Get current player&rsquo;s information set for $h$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">614</span>        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_info_set</span><span class="p">(</span><span class="n">h</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-67'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-67'>#</a>
+                </div>
+                <p>To store $\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">616</span>        <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-68'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-68'>#</a>
+                </div>
+                <p>To store
+<script type="math/tex; mode=display">\sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z)</script>
+for each action $a \in A(h)$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">620</span>        <span class="n">va</span> <span class="o">=</span> <span class="p">{}</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-69'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-69'>#</a>
+                </div>
+                <p>Iterate through all actions</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">623</span>        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-70'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-70'>#</a>
+                </div>
+                <p>If the current player is $i$,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">625</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">():</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-71'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-71'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\begin{align}
+\pi^{\sigma^t}_i(h + a) &= \pi^{\sigma^t}_i(h) \sigma^t_i(I)(a) \\
+\pi^{\sigma^t}_{-i}(h + a) &= \pi^{\sigma^t}_{-i}(h)
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">630</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">pi_neg_i</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-72'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-72'>#</a>
+                </div>
+                <p>Otherwise,</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">632</span>            <span class="k">else</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-73'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-73'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\begin{align}
+\pi^{\sigma^t}_i(h + a) &= \pi^{\sigma^t}_i(h)  \\
+\pi^{\sigma^t}_{-i}(h + a) &= \pi^{\sigma^t}_{-i}(h) * \sigma^t_i(I)(a)
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">637</span>                <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pi_i</span><span class="p">,</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">])</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-74'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-74'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z) =
+\sum_{a \in A(I)} \Bigg[ \sigma^t_i(I)(a)
+\sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z)
+\Bigg]</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">642</span>            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-75'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-75'>#</a>
+                </div>
+                <p>If the current player is $i$,
+update the cumulative strategies and total regrets</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">646</span>        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">player</span><span class="p">()</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-76'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-76'>#</a>
+                </div>
+                <p>Update cumulative strategies
+<script type="math/tex; mode=display">\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}
+= \sum_{t=1}^T \Big[ \sum_{h \in I} \pi_i^{\sigma^t}(h)
+\color{lightgreen}{\sigma^t(I)(a)} \Big]</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">651</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">652</span>                <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="n">pi_i</span> <span class="o">*</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">]</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-77'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-77'>#</a>
+                </div>
+                <p>
+<script type="math/tex; mode=display">\begin{align}
+\color{coral}{\tilde{r}^t_i(I, a)} &=
+ \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} -
+ \color{pink}{\tilde{v}_i(\sigma^t, I)} \\
+ &=
+ \pi^{\sigma^t}_{-i} (h) \Big(
+ \sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z) -
+ \sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)
+ \Big) \\
+T \color{orange}{R^T_i(I, a)} &=
+ \sum_{t=1}^T \color{coral}{\tilde{r}^t_i(I, a)}
+\end{align}</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">665</span>            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">666</span>                <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pi_neg_i</span> <span class="o">*</span> <span class="p">(</span><span class="n">va</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-78'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-78'>#</a>
+                </div>
+                <p>Update the strategy $\color{lightgreen}{\sigma^t(I)(a)}$</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">669</span>            <span class="n">I</span><span class="o">.</span><span class="n">calculate_strategy</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-79'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-79'>#</a>
+                </div>
+                <p>Return the expected utility for player $i$,
+<script type="math/tex; mode=display">\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)</script>
+</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">673</span>        <span class="k">return</span> <span class="n">v</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-80'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-80'>#</a>
+                </div>
+                <h3>Iteratively update $\color{lightgreen}{\sigma^t(I)(a)}$</h3>
+<p>This updates the strategies for $T$ iterations.</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">675</span>    <span class="k">def</span> <span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-81'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-81'>#</a>
+                </div>
+                <p>Loop for <code>epochs</code> times</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">683</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-82'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-82'>#</a>
+                </div>
+                <p>Walk tree and update regrets for each player</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">685</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_players</span><span class="p">):</span>
+<span class="lineno">686</span>                <span class="bp">self</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">(),</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-83'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-83'>#</a>
+                </div>
+                <p>Track data for analytics</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">689</span>            <span class="bp">self</span><span class="o">.</span><span class="n">tracker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span>
+<span class="lineno">690</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-84'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-84'>#</a>
+                </div>
+                <p>Save checkpoints every $1,000$ iterations</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">693</span>            <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1_000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">694</span>                <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span>
+<span class="lineno">695</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-85'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-85'>#</a>
+                </div>
+                <p>Print the information sets</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">698</span>        <span class="n">logger</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-86'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-86'>#</a>
+                </div>
+                <h3>Information set tracker</h3>
+<p>This is a small helper class to track data from information sets</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">701</span><span class="k">class</span> <span class="nc">InfoSetTracker</span><span class="p">:</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-87'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-87'>#</a>
+                </div>
+                <p>Set tracking indicators</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">707</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-88'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-88'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">711</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">712</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;average_strategy.*&#39;</span><span class="p">)</span>
+<span class="lineno">713</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_histogram</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;regret.*&#39;</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-89'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-89'>#</a>
+                </div>
+                <p>Track the data from all information sets</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">715</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_sets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InfoSet</span><span class="p">]):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-90'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-90'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">719</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">):</span>
+<span class="lineno">720</span>            <span class="k">for</span> <span class="n">I</span> <span class="ow">in</span> <span class="n">info_sets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<span class="lineno">721</span>                <span class="n">avg_strategy</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">get_average_strategy</span><span class="p">()</span>
+<span class="lineno">722</span>                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+<span class="lineno">723</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span>
+<span class="lineno">724</span>                        <span class="sa">f</span><span class="s1">&#39;strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">725</span>                        <span class="sa">f</span><span class="s1">&#39;average_strategy.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">avg_strategy</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">726</span>                        <span class="sa">f</span><span class="s1">&#39;regret.</span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">I</span><span class="o">.</span><span class="n">regret</span><span class="p">[</span><span class="n">a</span><span class="p">],</span>
+<span class="lineno">727</span>                    <span class="p">})</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-91'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-91'>#</a>
+                </div>
+                <h3>Configurable CFR module</h3>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">730</span><span class="k">class</span> <span class="nc">CFRConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-92'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-92'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">734</span>    <span class="n">create_new_history</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">History</span><span class="p">]</span>
+<span class="lineno">735</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_00_000</span>
+<span class="lineno">736</span>    <span class="n">cfr</span><span class="p">:</span> <span class="n">CFR</span> <span class="o">=</span> <span class="s1">&#39;simple_cfr&#39;</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-93'>
+        <div class='docs doc-strings'>
+                <div class='section-link'>
+                    <a href='#section-93'>#</a>
+                </div>
+                <p>Initialize <strong>CFR</strong> algorithm</p>
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">739</span><span class="nd">@option</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="o">.</span><span class="n">cfr</span><span class="p">)</span>
+<span class="lineno">740</span><span class="k">def</span> <span class="nf">simple_cfr</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
+            </div>
+        </div>
+    <div class='section' id='section-94'>
+            <div class='docs'>
+                <div class='section-link'>
+                    <a href='#section-94'>#</a>
+                </div>
+                
+            </div>
+            <div class='code'>
+                <div class="highlight"><pre><span class="lineno">744</span>    <span class="k">return</span> <span class="n">CFR</span><span class="p">(</span><span class="n">create_new_history</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">,</span>
+<span class="lineno">745</span>               <span class="n">epochs</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">epochs</span><span class="p">)</span></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

@@ -46,7 +46,7 @@ implementations.
 * [Cycle GAN](gan/cycle_gan/index.html)
 * [Wasserstein GAN](gan/wasserstein/index.html)
 * [Wasserstein GAN with Gradient Penalty](gan/wasserstein/gradient_penalty/index.html)
-* [Style GAN 2](gan/stylegan/index.html)
+* [StyleGAN 2](gan/stylegan/index.html)
 
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
