@@ -12,21 +12,27 @@ The paper
 introduces counterfactual regret and how minimizing counterfactual regret through self-play
 can be used to reach Nash equilibrium.
 The algorithm is called Counterfactual Regret Minimization (**CFR**).
-The paper uses this technique to solve Texas Hold'em Poker.
+
+The paper
+[Monte Carlo Sampling for Regret Minimization in Extensive Games](http://mlanctot.info/files/papers/nips09mccfr.pdf)
+introduces Monte Carlo Counterfactual Regret Minimization (**MCCFR**),
+where we sample from the game tree and estimate the regrets.
 
 We tried to keep our Python implementation easy-to-understand like a tutorial.
 We run it on [a very simple imperfect information game called Kuhn poker](kuhn/index.html).
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/cfr/kuhn/experiment.ipynb)
+
 ## Introduction
 
-Counterfactual Regret minimization, in each iteration,
- explores the full game tree by trying all player actions.
-It samples chance events only once per iteration.
-Chance events are things like dealing cards; they are kept constant for each game tree exploration.
-Then it calculates the *regret* of not taking each action, and following the current strategy.
-Then it updates the strategy based on these regrets for the next iteration.
-Finally, it computes the average of the strategies throughout the iterations.
-This becomes very close to the Nash equilibrium.
+We implement Monte Carlo Counterfactual Regret Minimization (MCCFR) with chance sampling (CS).
+It iteratively, explores part of the game tree by trying all player actions,
+but sampling chance events.
+Chance events are things like dealing cards; they are kept sampled once per iteration.
+Then it calculates, for each action, the *regret* of following the current strategy instead of taking that action.
+Then it updates the strategy based on these regrets for the next iteration, using regret matching.
+Finally, it computes the average of the strategies throughout the iterations,
+which is very close to the Nash equilibrium if we ran enough iterations.
 
 We will first introduce the mathematical notation and theory.
 
@@ -258,7 +264,7 @@ The paper
 The paper
 [Regret Minimization in Games with Incomplete Information](http://martin.zinkevich.org/publications/regretpoker.pdf)
 proves that if the strategy is selected according to above equation
-$R^T_i$ get's smaller proportionate to $\frac{1}{\sqrt T}$, and
+$R^T_i$ gets smaller proportionate to $\frac{1}{\sqrt T}$, and
 therefore reaches $\epsilon$-[Nash equilibrium](#NashEquilibrium).
 
 <a id="MCCFR"></a>

@@ -31,7 +31,7 @@ Here's some example games:
 He we extend the `InfoSet` class and `History` class defined in [`__init__.py`](../index.html)
 with Kuhn Poker specifics.
 
-
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/cfr/kuhn/experiment.ipynb)
 """
 
 from typing import List, cast, Dict
