@@ -232,7 +232,7 @@ def main():
     # Since the algorithm iterates fast and we track data on each iteration, writing to
     # other destinations such as Tensorboard can be relatively time consuming.
     # SQLite is enough for our analytics.
-    experiment.create(name='kuhn_poker', writers={'sqlite', 'screen'})
+    experiment.create(name='kuhn_poker', writers={'sqlite'})
     # Initialize configuration
     conf = Configs()
     # Load configuration

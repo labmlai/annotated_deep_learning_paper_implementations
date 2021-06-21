@@ -680,19 +680,19 @@ class CFR:
         """
 
         # Loop for `epochs` times
-        for t in monit.loop(self.epochs):
+        for t in monit.iterate('Train', self.epochs):
             # Walk tree and update regrets for each player
             for i in range(self.n_players):
                 self.walk_tree(self.create_new_history(), cast(Player, i), 1, 1)
 
             # Track data for analytics
+            tracker.add_global_step()
             self.tracker(self.info_sets)
             tracker.save()
 
             # Save checkpoints every $1,000$ iterations
             if (t + 1) % 1_000 == 0:
                 experiment.save_checkpoint()
-                tracker.new_line()
 
         # Print the information sets
         logger.inspect(self.info_sets)
@@ -716,15 +716,14 @@ class InfoSetTracker:
         """
         Track the data from all information sets
         """
-        with monit.section("Track"):
-            for I in info_sets.values():
-                avg_strategy = I.get_average_strategy()
-                for a in I.actions():
-                    tracker.add({
-                        f'strategy.{I.key}.{a}': I.strategy[a],
-                        f'average_strategy.{I.key}.{a}': avg_strategy[a],
-                        f'regret.{I.key}.{a}': I.regret[a],
-                    })
+        for I in info_sets.values():
+            avg_strategy = I.get_average_strategy()
+            for a in I.actions():
+                tracker.add({
+                    f'strategy.{I.key}.{a}': I.strategy[a],
+                    f'average_strategy.{I.key}.{a}': avg_strategy[a],
+                    f'regret.{I.key}.{a}': I.regret[a],
+                })
 
 
 class CFRConfigs(BaseConfigs):
