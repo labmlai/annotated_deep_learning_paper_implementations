@@ -301,6 +301,8 @@ And use that to update $\color{orange}{R^T_i(I, a)}$ and calculate
  the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
 Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.
 
+Here is a [Kuhn Poker](kuhn.html) implementation to try CFR on Kuhn Poker.
+
 *Let's dive into the code!*
 """
 from typing import NewType, Dict, List, Callable, cast
@@ -321,6 +323,8 @@ class History:
 
     History $h \in H$ is a sequence of actions including chance events,
      and $H$ is the set of all histories.
+
+    This class should be extended with game specific logic.
     """
 
     def is_terminal(self):
