@@ -50,6 +50,12 @@ implementations.
 
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
+#### ✨ [Counterfactual Regret Minimization (CFR)](cfr/index.html)
+
+Solving games with incomplete information such as poker with CFR.
+
+* [Kuhn Poker](cfr/kuhn/index.html)
+
 #### ✨ [Reinforcement Learning](rl/index.html)
 * [Proximal Policy Optimization](rl/ppo/index.html) with
  [Generalized Advantage Estimation](rl/ppo/gae.html)

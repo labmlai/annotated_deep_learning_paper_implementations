@@ -56,6 +56,12 @@ implementations almost weekly.
 
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
+#### ✨ [Counterfactual Regret Minimization (CFR)](https://nn.labml.ai/cfr/index.html)
+
+Solving games with incomplete information such as poker with CFR.
+
+* [Kuhn Poker](https://nn.labml.ai/cfr/kuhn/index.html)
+
 #### ✨ [Reinforcement Learning](https://nn.labml.ai/rl/index.html)
 * [Proximal Policy Optimization](https://nn.labml.ai/rl/ppo/index.html) with
  [Generalized Advantage Estimation](https://nn.labml.ai/rl/ppo/gae.html)
