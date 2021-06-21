@@ -32,6 +32,7 @@ He we extend the `InfoSet` class and `History` class defined in [`__init__.py`](
 with Kuhn Poker specifics.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/cfr/kuhn/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/7c35d3fad29711eba588acde48001122)
 """
 
 from typing import List, cast, Dict
