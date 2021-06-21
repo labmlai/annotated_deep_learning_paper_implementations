@@ -97,6 +97,7 @@ $u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy prof
 
 $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
 
+<a id="NashEquilibrium"></a>
 ### Nash Equilibrium
 
 Nash equilibrium is state where none of the players can increase their expected utility (or payoff)
@@ -194,26 +195,29 @@ So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
 ### Counterfactual regret
 
 **Counterfactual value** $\color{pink}{v_i(\sigma, I)}$ is the expected utility for player $i$ if
- the information $I$ is reached.
-So this is like the expected utility if player $i$ tried to reach $I$.
+ if player $i$ tried to reach $I$ (took the actions leading to $I$ with a probability of $1$).
 
-$$\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma(z[I], z) u_i(z)$$
+$$\color{pink}{v_i(\sigma, I)} = \sum_{z \in Z_I} \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)$$
 
-where $Z_I$ is the set of terminal histories reachable from $I$ and
-$z[I]$ is the prefix of history $z$ upto the information set $I$.
+where $Z_I$ is the set of terminal histories reachable from $I$,
+and $z[I]$ is the prefix of $z$ upto $I$.
 $\pi^\sigma(z[I], z)$ is the probability of reaching z from $z[I]$.
 
 **Immediate counterfactual regret** is,
 
-$$R^T_{i,imm}(I) = \frac{1}{T} \max_{a \in A{I}} \sum_{t=1}^T
-\pi^{\sigma^t}_{-i} (I) \Big(
+$$R^T_{i,imm}(I) = \max_{a \in A{I}} R^T_{i,imm}(I, a)$$
+
+where
+
+$$R^T_{i,imm}(I) = \frac{1}{T} \sum_{t=1}^T
+\Big(
 \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
 \Big)$$
 
 where $\sigma |_{I \rightarrow a}$ is the strategy profile $\sigma$ with the modification
 of always taking action $a$ at information set $I$.
 
-The paper proves that (Theorem 3),
+The [paper](http://martin.zinkevich.org/publications/regretpoker.pdf) proves that (Theorem 3),
 
 $$R^T_i \le \sum_{I \in \mathcal{I}} R^{T,+}_{i,imm}(I)$$
 where $$R^{T,+}_{i,imm}(I) = \max(R^T_{i,imm}(I), 0)$$
@@ -227,9 +231,8 @@ The regret for each information set and action pair $\color{orange}{R^T_i(I, a)}
 
 \begin{align}
 \color{coral}{r^t_i(I, a)} &=
- \pi^{\sigma^t}_{-i} (I) \Big(
  \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
- \Big) \\
+ \\
 \color{orange}{R^T_i(I, a)} &=
  \frac{1}{T} \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
 \end{align}
@@ -248,7 +251,53 @@ and the strategy is calculated with regret matching,
 
 where $\color{orange}{R^{T,+}_i(I, a)} = \max \Big(\color{orange}{R^T_i(I, a)}, 0 \Big)$
 
-So we maintain $\color{orange}{R^T_i(I, a)}$ and update
+The paper
+The paper
+[Regret Minimization in Games with Incomplete Information](http://martin.zinkevich.org/publications/regretpoker.pdf)
+proves that if the strategy is selected according to above equation
+$R^T_i$ get's smaller proportionate to $\frac{1}{\sqrt T}$, and
+therefore reaches $\epsilon$-[Nash equilibrium](#NashEquilibrium).
+
+<a id="MCCFR"></a>
+### Monte Carlo CFR (MCCFR)
+
+Computing $\color{coral}{r^t_i(I, a)}$ requires expanding the full game tree
+on each iteration.
+
+The paper
+[Monte Carlo Sampling for Regret Minimization in Extensive Games](http://mlanctot.info/files/papers/nips09mccfr.pdf)
+shows we can sample from the game tree and estimate the regrets.
+
+$\mathcal{Q} = {Q_1, \ldots, Q_r}$ is a set of subsets of $Z$ ($Q_j \subseteq Z$) where
+we look at only a single block $Q_j$ in an iteration.
+Union of all subsets spans $Z$ ($Q_1 \cap \ldots \cap Q_r = Z$).
+$q_j$ is the probability of picking block $Q_j$.
+
+$q(z)$ is the probability of picking $z$ in current iteration; i.e. $q(z) = \sum_{j:z \in Q_j} q_j$ -
+the sum of $q_j$ where $z \in Q_j$.
+
+Then we get **sampled counterfactual value** fro block $j$,
+
+$$\color{pink}{\tilde{v}(\sigma, I|j)} =
+ \sum_{z \in Q_j} \frac{1}{q(z)}
+ \pi^\sigma_{-i}(z[I]) \pi^\sigma(z[I], z) u_i(z)$$
+
+The paper shows that
+
+$$\mathbb{E}_{j \sim q_j} \Big[ \color{pink}{\tilde{v}(\sigma, I|j)} \Big]
+= \color{pink}{v_i(\sigma, I)}$$
+
+with a simple proof.
+
+Therefore we can sample a part of the game tree and calculate the regrets.
+We calculate an estimate of regrets
+
+$$
+\color{coral}{\tilde{r}^t_i(I, a)} =
+ \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{\tilde{v}_i(\sigma^t, I)}
+$$
+
+And use that to update $\color{orange}{R^T_i(I, a)}$ and calculate
  the strategy $\color{lightgreen}{\sigma_i^{T+1}(I)(a)}$ on each iteration.
 Finally we calculate the overall average strategy $\color{cyan}{\bar{\sigma}^T_i(I)(a)}$.
 
@@ -349,12 +398,12 @@ class InfoSet:
     # Total regret of not taking each action $A(I_i)$,
     #
     # \begin{align}
-    # \color{coral}{r^t_i(I, a)} &=
-    #  \pi^{\sigma^t}_{-i} (I) \Big(
-    #  \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
-    #  \Big) \\
+    # \color{coral}{\tilde{r}^t_i(I, a)} &=
+    #  \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} -
+    #  \color{pink}{\tilde{v}_i(\sigma^t, I)}
+    # \\
     # \color{orange}{R^T_i(I, a)} &=
-    #  \frac{1}{T} \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
+    #  \frac{1}{T} \sum_{t=1}^T \color{coral}{\tilde{r}^t_i(I, a)}
     # \end{align}
     #
     # We maintain $T \color{orange}{R^T_i(I, a)}$ instead of $\color{orange}{R^T_i(I, a)}$
@@ -482,6 +531,13 @@ class InfoSet:
 class CFR:
     """
     ## Counterfactual Regret Minimization (CFR) Algorithm
+
+    We do chance sampling (**CS**) where all the chance events (nodes) are sampled and
+    all other events (nodes) are explored.
+
+    We can ignore the term $q(z)$ since it's the same for all terminal histories
+    since we are doing chance sampling and it cancels out when calculating
+    strategy (common in numerator and denominator).
     """
 
     # $\mathcal{I}$ set of all information sets.
@@ -526,8 +582,8 @@ class CFR:
         * [`pi_neg_i`](#HistoryProbability) is
          $\pi^{\sigma^t}_{-i}(h)$
 
-        It returns the [counterfactual value](#CounterfactualRegret), for the history $h$
-        $$\color{pink}{v_i(\sigma, h)} = \sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$$
+        It returns the expected utility, for the history $h$
+        $$\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$$
         where $Z_h$ is the set of terminal histories with prefix $h$
 
         While walking the tee it updates the total regrets $\color{orange}{R^T_i(I, a)}$.
@@ -543,9 +599,11 @@ class CFR:
 
         # Get current player's information set for $h$
         I = self._get_info_set(h)
-        # Initialize $\color{pink}{v_i(\sigma, h)}$
+        # To store $\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$
         v = 0
-        # $\color{pink}{v_i(\sigma^t |_{I \rightarrow a}, h)}$ for each action $a \in A(h)$
+        # To store
+        # $$\sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z)$$
+        # for each action $a \in A(h)$
         va = {}
 
         # Iterate through all actions
@@ -564,60 +622,87 @@ class CFR:
                 # \pi^{\sigma^t}_{-i}(h + a) &= \pi^{\sigma^t}_{-i}(h) * \sigma^t_i(I)(a)
                 # \end{align}
                 va[a] = self.walk_tree(h + a, i, pi_i, pi_neg_i * I.strategy[a])
-            # $$\color{pink}{v_i(\sigma, h)} =
-            # \sum_{a \in A(I)} \sigma^t_i(I)(a)
-            # \color{pink}{v_i(\sigma^t |_{h \rightarrow a}, h)}$$
+            # $$\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z) =
+            # \sum_{a \in A(I)} \Bigg[ \sigma^t_i(I)(a)
+            # \sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z)
+            # \Bigg]$$
             v = v + I.strategy[a] * va[a]
 
         # If the current player is $i$,
         # update the cumulative strategies and total regrets
         if h.player() == i:
             # Update cumulative strategies
-            # $$\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}$$
-            # where
-            # $$\pi_i^{\sigma^t}(I) = \sum_{h \in I} \pi_i^{\sigma^t}(h)$$
+            # $$\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}
+            # = \sum_{t=1}^T \Big[ \sum_{h \in I} \pi_i^{\sigma^t}(h)
+            # \color{lightgreen}{\sigma^t(I)(a)} \Big]$$
             for a in I.actions():
                 I.cumulative_strategy[a] = I.cumulative_strategy[a] + pi_i * I.strategy[a]
             # \begin{align}
-            # \color{coral}{r^t_i(I, a)} &=
-            #  \pi^{\sigma^t}_{-i} (I) \Big(
-            #  \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, I)} - \color{pink}{v_i(\sigma^t, I)}
-            #  \Big) \\
+            # \color{coral}{\tilde{r}^t_i(I, a)} &=
+            #  \color{pink}{\tilde{v}_i(\sigma^t |_{I \rightarrow a}, I)} -
+            #  \color{pink}{\tilde{v}_i(\sigma^t, I)} \\
             #  &=
-            #  \sum_{h \in I} \pi^{\sigma^t}_{-i} (h) \Big(
-            #  \color{pink}{v_i(\sigma^t |_{I \rightarrow a}, h)} - \color{pink}{v_i(\sigma^t, h)}
+            #  \pi^{\sigma^t}_{-i} (h) \Big(
+            #  \sum_{z \in Z_h} \pi^{\sigma^t |_{I \rightarrow a}}(h, z) u_i(z) -
+            #  \sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)
             #  \Big) \\
             # T \color{orange}{R^T_i(I, a)} &=
-            #  \sum_{t=1}^T \color{coral}{r^t_i(I, a)}
+            #  \sum_{t=1}^T \color{coral}{\tilde{r}^t_i(I, a)}
             # \end{align}
             for a in I.actions():
                 I.regret[a] += pi_neg_i * (va[a] - v)
 
+            # Update the strategy $\color{lightgreen}{\sigma^t(I)(a)}$
             I.calculate_strategy()
 
+        # Return the expected utility for player $i$,
+        # $$\sum_{z \in Z_h} \pi^\sigma(h, z) u_i(z)$$
         return v
 
-    def solve(self):
+    def iterate(self):
+        """
+        ### Iteratively update $\color{lightgreen}{\sigma^t(I)(a)}$
+
+        This updates the strategies for $T$ iterations.
+        """
+
+        # Loop for `epochs` times
         for t in monit.loop(self.epochs):
+            # Walk tree and update regrets for each player
             for i in range(self.n_players):
                 self.walk_tree(self.create_new_history(), cast(Player, i), 1, 1)
 
+            # Track data for analytics
             self.tracker(self.info_sets)
             tracker.save()
+
+            # Save checkpoints every $1,000$ iterations
             if (t + 1) % 1_000 == 0:
                 experiment.save_checkpoint()
                 tracker.new_line()
 
+        # Print the information sets
         logger.inspect(self.info_sets)
 
 
 class InfoSetTracker:
+    """
+    ### Information set tracker
+
+    This is a small helper class to track data from information sets
+    """
     def __init__(self):
+        """
+        Set tracking indicators
+        """
         tracker.set_histogram(f'strategy.*')
         tracker.set_histogram(f'average_strategy.*')
         tracker.set_histogram(f'regret.*')
 
     def __call__(self, info_sets: Dict[str, InfoSet]):
+        """
+        Track the data from all information sets
+        """
         with monit.section("Track"):
             for I in info_sets.values():
                 avg_strategy = I.get_average_strategy()
@@ -630,6 +715,9 @@ class InfoSetTracker:
 
 
 class CFRConfigs(BaseConfigs):
+    """
+    ### Configurable CFR module
+    """
     create_new_history: Callable[[], History]
     epochs: int = 1_00_000
     cfr: CFR = 'simple_cfr'
@@ -637,5 +725,8 @@ class CFRConfigs(BaseConfigs):
 
 @option(CFRConfigs.cfr)
 def simple_cfr(c: CFRConfigs):
+    """
+    Initialize **CFR** algorithm
+    """
     return CFR(create_new_history=c.create_new_history,
                epochs=c.epochs)
