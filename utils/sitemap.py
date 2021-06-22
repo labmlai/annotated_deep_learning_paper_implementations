@@ -14,6 +14,9 @@ def collect(path: Path):
             return []
 
         html = path.relative_to(HOME)
+        if html.suffix not in {'.py'}:
+            return []
+
         if html.stem == '__init__':
             html = html.parent / 'index.html'
         else:
