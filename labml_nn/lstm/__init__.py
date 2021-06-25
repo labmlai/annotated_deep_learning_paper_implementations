@@ -57,6 +57,7 @@ class LSTMCell(Module):
 
     def __init__(self, input_size: int, hidden_size: int, layer_norm: bool = False):
         super().__init__()
+        self.hidden_size = hidden_size
 
         # These are the linear layer to transform the `input` and `hidden` vectors.
         # One of them doesn't need a bias since we add the transformations.
@@ -72,7 +73,7 @@ class LSTMCell(Module):
         # $i$, $f$, $g$ and $o$ embeddings are normalized and $c_t$ is normalized in
         # $h_t = o_t \odot \tanh(\mathop{LN}(c_t))$
         if layer_norm:
-            self.layer_norm = nn.ModuleList([nn.LayerNorm(hidden_size) for _ in range(4)])
+            self.layer_norm = nn.LayerNorm(hidden_size)
             self.layer_norm_c = nn.LayerNorm(hidden_size)
         else:
             self.layer_norm = nn.ModuleList([nn.Identity() for _ in range(4)])
@@ -82,14 +83,15 @@ class LSTMCell(Module):
         # We compute the linear transformations for $i_t$, $f_t$, $g_t$ and $o_t$
         # using the same linear layers.
         ifgo = self.hidden_lin(h) + self.input_lin(x)
-        # Each layer produces an output of 4 times the `hidden_size` and we split them
-        ifgo = ifgo.chunk(4, dim=-1)
+        # Each layer produces an output of 4 times the `hidden_size` and we reshape them
+        # This adds a batch dimension
+        ifgo = ifgo.reshape(-1, 4, self.hidden_size)
 
         # Apply layer normalization (not in original paper, but gives better results)
-        ifgo = [self.layer_norm[i](ifgo[i]) for i in range(4)]
+        ifgo = self.layer_norm(ifgo)
 
         # $$i_t, f_t, g_t, o_t$$
-        i, f, g, o = ifgo
+        i, f, g, o = ifgo.unbind(-2)
 
         # $$c_t = \sigma(f_t) \odot c_{t-1} + \sigma(i_t) \odot \tanh(g_t) $$
         c_next = torch.sigmoid(f) * c + torch.sigmoid(i) * torch.tanh(g)
