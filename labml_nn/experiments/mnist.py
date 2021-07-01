@@ -66,6 +66,9 @@ class MNISTConfigs(MNISTDatasetConfigs, TrainValidConfigs):
         ### Training or validation step
         """
 
+        # Training/Evaluation mode
+        self.model.train(self.mode.is_train)
+
         # Move data to the device
         data, target = batch[0].to(self.device), batch[1].to(self.device)
 
