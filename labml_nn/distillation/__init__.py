@@ -6,10 +6,44 @@ summary: >
   Distilling the Knowledge in a Neural Network.
 ---
 
-# Capsule Networks
+# Distilling the Knowledge in a Neural Network
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
 [Distilling the Knowledge in a Neural Network](https://papers.labml.ai/paper/1503.02531).
+
+It's a way of training a small network using the knowledge in a trained larger network;
+i.e. distilling the knowledge from the large network.
+
+A large model with regularization or an ensemble of models (using dropout) generalizes
+better than a small model when trained directly on the data and labels.
+However, a small model can be trained to generalize better with help of a large model.
+Smaller models are obviously better in production (faster, less compute, less memory).
+
+The output probabilities of a trained model gives more information than the labels,
+because it assigns non-zero probabilities to incorrect classes as well.
+These probabilities tell us that a sample has a chance of belonging to certain classes.
+For instance, when classifying digits, when given a image of digit *7*,
+a generalized model will give a high probability to 7, and will give a small but non-zero
+probability to 2, while assigning almost zero probability to other digits.
+Distillation uses this information to train a small model better.
+
+The probabilities are usually computed with a softmax operation,
+
+$$q_i = \frac{\exp (z_i)}{\sum_j \exp (z_j)}$$
+
+where $q_i$ is the probability for class $i$ and $z_i$ is the logit.
+
+We train the small model to minimize the Cross entropy or KL Divergence between it's output
+probability distribution and the large networks output probability distribution
+(soft targets).
+
+One of the problems here is that the probabilities assigned to incorrect classes by the
+large network are often very small and doesn't contribute to the loss.
+So they softens the probabilities by applying a temperature $T$,
+
+$$q_i = \frac{\exp (\frac{z_i}{T})}{\sum_j \exp (\frac{z_j}{T})}$$
+
+where higher values for $T$ will produce softer probabilities.
 
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6182e2adaf011eb927c91a2a1710932)
 """

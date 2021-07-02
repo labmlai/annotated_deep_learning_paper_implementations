@@ -66,23 +66,51 @@
                 <div class='section-link'>
                     <a href='#section-0'>#</a>
                 </div>
-                <h1>Capsule Networks</h1>
+                <h1>Distilling the Knowledge in a Neural Network</h1>
 <p>This is a <a href="https://pytorch.org">PyTorch</a> implementation/tutorial of the paper
 <a href="https://papers.labml.ai/paper/1503.02531">Distilling the Knowledge in a Neural Network</a>.</p>
+<p>It&rsquo;s a way of training a small network using the knowledge in a trained larger network;
+i.e. distilling the knowledge from the large network.</p>
+<p>A large model with regularization or an ensemble of models (using dropout) generalizes
+better than a small model when trained directly on the data and labels.
+However, a small model can be trained to generalize better with help of a large model.
+Smaller models are obviously better in production (faster, less compute, less memory).</p>
+<p>The output probabilities of a trained model gives more information than the labels,
+because it assigns non-zero probabilities to incorrect classes as well.
+These probabilities tell us that a sample has a chance of belonging to certain classes.
+For instance, when classifying digits, when given a image of digit <em>7</em>,
+a generalized model will give a high probability to 7, and will give a small but non-zero
+probability to 2, while assigning almost zero probability to other digits.
+Distillation uses this information to train a small model better.</p>
+<p>The probabilities are usually computed with a softmax operation,</p>
+<p>
+<script type="math/tex; mode=display">q_i = \frac{\exp (z_i)}{\sum_j \exp (z_j)}</script>
+</p>
+<p>where $q_i$ is the probability for class $i$ and $z_i$ is the logit.</p>
+<p>We train the small model to minimize the Cross entropy or KL Divergence between it&rsquo;s output
+probability distribution and the large networks output probability distribution
+(soft targets).</p>
+<p>One of the problems here is that the probabilities assigned to incorrect classes by the
+large network are often very small and doesn&rsquo;t contribute to the loss.
+So they softens the probabilities by applying a temperature $T$,</p>
+<p>
+<script type="math/tex; mode=display">q_i = \frac{\exp (\frac{z_i}{T})}{\sum_j \exp (\frac{z_j}{T})}</script>
+</p>
+<p>where higher values for $T$ will produce softer probabilities.</p>
 <p><a href="https://app.labml.ai/run/d6182e2adaf011eb927c91a2a1710932"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">17</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">18</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">19</span><span class="kn">import</span> <span class="nn">torch.nn.functional</span>
-<span class="lineno">20</span>
-<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">BatchIndex</span>
-<span class="lineno">22</span>
-<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span>
-<span class="lineno">24</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
-<span class="lineno">25</span><span class="kn">from</span> <span class="nn">labml_nn.distillation.large</span> <span class="kn">import</span> <span class="n">LargeModel</span><span class="p">,</span> <span class="n">Configs</span> <span class="k">as</span> <span class="n">LargeConfigs</span>
-<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml_nn.distillation.small</span> <span class="kn">import</span> <span class="n">SmallModel</span>
-<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.cifar10</span> <span class="kn">import</span> <span class="n">CIFAR10Configs</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">51</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">52</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">53</span><span class="kn">import</span> <span class="nn">torch.nn.functional</span>
+<span class="lineno">54</span>
+<span class="lineno">55</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">BatchIndex</span>
+<span class="lineno">56</span>
+<span class="lineno">57</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span>
+<span class="lineno">58</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">59</span><span class="kn">from</span> <span class="nn">labml_nn.distillation.large</span> <span class="kn">import</span> <span class="n">LargeModel</span><span class="p">,</span> <span class="n">Configs</span> <span class="k">as</span> <span class="n">LargeConfigs</span>
+<span class="lineno">60</span><span class="kn">from</span> <span class="nn">labml_nn.distillation.small</span> <span class="kn">import</span> <span class="n">SmallModel</span>
+<span class="lineno">61</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.cifar10</span> <span class="kn">import</span> <span class="n">CIFAR10Configs</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-1'>
@@ -93,12 +121,12 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">30</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CIFAR10Configs</span><span class="p">):</span>
-<span class="lineno">31</span>    <span class="n">large</span><span class="p">:</span> <span class="n">LargeModel</span>
-<span class="lineno">32</span>    <span class="n">kl_div_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">KLDivLoss</span><span class="p">(</span><span class="n">log_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="lineno">33</span>    <span class="n">kl_div_loss_weight</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">5</span>
-<span class="lineno">34</span>    <span class="n">nll_loss_weight</span> <span class="o">=</span> <span class="mf">0.5</span>
-<span class="lineno">35</span>    <span class="n">temperature</span> <span class="o">=</span> <span class="mi">5</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">64</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CIFAR10Configs</span><span class="p">):</span>
+<span class="lineno">65</span>    <span class="n">large</span><span class="p">:</span> <span class="n">LargeModel</span>
+<span class="lineno">66</span>    <span class="n">kl_div_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">KLDivLoss</span><span class="p">(</span><span class="n">log_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">67</span>    <span class="n">kl_div_loss_weight</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">5</span>
+<span class="lineno">68</span>    <span class="n">nll_loss_weight</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="lineno">69</span>    <span class="n">temperature</span> <span class="o">=</span> <span class="mi">5</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-2'>
@@ -109,7 +137,7 @@
                 <h3>Training or validation step</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">71</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-3'>
@@ -120,8 +148,8 @@
                 <p>Training/Evaluation mode</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">43</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">)</span>
-<span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">large</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">77</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">)</span>
+<span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">large</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-4'>
@@ -132,7 +160,7 @@
                 <p>Move data to the device</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">47</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">81</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-5'>
@@ -143,11 +171,11 @@
                 <p>Update global step (number of samples processed) when in training mode</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">50</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
-<span class="lineno">51</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-<span class="lineno">52</span>
-<span class="lineno">53</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-<span class="lineno">54</span>            <span class="n">large_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">large</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">84</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">85</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="lineno">86</span>
+<span class="lineno">87</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+<span class="lineno">88</span>            <span class="n">large_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">large</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-6'>
@@ -158,7 +186,7 @@
                 <p>Whether to capture model outputs</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">57</span>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">91</span>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-7'>
@@ -169,7 +197,7 @@
                 <p>Get model outputs.</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">59</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">93</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-8'>
@@ -180,13 +208,13 @@
                 <p>Calculate and log loss</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">62</span>        <span class="n">kl_div_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_div_loss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">output</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
-<span class="lineno">63</span>                                       <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">large_logits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
-<span class="lineno">64</span>        <span class="n">nll_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-<span class="lineno">65</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_div_loss_weight</span> <span class="o">*</span> <span class="n">kl_div_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nll_loss_weight</span> <span class="o">*</span> <span class="n">nll_loss</span>
-<span class="lineno">66</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.kl_div.&quot;</span><span class="p">,</span> <span class="n">kl_div_loss</span><span class="p">)</span>
-<span class="lineno">67</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.nll&quot;</span><span class="p">,</span> <span class="n">nll_loss</span><span class="p">)</span>
-<span class="lineno">68</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">96</span>        <span class="n">kl_div_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_div_loss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">output</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+<span class="lineno">97</span>                                       <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">large_logits</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+<span class="lineno">98</span>        <span class="n">nll_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">99</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_div_loss_weight</span> <span class="o">*</span> <span class="n">kl_div_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nll_loss_weight</span> <span class="o">*</span> <span class="n">nll_loss</span>
+<span class="lineno">100</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.kl_div.&quot;</span><span class="p">,</span> <span class="n">kl_div_loss</span><span class="p">)</span>
+<span class="lineno">101</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.nll&quot;</span><span class="p">,</span> <span class="n">nll_loss</span><span class="p">)</span>
+<span class="lineno">102</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-9'>
@@ -197,8 +225,8 @@
                 <p>Calculate and log accuracy</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">71</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-<span class="lineno">72</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">track</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">106</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">track</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-10'>
@@ -209,7 +237,7 @@
                 <p>Train the model</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">75</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">109</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-11'>
@@ -220,7 +248,7 @@
                 <p>Calculate gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">77</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">111</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-12'>
@@ -231,7 +259,7 @@
                 <p>Take optimizer step</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">79</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">113</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-13'>
@@ -242,8 +270,8 @@
                 <p>Log the model parameters and gradients on last batch of every epoch</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">81</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">:</span>
-<span class="lineno">82</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">115</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">:</span>
+<span class="lineno">116</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-14'>
@@ -254,7 +282,7 @@
                 <p>Clear the gradients</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">84</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">118</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-15'>
@@ -265,7 +293,7 @@
                 <p>Save the tracked metrics</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">121</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-16'>
@@ -276,8 +304,8 @@
                 <h3>Create model</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">90</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">large</span><span class="p">)</span>
-<span class="lineno">91</span><span class="k">def</span> <span class="nf">_large_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">124</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">large</span><span class="p">)</span>
+<span class="lineno">125</span><span class="k">def</span> <span class="nf">_large_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-17'>
@@ -288,7 +316,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">95</span>    <span class="k">return</span> <span class="n">LargeModel</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">129</span>    <span class="k">return</span> <span class="n">LargeModel</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-18'>
@@ -299,8 +327,8 @@
                 <h3>Create model</h3>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">98</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-<span class="lineno">99</span><span class="k">def</span> <span class="nf">_small_student_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">132</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="lineno">133</span><span class="k">def</span> <span class="nf">_small_student_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-19'>
@@ -311,7 +339,7 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">103</span>    <span class="k">return</span> <span class="n">SmallModel</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">137</span>    <span class="k">return</span> <span class="n">SmallModel</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-20'>
@@ -322,15 +350,15 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">106</span><span class="k">def</span> <span class="nf">get_saved_model</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">107</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
-<span class="lineno">108</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">LargeConfigs</span><span class="p">()</span>
-<span class="lineno">109</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">experiment</span><span class="o">.</span><span class="n">load_configs</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">))</span>
-<span class="lineno">110</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span>
-<span class="lineno">111</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
-<span class="lineno">112</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="lineno">113</span>
-<span class="lineno">114</span>    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">140</span><span class="k">def</span> <span class="nf">get_saved_model</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">141</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+<span class="lineno">142</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">LargeConfigs</span><span class="p">()</span>
+<span class="lineno">143</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">experiment</span><span class="o">.</span><span class="n">load_configs</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">))</span>
+<span class="lineno">144</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span>
+<span class="lineno">145</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
+<span class="lineno">146</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="lineno">147</span>
+<span class="lineno">148</span>    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-21'>
@@ -341,8 +369,8 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">117</span><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">118</span>    <span class="n">large_model</span> <span class="o">=</span> <span class="n">get_saved_model</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">151</span><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">152</span>    <span class="n">large_model</span> <span class="o">=</span> <span class="n">get_saved_model</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-22'>
@@ -353,7 +381,7 @@
                 <p>Create experiment</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">120</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;distillation&#39;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;cifar10&#39;</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">154</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;distillation&#39;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;cifar10&#39;</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-23'>
@@ -364,8 +392,8 @@
                 <p>Create configurations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">122</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span>
-<span class="lineno">123</span>    <span class="n">conf</span><span class="o">.</span><span class="n">large</span> <span class="o">=</span> <span class="n">large_model</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">156</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span>
+<span class="lineno">157</span>    <span class="n">conf</span><span class="o">.</span><span class="n">large</span> <span class="o">=</span> <span class="n">large_model</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-24'>
@@ -376,13 +404,13 @@
                 <p>Load configurations</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">125</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="p">{</span>
-<span class="lineno">126</span>        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
-<span class="lineno">127</span>        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
-<span class="lineno">128</span>        <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="s1">&#39;_small_student_model&#39;</span><span class="p">,</span>
-<span class="lineno">129</span>    <span class="p">})</span>
-<span class="lineno">130</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span>
-<span class="lineno">131</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">159</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="p">{</span>
+<span class="lineno">160</span>        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+<span class="lineno">161</span>        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
+<span class="lineno">162</span>        <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="s1">&#39;_small_student_model&#39;</span><span class="p">,</span>
+<span class="lineno">163</span>    <span class="p">})</span>
+<span class="lineno">164</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span>
+<span class="lineno">165</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-25'>
@@ -393,8 +421,8 @@
                 <p>Start the experiment and run the training loop</p>
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">133</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
-<span class="lineno">134</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">167</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
+<span class="lineno">168</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
             </div>
         </div>
     <div class='section' id='section-26'>
@@ -405,8 +433,8 @@
                 
             </div>
             <div class='code'>
-                <div class="highlight"><pre><span class="lineno">138</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">139</span>    <span class="n">main</span><span class="p">(</span><span class="s1">&#39;d46cd53edaec11eb93c38d6538aee7d6&#39;</span><span class="p">,</span> <span class="mi">1_000_000</span><span class="p">)</span></pre></div>
+                <div class="highlight"><pre><span class="lineno">172</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">173</span>    <span class="n">main</span><span class="p">(</span><span class="s1">&#39;d46cd53edaec11eb93c38d6538aee7d6&#39;</span><span class="p">,</span> <span class="mi">1_000_000</span><span class="p">)</span></pre></div>
             </div>
         </div>
     </div>
