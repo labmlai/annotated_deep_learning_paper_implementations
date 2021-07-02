@@ -17,48 +17,30 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
-from labml_nn.experiments.cifar10 import CIFAR10Configs
+from labml_nn.experiments.cifar10 import CIFAR10Configs, CIFAR10VGGModel
 from labml_nn.normalization.instance_norm import InstanceNorm
 
 
-class Model(Module):
+class Model(CIFAR10VGGModel):
     """
     ### VGG model for CIFAR-10 classification
+
+    This derives from the [generic VGG style architecture](../../experiments/cifar10.html).
     """
 
+    def conv_block(self, in_channels, out_channels) -> nn.Module:
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            InstanceNorm(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
     def __init__(self):
-        super().__init__()
-        layers = []
-        # RGB channels
-        in_channels = 3
-        # Number of channels in each layer in each block
-        for block in [[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]]:
-            # Convolution, Normalization and Activation layers
-            for channels in block:
-                layers += [nn.Conv2d(in_channels, channels, kernel_size=3, padding=1),
-                           InstanceNorm(channels),
-                           nn.ReLU(inplace=True)]
-                in_channels = channels
-            # Max pooling at end of each block
-            layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-
-        # Create a sequential model with the layers
-        self.layers = nn.Sequential(*layers)
-        # Final logits layer
-        self.fc = nn.Linear(512, 10)
-
-    def __call__(self, x):
-        # The VGG layers
-        x = self.layers(x)
-        # Reshape for classification layer
-        x = x.view(x.shape[0], -1)
-        # Final linear layer
-        return self.fc(x)
+        super().__init__([[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]])
 
 
 @option(CIFAR10Configs.model)
-def model(c: CIFAR10Configs):
+def _model(c: CIFAR10Configs):
     """
     ### Create model
     """
