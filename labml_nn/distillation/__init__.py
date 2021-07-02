@@ -1,3 +1,19 @@
+"""
+---
+title: Distilling the Knowledge in a Neural Network
+summary: >
+  PyTorch implementation and tutorial of the paper
+  Distilling the Knowledge in a Neural Network.
+---
+
+# Capsule Networks
+
+This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
+[Distilling the Knowledge in a Neural Network](https://papers.labml.ai/paper/1503.02531).
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6182e2adaf011eb927c91a2a1710932)
+"""
+
 import torch
 from torch import nn
 import torch.nn.functional
