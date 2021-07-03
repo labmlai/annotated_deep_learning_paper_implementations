@@ -86,6 +86,8 @@ Solving games with incomplete information such as poker with CFR.
 * [Weight Standardization](https://nn.labml.ai/normalization/weight_standardization/index.html)
 * [Batch-Channel Normalization](https://nn.labml.ai/normalization/batch_channel_norm/index.html)
 
+#### ✨ [Distillation](https://nn.labml.ai/distillation/index.html)
+
 ### Installation
 
 ```bash
