@@ -13,31 +13,26 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
-from labml_nn.experiments.cifar10 import CIFAR10Configs
+from labml_nn.experiments.cifar10 import CIFAR10Configs, CIFAR10VGGModel
 from labml_nn.normalization.batch_norm import BatchNorm
 
 
-class Model(Module):
-    def __init__(self):
-        super().__init__()
-        layers = []
-        in_channels = 3
-        for block in [[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]]:
-            for channels in block:
-                layers += [nn.Conv2d(in_channels, channels, kernel_size=3, padding=1),
-                           BatchNorm(channels),
-                           nn.ReLU(inplace=True)]
-                in_channels = channels
-            layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
-        self.layers = nn.Sequential(*layers)
-        self.fc = nn.Linear(512, 10)
+class Model(CIFAR10VGGModel):
+    """
+    ### VGG model for CIFAR-10 classification
 
-    def __call__(self, x):
-        x = self.layers(x)
-        x = x.view(x.shape[0], -1)
-        return self.fc(x)
+    This derives from the [generic VGG style architecture](../../experiments/cifar10.html).
+    """
+
+    def conv_block(self, in_channels, out_channels) -> nn.Module:
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            BatchNorm(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
+    def __init__(self):
+        super().__init__([[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]])
 
 
 @option(CIFAR10Configs.model)
