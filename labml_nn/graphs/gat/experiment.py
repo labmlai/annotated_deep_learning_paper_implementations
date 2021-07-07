@@ -80,7 +80,7 @@ def accuracy(output: torch.Tensor, labels: torch.Tensor):
 
 class Configs(BaseConfigs):
     model: GAT
-    training_samples: int = 140
+    training_samples: int = 500
     in_features: int
     n_hidden: int = 64
     n_heads: int = 8
@@ -89,7 +89,7 @@ class Configs(BaseConfigs):
     dropout: float = 0.6
     include_edges: bool = True
     cora_dataset: CoraDataset
-    epochs: int = 10_000
+    epochs: int = 1_000
     loss_func = nn.CrossEntropyLoss()
 
     device: torch.device = DeviceConfigs()
