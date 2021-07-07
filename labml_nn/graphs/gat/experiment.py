@@ -110,8 +110,9 @@ class Configs(BaseConfigs):
         edges_adj = edges_adj.unsqueeze(-1)
 
         train_split = int(len(labels) * 0.8)
-        idx_train = torch.tensor(range(train_split), dtype=torch.long, device=self.device)
-        idx_valid = torch.tensor(range(train_split, len(labels)), dtype=torch.long, device=self.device)
+        idx_rand = torch.randperm(len(labels))
+        idx_train = idx_rand[:train_split]
+        idx_valid = idx_rand[train_split:]
 
         for epoch in monit.loop(self.epochs):
             self.model.train()
