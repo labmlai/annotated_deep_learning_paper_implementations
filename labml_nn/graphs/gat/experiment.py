@@ -139,7 +139,7 @@ def main():
     # Create configurations
     conf = Configs()
     # Create an experiment
-    experiment.create(name='cycle_gan')
+    experiment.create(name='gat')
     # Calculate configurations.
     # It will calculate `conf.run` and all other configs required by it.
     experiment.configs(conf, {
