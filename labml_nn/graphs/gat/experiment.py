@@ -80,6 +80,7 @@ def accuracy(output: torch.Tensor, labels: torch.Tensor):
 
 class Configs(BaseConfigs):
     model: GAT
+    training_samples: int = 140
     in_features: int
     n_hidden: int = 64
     n_heads: int = 8
@@ -109,10 +110,9 @@ class Configs(BaseConfigs):
         edges_adj = self.cora_dataset.adj_mat.to(self.device)
         edges_adj = edges_adj.unsqueeze(-1)
 
-        train_split = int(len(labels) * 0.8)
         idx_rand = torch.randperm(len(labels))
-        idx_train = idx_rand[:train_split]
-        idx_valid = idx_rand[train_split:]
+        idx_train = idx_rand[:self.training_samples]
+        idx_valid = idx_rand[self.training_samples:]
 
         for epoch in monit.loop(self.epochs):
             self.model.train()
