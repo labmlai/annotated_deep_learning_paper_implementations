@@ -31,7 +31,7 @@ class CoraDataset:
 
     Cora dataset is a dataset of research papers.
     For each paper we are given a binary feature vector that indicates the presence of words.
-    Each paper classified into one of 7 classes.
+    Each paper is classified into one of 7 classes.
     The dataset also has the citation network.
 
     The papers are the nodes of the graph and the edges are the citations.

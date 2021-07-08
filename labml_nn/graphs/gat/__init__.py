@@ -15,14 +15,14 @@ A graph consists of nodes and edges connecting nodes.
 For example, in Cora dataset the nodes are research papers and the edges are citations that
 connect the papers.
 
-GAT uses masked self attention, kind of similar to [transformers](../../transformers/mha.html).
+GAT uses masked self-attention, kind of similar to [transformers](../../transformers/mha.html).
 GAT consists of graph attention layers stacked on top of each other.
 Each graph attention layer gets node embeddings as inputs and outputs transformed embeddings.
-The node embeddings pays attention to the embeddings of other nodes it's connected to.
+The node embeddings pay attention to the embeddings of other nodes it's connected to.
 The details of graph attention layers are included alongside the implementation.
 
 Here is [the training code](experiment.html) for training
-a two layer GAT on Cora dataset.
+a two-layer GAT on Cora dataset.
 
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6c636cadf3511eba2f1e707f612f95d)
 """
@@ -105,7 +105,7 @@ class GraphAttentionLayer(Module):
 
         # #### Calculate attention score
         #
-        # We calculate these for each head $k$, we have ommitted $\cdot^k$ for simplicity.
+        # We calculate these for each head $k$. *We have omitted $\cdot^k$ for simplicity*.
         #
         # $$e_{ij} = a(\mathbf{W} \overrightarrow{h_i}, \mathbf{W} \overrightarrow{h_j}) =
         # a(\overrightarrow{g_i}, \overrightarrow{g_j})$$
@@ -185,7 +185,7 @@ class GraphAttentionLayer(Module):
         # $$\overrightarrow{h'^k_i} = \sum_{j \in \mathcal{N}_i} \alpha^k_{ij} \overrightarrow{g^k_j}$$
         #
         # *Note:* The paper includes the final activation $\sigma$ in $\overrightarrow{h_i}$
-        # We have ommited this from the Graph Attention Layer implementation
+        # We have omitted this from the Graph Attention Layer implementation
         # and use it on the GAT model to match with how other PyTorch modules are defined -
         # activation as a separate layer.
         attn_res = torch.einsum('ijh,jhf->ihf', a, g)

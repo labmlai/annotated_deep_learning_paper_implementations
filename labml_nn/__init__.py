@@ -50,6 +50,10 @@ implementations.
 
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
+#### ✨ Graph Neural Networks
+
+* [Graph Attention Networks (GAT)](graphs/gat/index.html)
+
 #### ✨ [Counterfactual Regret Minimization (CFR)](cfr/index.html)
 
 Solving games with incomplete information such as poker with CFR.

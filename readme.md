@@ -56,6 +56,10 @@ implementations almost weekly.
 
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
+#### ✨ Graph Neural Networks
+
+* [Graph Attention Networks (GAT)](https://nn.labml.ai/graphs/gat/index.html)
+
 #### ✨ [Counterfactual Regret Minimization (CFR)](https://nn.labml.ai/cfr/index.html)
 
 Solving games with incomplete information such as poker with CFR.
