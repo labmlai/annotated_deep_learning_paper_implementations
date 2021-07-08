@@ -9,7 +9,7 @@ from labml.configs import BaseConfigs
 from labml.utils import download
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.module import Module
-from labml_nn.graphs.gat import GATLayer
+from labml_nn.graphs.gat import GraphAttentionLayer
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
@@ -58,11 +58,11 @@ class GAT(Module):
     def __init__(self, in_features: int, n_hidden: int, n_classes: int, n_heads: int, dropout: float):
         super().__init__()
 
-        self.layer1 = GATLayer(in_features, n_hidden, n_heads, is_concat=True, dropout=dropout)
+        self.layer1 = GraphAttentionLayer(in_features, n_hidden, n_heads, is_concat=True, dropout=dropout)
 
         self.dropout = nn.Dropout(dropout)
 
-        self.output = GATLayer(n_hidden, n_classes, 1, is_concat=False, dropout=dropout)
+        self.output = GraphAttentionLayer(n_hidden, n_classes, 1, is_concat=False, dropout=dropout)
 
         self.activation = nn.ELU()
 
