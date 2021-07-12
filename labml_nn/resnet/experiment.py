@@ -56,8 +56,10 @@ def main():
     # Load configurations
     experiment.configs(conf, {
         'optimizer.optimizer': 'Adam',
-        'optimizer.learning_rate': 2.5e-4,
+        'optimizer.learning_rate': 1e-4,
+        'optimizer.weight_decay': 1e-4,
         'epochs': 100,
+        'train_batch_size': 256,
     })
     # Set model for saving/loading
     experiment.add_pytorch_models({'model': conf.model})
