@@ -140,7 +140,7 @@ class Configs(CIFAR10Configs):
         soft_targets = nn.functional.log_softmax(large_logits / self.temperature, dim=-1)
         # Temperature adjusted probabilities of the small model
         # $$q_i = \frac{\exp (\frac{z_i}{T})}{\sum_j \exp (\frac{z_j}{T})}$$
-        soft_prob = nn.functional.log_softmax(large_logits / self.temperature, dim=-1)
+        soft_prob = nn.functional.log_softmax(output / self.temperature, dim=-1)
 
         # Calculate the soft targets loss
         soft_targets_loss = self.kl_div_loss(soft_prob, soft_targets)
