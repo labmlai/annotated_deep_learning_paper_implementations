@@ -81,7 +81,8 @@ def _weight_decay(c: OptimizerConfigs):
 
 @option(OptimizerConfigs.optimizer, 'SGD')
 def _sgd_optimizer(c: OptimizerConfigs):
-    return torch.optim.SGD(c.parameters, c.learning_rate, c.momentum)
+    return torch.optim.SGD(c.parameters, c.learning_rate, c.momentum,
+                           weight_decay=c.weight_decay)
 
 
 @option(OptimizerConfigs.optimizer, 'Adam')

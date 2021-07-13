@@ -10,7 +10,7 @@ summary: >
 import torch
 from torch import nn
 
-from labml import experiment
+from labml import experiment, lab
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.cifar10 import CIFAR10Configs
@@ -56,10 +56,13 @@ def main():
     # Load configurations
     experiment.configs(conf, {
         'optimizer.optimizer': 'Adam',
-        'optimizer.learning_rate': 1e-4,
-        'optimizer.weight_decay': 1e-4,
+        'optimizer.learning_rate': 2.5e-4,
+        # 'optimizer.weight_decay': 1e-4,
         'epochs': 100,
         'train_batch_size': 256,
+
+        'train_dataset': 'cifar10_train_augmented',
+        'valid_dataset': 'cifar10_valid_no_augment',
     })
     # Set model for saving/loading
     experiment.add_pytorch_models({'model': conf.model})

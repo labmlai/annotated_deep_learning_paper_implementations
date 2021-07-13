@@ -11,6 +11,8 @@ from typing import List
 
 import torch.nn as nn
 
+from labml import lab
+from labml.configs import option
 from labml_helpers.datasets.cifar10 import CIFAR10Configs as CIFAR10DatasetConfigs
 from labml_helpers.module import Module
 from labml_nn.experiments.mnist import MNISTConfigs
@@ -18,6 +20,34 @@ from labml_nn.experiments.mnist import MNISTConfigs
 
 class CIFAR10Configs(CIFAR10DatasetConfigs, MNISTConfigs):
     dataset_name: str = 'CIFAR10'
+
+
+@option(CIFAR10Configs.train_dataset)
+def cifar10_train_augmented():
+    from torchvision.datasets import CIFAR10
+    from torchvision.transforms import transforms
+    return CIFAR10(str(lab.get_data_path()),
+                   train=True,
+                   download=True,
+                   transform=transforms.Compose([
+                       transforms.RandomCrop(32, padding=4),
+                       transforms.RandomHorizontalFlip(),
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                   ]))
+
+
+@option(CIFAR10Configs.valid_dataset)
+def cifar10_valid_no_augment():
+    from torchvision.datasets import CIFAR10
+    from torchvision.transforms import transforms
+    return CIFAR10(str(lab.get_data_path()),
+                   train=False,
+                   download=True,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                   ]))
 
 
 class CIFAR10VGGModel(Module):
