@@ -58,8 +58,10 @@ def main():
     experiment.configs(conf, {
         'device.cuda_device': 0,
 
-        'optimizer.optimizer': 'Noam',
-        'optimizer.learning_rate': 1.,
+        # 'optimizer.optimizer': 'Noam',
+        # 'optimizer.learning_rate': 1.,
+        'optimizer.optimizer': 'Adam',
+        'optimizer.learning_rate': 2.5e-4,
         'optimizer.d_model': 512,
 
         'transformer.d_model': 512,
