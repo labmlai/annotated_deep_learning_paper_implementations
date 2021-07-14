@@ -51,11 +51,12 @@ def main():
     # Load configurations
     experiment.configs(conf, {
         'bottlenecks': [8, 16, 16],
+        'n_blocks': [6, 6, 6],
 
         'optimizer.optimizer': 'Adam',
         'optimizer.learning_rate': 2.5e-4,
         # 'optimizer.weight_decay': 1e-4,
-        'epochs': 100,
+        'epochs': 500,
         'train_batch_size': 256,
 
         'train_dataset': 'cifar10_train_augmented',

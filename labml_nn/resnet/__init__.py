@@ -253,7 +253,7 @@ class ResNetBase(Module):
                                                       stride=2 if len(blocks) == 0 else 1))
 
             prev_channels = channels
-            for i in range(n_blocks[i] - 1):
+            for _ in range(n_blocks[i] - 1):
                 if bottlenecks is None:
                     blocks.append(ResidualBlock(channels, channels, stride=1))
                 else:
