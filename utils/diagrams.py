@@ -253,6 +253,8 @@ def main():
             dest_path.parent.mkdir(parents=True)
 
         with monit.section(str(p)):
+            if source_path.suffix == '.svg':
+                parse(source_path, source_path)
             shutil.copy(str(source_path), str(dest_path))
 
 
