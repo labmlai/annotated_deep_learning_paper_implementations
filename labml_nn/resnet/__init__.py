@@ -187,14 +187,14 @@ class BottleneckResidualBlock(Module):
         # First $1 \times 1$ convolution layer, this maps to `bottleneck_channels`
         self.conv1 = nn.Conv2d(in_channels, bottleneck_channels, kernel_size=1, stride=1)
         # Batch normalization after the first convolution
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.bn1 = nn.BatchNorm2d(bottleneck_channels)
         # First activation function (ReLU)
         self.act1 = nn.ReLU()
 
         # Second $3 \times 3$ convolution layer
         self.conv2 = nn.Conv2d(bottleneck_channels, bottleneck_channels, kernel_size=3, stride=stride, padding=1)
         # Batch normalization after the second convolution
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.bn2 = nn.BatchNorm2d(bottleneck_channels)
         # Second activation function (ReLU)
         self.act2 = nn.ReLU()
 
