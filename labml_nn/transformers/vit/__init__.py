@@ -16,20 +16,16 @@ class PatchEmbeddings(Module):
     def __init__(self, d_model: int, patch_size: int, in_channels: int):
         super().__init__()
         self.patch_size = patch_size
-        self.linear = nn.Linear(patch_size * patch_size * in_channels, d_model)
+        self.conv = nn.Conv2d(in_channels, d_model, patch_size, stride=patch_size)
 
     def __call__(self, x: torch.Tensor):
         """
         x has shape `[batch_size, channels, height, width]`
         """
+        x = self.conv(x)
         bs, c, h, w = x.shape
-        assert h % self.patch_size == 0 and w % self.patch_size == 0
-        h_p = h // self.patch_size
-        w_p = w // self.patch_size
-        x = x.view(bs, c, h_p, self.patch_size, w_p, self.patch_size)
-        x = x.permute(2, 4, 0, 1, 3, 5)
-        x = x.reshape(h_p * w_p, bs, -1)
-        x = self.linear(x)
+        x = x.permute(2, 3, 0, 1)
+        x = x.view(h * w, bs, c)
 
         return x
 
