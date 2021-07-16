@@ -12,12 +12,12 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 
 ResNets train layers as residual functions to overcome the
 *degradation problem*.
-Degradation problem is accuracy of deep neural networks degrading when
-the number of layers become very high.
+The degradation problem is the accuracy of deep neural networks degrading when
+the number of layers becomes very high.
 The accuracy increases as the number of layers increase, then saturates,
 and then starts to degrade.
 
-The paper argues that deeper models should perform at least as good as shallower
+The paper argues that deeper models should perform at least as well as shallower
 models because the extra layers can just learn to perform an identity mapping.
 
 ## Residual Learning
@@ -29,7 +29,7 @@ $$\mathcal{F}(x) = \mathcal{H}(x) - x$$
 
 instead. And the original function becomes $\mathcal{F}(x) + x$.
 
-In this case learning identity mapping for $\mathcal{H}(x)$ is
+In this case, learning identity mapping for $\mathcal{H}(x)$ is
 equivalent to learning $\mathcal{F}(x)$ to be $0$, which is easier to
 learn.
 
@@ -42,12 +42,12 @@ the paper suggests doing a linear projection, with learned weights $W_s$.
 
 $$\mathcal{F}(x, \{W_i\}) + W_s x$$
 
-Paper experimented with zero-padding instead of linear projections and found linear projections
+Paper experimented with zero padding instead of linear projections and found linear projections
 to work better. Also when the feature map sizes match they found identity mapping
 to be better than linear projections.
 
 $\mathcal{F}$ should have more than one layer, otherwise the sum $\mathcal{F}(x, \{W_i\}) + W_s x$
-also won't have non-linearity's and will be like a linear layer.
+also won't have non-linearities and will be like a linear layer.
 
 Here is [the training code](experiment.html) for training a ResNet on CIFAR-10.
 
