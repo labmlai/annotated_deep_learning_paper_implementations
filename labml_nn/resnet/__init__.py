@@ -105,7 +105,7 @@ class ResidualBlock(Module):
     The second convolution layer maps from `out_channels` to `out_channels` and
     always has a stride length of 1.
 
-    Both convolution layers are followed by a batch normalization.
+    Both convolution layers are followed by batch normalization.
     """
 
     def __init__(self, in_channels: int, out_channels: int, stride: int):
@@ -160,21 +160,21 @@ class BottleneckResidualBlock(Module):
     ## Bottleneck Residual Block
 
     This implements the bottleneck block described in the paper.
-    It has $1 \times 1$, $3 \times 3$ and $1 \times 1$ convolution layers.
+    It has $1 \times 1$, $3 \times 3$, and $1 \times 1$ convolution layers.
 
     ![Bottlenext Block](bottleneck_block.svg)
 
     The first convolution layer maps from `in_channels` to `bottleneck_channels` with a $1x1$
     convolution,
-    where the `bottleneck_channels` is lower than than `in_channels`.
+    where the `bottleneck_channels` is lower than `in_channels`.
 
     The second $3x3$ convolution layer maps from `bottleneck_channels` to `bottleneck_channels`.
     This can have a stride length greater than $1$ when we want to compress the
     feature map size.
 
-    The third, final $1x1$ convolution layer maps to `out_channels`, where
-    `out_channels` is higher than `in_channels` if the stride length is greater than $1$,
-    otherwise $out_channels$ is equal to `in_channels`.
+    The third, final $1x1$ convolution layer maps to `out_channels`.
+    `out_channels` is higher than `in_channels` if the stride length is greater than $1$;
+    otherwise, $out_channels$ is equal to `in_channels`.
 
     `bottleneck_channels` is less than `in_channels` and the $3x3$ convolution is performed
     on this shrunk space (hence the bottleneck). The two $1x1$ convolution decreases and increases
