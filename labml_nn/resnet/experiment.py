@@ -1,11 +1,13 @@
 """
 ---
-title: Train a resnet on CIFAR 10
+title: Train a ResNet on CIFAR 10
 summary: >
-  Train a resnet on CIFAR 10
+  Train a ResNet on CIFAR 10
 ---
 
-#  Train a resnet on CIFAR 10
+# Train a [ResNet](index.html) on CIFAR 10
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/fc5ad600e4af11ebbafd23b8665193c1)
 """
 from typing import List, Optional
 
@@ -25,9 +27,13 @@ class Configs(CIFAR10Configs):
     dataset related configurations, optimizer, and a training loop.
     """
 
+    # Number fo blocks for each feature map size
     n_blocks: List[int] = [3, 3, 3]
+    # Number of channels for each feature map size
     n_channels: List[int] = [16, 32, 64]
+    # Bottleneck sizes
     bottlenecks: Optional[List[int]] = None
+    # Kernel size of the initial convolution layer
     first_kernel_size: int = 7
 
 
@@ -36,10 +42,14 @@ def _resnet(c: Configs):
     """
     ### Create model
     """
+    # [ResNet](index.html)
     base = ResNetBase(c.n_blocks, c.n_channels, c.bottlenecks, img_channels=3, first_kernel_size=c.first_kernel_size)
+    # Linear layer for classification
     classification = nn.Linear(c.n_channels[-1], 10)
 
+    # Stack them
     model = nn.Sequential(base, classification)
+    # Move the model to the device
     return model.to(c.device)
 
 
@@ -55,7 +65,7 @@ def main():
 
         'optimizer.optimizer': 'Adam',
         'optimizer.learning_rate': 2.5e-4,
-        # 'optimizer.weight_decay': 1e-4,
+
         'epochs': 500,
         'train_batch_size': 256,
 
