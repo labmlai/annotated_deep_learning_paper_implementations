@@ -38,6 +38,8 @@ implementations.
 
 #### ✨ [HyperNetworks - HyperLSTM](hypernetworks/hyper_lstm.html)
 
+#### ✨ [ResNet](resnet/index.html)
+
 #### ✨ [Capsule Networks](capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](gan/index.html)

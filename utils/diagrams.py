@@ -254,8 +254,9 @@ def main():
 
         with monit.section(str(p)):
             if source_path.suffix == '.svg':
-                parse(source_path, source_path)
-            shutil.copy(str(source_path), str(dest_path))
+                parse(source_path, dest_path)
+            else:
+                shutil.copy(str(source_path), str(dest_path))
 
 
 if __name__ == '__main__':

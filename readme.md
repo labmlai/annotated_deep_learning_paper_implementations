@@ -44,6 +44,8 @@ implementations almost weekly.
 
 #### ✨ [HyperNetworks - HyperLSTM](https://nn.labml.ai/hypernetworks/hyper_lstm.html)
 
+#### ✨ [ResNet](https://nn.labml.ai/resnet/index.html)
+
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
