@@ -31,6 +31,7 @@ implementations.
 * [Masked Language Model](transformers/mlm/index.html)
 * [MLP-Mixer: An all-MLP Architecture for Vision](transformers/mlp_mixer/index.html)
 * [Pay Attention to MLPs (gMLP)](transformers/gmlp/index.html)
+* [Vision Transformer (ViT)](transformers/vit/index.html)
 
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 

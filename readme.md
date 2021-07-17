@@ -37,6 +37,7 @@ implementations almost weekly.
 * [Masked Language Model](https://nn.labml.ai/transformers/mlm/index.html)
 * [MLP-Mixer: An all-MLP Architecture for Vision](https://nn.labml.ai/transformers/mlp_mixer/index.html)
 * [Pay Attention to MLPs (gMLP)](https://nn.labml.ai/transformers/gmlp/index.html)
+* [Vision Transformer (ViT)](https://nn.labml.ai/transformers/vit/index.html)
 
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 

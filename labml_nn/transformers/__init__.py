@@ -82,6 +82,11 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [Pay Attention to MLPs](https://papers.labml.ai/paper/2105.08050).
+
+## [Vision Transformer (ViT)](vit/index.html)
+
+This is an implementation of the paper
+[An Image Is Worth 16x16 Words: Transformers For Image Recognition At Scale](https://arxiv.org/abs/2010.11929).
 """
 
 from .configs import TransformerConfigs
