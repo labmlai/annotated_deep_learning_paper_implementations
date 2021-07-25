@@ -117,7 +117,7 @@ class GraphAttentionV2Layer(Module):
         # We calculate these for each head $k$. *We have omitted $\cdot^k$ for simplicity*.
         #
         # $$e_{ij} = a(\mathbf{W_l} \overrightarrow{h_i}, \mathbf{W_r} \overrightarrow{h_j}) =
-        # a(\overrightarrow{{g_l}_i}}, \overrightarrow{{g_r}_j}})$$
+        # a(\overrightarrow{{g_l}_i}, \overrightarrow{{g_r}_j})$$
         #
         # $e_{ij}$ is the attention score (importance) from node $j$ to node $i$.
         # We calculate this for each head.
@@ -131,7 +131,7 @@ class GraphAttentionV2Layer(Module):
         #
         # $$e_{ij} = \mathbf{a}^\top \text{LeakyReLU} \Big(
         # \Big[
-        # \overrightarrow{{g_l}_i}} + \overrightarrow{{g_r}_j}}
+        # \overrightarrow{{g_l}_i} + \overrightarrow{{g_r}_j}
         # \Big] \Big)$$
 
         # First we calculate

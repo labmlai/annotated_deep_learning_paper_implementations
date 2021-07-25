@@ -62,6 +62,7 @@ implementations almost weekly.
 #### ✨ Graph Neural Networks
 
 * [Graph Attention Networks (GAT)](https://nn.labml.ai/graphs/gat/index.html)
+* [Graph Attention Networks v2 (GATv2)](https://nn.labml.ai/graphs/gatv2/index.html)
 
 #### ✨ [Counterfactual Regret Minimization (CFR)](https://nn.labml.ai/cfr/index.html)
 
