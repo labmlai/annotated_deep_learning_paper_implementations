@@ -16,4 +16,4 @@ In contrast, in GATv2, every node can attend to any other node.
 Here is [the training code](https://nn.labml.ai/graph/gatv2/experiment.html) for training
 a two-layer GATv2 on Cora dataset.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8e27ad82ed2611ebabb691fb2028a868)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/34b1e2f6ed6f11ebb860997901a2d1e3)

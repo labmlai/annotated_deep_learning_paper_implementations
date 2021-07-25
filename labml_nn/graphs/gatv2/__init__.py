@@ -17,7 +17,7 @@ of attended nodes is unconditioned on the query node.
 In contrast, in GATv2, every node can attend to any other node.
 Here is [the training code](experiment.html) for training
 a two-layer GATv2 on Cora dataset.
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8e27ad82ed2611ebabb691fb2028a868)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/34b1e2f6ed6f11ebb860997901a2d1e3)
 """
 
 import torch
@@ -116,7 +116,7 @@ class GraphAttentionV2Layer(Module):
         # $a$ is the attention mechanism, that calculates the attention score.
         # The paper sums
         # $\overrightarrow{{g_l}_i}$, $\overrightarrow{{g_r}_j}$
-        # followed by a $\text{LeakyReLU}$  
+        # followed by a $\text{LeakyReLU}$ 
         # and does a linear transformation with a weight vector $\mathbf{a} \in \mathbb{R}^{F'}$
         # 
         #

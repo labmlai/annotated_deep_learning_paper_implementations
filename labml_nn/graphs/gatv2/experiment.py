@@ -7,7 +7,7 @@ summary: >
 
 # Train a Graph Attention Network v2 (GATv2) on Cora dataset
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8e27ad82ed2611ebabb691fb2028a868)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/34b1e2f6ed6f11ebb860997901a2d1e3)
 """
 
 from typing import Dict
@@ -178,7 +178,7 @@ class Configs(BaseConfigs):
     # Number of classes for classification
     n_classes: int
     # Dropout probability
-    dropout: float = 0.6
+    dropout: float = 0.7
     # Whether to include the citation network
     include_edges: bool = True
     # Dataset
