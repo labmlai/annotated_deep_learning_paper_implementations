@@ -105,10 +105,10 @@ class GraphAttentionV2Layer(Module):
         # Number of nodes
         n_nodes = h.shape[0]
         # The initial transformations,
-        # $$\overrightarrow{g^l_{i,k}} = \mathbf{W_l}^k \overrightarrow{h_i}$$
-        # $$\overrightarrow{g^r_{i,k}} = \mathbf{W_r}^k \overrightarrow{h_i}$$
+        # $$\overrightarrow{{g_l}^k_i} = \mathbf{W_l}^k \overrightarrow{h_i}$$
+        # $$\overrightarrow{{g_r}^k_i} = \mathbf{W_r}^k \overrightarrow{h_i}$$
         # for each head.
-        # We do single linear transformation and then split it up for each head.
+        # We do two linear transformations and then split it up for each head.
         g_l = self.linear_l(h).view(n_nodes, self.n_heads, self.n_hidden)
         g_r = self.linear_r(h).view(n_nodes, self.n_heads, self.n_hidden)
         
@@ -116,53 +116,53 @@ class GraphAttentionV2Layer(Module):
         #
         # We calculate these for each head $k$. *We have omitted $\cdot^k$ for simplicity*.
         #
-        # $$e_{ij} = a(\mathbf{W} \overrightarrow{h_i}, \mathbf{W} \overrightarrow{h_j}) =
-        # a(\overrightarrow{g^l_i}}, \overrightarrow{g^r_j}})$$
+        # $$e_{ij} = a(\mathbf{W_l} \overrightarrow{h_i}, \mathbf{W_r} \overrightarrow{h_j}) =
+        # a(\overrightarrow{{g_l}_i}}, \overrightarrow{{g_r}_j}})$$
         #
         # $e_{ij}$ is the attention score (importance) from node $j$ to node $i$.
         # We calculate this for each head.
         #
         # $a$ is the attention mechanism, that calculates the attention score.
         # The paper sums
-        # $\overrightarrow{g^l_i}$, $\overrightarrow{g^r_j}$
+        # $\overrightarrow{{g_l}_i}$, $\overrightarrow{{g_r}_j}$
         # followed by a $\text{LeakyReLU}$
         # and does a linear transformation with a weight vector $\mathbf{a} \in \mathbb{R}^{F'}$
         # 
         #
         # $$e_{ij} = \mathbf{a}^\top \text{LeakyReLU} \Big(
         # \Big[
-        # \overrightarrow{g^l_i}} + \overrightarrow{g^r_j}}
+        # \overrightarrow{{g_l}_i}} + \overrightarrow{{g_r}_j}}
         # \Big] \Big)$$
 
         # First we calculate
-        # $\Big[\overrightarrow{g^l_i} + \overrightarrow{g^r_j} \Big]$
+        # $\Big[\overrightarrow{{g_l}_i} + \overrightarrow{{g_r}_j} \Big]$
         # for all pairs of $i, j$.
         #
         # `g_l_repeat` gets
-        # $$\{\overrightarrow{g^l_1}, \overrightarrow{g^l_2}, \dots, \overrightarrow{g^l_N},
-        # \overrightarrow{g^l_1}, \overrightarrow{g^l_2}, \dots, \overrightarrow{g^l_N}, ...\}$$
+        # $$\{\overrightarrow{{g_l}_1}, \overrightarrow{{g_l}_2}, \dots, \overrightarrow{{g_l}_N},
+        # \overrightarrow{{g_l}_1}, \overrightarrow{{g_l}_2}, \dots, \overrightarrow{{g_l}_N}, ...\}$$
         # where each node embedding is repeated `n_nodes` times.
         g_l_repeat = g_l.repeat(n_nodes, 1, 1)
         # `g_r_repeat_interleave` gets
-        # $$\{\overrightarrow{g^r_1}, \overrightarrow{g^r_1}, \dots, \overrightarrow{g^r_1},
-        # \overrightarrow{g^r_2}, \overrightarrow{g^r_2}, \dots, \overrightarrow{g^r_2}, ...\}$$
+        # $$\{\overrightarrow{{g_r}_1}, \overrightarrow{{g_r}_1}, \dots, \overrightarrow{{g_r}_1},
+        # \overrightarrow{{g_r}_2}, \overrightarrow{{g_r}_2}, \dots, \overrightarrow{{g_r}_2}, ...\}$$
         # where each node embedding is repeated `n_nodes` times.
         g_r_repeat_interleave = g_r.repeat_interleave(n_nodes, dim=0)
         # Now we sum to get
-        # $$\{\overrightarrow{g^l_1} + \overrightarrow{g^r_1},
-        # \overrightarrow{g^l_1}, + \overrightarrow{g^r_2},
-        # \dots, \overrightarrow{g^l_1}  +\overrightarrow{g^r_N},
-        # \overrightarrow{g^l_2} + \overrightarrow{g^r_1},
-        # \overrightarrow{g^l_2}, + \overrightarrow{g^r_2},
-        # \dots, \overrightarrow{g^l_2}  + \overrightarrow{g^r_N}, ...\}$$
+        # $$\{\overrightarrow{{g_l}_1} + \overrightarrow{{g_r}_1},
+        # \overrightarrow{{g_l}_1}, + \overrightarrow{{g_r}_2},
+        # \dots, \overrightarrow{{g_l}_1}  +\overrightarrow{{g_r}_N},
+        # \overrightarrow{{g_l}_2} + \overrightarrow{{g_r}_1},
+        # \overrightarrow{{g_l}_2}, + \overrightarrow{{g_r}_2},
+        # \dots, \overrightarrow{{g_l}_2}  + \overrightarrow{{g_r}_N}, ...\}$$
         g_sum = g_l_repeat + g_r_repeat_interleave
-        # Reshape so that `g_sum[i, j]` is $\overrightarrow{g^l_i} + \overrightarrow{g^r_j}$
+        # Reshape so that `g_sum[i, j]` is $\overrightarrow{{g_l}_i} + \overrightarrow{{g_r}_j}$
         g_sum = g_sum.view(n_nodes, n_nodes, self.n_heads, self.n_hidden)
 
         # Calculate
         # $$e_{ij} = \mathbf{a}^\top \text{LeakyReLU} \Big(
         # \Big[
-        # \overrightarrow{g^l_i} + \overrightarrow{g^r_j}
+        # \overrightarrow{{g_l}_i} + \overrightarrow{{g_r}_j}
         # \Big] \Big)$$
         # `e` is of shape `[n_nodes, n_nodes, n_heads, 1]`
         e = self.attn(self.activation(g_sum))
@@ -192,7 +192,7 @@ class GraphAttentionV2Layer(Module):
         a = self.dropout(a)
 
         # Calculate final output for each head
-        # $$\overrightarrow{h'^k_i} = \sum_{j \in \mathcal{N}_i} \alpha^k_{ij} \overrightarrow{g^r_{j,k}}$$
+        # $$\overrightarrow{h'^k_i} = \sum_{j \in \mathcal{N}_i} \alpha^k_{ij} \overrightarrow{{g_r}_{j,k}}$$
         attn_res = torch.einsum('ijh,jhf->ihf', a, g_r)
 
         # Concatenate the heads
