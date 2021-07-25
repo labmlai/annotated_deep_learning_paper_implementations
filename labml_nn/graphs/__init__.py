@@ -8,4 +8,5 @@ summary: >
 # Graph Neural Networks
 
 * [Graph Attention Networks (GAT)](gat/index.html)
+* [Graph Attention Networks v2 (GATv2)](gatv2/index.html)
 """
