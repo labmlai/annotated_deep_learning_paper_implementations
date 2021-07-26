@@ -1,4 +1,4 @@
-# [Distilling the Knowledge in a Neural Network]((https://nn.labml.ai/distillation/index.html))
+# [Distilling the Knowledge in a Neural Network](https://nn.labml.ai/distillation/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
 [Distilling the Knowledge in a Neural Network](https://papers.labml.ai/paper/1503.02531).
