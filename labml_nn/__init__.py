@@ -56,7 +56,7 @@ implementations.
 #### ✨ Graph Neural Networks
 
 * [Graph Attention Networks (GAT)](graphs/gat/index.html)
-* [Graph Attention Networks v2 (GATv2)](gatv2/index.html)
+* [Graph Attention Networks v2 (GATv2)](graphs/gatv2/index.html)
 
 #### ✨ [Counterfactual Regret Minimization (CFR)](cfr/index.html)
 
