@@ -1,4 +1,4 @@
-# [Graph Attention Networks v2 (GATv2)](https://nn.labml.ai/graph/gatv2/index.html)
+# [Graph Attention Networks v2 (GATv2)](https://nn.labml.ai/graphs/gatv2/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the GATv2 opeartor from the paper
 [How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
@@ -13,7 +13,7 @@ since the linear layers in the standard GAT are applied right after each other, 
 of attended nodes is unconditioned on the query node. 
 In contrast, in GATv2, every node can attend to any other node.
 
-Here is [the training code](https://nn.labml.ai/graph/gatv2/experiment.html) for training
+Here is [the training code](https://nn.labml.ai/graphs/gatv2/experiment.html) for training
 a two-layer GATv2 on Cora dataset.
 
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/34b1e2f6ed6f11ebb860997901a2d1e3)
