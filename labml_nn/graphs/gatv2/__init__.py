@@ -8,15 +8,47 @@ summary: >
 This is a [PyTorch](https://pytorch.org) implementation of the GATv2 operator from the paper
 [How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
 
-GATv2s work on graph data.
+GATv2s work on graph data similar to [GAT](../gat/index.html).
 A graph consists of nodes and edges connecting nodes.
 For example, in Cora dataset the nodes are research papers and the edges are citations that
 connect the papers.
 
-The GATv2 operator fixes the static attention problem of the standard [GAT](../gat/index.html):
-since the linear layers in the standard GAT are applied right after each other, the ranking 
-of attended nodes is unconditioned on the query node. 
-In contrast, in GATv2, every node can attend to any other node.
+The GATv2 operator fixes the static attention problem of the standard [GAT](../gat/index.html).
+Static attention is when the attention to the key nodes has the same rank (order) for any query node.
+[GAT](../gat/index.html) computes attention from query node $i$ to key node $j$ as,
+
+\begin{align}
+e_{ij} &= \text{LeakyReLU} \Big(\mathbf{a}^\top \Big[
+ \mathbf{W} \overrightarrow{h_i} \Vert  \mathbf{W} \overrightarrow{h_j}
+\Big] \Big) \\
+&=
+\text{LeakyReLU} \Big(\mathbf{a}_1^\top  \mathbf{W} \overrightarrow{h_i} +
+ \mathbf{a}_2^\top  \mathbf{W} \overrightarrow{h_j}
+\Big)
+\end{align}
+
+Note that for any query node $i$, the attention rank ($argsort$) of keys depends only
+on $\mathbf{a}_2^\top  \mathbf{W} \overrightarrow{h_j}$.
+Therefore the attention rank of keys remains the same (*static*) for all queries.
+
+GATv2 allows dynamic attention by changing the attention mechanism,
+
+\begin{align}
+e_{ij} &= \mathbf{a}^\top \text{LeakyReLU} \Big( \mathbf{W} \Big[
+ \overrightarrow{h_i} \Vert  \overrightarrow{h_j}
+\Big] \Big) \\
+&= \mathbf{a}^\top \text{LeakyReLU} \Big(
+\mathbf{W}_l \overrightarrow{h_i} +  \mathbf{W}_r \overrightarrow{h_j}
+\Big)
+\end{align}
+
+The paper shows that GATs static attention mechanism fails on some graph problems
+with a synthetic dictionary lookup dataset.
+It's a fully connected bipartite graph where one set of nodes (query nodes)
+have a key associated with it
+and the other set of nodes have both a key and a value associated with it.
+The goal is to predict the values of query nodes.
+GAT fails on this task because of its limited static attention.
 
 Here is [the training code](experiment.html) for training
 a two-layer GATv2 on Cora dataset.
@@ -42,11 +74,12 @@ class GraphAttentionV2Layer(Module):
     $$\mathbf{h'} = \{ \overrightarrow{h'_1}, \overrightarrow{h'_2}, \dots, \overrightarrow{h'_N} \}$$,
     where $\overrightarrow{h'_i} \in \mathbb{R}^{F'}$.
     """
+
     def __init__(self, in_features: int, out_features: int, n_heads: int,
                  is_concat: bool = True,
                  dropout: float = 0.6,
-                 leaky_relu_negative_slope: float = 0.2, 
-                 share_weights=False):
+                 leaky_relu_negative_slope: float = 0.2,
+                 share_weights: bool = False):
         """
         * `in_features`, $F$, is the number of input features per node
         * `out_features`, $F'$, is the number of output features per node
@@ -54,7 +87,7 @@ class GraphAttentionV2Layer(Module):
         * `is_concat` whether the multi-head results should be concatenated or averaged
         * `dropout` is the dropout probability
         * `leaky_relu_negative_slope` is the negative slope for leaky relu activation
-        * `share_weights` if set to True, the same matrix will be applied to the source and the target node of every edge
+        * `share_weights` if set to `True`, the same matrix will be applied to the source and the target node of every edge
         """
         super().__init__()
 
@@ -74,11 +107,11 @@ class GraphAttentionV2Layer(Module):
         # Linear layer for initial source transformation;
         # i.e. to transform the source node embeddings before self-attention
         self.linear_l = nn.Linear(in_features, self.n_hidden * n_heads, bias=False)
-        # If  `share_weights is True` the same linear layer is used for the target nodes
+        # If `share_weights` is `True` the same linear layer is used for the target nodes
         if share_weights:
             self.linear_r = self.linear_l
         else:
-            self.linear_r = Linear(in_channels, heads * out_channels, bias=bias)
+            self.linear_r = nn.Linear(in_features, self.n_hidden * n_heads, bias=False)
         # Linear layer to compute attention score $e_{ij}$
         self.attn = nn.Linear(self.n_hidden, 1, bias=False)
         # The activation for attention score $e_{ij}$
@@ -106,7 +139,7 @@ class GraphAttentionV2Layer(Module):
         # We do two linear transformations and then split it up for each head.
         g_l = self.linear_l(h).view(n_nodes, self.n_heads, self.n_hidden)
         g_r = self.linear_r(h).view(n_nodes, self.n_heads, self.n_hidden)
-        
+
         # #### Calculate attention score
         #
         # We calculate these for each head $k$. *We have omitted $\cdot^k$ for simplicity*.

@@ -40,13 +40,13 @@ class GATv2(Module):
         super().__init__()
 
         # First graph attention layer where we concatenate the heads
-        self.layer1 = GraphAttentionV2Layer(in_features, n_hidden, n_heads, is_concat=True, dropout=dropout,
-                                            share_weights=share_weights)
+        self.layer1 = GraphAttentionV2Layer(in_features, n_hidden, n_heads,
+                                            is_concat=True, dropout=dropout, share_weights=share_weights)
         # Activation function after first graph attention layer
         self.activation = nn.ELU()
         # Final graph attention layer where we average the heads
-        self.output = GraphAttentionV2Layer(n_hidden, n_classes, 1, is_concat=False, dropout=dropout,
-                                            share_weights=share_weights)
+        self.output = GraphAttentionV2Layer(n_hidden, n_classes, 1,
+                                            is_concat=False, dropout=dropout, share_weights=share_weights)
         # Dropout
         self.dropout = nn.Dropout(dropout)
 
@@ -73,11 +73,11 @@ class Configs(GATConfigs):
     ## Configurations
 
     Since the experiment is same as [GAT experiment](../gat/experiment.html) but with
-    [GATv2 mode](index.html) we extend the same configs and change the model
+    [GATv2 model](index.html) we extend the same configs and change the model.
     """
 
     # Whether to share weights for source and target nodes of edges
-    share_weights: bool = True
+    share_weights: bool = False
     # Set the model
     model: GATv2 = 'gat_v2_model'
 
@@ -85,7 +85,7 @@ class Configs(GATConfigs):
 @option(Configs.model)
 def gat_v2_model(c: Configs):
     """
-    Create GAT model
+    Create GATv2 model
     """
     return GATv2(c.in_features, c.n_hidden, c.n_classes, c.n_heads, c.dropout, c.share_weights).to(c.device)
 
