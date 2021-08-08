@@ -5,15 +5,15 @@ with open("readme.md", "r") as f:
 
 setuptools.setup(
     name='labml-nn',
-    version='0.4.103',
+    version='0.4.104',
     author="Varuna Jayasiri, Nipun Wijerathne",
     author_email="vpjayasiri@gmail.com, hnipun@gmail.com",
-    description="A collection of PyTorch implementations of neural network architectures and layers.",
+    description="🧠 Implementations/tutorials of deep learning papers with side-by-side notes; including transformers (original, xl, switch, feedback, vit), optimizers(adam, radam, adabelief), gans(dcgan, cyclegan, stylegan2), reinforcement learning (ppo, dqn), capsnet, distillation, etc.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/lab-ml/nn",
+    url="https://github.com/labmlai/annotated_deep_learning_paper_implementations",
     project_urls={
-        'Documentation': 'https://lab-ml.com/'
+        'Documentation': 'https://nn.labml.ai'
     },
     packages=setuptools.find_packages(exclude=('labml', 'labml.*',
                                                'labml_samples', 'labml_samples.*',
