@@ -88,7 +88,7 @@ class Configs(BaseConfigs):
     """
 
     # Device to train the model on.
-    # [`DeviceConfigs`](https://github.com/lab-ml/helpers/blob/master/labml_helpers/device.py)
+    # [`DeviceConfigs`](https://docs.labml.ai/api/helpers.html#labml_helpers.device.DeviceConfigs)
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 
