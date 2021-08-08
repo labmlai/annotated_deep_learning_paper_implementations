@@ -20,5 +20,5 @@ Annotated implementation of relative multi-headed attention is in [`relative_mha
 
 Here's [the training code](https://nn.labml.ai/transformers/xl/experiment.html) and a notebook for training a transformer XL model on Tiny Shakespeare dataset.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/xl/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/xl/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d3b6760c692e11ebb6a70242ac1c0002)

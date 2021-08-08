@@ -10,7 +10,7 @@ This trains a fast weights transformer model for auto-regression.
 
 Here’s a Colab notebook for training a fast weights transformer on Tiny Shakespeare dataset.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/fast_weights/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/fast_weights/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/928aadc0846c11eb85710242ac1c0002)
 """
 

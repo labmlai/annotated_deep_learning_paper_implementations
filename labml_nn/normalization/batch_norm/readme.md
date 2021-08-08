@@ -84,5 +84,5 @@ mean and variance during the training phase and use that for inference.
 Here's [the training code](mnist.html) and a notebook for training
 a CNN classifier that uses batch normalization for MNIST dataset.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/batch_norm/mnist.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/011254fe647011ebbb8e0242ac1c0002)

@@ -33,7 +33,7 @@ discusses dropping tokens when routing is not balanced.
 
 Here's [the training code](experiment.html) and a notebook for training a switch transformer on Tiny Shakespeare dataset.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/transformers/switch/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/switch/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/c4656c605b9311eba13d0242ac1c0002)
 """
 

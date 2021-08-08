@@ -9,7 +9,7 @@ summary: Annotated implementation to train a PPO agent on Atari Breakout game.
 This experiment trains Proximal Policy Optimization (PPO) agent  Atari Breakout game on OpenAI Gym.
 It runs the [game environments on multiple processes](../game.html) to sample efficiently.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/rl/ppo/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/ppo/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f)
 """
 

@@ -81,7 +81,7 @@ network that defines $f$ clipped within a range.*
 
 Here is the code to try this on a [simple MNIST generation experiment](experiment.html).
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/gan/wasserstein/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/gan/wasserstein/experiment.ipynb)
 """
 
 import torch.utils.data

@@ -21,7 +21,7 @@ where we sample from the game tree and estimate the regrets.
 We tried to keep our Python implementation easy-to-understand like a tutorial.
 We run it on [a very simple imperfect information game called Kuhn poker](kuhn/index.html).
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-ml/nn/blob/master/labml_nn/cfr/kuhn/experiment.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/cfr/kuhn/experiment.ipynb)
 
 [![Twitter thread](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Ftwitter.com%2Flabmlai%2Fstatus%2F1407186002255380484)](https://twitter.com/labmlai/status/1407186002255380484)
 Twitter thread

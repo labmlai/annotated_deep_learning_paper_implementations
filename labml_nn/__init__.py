@@ -3,7 +3,7 @@
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
-[These implementations](https://github.com/lab-ml/nn) are documented with explanations,
+[These implementations](https://github.com/labmlai/annotated_deep_learning_paper_implementations) are documented with explanations,
 and the [website](index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
