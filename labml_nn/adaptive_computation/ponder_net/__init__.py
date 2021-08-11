@@ -57,7 +57,7 @@ class SimplePonderGRU(Module):
 
             p.append(p_n)
             y.append(y_n)
-            
+
             p_sampled = p_sampled * (1 - halt) + p_n * halt
             y_sampled = y_sampled * (1 - halt) + y_n * halt
 

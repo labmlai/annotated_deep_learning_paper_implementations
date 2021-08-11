@@ -15,7 +15,7 @@ class Configs(SimpleTrainValidConfigs):
     """
     Configurations with MNIST data and Train & Validation setup
     """
-    epochs: int = 10
+    epochs: int = 100
     model: SimplePonderGRU
     accuracy = AccuracyDirect()
 
@@ -30,7 +30,7 @@ class Configs(SimpleTrainValidConfigs):
     beta: float = 0.01
 
     batch_size: int = 128
-    n_batches: int = 5_000
+    n_batches: int = 500
 
     grad_norm_clip: float = 1.0
 
