@@ -90,6 +90,10 @@ Solving games with incomplete information such as poker with CFR.
 
 #### ✨ [Distillation](distillation/index.html)
 
+#### ✨ [Adaptive Computation](adaptive_computation/index.html)
+
+* [PonderNet](adaptive_computation/ponder_net/index.html)
+
 ### Installation
 
 ```bash
