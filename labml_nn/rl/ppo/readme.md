@@ -1,7 +1,7 @@
 # [Proximal Policy Optimization - PPO](https://nn.labml.ai/rl/ppo/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of
-[Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
+[Proximal Policy Optimization - PPO](https://papers.labml.ai/paper/1707.06347).
 
 PPO is a policy gradient method for reinforcement learning.
 Simple policy gradient methods one do a single gradient update per sample (or a set of samples).

@@ -1,7 +1,7 @@
 # [Graph Attention Networks (GAT)](https://nn.labml.ai/graphs/gat/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Graph Attention Networks](https://arxiv.org/abs/1710.10903).
+[Graph Attention Networks](https://papers.labml.ai/paper/1710.10903).
 
 GATs work on graph data.
 A graph consists of nodes and edges connecting nodes.

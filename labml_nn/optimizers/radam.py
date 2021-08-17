@@ -9,7 +9,7 @@ summary: A simple PyTorch implementation/tutorial of RAdam optimizer.
 This implementation is based on
 [the official implementation](https://github.com/LiyuanLucasLiu/RAdam)
 of the paper
-[On the Variance of the Adaptive Learning Rate and Beyond](https://arxiv.org/abs/1908.03265).
+[On the Variance of the Adaptive Learning Rate and Beyond](https://papers.labml.ai/paper/1908.03265).
 
 We have implemented it in [PyTorch](https://pytorch.org)
 as an extension to [our AMSGrad implementation](amsgrad.html)

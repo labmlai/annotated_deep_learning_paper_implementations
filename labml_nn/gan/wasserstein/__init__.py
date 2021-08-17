@@ -7,7 +7,7 @@ summary: A simple PyTorch implementation/tutorial of Wasserstein Generative Adve
 # Wasserstein GAN (WGAN)
 
 This is an implementation of
-[Wasserstein GAN](https://arxiv.org/abs/1701.07875).
+[Wasserstein GAN](https://papers.labml.ai/paper/1701.07875).
 
 The original GAN loss is based on Jensen-Shannon (JS) divergence
 between the real distribution $\mathbb{P}_r$ and generated distribution $\mathbb{P}_g$.

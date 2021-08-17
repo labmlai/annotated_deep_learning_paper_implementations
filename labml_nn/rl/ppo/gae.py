@@ -7,7 +7,7 @@ summary: A PyTorch implementation/tutorial of Generalized Advantage Estimation (
 # Generalized Advantage Estimation (GAE)
 
 This is a [PyTorch](https://pytorch.org) implementation of paper
-[Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438).
+[Generalized Advantage Estimation](https://papers.labml.ai/paper/1506.02438).
 
 You can find an experiment that uses it [here](experiment.html).
 """

@@ -9,7 +9,7 @@ summary: A simple PyTorch implementation/tutorial of AdaBelief optimizer.
 This is based from AdaBelief
 [official implementation](https://github.com/juntang-zhuang/Adabelief-Optimizer)
 of the paper
-[AdaBelief Optimizer: Adapting Stepsizes by the Belief in Observed Gradients](https://arxiv.org/abs/2010.07468).
+[AdaBelief Optimizer: Adapting Stepsizes by the Belief in Observed Gradients](https://papers.labml.ai/paper/2010.07468).
 
 This is implemented in [PyTorch](https://pytorch.org) as an extension to [RAdam](radam.html).
 

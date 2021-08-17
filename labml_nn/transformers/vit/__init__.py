@@ -9,7 +9,7 @@ summary: >
 #  Vision Transformer (ViT)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[An Image Is Worth 16x16 Words: Transformers For Image Recognition At Scale](https://arxiv.org/abs/2010.11929).
+[An Image Is Worth 16x16 Words: Transformers For Image Recognition At Scale](https://papers.labml.ai/paper/2010.11929).
 
 Vision transformer applies a pure transformer to images
 without any convolution layers.

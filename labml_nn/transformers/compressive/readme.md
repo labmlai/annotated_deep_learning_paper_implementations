@@ -1,7 +1,7 @@
 # [Compressive Transformer](https://nn.labml.ai/transformers/compressive/index.html)
 
 This is an implementation of
-[Compressive Transformers for Long-Range Sequence Modelling](https://arxiv.org/abs/1911.05507)
+[Compressive Transformers for Long-Range Sequence Modelling](https://papers.labml.ai/paper/1911.05507)
 in [PyTorch](https://pytorch.org).
 
 This is an extension of [Transformer XL](https://nn.labml.ai/transformers/xl/index.html) where past memories

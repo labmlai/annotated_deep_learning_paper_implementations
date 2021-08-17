@@ -7,7 +7,7 @@ summary: A PyTorch implementation/tutorial of HyperLSTM introduced in paper Hype
 # HyperNetworks - HyperLSTM
 
 We have implemented HyperLSTM introduced in paper
-[HyperNetworks](https://arxiv.org/abs/1609.09106), with annotations
+[HyperNetworks](https://papers.labml.ai/paper/1609.09106), with annotations
 using [PyTorch](https://pytorch.org).
 [This blog post](https://blog.otoro.net/2016/09/28/hyper-networks/)
 by David Ha gives a good explanation of HyperNetworks.

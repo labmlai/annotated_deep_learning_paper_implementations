@@ -7,7 +7,7 @@ summary: >
 
 # Transformer Auto-Regression Experiment
 
-This trains a simple transformer introduced in [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
+This trains a simple transformer introduced in [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
 on an NLP auto-regression task (with Tiny Shakespeare dataset).
 """
 

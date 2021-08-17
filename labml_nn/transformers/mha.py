@@ -9,7 +9,7 @@ summary: >
 # Multi-Headed Attention (MHA)
 
 This is a tutorial/implementation of multi-headed attention
-from paper [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
+from paper [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
 in [PyTorch](https://pytorch.org/).
 The implementation is inspired from [Annotated Transformer](https://nlp.seas.harvard.edu/2018/04/03/attention.html).
 

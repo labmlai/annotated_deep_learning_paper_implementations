@@ -1,7 +1,7 @@
 # [Fast weights transformer](https://nn.labml.ai/transformers/fast_weights/index.html)
 
 This is an annotated implementation of the paper
-[Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://arxiv.org/abs/2102.11174).
+[Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://papers.labml.ai/paper/2102.11174).
 
 Here is the [annotated implementation](https://nn.labml.ai/transformers/fast_weights/index.html).
 Here are [the training code](https://nn.labml.ai/transformers/fast_weights/experiment.html)

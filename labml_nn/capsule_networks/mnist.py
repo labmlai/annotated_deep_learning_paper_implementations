@@ -9,7 +9,7 @@ summary: Code for training Capsule Networks on MNIST dataset
 This is an annotated PyTorch code to classify MNIST digits with PyTorch.
 
 This paper implements the experiment described in paper
-[Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
+[Dynamic Routing Between Capsules](https://papers.labml.ai/paper/1710.09829).
 """
 from typing import Any
 

@@ -8,7 +8,7 @@ summary: >
 # Proximal Policy Optimization - PPO
 
 This is a [PyTorch](https://pytorch.org) implementation of
-[Proximal Policy Optimization - PPO](https://arxiv.org/abs/1707.06347).
+[Proximal Policy Optimization - PPO](https://papers.labml.ai/paper/1707.06347).
 
 PPO is a policy gradient method for reinforcement learning.
 Simple policy gradient methods do a single gradient update per sample (or a set of samples).
@@ -112,7 +112,7 @@ class ClippedPPOLoss(Module):
     The error we introduce to $J(\pi_\theta) - J(\pi_{\theta_{OLD}})$
      by this assumption is bound by the KL divergence between
      $\pi_\theta$ and $\pi_{\theta_{OLD}}$.
-    [Constrained Policy Optimization](https://arxiv.org/abs/1705.10528)
+    [Constrained Policy Optimization](https://papers.labml.ai/paper/1705.10528)
      shows the proof of this. I haven't read it.
 
 

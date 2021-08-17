@@ -1,7 +1,7 @@
 # [Switch Transformer](https://nn.labml.ai/transformers/switch/index.html)
 
 This is a miniature [PyTorch](https://pytorch.org) implementation of the paper
-[Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961).
+[Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://papers.labml.ai/paper/2101.03961).
 Our implementation only has a few million parameters and doesn't do model parallel distributed training.
 It does single GPU training, but we implement the concept of switching as described in the paper.
 

@@ -1,7 +1,7 @@
 # [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of
-[Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829).
+[Dynamic Routing Between Capsules](https://papers.labml.ai/paper/1710.09829).
 
 Capsule network is a neural network architecture that embeds features
 as capsules and routes them with a voting mechanism to next layer of capsules.

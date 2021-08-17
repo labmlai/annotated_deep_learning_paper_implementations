@@ -1,7 +1,7 @@
 # [FNet: Mixing Tokens with Fourier Transforms](https://nn.labml.ai/transformers/fnet/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[FNet: Mixing Tokens with Fourier Transforms](https://arxiv.org/abs/2105.03824).
+[FNet: Mixing Tokens with Fourier Transforms](https://papers.labml.ai/paper/2105.03824).
 
 This paper replaces the [self-attention layer](https://nn.labml.ai/transformers//mha.html) with two
 [Fourier transforms](https://en.wikipedia.org/wiki/Discrete_Fourier_transform) to

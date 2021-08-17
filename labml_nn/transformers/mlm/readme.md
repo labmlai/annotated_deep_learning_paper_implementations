@@ -2,7 +2,7 @@
 
 This is a [PyTorch](https://pytorch.org) implementation of Masked Language Model (MLM)
  used to pre-train the BERT model introduced in the paper
-[BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805).
+[BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://papers.labml.ai/paper/1810.04805).
 
 ## BERT Pretraining
 

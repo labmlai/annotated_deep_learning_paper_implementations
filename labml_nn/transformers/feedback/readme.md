@@ -1,7 +1,7 @@
 # [Feedback Transformer](https://nn.labml.ai/transformers/feedback/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://arxiv.org/abs/2002.09402).
+[Accessing Higher-level Representations in Sequential Transformers with Feedback Memory](https://papers.labml.ai/paper/2002.09402).
 
 Normal transformers process tokens in parallel. Each transformer layer pays attention
 to the outputs of the previous layer.
