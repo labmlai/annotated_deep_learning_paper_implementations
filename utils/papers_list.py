@@ -19,6 +19,8 @@ IGNORE = {
     'transformers/configs.html',
     'optimizers/noam.html',
     'transformers/basic/autoregressive_experiment.html',
+    'transformers/xl/relative_mha.html',
+    'capsule_networks/mnist.html',
 }
 
 IGNORE_PAPERS = {
