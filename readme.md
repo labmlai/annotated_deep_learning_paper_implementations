@@ -1,6 +1,6 @@
 [![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai)
 
-# [labml.ai Deep Learning Paper Implementaion](https://nn.labml.ai/index.html)
+# [labml.ai Deep Learning Paper Implementations](https://nn.labml.ai/index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
