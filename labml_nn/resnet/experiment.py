@@ -34,7 +34,7 @@ class Configs(CIFAR10Configs):
     # Bottleneck sizes
     bottlenecks: Optional[List[int]] = None
     # Kernel size of the initial convolution layer
-    first_kernel_size: int = 7
+    first_kernel_size: int = 3
 
 
 @option(Configs.model)

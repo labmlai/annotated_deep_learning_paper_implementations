@@ -273,7 +273,7 @@ class ResNetBase(Module):
         # Initial convolution layer maps from `img_channels` to number of channels in the first
         # residual block (`n_channels[0]`)
         self.conv = nn.Conv2d(img_channels, n_channels[0],
-                              kernel_size=first_kernel_size, stride=1, padding=first_kernel_size // 2)
+                              kernel_size=first_kernel_size, stride=2, padding=first_kernel_size // 2)
         # Batch norm after initial convolution
         self.bn = nn.BatchNorm2d(n_channels[0])
 
