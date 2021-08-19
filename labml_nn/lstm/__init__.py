@@ -78,7 +78,7 @@ class LSTMCell(Module):
             self.layer_norm = nn.ModuleList([nn.Identity() for _ in range(4)])
             self.layer_norm_c = nn.Identity()
 
-    def __call__(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor):
+    def forward(self, x: torch.Tensor, h: torch.Tensor, c: torch.Tensor):
         # We compute the linear transformations for $i_t$, $f_t$, $g_t$ and $o_t$
         # using the same linear layers.
         ifgo = self.hidden_lin(h) + self.input_lin(x)
@@ -119,7 +119,7 @@ class LSTM(Module):
         self.cells = nn.ModuleList([LSTMCell(input_size, hidden_size)] +
                                    [LSTMCell(hidden_size, hidden_size) for _ in range(n_layers - 1)])
 
-    def __call__(self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
+    def forward(self, x: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
         """
         `x` has shape `[n_steps, batch_size, input_size]` and
         `state` is a tuple of $h$ and $c$, each with a shape of `[batch_size, hidden_size]`.

@@ -63,7 +63,7 @@ class BatchChannelNorm(Module):
         # Channel normalization
         self.channel_norm = ChannelNorm(channels, groups, eps)
 
-    def __call__(self, x):
+    def forward(self, x):
         x = self.batch_norm(x)
         return self.channel_norm(x)
 
@@ -113,7 +113,7 @@ class EstimatedBatchNorm(Module):
         self.register_buffer('exp_mean', torch.zeros(channels))
         self.register_buffer('exp_var', torch.ones(channels))
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         `x` is a tensor of shape `[batch_size, channels, *]`.
         `*` denotes any number of (possibly 0) dimensions.
@@ -195,7 +195,7 @@ class ChannelNorm(Module):
             self.scale = nn.Parameter(torch.ones(groups))
             self.shift = nn.Parameter(torch.zeros(groups))
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         `x` is a tensor of shape `[batch_size, channels, *]`.
         `*` denotes any number of (possibly 0) dimensions.

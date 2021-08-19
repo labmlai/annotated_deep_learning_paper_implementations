@@ -45,7 +45,7 @@ class Model(Module):
         #
         self.fc2 = nn.Linear(500, 10)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.max_pool2d(x, 2, 2)
         x = F.relu(self.bn2(self.conv2(x)))

@@ -72,7 +72,7 @@ class RHNCell(Module):
         # Similarly we combine $lin_{hx}$ and $lin_{gx}$.
         self.input_lin = nn.Linear(input_size, 2 * hidden_size, bias=False)
 
-    def __call__(self, x: torch.Tensor, s: torch.Tensor):
+    def forward(self, x: torch.Tensor, s: torch.Tensor):
         """
         `x` has shape `[batch_size, input_size]` and
         `s` has shape `[batch_size, hidden_size]`.
@@ -123,7 +123,7 @@ class RHN(Module):
         self.cells = nn.ModuleList([RHNCell(input_size, hidden_size, depth)] +
                                    [RHNCell(hidden_size, hidden_size, depth) for _ in range(n_layers - 1)])
 
-    def __call__(self, x: torch.Tensor, state: Optional[torch.Tensor] = None):
+    def forward(self, x: torch.Tensor, state: Optional[torch.Tensor] = None):
         """
         `x` has shape `[seq_len, batch_size, input_size]` and
         `state` has shape `[batch_size, hidden_size]`.
