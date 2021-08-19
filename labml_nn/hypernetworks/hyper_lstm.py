@@ -147,9 +147,9 @@ class HyperLSTMCell(Module):
         self.layer_norm = nn.ModuleList([nn.LayerNorm(hidden_size) for _ in range(4)])
         self.layer_norm_c = nn.LayerNorm(hidden_size)
 
-    def __call__(self, x: torch.Tensor,
-                 h: torch.Tensor, c: torch.Tensor,
-                 h_hat: torch.Tensor, c_hat: torch.Tensor):
+    def forward(self, x: torch.Tensor,
+                h: torch.Tensor, c: torch.Tensor,
+                h_hat: torch.Tensor, c_hat: torch.Tensor):
         # $$
         # \hat{x}_t = \begin{pmatrix}
         # h_{t-1} \\
@@ -202,6 +202,7 @@ class HyperLSTM(Module):
     """
     # HyperLSTM module
     """
+
     def __init__(self, input_size: int, hidden_size: int, hyper_size: int, n_z: int, n_layers: int):
         """
         Create a network of `n_layers` of HyperLSTM.
@@ -220,8 +221,8 @@ class HyperLSTM(Module):
                                    [HyperLSTMCell(hidden_size, hidden_size, hyper_size, n_z) for _ in
                                     range(n_layers - 1)])
 
-    def __call__(self, x: torch.Tensor,
-                 state: Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]] = None):
+    def forward(self, x: torch.Tensor,
+                state: Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]] = None):
         """
         * `x` has shape `[n_steps, batch_size, input_size]` and
         * `state` is a tuple of $h, c, \hat{h}, \hat{c}$.

@@ -85,7 +85,7 @@ class GraphAttentionLayer(Module):
         # Dropout layer to be applied for attention
         self.dropout = nn.Dropout(dropout)
 
-    def __call__(self, h: torch.Tensor, adj_mat: torch.Tensor):
+    def forward(self, h: torch.Tensor, adj_mat: torch.Tensor):
         """
         * `h`, $\mathbf{h}$ is the input node embeddings of shape `[n_nodes, in_features]`.
         * `adj_mat` is the adjacency matrix of shape `[n_nodes, n_nodes, n_heads]`.

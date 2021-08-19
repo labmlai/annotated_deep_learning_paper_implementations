@@ -22,7 +22,7 @@ class AutoregressiveModel(Module):
         self.lstm = rnn_model
         self.generator = nn.Linear(d_model, n_vocab)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         x = self.src_embed(x)
         # Embed the tokens (`src`) and run it through the the transformer
         res, state = self.lstm(x)

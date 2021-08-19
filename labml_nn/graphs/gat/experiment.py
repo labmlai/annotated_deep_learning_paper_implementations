@@ -134,7 +134,7 @@ class GAT(Module):
         # Dropout
         self.dropout = nn.Dropout(dropout)
 
-    def __call__(self, x: torch.Tensor, adj_mat: torch.Tensor):
+    def forward(self, x: torch.Tensor, adj_mat: torch.Tensor):
         """
         * `x` is the features vectors of shape `[n_nodes, in_features]`
         * `adj_mat` is the adjacency matrix of the form
