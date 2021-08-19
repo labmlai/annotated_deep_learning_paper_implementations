@@ -83,7 +83,7 @@ class ShortcutProjection(Module):
         # Paper suggests adding batch normalization after each convolution operation
         self.bn = nn.BatchNorm2d(out_channels)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Convolution and batch normalization
         return self.bn(self.conv(x))
 
@@ -140,7 +140,7 @@ class ResidualBlock(Module):
         # Second activation function (ReLU) (after adding the shortcut)
         self.act2 = nn.ReLU()
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the input of shape `[batch_size, in_channels, height, width]`
         """
@@ -221,7 +221,7 @@ class BottleneckResidualBlock(Module):
         # Second activation function (ReLU) (after adding the shortcut)
         self.act3 = nn.ReLU()
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the input of shape `[batch_size, in_channels, height, width]`
         """
@@ -310,7 +310,7 @@ class ResNetBase(Module):
         # Stack the blocks
         self.blocks = nn.Sequential(*blocks)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` has shape `[batch_size, img_channels, height, width]`
         """

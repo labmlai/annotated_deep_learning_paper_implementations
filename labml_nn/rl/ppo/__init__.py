@@ -136,8 +136,8 @@ class ClippedPPOLoss(Module):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, log_pi: torch.Tensor, sampled_log_pi: torch.Tensor,
-                 advantage: torch.Tensor, clip: float) -> torch.Tensor:
+    def forward(self, log_pi: torch.Tensor, sampled_log_pi: torch.Tensor,
+                advantage: torch.Tensor, clip: float) -> torch.Tensor:
         # ratio $r_t(\theta) = \frac{\pi_\theta (a_t|s_t)}{\pi_{\theta_{OLD}} (a_t|s_t)}$;
         # *this is different from rewards* $r_t$.
         ratio = torch.exp(log_pi - sampled_log_pi)
@@ -200,7 +200,8 @@ class ClippedValueFunctionLoss(Module):
      significantly from $V_{\theta_{OLD}}$.
 
     """
-    def __call__(self, value: torch.Tensor, sampled_value: torch.Tensor, sampled_return: torch.Tensor, clip: float):
+
+    def forward(self, value: torch.Tensor, sampled_value: torch.Tensor, sampled_return: torch.Tensor, clip: float):
         clipped_value = sampled_value + (value - sampled_value).clamp(min=-clip, max=clip)
         vf_loss = torch.max((value - sampled_return) ** 2, (clipped_value - sampled_return) ** 2)
         return 0.5 * vf_loss.mean()

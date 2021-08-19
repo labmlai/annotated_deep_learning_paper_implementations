@@ -82,7 +82,7 @@ class Model(Module):
             nn.Linear(in_features=256, out_features=4),
         )
 
-    def __call__(self, obs: torch.Tensor):
+    def forward(self, obs: torch.Tensor):
         # Convolution
         h = self.conv(obs)
         # Reshape for linear layers

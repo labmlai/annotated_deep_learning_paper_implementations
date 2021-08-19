@@ -69,7 +69,7 @@ class Model(Module):
         #
         self.activation = nn.ReLU()
 
-    def __call__(self, obs: torch.Tensor):
+    def forward(self, obs: torch.Tensor):
         h = self.activation(self.conv1(obs))
         h = self.activation(self.conv2(h))
         h = self.activation(self.conv3(h))

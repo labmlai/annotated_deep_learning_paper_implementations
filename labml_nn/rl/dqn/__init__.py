@@ -106,9 +106,9 @@ class QFuncLoss(Module):
         self.gamma = gamma
         self.huber_loss = nn.SmoothL1Loss(reduction='none')
 
-    def __call__(self, q: torch.Tensor, action: torch.Tensor, double_q: torch.Tensor,
-                 target_q: torch.Tensor, done: torch.Tensor, reward: torch.Tensor,
-                 weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, q: torch.Tensor, action: torch.Tensor, double_q: torch.Tensor,
+                target_q: torch.Tensor, done: torch.Tensor, reward: torch.Tensor,
+                weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         * `q` - $Q(s;\theta_i)$
         * `action` - $a$
