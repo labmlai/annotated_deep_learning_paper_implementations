@@ -112,7 +112,7 @@ class GeneratorResNet(Module):
         # Initialize weights to $\mathcal{N}(0, 0.2)$
         self.apply(weights_init_normal)
 
-    def __call__(self, x):
+    def forward(self, x):
         return self.layers(x)
 
 
@@ -132,7 +132,7 @@ class ResidualBlock(Module):
             nn.ReLU(inplace=True),
         )
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         return x + self.block(x)
 
 
@@ -184,7 +184,7 @@ class DiscriminatorBlock(Module):
         layers.append(nn.LeakyReLU(0.2, inplace=True))
         self.layers = nn.Sequential(*layers)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         return self.layers(x)
 
 

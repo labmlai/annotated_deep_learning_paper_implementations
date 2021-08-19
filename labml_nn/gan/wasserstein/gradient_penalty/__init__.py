@@ -54,7 +54,7 @@ class GradientPenalty(Module):
     ## Gradient Penalty
     """
 
-    def __call__(self, x: torch.Tensor, f: torch.Tensor):
+    def forward(self, x: torch.Tensor, f: torch.Tensor):
         """
         * `x` is $x \sim \mathbb{P}_r$
         * `f` is $D(x)$

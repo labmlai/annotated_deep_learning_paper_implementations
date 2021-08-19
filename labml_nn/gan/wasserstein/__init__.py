@@ -101,7 +101,7 @@ class DiscriminatorLoss(Module):
      \frac{1}{m} \sum_{i=1}^m f_w \big( g_\theta(z^{(i)}) \big)$$
     """
 
-    def __call__(self, f_real: torch.Tensor, f_fake: torch.Tensor):
+    def forward(self, f_real: torch.Tensor, f_fake: torch.Tensor):
         """
         * `f_real` is $f_w(x)$
         * `f_fake` is $f_w(g_\theta(z))$
@@ -127,7 +127,7 @@ class GeneratorLoss(Module):
 
     """
 
-    def __call__(self, f_fake: torch.Tensor):
+    def forward(self, f_fake: torch.Tensor):
         """
         * `f_fake` is $f_w(g_\theta(z))$
         """

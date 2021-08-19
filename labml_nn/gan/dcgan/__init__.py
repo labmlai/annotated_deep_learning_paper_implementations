@@ -53,7 +53,7 @@ class Generator(Module):
 
         self.apply(_weights_init)
 
-    def __call__(self, x):
+    def forward(self, x):
         # Change from shape `[batch_size, 100]` to `[batch_size, 100, 1, 1]`
         x = x.unsqueeze(-1).unsqueeze(-1)
         x = self.layers(x)

@@ -76,7 +76,7 @@ class DiscriminatorLogitsLoss(Module):
         self.register_buffer('labels_true', _create_labels(256, 1.0 - smoothing, 1.0), False)
         self.register_buffer('labels_false', _create_labels(256, 0.0, smoothing), False)
 
-    def __call__(self, logits_true: torch.Tensor, logits_false: torch.Tensor):
+    def forward(self, logits_true: torch.Tensor, logits_false: torch.Tensor):
         """
         `logits_true` are logits from $D(\pmb{x}^{(i)})$ and
         `logits_false` are logits from $D(G(\pmb{z}^{(i)}))$
@@ -111,7 +111,7 @@ class GeneratorLogitsLoss(Module):
         # the above gradient.
         self.register_buffer('fake_labels', _create_labels(256, 1.0 - smoothing, 1.0), False)
 
-    def __call__(self, logits: torch.Tensor):
+    def forward(self, logits: torch.Tensor):
         if len(logits) > len(self.fake_labels):
             self.register_buffer("fake_labels",
                                  _create_labels(len(logits), 1.0 - self.smoothing, 1.0, logits.device), False)
