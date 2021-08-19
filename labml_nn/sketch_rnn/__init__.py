@@ -211,7 +211,7 @@ class EncoderRNN(Module):
         # Head to get $\hat{\sigma}$
         self.sigma_head = nn.Linear(2 * enc_hidden_size, d_z)
 
-    def __call__(self, inputs: torch.Tensor, state=None):
+    def forward(self, inputs: torch.Tensor, state=None):
         # The hidden state of the bidirectional LSTM is the concatenation of the
         # output of the last token in the forward direction and
         # first token in the reverse direction, which is what we want.
@@ -269,7 +269,7 @@ class DecoderRNN(Module):
         self.n_distributions = n_distributions
         self.dec_hidden_size = dec_hidden_size
 
-    def __call__(self, x: torch.Tensor, z: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]]):
+    def forward(self, x: torch.Tensor, z: torch.Tensor, state: Optional[Tuple[torch.Tensor, torch.Tensor]]):
         # Calculate the initial state
         if state is None:
             # $[h_0; c_0] = \tanh(W_{z}z + b_z)$
@@ -314,7 +314,7 @@ class ReconstructionLoss(Module):
     ## Reconstruction Loss
     """
 
-    def __call__(self, mask: torch.Tensor, target: torch.Tensor,
+    def forward(self, mask: torch.Tensor, target: torch.Tensor,
                  dist: 'BivariateGaussianMixture', q_logits: torch.Tensor):
         # Get $\Pi$ and $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
         pi, mix = dist.get_distribution()
@@ -355,7 +355,7 @@ class KLDivLoss(Module):
     This calculates the KL divergence between a given normal distribution and $\mathcal{N}(0, 1)$
     """
 
-    def __call__(self, sigma_hat: torch.Tensor, mu: torch.Tensor):
+    def forward(self, sigma_hat: torch.Tensor, mu: torch.Tensor):
         # $$L_{KL} = - \frac{1}{2 N_z} \bigg( 1 + \hat{\sigma} - \mu^2 - \exp(\hat{\sigma}) \bigg)$$
         return -0.5 * torch.mean(1 + sigma_hat - mu ** 2 - torch.exp(sigma_hat))
 

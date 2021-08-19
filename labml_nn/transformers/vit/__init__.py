@@ -75,7 +75,7 @@ class PatchEmbeddings(Module):
         # transformation on each patch.
         self.conv = nn.Conv2d(in_channels, d_model, patch_size, stride=patch_size)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the input image of shape `[batch_size, channels, height, width]`
         """
@@ -109,7 +109,7 @@ class LearnedPositionalEmbeddings(Module):
         # Positional embeddings for each location
         self.positional_encodings = nn.Parameter(torch.zeros(max_len, 1, d_model), requires_grad=True)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the patch embeddings of shape `[patches, batch_size, d_model]`
         """
@@ -141,7 +141,7 @@ class ClassificationHead(Module):
         # Second layer
         self.linear2 = nn.Linear(n_hidden, n_classes)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the transformer encoding for `[CLS]` token
         """
@@ -187,7 +187,7 @@ class VisionTransformer(Module):
         # Final normalization layer
         self.ln = nn.LayerNorm([transformer_layer.size])
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         """
         * `x` is the input image of shape `[batch_size, channels, height, width]`
         """

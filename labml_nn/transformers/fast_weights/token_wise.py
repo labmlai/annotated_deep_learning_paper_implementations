@@ -43,7 +43,7 @@ class FastWeightsAttention(Module):
         # Dropout
         self.dropout = nn.Dropout(dropout_prob)
 
-    def __call__(self, x: torch.Tensor, weights: Optional[torch.Tensor]):
+    def forward(self, x: torch.Tensor, weights: Optional[torch.Tensor]):
         query = self.phi(self.query(x))
         key = self.phi(self.key(x))
         value = self.value(x)
@@ -84,7 +84,7 @@ class FastWeightsAttentionTransformerLayer(Module):
         self.norm_self_attn = nn.LayerNorm([d_model])
         self.norm_ff = nn.LayerNorm([d_model])
 
-    def __call__(self, x: torch.Tensor, weights: Optional[torch.Tensor]):
+    def forward(self, x: torch.Tensor, weights: Optional[torch.Tensor]):
         attn, weights = self.attn(x, weights)
         # Add the self attention results
         x = x + self.dropout(attn)
@@ -108,7 +108,7 @@ class FastWeightsAttentionTransformer(Module):
         # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
-    def __call__(self, x_seq: torch.Tensor):
+    def forward(self, x_seq: torch.Tensor):
         # Split the input to a list along the sequence axis
         x_seq = torch.unbind(x_seq, dim=0)
         # List to store the outputs

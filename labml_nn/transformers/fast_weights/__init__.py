@@ -145,7 +145,7 @@ class DPFP(Module):
         self.relu = nn.ReLU()
         self.eps = eps
 
-    def __call__(self, k: torch.Tensor):
+    def forward(self, k: torch.Tensor):
         # Get $\color{lightgreen}{\phi(k)}$
         k = self.dpfp(k)
         # Normalize by $\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}$
@@ -228,7 +228,7 @@ class FastWeightsAttention(Module):
         # Dropout
         self.dropout = nn.Dropout(dropout_prob)
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Get the number of steps $L$
         seq_len = x.shape[0]
         # $\color{lightgreen}{\phi'(q^{(i)})}$ for all steps and heads
@@ -291,7 +291,7 @@ class FastWeightsAttentionTransformerLayer(Module):
         self.norm_self_attn = nn.LayerNorm([d_model])
         self.norm_ff = nn.LayerNorm([d_model])
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         # Calculate fast weights self attention
         attn = self.attn(x)
         # Add the self attention results
@@ -319,7 +319,7 @@ class FastWeightsAttentionTransformer(Module):
         # Final normalization layer
         self.norm = nn.LayerNorm([layer.size])
 
-    def __call__(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor):
         for i, layer in enumerate(self.layers):
             # Get layer output
             x = layer(x)
