@@ -56,7 +56,7 @@ class Squash(Module):
         super().__init__()
         self.epsilon = epsilon
 
-    def __call__(self, s: torch.Tensor):
+    def forward(self, s: torch.Tensor):
         """
         The shape of `s` is `[batch_size, n_capsules, n_features]`
         """
@@ -100,7 +100,7 @@ class Router(Module):
         # lower layer to each capsule in this layer
         self.weight = nn.Parameter(torch.randn(in_caps, out_caps, in_d, out_d), requires_grad=True)
 
-    def __call__(self, u: torch.Tensor):
+    def forward(self, u: torch.Tensor):
         """
         The shape of `u` is `[batch_size, n_capsules, n_features]`.
         These are the capsules from the lower layer.
@@ -162,7 +162,7 @@ class MarginLoss(Module):
         self.lambda_ = lambda_
         self.n_labels = n_labels
 
-    def __call__(self, v: torch.Tensor, labels: torch.Tensor):
+    def forward(self, v: torch.Tensor, labels: torch.Tensor):
         """
         `v`, $\mathbf{v}_j$ are the squashed output capsules.
         This has shape `[batch_size, n_labels, n_features]`; that is, there is a capsule for each label.

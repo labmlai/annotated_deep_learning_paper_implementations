@@ -104,7 +104,7 @@ class CIFAR10VGGModel(Module):
         # Final logits layer
         self.fc = nn.Linear(in_channels, 10)
 
-    def __call__(self, x):
+    def forward(self, x):
         # The VGG layers
         x = self.layers(x)
         # Reshape for classification layer

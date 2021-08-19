@@ -34,7 +34,7 @@ class CrossEntropyLoss(Module):
         super().__init__()
         self.loss = nn.CrossEntropyLoss()
 
-    def __call__(self, outputs, targets):
+    def forward(self, outputs, targets):
         return self.loss(outputs.view(-1, outputs.shape[-1]), targets.view(-1))
 
 

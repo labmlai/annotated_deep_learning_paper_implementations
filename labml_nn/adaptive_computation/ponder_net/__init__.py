@@ -107,7 +107,7 @@ class ParityPonderGRU(Module):
         # An option to set during inference so that computation is actually halted at inference time
         self.is_halt = False
 
-    def __call__(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         * `x` is the input of shape `[batch_size, n_elems]`
 
@@ -194,7 +194,7 @@ class ReconstructionLoss(Module):
         super().__init__()
         self.loss_func = loss_func
 
-    def __call__(self, p: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
+    def forward(self, p: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
         """
         * `p` is $p_1 \dots p_N$ in a tensor of shape `[N, batch_size]`
         * `y_hat` is $\hat{y}_1 \dots \hat{y}_N$ in a tensor of shape `[N, batch_size, ...]`
@@ -254,7 +254,7 @@ class RegularizationLoss(Module):
         # KL-divergence loss
         self.kl_div = nn.KLDivLoss(reduction='batchmean')
 
-    def __call__(self, p: torch.Tensor):
+    def forward(self, p: torch.Tensor):
         """
         * `p` is $p_1 \dots p_N$ in a tensor of shape `[N, batch_size]`
         """
