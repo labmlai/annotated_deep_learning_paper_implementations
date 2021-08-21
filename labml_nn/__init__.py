@@ -94,6 +94,10 @@ Solving games with incomplete information such as poker with CFR.
 
 * [PonderNet](adaptive_computation/ponder_net/index.html)
 
+#### ✨ [Uncertainty](uncertainty/index.html)
+
+* [Evidential Deep Learning to Quantify Classification Uncertainty](uncertainty/evidence/index.html)
+
 ### Installation
 
 ```bash
@@ -102,12 +106,12 @@ pip install labml-nn
 
 ### Citing LabML
 
-If you use LabML for academic research, please cite the library using the following BibTeX entry.
+If you use this for academic research, please cite it using the following BibTeX entry.
 
 ```bibtex
 @misc{labml,
  author = {Varuna Jayasiri, Nipun Wijerathne},
- title = {LabML: A library to organize machine learning experiments},
+ title = {labml.ai Annotated Paper Implementations},
  year = {2020},
  url = {https://nn.labml.ai/},
 }

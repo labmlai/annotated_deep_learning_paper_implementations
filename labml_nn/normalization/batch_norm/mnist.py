@@ -72,7 +72,10 @@ def main():
     # Create configurations
     conf = MNISTConfigs()
     # Load configurations
-    experiment.configs(conf, {'optimizer.optimizer': 'Adam'})
+    experiment.configs(conf, {
+        'optimizer.optimizer': 'Adam',
+        'optimizer.learning_rate': 0.001,
+    })
     # Start the experiment and run the training loop
     with experiment.start():
         conf.run()
