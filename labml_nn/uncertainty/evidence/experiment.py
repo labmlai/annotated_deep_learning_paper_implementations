@@ -103,9 +103,10 @@ class Configs(MNISTConfigs):
         # Set tracker configurations
         tracker.set_scalar("loss.*", True)
         tracker.set_scalar("accuracy.*", True)
-        tracker.set_histogram('u.*', False)
-        tracker.set_histogram('prob.*', True)
+        tracker.set_histogram('u.*', True)
+        tracker.set_histogram('prob.*', False)
         tracker.set_scalar('annealing_coef.*', False)
+        tracker.set_scalar('kl_div_loss.*', False)
 
         #
         self.state_modules = []
