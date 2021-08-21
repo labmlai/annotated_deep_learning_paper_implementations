@@ -210,7 +210,7 @@ def main():
         # 'loss_func': 'cross_entropy_bayes_risk',
         'loss_func': 'squared_error_bayes_risk',
 
-        'logits_to_evidence': 'softplus',
+        'outputs_to_evidence': 'softplus',
 
         'dropout': 0.5,
     })
