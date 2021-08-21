@@ -99,6 +99,10 @@ Solving games with incomplete information such as poker with CFR.
 
 * [PonderNet](https://nn.labml.ai/adaptive_computation/ponder_net/index.html)
 
+#### ✨ [Uncertainty](https://nn.labml.ai/uncertainty/index.html)
+
+* [Evidential Deep Learning to Quantify Classification Uncertainty](https://nn.labml.ai/uncertainty/evidence/index.html)
+
 ### Installation
 
 ```bash
