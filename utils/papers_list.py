@@ -78,6 +78,8 @@ def main():
             by_id[p['arxiv_id']] = []
         by_id[p['arxiv_id']].append(f'''https://nn.labml.ai/{p['url']}''')
 
+    logger.log([('Papers', Text.key), ': ', f'{len(by_id) :,}'])
+
     with open(str(HOME.parent / 'docs' / 'papers.json'), 'w') as f:
         f.write(json.dumps(by_id, indent=1))
 
