@@ -121,3 +121,15 @@ If you use this for academic research, please cite it using the following BibTeX
  url = {https://nn.labml.ai/},
 }
 ```
+
+### Other Projects
+
+#### [🚀 Trending Research Papers](https://papers.labml.ai/)
+
+This shows the most popular research papers on social media. It also aggregates links to useful resources like paper explanations videos and discussions.
+
+
+#### [🧪 labml.ai/labml](https://github.com/labmlai/labml)
+
+This is a library that let's you onitor deep learning model training and hardware usage from your mobile phone. It also comes with a bunch of other tools to help write deep learning code efficiently.
+
