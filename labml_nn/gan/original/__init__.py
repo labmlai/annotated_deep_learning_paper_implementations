@@ -27,7 +27,7 @@ $p_{data}(\pmb{x})$ is the probability distribution over data,
 whilst $p_{\pmb{z}}(\pmb{z})$ probability distribution of $\pmb{z}$, which is set to
 gaussian noise.
 
-This file defines the loss functions. [Here](../simple_mnist_experiment.html) is an MNIST example
+This file defines the loss functions. [Here](experiment.html) is an MNIST example
 with two multilayer perceptron for the generator and discriminator.
 """
 

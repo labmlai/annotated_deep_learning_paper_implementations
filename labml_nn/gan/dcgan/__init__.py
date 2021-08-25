@@ -99,7 +99,7 @@ def _weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-# We import the [simple gan experiment]((simple_mnist_experiment.html) and change the
+# We import the [simple gan experiment](../original/experiment.html) and change the
 # generator and discriminator networks
 calculate(Configs.generator, 'cnn', lambda c: Generator().to(c.device))
 calculate(Configs.discriminator, 'cnn', lambda c: Discriminator().to(c.device))
