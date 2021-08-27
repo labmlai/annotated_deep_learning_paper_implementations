@@ -88,6 +88,9 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     # Validation data loader
     valid_loader: DataLoader = 'shuffled_valid_loader'
 
+    # Report last token loss
+    is_log_last_token_loss: bool = False
+
     def init(self):
         """
         ### Initialization
@@ -108,6 +111,9 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         ### Training or validation step
         """
 
+        # Set training/eval mode
+        self.model.train(self.mode.is_train)
+
         # Move data to the device
         data, target = batch[0].to(self.device), batch[1].to(self.device)
 
@@ -125,6 +131,11 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         # Calculate and log loss
         loss = self.loss_func(output, target)
         tracker.add("loss.", loss)
+
+        if self.is_log_last_token_loss:
+            if self.seq_len < output.shape[0]:
+                tracker.add('loss.seq_len.', self.loss_func(output[self.seq_len - 1], target[self.seq_len - 1]))
+            tracker.add('loss.last.', self.loss_func(output[-1], target[-1]))
 
         # Calculate and log accuracy
         self.accuracy(output, target)

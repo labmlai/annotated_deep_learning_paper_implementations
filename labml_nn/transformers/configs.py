@@ -199,7 +199,7 @@ class TransformerConfigs(BaseConfigs):
 
 # ### Multi-head Attention
 def _mha(c: TransformerConfigs):
-    return MultiHeadAttention(c.n_heads, c.d_model)
+    return MultiHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
 
 
 calculate(TransformerConfigs.encoder_attn, 'mha', _mha)
