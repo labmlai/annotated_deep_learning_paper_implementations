@@ -1,12 +1,9 @@
-from pathlib import PurePath, Path
-from typing import Callable, Optional
-
+import torch
 from torch.utils.data import DataLoader
 
-from labml import experiment, monit, lab
+from labml import experiment, tracker
 from labml.configs import option, calculate
-from labml.utils.download import download_file
-from labml_helpers.datasets.text import SequentialDataLoader, SequentialUnBatchedDataset, TextDataset
+from labml_helpers.datasets.text import SequentialUnBatchedDataset
 from labml_nn.alibi import AlibiMultiHeadAttention
 from labml_nn.experiments.nlp_autoregression import transpose_batch
 from labml_nn.transformers import TransformerConfigs
@@ -17,7 +14,12 @@ class Configs(GPTConfigs):
     transformer: TransformerConfigs = 'GPT_ALiBi'
     valid_seq_len: int = 128
     valid_loader = 'shuffled_longer_valid_loader'
-    text: TextDataset = 'tiny_shakespeare_no_split'
+
+    def other_metrics(self, output: torch.Tensor, target: torch.Tensor):
+        if self.seq_len < output.shape[0]:
+            tracker.add(f'loss.{self.seq_len - 1}.', self.loss_func(output[self.seq_len - 1], target[self.seq_len - 1]))
+            tracker.add(f'loss.0.', self.loss_func(output[0], target[0]))
+        tracker.add(f'loss.{int(output.shape[0]) - 1}.', self.loss_func(output[-1], target[-1]))
 
 
 # ### Multi-head Attention
@@ -69,40 +71,6 @@ def _transformer_configs(c: Configs):
     return conf
 
 
-class TextFileDataset(TextDataset):
-    standard_tokens = []
-
-    def __init__(self, path: PurePath, tokenizer: Callable, *,
-                 url: Optional[str] = None,
-                 filter_subset: Optional[int] = None):
-        path = Path(path)
-        if not path.exists():
-            if not url:
-                raise FileNotFoundError(str(path))
-            else:
-                download_file(url, path)
-
-        with monit.section("Load data"):
-            text = self.load(path)
-            if filter_subset:
-                text = text[:filter_subset]
-
-        super().__init__(path, tokenizer, text, text, '')
-
-
-@option(Configs.text)
-def tiny_shakespeare_no_split(c: Configs):
-    """
-    ### Tiny Shakespeare dataset
-
-    It will download from the url if not present
-    """
-    return TextFileDataset(
-        lab.get_data_path() / 'tiny_shakespeare.txt',
-        c.tokenizer,
-        url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
-
-
 def main():
     # Create experiment
     experiment.create(name="gpt_alibi")
@@ -117,7 +85,8 @@ def main():
         # Starting prompt for sampling
         'prompt': 'It is ',
         # Use Tiny Shakespeare dataset
-        'text': 'tiny_shakespeare_no_split',
+        'text': 'tiny_shakespeare',
+        # 'text': 'tiny_shakespeare_no_split',
 
         # Use a context size of $128$
         'seq_len': 64,
@@ -135,17 +104,13 @@ def main():
         'transformer.d_model': 128,
         'transformer.ffn.d_ff': 512,
         'transformer.n_heads': 8,
-        'transformer.n_layers': 3,
+        'transformer.n_layers': 4,
 
-        'transformer.dropout': 0.2,
-
-        'is_log_last_token_loss': True,
+        'transformer.dropout': 0.1,
     })
 
     # Set models for saving and loading
     experiment.add_pytorch_models({'model': conf.model})
-
-    experiment.load('511bfbc8071b11ecad290d807660f656')
 
     # Start the experiment
     with experiment.start():

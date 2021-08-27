@@ -88,9 +88,6 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     # Validation data loader
     valid_loader: DataLoader = 'shuffled_valid_loader'
 
-    # Report last token loss
-    is_log_last_token_loss: bool = False
-
     def init(self):
         """
         ### Initialization
@@ -132,14 +129,11 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         loss = self.loss_func(output, target)
         tracker.add("loss.", loss)
 
-        if self.is_log_last_token_loss:
-            if self.seq_len < output.shape[0]:
-                tracker.add('loss.seq_len.', self.loss_func(output[self.seq_len - 1], target[self.seq_len - 1]))
-            tracker.add('loss.last.', self.loss_func(output[-1], target[-1]))
-
         # Calculate and log accuracy
         self.accuracy(output, target)
         self.accuracy.track()
+
+        self.other_metrics(output, target)
 
         # Train the model
         if self.mode.is_train:
