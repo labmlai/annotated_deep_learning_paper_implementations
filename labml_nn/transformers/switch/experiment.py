@@ -119,6 +119,8 @@ class Configs(NLPAutoRegressionConfigs):
         route_prob = route_prob / total
         # Load balancing loss
         # $$\mathscr{L} = N \sum_{i=1}^N f_i \cdot P_i$$
+        # $\mathscr{L}$ is the loss for a single layer and here we are
+        # taking the sum of losses across all layers.
         load_balancing_loss = self.n_experts * (route_frac * route_prob).sum()
 
         # Track stats
