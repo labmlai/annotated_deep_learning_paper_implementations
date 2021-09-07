@@ -168,7 +168,7 @@ class VisionTransformer(Module):
         """
         * `transformer_layer` is a copy of a single [transformer layer](../models.html#TransformerLayer).
          We make copies of it to make the transformer with `n_layers`.
-        * `n_layers` is the number of [transformer layers]((../models.html#TransformerLayer).
+        * `n_layers` is the number of [transformer layers](../models.html#TransformerLayer).
         * `patch_emb` is the [patch embeddings layer](#PatchEmbeddings).
         * `pos_emb` is the [positional embeddings layer](#LearnedPositionalEmbeddings).
         * `classification` is the [classification head](#ClassificationHead).
