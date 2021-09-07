@@ -131,5 +131,5 @@ This shows the most popular research papers on social media. It also aggregates 
 
 #### [🧪 labml.ai/labml](https://github.com/labmlai/labml)
 
-This is a library that let's you onitor deep learning model training and hardware usage from your mobile phone. It also comes with a bunch of other tools to help write deep learning code efficiently.
+This is a library that let's you monitor deep learning model training and hardware usage from your mobile phone. It also comes with a bunch of other tools to help write deep learning code efficiently.
 
