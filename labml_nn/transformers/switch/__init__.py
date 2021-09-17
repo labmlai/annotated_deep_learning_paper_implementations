@@ -143,7 +143,6 @@ class SwitchFeedForward(Module):
             dropped = torch.cat(dropped)
             final_output[dropped, :] = x[dropped, :]
 
-        # Scale the expert outputs by the routing probabilities
         if self.is_scale_prob:
             # Multiply by the expert outputs by the probabilities $y = p_i(x) E_i(x)$
             final_output = final_output * route_prob_max.view(-1, 1)
