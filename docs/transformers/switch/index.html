@@ -90,15 +90,15 @@ In a distributed setup you would have each FFN (each very large) on a different 
 discusses dropping tokens when routing is not balanced.</p>
 <p>Here&rsquo;s <a href="experiment.html">the training code</a> and a notebook for training a switch transformer on Tiny Shakespeare dataset.</p>
 <p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/switch/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
-<a href="https://app.labml.ai/run/c4656c605b9311eba13d0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+<a href="https://app.labml.ai/run/353770ce177c11ecaa5fb74452424f46"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">40</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="lineno">41</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 <span class="lineno">42</span>
 <span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span>
-<span class="lineno">45</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">45</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span>
 <span class="lineno">46</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
         </div>
     </div>
@@ -244,11 +244,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>Scale the inputs to the experts by the routing probabilities</p>
+            <p>Get indexes of tokens going to each expert</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">105</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scale_prob</span><span class="p">:</span>
-<span class="lineno">106</span>            <span class="n">factor</span> <span class="o">=</span> <span class="n">route_prob_max</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">105</span>        <span class="n">indexes_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">routes</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -256,50 +255,16 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>Don&rsquo;t scale the values but multiply by $\frac{p}{\hat{p}} = 1$ so that the gradients flow</p>
+            <p>Initialize an empty tensor to store outputs</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">108</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">109</span>            <span class="n">factor</span> <span class="o">=</span> <span class="n">route_prob_max</span> <span class="o">/</span> <span class="n">route_prob_max</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">108</span>        <span class="n">final_output</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
         <div class='docs'>
             <div class='section-link'>
                 <a href='#section-13'>#</a>
-            </div>
-            <p>Multiply by the scaling factor</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">111</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">factor</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-14'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-14'>#</a>
-            </div>
-            <p>Get indexes of tokens going to each expert</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">114</span>        <span class="n">indexes_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">routes</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)]</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-15'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-15'>#</a>
-            </div>
-            <p>Initialize an empty tensor to store outputs</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">117</span>        <span class="n">final_output</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-16'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-16'>#</a>
             </div>
             <p>Capacity of each expert.
 <script type="math/tex; mode=display">\mathrm{expert\;capacity} =
@@ -308,7 +273,40 @@ We route to the expert with highest probability</p>
 </p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">123</span>        <span class="n">capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity_factor</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">114</span>        <span class="n">capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity_factor</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>Number of tokens routed to each expert.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>        <span class="n">counts</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_tensor</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Initialize an empty list of dropped tokens</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>        <span class="n">dropped</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Only drop tokens if <code>drop_tokens</code> is <code>True</code>.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_tokens</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-17'>
@@ -316,10 +314,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <p>Number of tokens routed to each expert.</p>
+            <p>Drop tokens in each of the experts</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">125</span>        <span class="n">counts</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">new_tensor</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">123</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-18'>
@@ -327,10 +325,11 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-18'>#</a>
             </div>
-            <p>Initialize an empty list of dropped tokens</p>
+            <p>Ignore if the expert is not over capacity</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">128</span>        <span class="n">dropped</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">125</span>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">capacity</span><span class="p">:</span>
+<span class="lineno">126</span>                    <span class="k">continue</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-19'>
@@ -338,10 +337,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>Only drop tokens if <code>drop_tokens</code> is <code>True</code>.</p>
+            <p>Shuffle indexes before dropping</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_tokens</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">128</span>                <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]))]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-20'>
@@ -349,10 +348,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <p>Drop tokens in each of the experts</p>
+            <p>Collect the tokens over capacity as dropped tokens</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">132</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">130</span>                <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">capacity</span><span class="p">:])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
@@ -360,11 +359,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-21'>#</a>
             </div>
-            <p>Ignore if the expert is not over capacity</p>
+            <p>Keep only the tokens upto the capacity of the expert</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">134</span>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">capacity</span><span class="p">:</span>
-<span class="lineno">135</span>                    <span class="k">continue</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">132</span>                <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][:</span><span class="n">capacity</span><span class="p">]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-22'>
@@ -372,10 +370,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-22'>#</a>
             </div>
-            <p>Shuffle indexes before dropping</p>
+            <p>Get outputs of the expert FFNs</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">137</span>                <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]))]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">135</span>        <span class="n">expert_output</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-23'>
@@ -383,10 +381,11 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>Collect the tokens over capacity as dropped tokens</p>
+            <p>Assign to final output</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">139</span>                <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">capacity</span><span class="p">:])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">138</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">):</span>
+<span class="lineno">139</span>            <span class="n">final_output</span><span class="p">[</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">expert_output</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-24'>
@@ -394,10 +393,12 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>Keep only the tokens upto the capacity of the expert</p>
+            <p>Pass through the dropped tokens</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">141</span>                <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">][:</span><span class="n">capacity</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">142</span>        <span class="k">if</span> <span class="n">dropped</span><span class="p">:</span>
+<span class="lineno">143</span>            <span class="n">dropped</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span>
+<span class="lineno">144</span>            <span class="n">final_output</span><span class="p">[</span><span class="n">dropped</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">dropped</span><span class="p">,</span> <span class="p">:]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-25'>
@@ -405,10 +406,10 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-25'>#</a>
             </div>
-            <p>Get outputs of the expert FFNs</p>
+            <p>Scale the expert outputs by the routing probabilities</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">144</span>        <span class="n">route_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">experts</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">x</span><span class="p">[</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">147</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scale_prob</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-26'>
@@ -416,11 +417,11 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-26'>#</a>
             </div>
-            <p>Assign to final output</p>
+            <p>Multiply by the expert outputs by the probabilities $y = p_i(x) E_i(x)$</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">147</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_experts</span><span class="p">):</span>
-<span class="lineno">148</span>            <span class="n">final_output</span><span class="p">[</span><span class="n">indexes_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">route_outputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">149</span>            <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">*</span> <span class="n">route_prob_max</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">150</span>        <span class="k">else</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-27'>
@@ -428,12 +429,11 @@ We route to the expert with highest probability</p>
             <div class='section-link'>
                 <a href='#section-27'>#</a>
             </div>
-            <p>Pass through the dropped tokens</p>
+            <p>Don&rsquo;t scale the values but multiply by $\frac{p}{\hat{p}} = 1$ so that the gradients flow
+(this is something we experimented with).</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">151</span>        <span class="k">if</span> <span class="n">dropped</span><span class="p">:</span>
-<span class="lineno">152</span>            <span class="n">dropped</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span>
-<span class="lineno">153</span>            <span class="n">final_output</span><span class="p">[</span><span class="n">dropped</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">dropped</span><span class="p">,</span> <span class="p">:]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">153</span>            <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">*</span> <span class="p">(</span><span class="n">route_prob_max</span> <span class="o">/</span> <span class="n">route_prob_max</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-28'>
@@ -489,11 +489,11 @@ with handling extra outputs of switch feedforward module.</p>
 </ul>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">174</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">175</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">176</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
-<span class="lineno">177</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">SwitchFeedForward</span><span class="p">,</span>
-<span class="lineno">178</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">175</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">176</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">177</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
+<span class="lineno">178</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">SwitchFeedForward</span><span class="p">,</span>
+<span class="lineno">179</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-32'>
@@ -504,13 +504,13 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">185</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">186</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span>
-<span class="lineno">187</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
-<span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
-<span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span>
-<span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
-<span class="lineno">191</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">186</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">187</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span>
+<span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
+<span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
+<span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span>
+<span class="lineno">191</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">192</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-33'>
@@ -521,9 +521,9 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">193</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">194</span>                 <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">195</span>                 <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">194</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">195</span>                <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">196</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-34'>
@@ -534,7 +534,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Normalize the vectors before doing self attention</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">197</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-35'>
@@ -545,7 +545,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Run through self attention, i.e. keys and values are from self</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">199</span>        <span class="n">self_attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="n">self_attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-36'>
@@ -556,7 +556,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Add the self attention results</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">201</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">self_attn</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">202</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">self_attn</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-37'>
@@ -567,7 +567,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Normalize for feed-forward</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">204</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">205</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-38'>
@@ -578,7 +578,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Pass through the switching feed-forward network</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">206</span>        <span class="n">ff</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">207</span>        <span class="n">ff</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-39'>
@@ -589,9 +589,9 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Add the feed-forward results back</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">208</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
-<span class="lineno">209</span>
-<span class="lineno">210</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">209</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
+<span class="lineno">210</span>
+<span class="lineno">211</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-40'>
@@ -602,7 +602,7 @@ with handling extra outputs of switch feedforward module.</p>
             <h2>Switch Transformer</h2>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">213</span><span class="k">class</span> <span class="nc">SwitchTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">214</span><span class="k">class</span> <span class="nc">SwitchTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-41'>
@@ -613,8 +613,8 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">218</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">SwitchTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">219</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">219</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">SwitchTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">220</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-42'>
@@ -625,7 +625,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Make copies of the transformer layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">221</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">222</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-43'>
@@ -636,7 +636,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Final normalization layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">223</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-44'>
@@ -647,7 +647,7 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">225</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">226</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-45'>
@@ -658,12 +658,12 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Run through each transformer layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">227</span>        <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
-<span class="lineno">228</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
-<span class="lineno">229</span>            <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n_d</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
-<span class="lineno">230</span>            <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="lineno">231</span>            <span class="n">route_prob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
-<span class="lineno">232</span>            <span class="n">n_dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_d</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">228</span>        <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="lineno">229</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+<span class="lineno">230</span>            <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n_d</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+<span class="lineno">231</span>            <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="lineno">232</span>            <span class="n">route_prob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="lineno">233</span>            <span class="n">n_dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_d</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-46'>
@@ -674,7 +674,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Finally, normalize the vectors</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">234</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-47'>
@@ -685,7 +685,7 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">236</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">route_prob</span><span class="p">),</span> <span class="n">n_dropped</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">237</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">route_prob</span><span class="p">),</span> <span class="n">n_dropped</span></pre></div>
         </div>
     </div>
     <div class='footer'>
