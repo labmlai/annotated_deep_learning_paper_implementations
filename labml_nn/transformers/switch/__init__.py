@@ -34,15 +34,15 @@ discusses dropping tokens when routing is not balanced.
 Here's [the training code](experiment.html) and a notebook for training a switch transformer on Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/switch/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/c4656c605b9311eba13d0242ac1c0002)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/353770ce177c11ecaa5fb74452424f46)
 """
 
 import torch
 from torch import nn
 
 from labml_helpers.module import Module
-from labml_nn.transformers.mha import MultiHeadAttention
 from labml_nn.transformers.feed_forward import FeedForward
+from labml_nn.transformers.mha import MultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
@@ -101,15 +101,6 @@ class SwitchFeedForward(Module):
         # We route to the expert with highest probability
         route_prob_max, routes = torch.max(route_prob, dim=-1)
 
-        # Scale the inputs to the experts by the routing probabilities
-        if self.is_scale_prob:
-            factor = route_prob_max
-        # Don't scale the values but multiply by $\frac{p}{\hat{p}} = 1$ so that the gradients flow
-        else:
-            factor = route_prob_max / route_prob_max.detach()
-        # Multiply by the scaling factor
-        x = x * factor.view(-1, 1)
-
         # Get indexes of tokens going to each expert
         indexes_list = [torch.eq(routes, i).nonzero(as_tuple=True)[0] for i in range(self.n_experts)]
 
@@ -141,16 +132,27 @@ class SwitchFeedForward(Module):
                 indexes_list[i] = indexes_list[i][:capacity]
 
         # Get outputs of the expert FFNs
-        route_outputs = [self.experts[i](x[indexes_list[i], :]) for i in range(self.n_experts)]
+        expert_output = [self.experts[i](x[indexes_list[i], :]) for i in range(self.n_experts)]
 
         # Assign to final output
         for i in range(self.n_experts):
-            final_output[indexes_list[i], :] = route_outputs[i]
+            final_output[indexes_list[i], :] = expert_output[i]
 
         # Pass through the dropped tokens
         if dropped:
             dropped = torch.cat(dropped)
             final_output[dropped, :] = x[dropped, :]
+
+        # Scale the outputs of the the experts by the routing probabilities
+        if self.is_scale_prob:
+            factor = route_prob_max
+        # Don't scale the values but multiply by $\frac{p}{\hat{p}} = 1$ so that the gradients flow
+        # (this is just something we experimented with)
+        else:
+            factor = route_prob_max / route_prob_max.detach()
+
+        # Multiply by the scaling factor
+        final_output = final_output * factor.view(-1, 1)
 
         # Change the shape of the final output back to `[seq_len, batch_size, d_model]`
         final_output = final_output.view(seq_len, batch_size, d_model)
@@ -171,6 +173,7 @@ class SwitchTransformerLayer(Module):
     This is the same as [normal transformer block](../models.html#TransformerLayer)
     with handling extra outputs of switch feedforward module.
     """
+
     def __init__(self, *,
                  d_model: int,
                  attn: MultiHeadAttention,
@@ -191,8 +194,8 @@ class SwitchTransformerLayer(Module):
         self.norm_ff = nn.LayerNorm([d_model])
 
     def forward(self, *,
-                 x: torch.Tensor,
-                 mask: torch.Tensor):
+                x: torch.Tensor,
+                mask: torch.Tensor):
         # Normalize the vectors before doing self attention
         z = self.norm_self_attn(x)
         # Run through self attention, i.e. keys and values are from self
