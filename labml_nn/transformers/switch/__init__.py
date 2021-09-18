@@ -162,8 +162,9 @@ class SwitchFeedForward(Module):
         # * number of tokens routed to each expert
         # * sum of probabilities for each expert
         # * number of tokens dropped.
+        # * routing probabilities of the selected experts
         # These are used for the load balancing loss and logging
-        return final_output, counts, route_prob.sum(0), len(dropped)
+        return final_output, counts, route_prob.sum(0), len(dropped), route_prob_max
 
 
 class SwitchTransformerLayer(Module):
@@ -206,11 +207,11 @@ class SwitchTransformerLayer(Module):
         # Normalize for feed-forward
         z = self.norm_ff(x)
         # Pass through the switching feed-forward network
-        ff, counts, route_prob, n_dropped = self.feed_forward(z)
+        ff, counts, route_prob, n_dropped, route_prob_max = self.feed_forward(z)
         # Add the feed-forward results back
         x = x + self.dropout(ff)
 
-        return x, counts, route_prob, n_dropped
+        return x, counts, route_prob, n_dropped, route_prob_max
 
 
 class SwitchTransformer(Module):
@@ -227,13 +228,14 @@ class SwitchTransformer(Module):
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor):
         # Run through each transformer layer
-        counts, route_prob, n_dropped = [], [], []
+        counts, route_prob, n_dropped, route_prob_max = [], [], [], []
         for layer in self.layers:
-            x, f, p, n_d = layer(x=x, mask=mask)
+            x, f, p, n_d, p_max = layer(x=x, mask=mask)
             counts.append(f)
             route_prob.append(p)
             n_dropped.append(n_d)
+            route_prob_max.append(p_max)
         # Finally, normalize the vectors
         x = self.norm(x)
         #
-        return x, torch.stack(counts), torch.stack(route_prob), n_dropped
+        return x, torch.stack(counts), torch.stack(route_prob), n_dropped, torch.stack(route_prob_max)

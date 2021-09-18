@@ -45,11 +45,11 @@ class AutoregressiveModel(Module):
         # Token embeddings
         x = self.src_embed(x)
         # Run it through the transformer
-        res, counts, route_prob, n_dropped = self.transformer(x, self.mask)
+        res, counts, route_prob, n_dropped, route_prob_max = self.transformer(x, self.mask)
         # Generate logits of the next token
         res = self.generator(res)
         #
-        return res, counts, route_prob, n_dropped
+        return res, counts, route_prob, n_dropped, route_prob_max
 
 
 class Configs(NLPAutoRegressionConfigs):
@@ -107,7 +107,7 @@ class Configs(NLPAutoRegressionConfigs):
         # Whether to capture model outputs
         with self.mode.update(is_log_activations=batch_idx.is_last):
             # Get model outputs.
-            output, counts, route_prob, n_dropped = self.model(data)
+            output, counts, route_prob, n_dropped, route_prob_max = self.model(data)
 
         # Calculate and cross entropy loss
         cross_entropy_loss = self.loss_func(output, target)
@@ -131,6 +131,7 @@ class Configs(NLPAutoRegressionConfigs):
         tracker.add('route.min.', route_frac.min())
         tracker.add('route.max.', route_frac.max())
         tracker.add('route.std.', route_frac.std())
+        tracker.add('route.max_prob.', route_prob_max)
         tracker.add("loss.", cross_entropy_loss)
         tracker.add("lb_loss.", load_balancing_loss)
 
