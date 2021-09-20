@@ -15,6 +15,7 @@ and derivatives and enhancements of it.
 
 * [Multi-head attention](mha.html)
 * [Transformer Encoder and Decoder Models](models.html)
+* [Position-wise Feed Forward Network (FFN)](feed_forward.html)
 * [Fixed positional encoding](positional_encoding.html)
 
 ## [Transformer XL](xl/index.html)

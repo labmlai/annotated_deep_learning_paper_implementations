@@ -448,10 +448,11 @@ We route to the expert with highest probability</p>
 * number of tokens routed to each expert
 * sum of probabilities for each expert
 * number of tokens dropped.
+* routing probabilities of the selected experts
 These are used for the load balancing loss and logging</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">163</span>        <span class="k">return</span> <span class="n">final_output</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">164</span>        <span class="k">return</span> <span class="n">final_output</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span> <span class="n">route_prob_max</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-29'>
@@ -464,7 +465,7 @@ These are used for the load balancing loss and logging</p>
 with handling extra outputs of switch feedforward module.</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">166</span><span class="k">class</span> <span class="nc">SwitchTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">167</span><span class="k">class</span> <span class="nc">SwitchTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-30'>
@@ -480,11 +481,11 @@ with handling extra outputs of switch feedforward module.</p>
 </ul>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">174</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">175</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">176</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
-<span class="lineno">177</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">SwitchFeedForward</span><span class="p">,</span>
-<span class="lineno">178</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">175</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">176</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">177</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
+<span class="lineno">178</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">SwitchFeedForward</span><span class="p">,</span>
+<span class="lineno">179</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-31'>
@@ -495,13 +496,13 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">185</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">186</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span>
-<span class="lineno">187</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
-<span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
-<span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span>
-<span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
-<span class="lineno">191</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">186</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">187</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span>
+<span class="lineno">188</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span>
+<span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span>
+<span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span>
+<span class="lineno">191</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">192</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-32'>
@@ -512,9 +513,9 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">193</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">194</span>                <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">195</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">194</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">195</span>                <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">196</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-33'>
@@ -525,7 +526,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Normalize the vectors before doing self attention</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">197</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-34'>
@@ -536,7 +537,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Run through self attention, i.e. keys and values are from self</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">199</span>        <span class="n">self_attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="n">self_attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-35'>
@@ -547,7 +548,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Add the self attention results</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">201</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">self_attn</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">202</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">self_attn</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-36'>
@@ -558,7 +559,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Normalize for feed-forward</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">204</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">205</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-37'>
@@ -569,7 +570,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Pass through the switching feed-forward network</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">206</span>        <span class="n">ff</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">207</span>        <span class="n">ff</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span><span class="p">,</span> <span class="n">route_prob_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-38'>
@@ -580,9 +581,9 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Add the feed-forward results back</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">208</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
-<span class="lineno">209</span>
-<span class="lineno">210</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">209</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
+<span class="lineno">210</span>
+<span class="lineno">211</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span><span class="p">,</span> <span class="n">route_prob_max</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-39'>
@@ -593,7 +594,7 @@ with handling extra outputs of switch feedforward module.</p>
             <h2>Switch Transformer</h2>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">213</span><span class="k">class</span> <span class="nc">SwitchTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">214</span><span class="k">class</span> <span class="nc">SwitchTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-40'>
@@ -604,8 +605,8 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">218</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">SwitchTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="lineno">219</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">219</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">SwitchTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">220</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-41'>
@@ -616,7 +617,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Make copies of the transformer layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">221</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">222</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-42'>
@@ -627,7 +628,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Final normalization layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">223</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-43'>
@@ -638,7 +639,7 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">225</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">226</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-44'>
@@ -649,12 +650,13 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Run through each transformer layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">227</span>        <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
-<span class="lineno">228</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
-<span class="lineno">229</span>            <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n_d</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
-<span class="lineno">230</span>            <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-<span class="lineno">231</span>            <span class="n">route_prob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
-<span class="lineno">232</span>            <span class="n">n_dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_d</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">228</span>        <span class="n">counts</span><span class="p">,</span> <span class="n">route_prob</span><span class="p">,</span> <span class="n">n_dropped</span><span class="p">,</span> <span class="n">route_prob_max</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+<span class="lineno">229</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+<span class="lineno">230</span>            <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n_d</span><span class="p">,</span> <span class="n">p_max</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+<span class="lineno">231</span>            <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="lineno">232</span>            <span class="n">route_prob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="lineno">233</span>            <span class="n">n_dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_d</span><span class="p">)</span>
+<span class="lineno">234</span>            <span class="n">route_prob_max</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_max</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-45'>
@@ -665,7 +667,7 @@ with handling extra outputs of switch feedforward module.</p>
             <p>Finally, normalize the vectors</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">234</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">236</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-46'>
@@ -676,7 +678,7 @@ with handling extra outputs of switch feedforward module.</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">236</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">route_prob</span><span class="p">),</span> <span class="n">n_dropped</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">238</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">counts</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">route_prob</span><span class="p">),</span> <span class="n">n_dropped</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">route_prob_max</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='footer'>
