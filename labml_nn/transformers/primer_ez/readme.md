@@ -4,7 +4,7 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 [Primer: Searching for Efficient Transformers for Language Modeling](https://papers.labml.ai/paper/2109.08668).
 
 The authors do an evolutionary search for transformer architectures.
-They name the architecture found using the search Primer (PRIMitives searched transformER).
+They name the architecture found using the search as Primer (PRIMitives searched transformER).
 **Primer EZ** is the architecture with the two most robust modifications in Primer compared to
  the original transformer.
 Primer EZ trains a lot faster than the vanilla transformer.
