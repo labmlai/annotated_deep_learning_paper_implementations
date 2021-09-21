@@ -103,6 +103,10 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         # This will keep the accuracy metric stats separate for training and validation.
         self.state_modules = [self.accuracy]
 
+    def other_metrics(self, output: torch.Tensor, target: torch.Tensor):
+        """Override to calculate and log other metrics"""
+        pass
+
     def step(self, batch: any, batch_idx: BatchIndex):
         """
         ### Training or validation step

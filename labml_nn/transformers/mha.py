@@ -18,7 +18,7 @@ with MHA for NLP auto-regression.
 """
 
 import math
-from typing import Optional
+from typing import Optional, List
 
 import torch
 from torch import nn as nn
@@ -125,6 +125,22 @@ class MultiHeadAttention(Module):
         # Calculate $Q K^\top$ or $S_{ijbh} = \sum_d Q_{ibhd} K_{jbhd}$
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
 
+    def prepare_mask(self, mask: torch.Tensor, query_shape: List[int], key_shape: List[int]):
+        """
+        `mask` has shape `[seq_len_q, seq_len_k, batch_size]`, where first dimension is the query dimension.
+        If the query dimension is equal to $1$ it will be broadcasted.
+        """
+
+        assert mask.shape[0] == 1 or mask.shape[0] == query_shape[0]
+        assert mask.shape[1] == key_shape[0]
+        assert mask.shape[2] == 1 or mask.shape[2] == query_shape[1]
+
+        # Same mask applied to all heads.
+        mask = mask.unsqueeze(-1)
+
+        # resulting mask has shape `[seq_len_q, seq_len_k, batch_size, heads]`
+        return mask
+
     def forward(self, *,
                 query: torch.Tensor,
                 key: torch.Tensor,
@@ -144,15 +160,7 @@ class MultiHeadAttention(Module):
         seq_len, batch_size, _ = query.shape
 
         if mask is not None:
-            # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`,
-            # where first dimension is the query dimension.
-            # If the query dimension is equal to $1$ it will be broadcasted.
-            assert mask.shape[0] == 1 or mask.shape[0] == query.shape[0]
-            assert mask.shape[1] == key.shape[0]
-            assert mask.shape[2] == 1 or mask.shape[2] == query.shape[1]
-
-            # Same mask applied to all heads.
-            mask = mask.unsqueeze(-1)
+            mask = self.prepare_mask(mask, query.shape, key.shape)
 
         # Prepare `query`, `key` and `value` for attention computation.
         # These will then have shape `[seq_len, batch_size, heads, d_k]`.
