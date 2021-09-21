@@ -88,6 +88,11 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [An Image Is Worth 16x16 Words: Transformers For Image Recognition At Scale](https://papers.labml.ai/paper/2010.11929).
+
+## [Primer EZ](primer_ez/index.html)
+
+This is an implementation of the paper
+[Primer: Searching for Efficient Transformers for Language Modeling](https://papers.labml.ai/paper/2109.08668).
 """
 
 from .configs import TransformerConfigs
