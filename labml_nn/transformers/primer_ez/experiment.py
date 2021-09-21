@@ -19,7 +19,7 @@ def _primer_ez_mha(c: TransformerConfigs):
 
 def main():
     # Create experiment
-    experiment.create(name="transformer")
+    experiment.create(name="primer_ez")
     # Create configs
     conf = Configs()
     # Override configurations
@@ -47,15 +47,13 @@ def main():
         'd_model': 512,
         'transformer.ffn.d_ff': 2048,
 
-        # 'transformer.ffn.activation': 'SquaredReLU',
-        # 'transformer.encoder_attn': 'MultiDConvHeadAttention',
+        'transformer.ffn.activation': 'SquaredReLU',
+        'transformer.encoder_attn': 'MultiDConvHeadAttention',
 
-        'transformer.ffn.activation': 'ReLU',
-        'transformer.encoder_attn': 'mha',
+        # 'transformer.ffn.activation': 'ReLU',
+        # 'transformer.encoder_attn': 'mha',
 
-        # Use [Noam optimizer](../../optimizers/noam.html)
-        # 'optimizer.optimizer': 'Noam',
-        # 'optimizer.learning_rate': 1.,
+        # Use Adam optimizer
         'optimizer.optimizer': 'Adam',
         'optimizer.learning_rate': 2.5e-4,
     })
