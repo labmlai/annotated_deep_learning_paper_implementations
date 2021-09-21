@@ -13,20 +13,21 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 
 The authors do an evolutionary search for transformer architectures.
 They name the architecture found using the search Primer (PRIMitives searched transformER).
-**Primer EZ** is the architecture with the two most robust modification in Primer compared to original transformer.
-Primer EZ trains a lot faster than vanilla transformer.
+**Primer EZ** is the architecture with the two most robust modifications in Primer compared to
+ the original transformer.
+Primer EZ trains a lot faster than the vanilla transformer.
 
 ### Squared ReLU
 
 The most effective modification found by the search is using a square ReLU instead of ReLU in
-the [position wise feedforward module](../feed_forward.html).
+the [position-wise feedforward module](../feed_forward.html).
 
 $$y = {\max(x, 0)}^2$$
 
 ### Multi-DConv-Head Attention (MDHA)
 
 The next effective modification is a depth-wise $3 \times 1$ convolution after multi-head projection
- for queries, keys and values.
+ for queries, keys, and values.
 The convolution is along the sequence dimension and per channel (depth-wise).
 To be clear, if the number of channels in each head is $d_k$ the convolution will have $1 \times 3$
 kernels for each of the $d_k$ channels.
