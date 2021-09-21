@@ -198,11 +198,14 @@ The convolution is done per-channel (depth wise).</p>
             <div class='section-link'>
                 <a href='#section-9'>#</a>
             </div>
-            <p>We use PyTorch&rsquo;s <code>Conv1d</code> module.</p>
+            <p>We use PyTorch&rsquo;s <code>Conv1d</code> module.
+We set the number of groups to be equal to the number of channels so that it does a separate convolution
+(with different kernels) for each channel.
+We add padding to both sides and later crop the right most <code>kernel_size - 1</code> results</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">76</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv1d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">d_k</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">d_k</span><span class="p">,</span>
-<span class="lineno">77</span>                              <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,),</span> <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">79</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv1d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">d_k</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">d_k</span><span class="p">,</span>
+<span class="lineno">80</span>                              <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span><span class="p">,),</span> <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,),</span> <span class="n">groups</span><span class="o">=</span><span class="n">d_k</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -213,7 +216,7 @@ The convolution is done per-channel (depth wise).</p>
             <p><code>x</code> has shape <code>[seq_len, batch_size, heads, d_k]</code></p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">79</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">82</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -224,16 +227,16 @@ The convolution is done per-channel (depth wise).</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-<span class="lineno">85</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="lineno">86</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
-<span class="lineno">87</span>
-<span class="lineno">88</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="lineno">89</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-<span class="lineno">90</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
-<span class="lineno">91</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="lineno">92</span>
-<span class="lineno">93</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+<span class="lineno">88</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="lineno">89</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
+<span class="lineno">90</span>
+<span class="lineno">91</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">92</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+<span class="lineno">93</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
+<span class="lineno">94</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="lineno">95</span>
+<span class="lineno">96</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -244,7 +247,7 @@ The convolution is done per-channel (depth wise).</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">96</span><span class="k">class</span> <span class="nc">MultiDConvHeadAttention</span><span class="p">(</span><span class="n">MultiHeadAttention</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">99</span><span class="k">class</span> <span class="nc">MultiDConvHeadAttention</span><span class="p">(</span><span class="n">MultiHeadAttention</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -255,12 +258,12 @@ The convolution is done per-channel (depth wise).</p>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">97</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
-<span class="lineno">98</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">heads</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">)</span>
-<span class="lineno">99</span>
-<span class="lineno">100</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span>
-<span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span>
-<span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">100</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+<span class="lineno">101</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">heads</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">)</span>
+<span class="lineno">102</span>
+<span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span>
+<span class="lineno">104</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span>
+<span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">SpatialDepthWiseConvolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='footer'>

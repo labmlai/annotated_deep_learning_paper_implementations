@@ -66,15 +66,18 @@ class SpatialDepthWiseConvolution(Module):
     """
     ## Spatial Depth Wise Convolution
     """
-
-    def __init__(self, kernel_size: int = 3):
+    def __init__(self, d_k: int, kernel_size: int = 3):
         """
         * `d_k` is the number of channels in each head
         """
         super().__init__()
         self.kernel_size = kernel_size
         # We use PyTorch's `Conv1d` module.
-        self.conv = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=(kernel_size,), padding=(kernel_size - 1,))
+        # We set the number of groups to be equal to the number of channels so that it does a separate convolution
+        # (with different kernels) for each channel.
+        # We add padding to both sides and later crop the right most `kernel_size - 1` results
+        self.conv = nn.Conv1d(in_channels=d_k, out_channels=d_k,
+                              kernel_size=(kernel_size,), padding=(kernel_size - 1,), groups=d_k)
 
     def forward(self, x: torch.Tensor):
         """
@@ -83,7 +86,7 @@ class SpatialDepthWiseConvolution(Module):
 
         seq_len, batch_size, heads, d_k = x.shape
         x = x.permute(1, 2, 3, 0)
-        x = x.view(batch_size * heads * d_k, 1, seq_len)
+        x = x.view(batch_size * heads, d_k, seq_len)
 
         x = self.conv(x)
         x = x[:, :, :-(self.kernel_size - 1)]
@@ -97,6 +100,6 @@ class MultiDConvHeadAttention(MultiHeadAttention):
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
         super().__init__(heads, d_model, dropout_prob)
 
-        self.query = nn.Sequential(self.query, SpatialDepthWiseConvolution())
-        self.key = nn.Sequential(self.key, SpatialDepthWiseConvolution())
-        self.value = nn.Sequential(self.value, SpatialDepthWiseConvolution())
+        self.query = nn.Sequential(self.query, SpatialDepthWiseConvolution(self.d_k))
+        self.key = nn.Sequential(self.key, SpatialDepthWiseConvolution(self.d_k))
+        self.value = nn.Sequential(self.value, SpatialDepthWiseConvolution(self.d_k))
