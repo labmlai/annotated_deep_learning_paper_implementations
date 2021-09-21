@@ -76,7 +76,7 @@ with MHA for NLP auto-regression.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">20</span><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="lineno">21</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
 <span class="lineno">22</span>
 <span class="lineno">23</span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="lineno">24</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span> <span class="k">as</span> <span class="n">nn</span>
@@ -370,6 +370,53 @@ give very small gradients when $d_k$ is large.</p>
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
+            <p><code>mask</code> has shape <code>[seq_len_q, seq_len_k, batch_size]</code>, where first dimension is the query dimension.
+If the query dimension is equal to $1$ it will be broadcasted.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">128</span>    <span class="k">def</span> <span class="nf">prepare_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">query_shape</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">key_shape</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>        <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">query_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">135</span>        <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">key_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">136</span>        <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">query_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>Same mask applied to all heads.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">139</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>resulting mask has shape <code>[seq_len_q, seq_len_k, batch_size, heads]</code></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">142</span>        <span class="k">return</span> <span class="n">mask</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
             <p><code>query</code>, <code>key</code> and <code>value</code> are the tensors that store
 collection of <em>query</em>, <em>key</em> and <em>value</em> vectors.
 They have shape <code>[seq_len, batch_size, d_model]</code>.</p>
@@ -378,64 +425,11 @@ They have shape <code>[seq_len, batch_size, d_model]</code>.</p>
 query at position <code>i</code> has access to key-value at position <code>j</code>.</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">128</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">129</span>                <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">130</span>                <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">131</span>                <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-<span class="lineno">132</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-25'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-25'>#</a>
-            </div>
-            <p><code>query</code>, <code>key</code> and <code>value</code>  have shape <code>[seq_len, batch_size, d_model]</code></p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">144</span>        <span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span>
-<span class="lineno">145</span>
-<span class="lineno">146</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-26'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-26'>#</a>
-            </div>
-            <p><code>mask</code> has shape <code>[seq_len_q, seq_len_k, batch_size]</code>,
-where first dimension is the query dimension.
-If the query dimension is equal to $1$ it will be broadcasted.</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">150</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="lineno">151</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="lineno">152</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-27'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-27'>#</a>
-            </div>
-            <p>Same mask applied to all heads.</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">155</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-28'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-28'>#</a>
-            </div>
-            <p>Prepare <code>query</code>, <code>key</code> and <code>value</code> for attention computation.
-These will then have shape <code>[seq_len, batch_size, heads, d_k]</code>.</p>
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">159</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-<span class="lineno">160</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-<span class="lineno">161</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">144</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">145</span>                <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">146</span>                <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">147</span>                <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">148</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-29'>
@@ -443,11 +437,13 @@ These will then have shape <code>[seq_len, batch_size, heads, d_k]</code>.</p>
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Compute attention scores $Q K^\top$.
-This gives a tensor of shape <code>[seq_len, seq_len, batch_size, heads]</code>.</p>
+            <p><code>query</code>, <code>key</code> and <code>value</code>  have shape <code>[seq_len, batch_size, d_model]</code></p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">165</span>        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">160</span>        <span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span>
+<span class="lineno">161</span>
+<span class="lineno">162</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">163</span>            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_mask</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-30'>
@@ -455,10 +451,13 @@ This gives a tensor of shape <code>[seq_len, seq_len, batch_size, heads]</code>.
             <div class='section-link'>
                 <a href='#section-30'>#</a>
             </div>
-            <p>Scale scores $\frac{Q K^\top}{\sqrt{d_k}}$</p>
+            <p>Prepare <code>query</code>, <code>key</code> and <code>value</code> for attention computation.
+These will then have shape <code>[seq_len, batch_size, heads, d_k]</code>.</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">168</span>        <span class="n">scores</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">167</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="lineno">168</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="lineno">169</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-31'>
@@ -466,11 +465,11 @@ This gives a tensor of shape <code>[seq_len, seq_len, batch_size, heads]</code>.
             <div class='section-link'>
                 <a href='#section-31'>#</a>
             </div>
-            <p>Apply mask</p>
+            <p>Compute attention scores $Q K^\top$.
+This gives a tensor of shape <code>[seq_len, seq_len, batch_size, heads]</code>.</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">171</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<span class="lineno">172</span>            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">173</span>        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scores</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-32'>
@@ -478,11 +477,10 @@ This gives a tensor of shape <code>[seq_len, seq_len, batch_size, heads]</code>.
             <div class='section-link'>
                 <a href='#section-32'>#</a>
             </div>
-            <p>$softmax$ attention along the key sequence dimension
-$\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
+            <p>Scale scores $\frac{Q K^\top}{\sqrt{d_k}}$</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">176</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">176</span>        <span class="n">scores</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-33'>
@@ -490,10 +488,11 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-33'>#</a>
             </div>
-            <p>Save attentions if debugging</p>
+            <p>Apply mask</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">179</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;attn&#39;</span><span class="p">,</span> <span class="n">attn</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">179</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">180</span>            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-34'>
@@ -501,10 +500,11 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-34'>#</a>
             </div>
-            <p>Apply dropout</p>
+            <p>$softmax$ attention along the key sequence dimension
+$\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">182</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">184</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-35'>
@@ -512,12 +512,10 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-35'>#</a>
             </div>
-            <p>Multiply by values
-<script type="math/tex; mode=display">\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)V</script>
-</p>
+            <p>Save attentions if debugging</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">186</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ijbh,jbhd-&gt;ibhd&quot;</span><span class="p">,</span> <span class="n">attn</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">187</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;attn&#39;</span><span class="p">,</span> <span class="n">attn</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-36'>
@@ -525,10 +523,10 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-36'>#</a>
             </div>
-            <p>Save attentions for any other calculations </p>
+            <p>Apply dropout</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">189</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">190</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-37'>
@@ -536,10 +534,12 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <p>Concatenate multiple heads</p>
+            <p>Multiply by values
+<script type="math/tex; mode=display">\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)V</script>
+</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">192</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">194</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ijbh,jbhd-&gt;ibhd&quot;</span><span class="p">,</span> <span class="n">attn</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-38'>
@@ -547,10 +547,32 @@ $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
             <div class='section-link'>
                 <a href='#section-38'>#</a>
             </div>
+            <p>Save attentions for any other calculations </p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">197</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>Concatenate multiple heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
             <p>Output layer</p>
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">195</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">203</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='footer'>
