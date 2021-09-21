@@ -1,3 +1,17 @@
+"""
+---
+title: Primer EZ experiment
+summary: This experiment trains Primer EZ on Tiny Shakespeare dataset.
+---
+
+# [Primer EZ](index.html) Experiment
+
+This is an annotated PyTorch experiment to train a [Primer EZ transformer](index.html).
+
+This is based on our [vanilla transformer experiment](../basic/experiment.html).
+We use the same experiment and add the Primer EZ modifications.
+"""
+
 from labml import experiment
 from labml.configs import option
 from labml_nn.transformers import TransformerConfigs
@@ -8,11 +22,21 @@ from labml_nn.transformers.primer_ez import SquaredReLU
 
 @option(FeedForwardConfigs.activation, 'SquaredReLU')
 def _squared_relu():
+    """
+    Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
+     of [**squared ReLU**](index.html) to [configurable](../configs.html#FFN)
+     [feed forward module](../feed_forward.html).
+    """
     return SquaredReLU()
 
 
 @option(TransformerConfigs.encoder_attn, 'MultiDConvHeadAttention')
 def _primer_ez_mha(c: TransformerConfigs):
+    """
+    Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
+     of [**Multi-DConv-Head Attention**](index.html) to
+     [configurable transformer](../configs.html#TransformerConfigs)
+    """
     from labml_nn.transformers.primer_ez import MultiDConvHeadAttention
     return MultiDConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
 
@@ -47,15 +71,19 @@ def main():
         'd_model': 512,
         'transformer.ffn.d_ff': 2048,
 
-        'transformer.ffn.activation': 'SquaredReLU',
-        'transformer.encoder_attn': 'MultiDConvHeadAttention',
-
-        # 'transformer.ffn.activation': 'ReLU',
-        # 'transformer.encoder_attn': 'mha',
-
         # Use Adam optimizer
         'optimizer.optimizer': 'Adam',
         'optimizer.learning_rate': 2.5e-4,
+
+        # ⭐️ Use [**squared ReLU**](index.html) activation in the feed forward network.
+        #
+        # *Replace this with `ReLU` for $ReLU$.*
+        'transformer.ffn.activation': 'SquaredReLU',
+
+        # ⭐️ Use [**Multi-DConv-Head Attention**](index.html) for encoder attention.
+        #
+        # *Replace this with `mha` for original multi-head attention.*
+        'transformer.encoder_attn': 'MultiDConvHeadAttention',
     })
 
     # Set models for saving and loading
