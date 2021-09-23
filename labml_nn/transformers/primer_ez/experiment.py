@@ -31,7 +31,7 @@ def _squared_relu():
 
 
 @option(TransformerConfigs.encoder_attn, 'MultiDConvHeadAttention')
-def _primer_ez_mha(c: TransformerConfigs):
+def _d_conv_mha(c: TransformerConfigs):
     """
     Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
      of [**Multi-DConv-Head Attention**](index.html) to
@@ -39,6 +39,28 @@ def _primer_ez_mha(c: TransformerConfigs):
     """
     from labml_nn.transformers.primer_ez import MultiDConvHeadAttention
     return MultiDConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
+
+
+@option(TransformerConfigs.encoder_attn, 'MultiDSharedConvHeadAttention')
+def _d_shared_conv_mha(c: TransformerConfigs):
+    """
+    Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
+     of [**Multi Depth-wise Shared Conv Head Attention**](variations.html) to
+     [configurable transformer](../configs.html#TransformerConfigs)
+    """
+    from labml_nn.transformers.primer_ez.variations import MultiDSharedConvHeadAttention
+    return MultiDSharedConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
+
+
+@option(TransformerConfigs.encoder_attn, 'MultiDPHConvHeadAttention')
+def _d_per_head_conv_mha(c: TransformerConfigs):
+    """
+    Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
+     of [**Multi Depth-wise Per Head Conv Head Attention**](variation.html) to
+     [configurable transformer](../configs.html#TransformerConfigs)
+    """
+    from labml_nn.transformers.primer_ez.variations import MultiDPHConvHeadAttention
+    return MultiDPHConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
 
 
 def main():
