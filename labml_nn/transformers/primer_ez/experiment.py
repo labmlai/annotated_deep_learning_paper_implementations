@@ -47,6 +47,8 @@ def _d_shared_conv_mha(c: TransformerConfigs):
     Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
      of [**Multi Depth-wise Shared Conv Head Attention**](variations.html) to
      [configurable transformer](../configs.html#TransformerConfigs)
+
+    📝 *This is a variation we tried*
     """
     from labml_nn.transformers.primer_ez.variations import MultiDSharedConvHeadAttention
     return MultiDSharedConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
@@ -58,6 +60,8 @@ def _d_per_head_conv_mha(c: TransformerConfigs):
     Add the [option](https://docs.labml.ai/api/configs.html#labml.configs.option)
      of [**Multi Depth-wise Per Head Conv Head Attention**](variation.html) to
      [configurable transformer](../configs.html#TransformerConfigs)
+
+    📝 *This is a variation we tried*
     """
     from labml_nn.transformers.primer_ez.variations import MultiDPHConvHeadAttention
     return MultiDPHConvHeadAttention(c.n_heads, c.d_model, dropout_prob=c.dropout)
