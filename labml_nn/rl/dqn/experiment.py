@@ -271,7 +271,7 @@ def main():
         # Target model updating interval
         'update_target_model': 250,
         # Learning rate.
-        'learning_rate': FloatDynamicHyperParam(2.5e-4, (0, 1e-3)),
+        'learning_rate': FloatDynamicHyperParam(1e-4, (0, 1e-3)),
     }
 
     # Configurations
