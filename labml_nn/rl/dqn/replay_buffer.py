@@ -10,7 +10,7 @@ This implements paper [Prioritized experience replay](https://papers.labml.ai/pa
 using a binary segment tree.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a0da8048235511ecb9affd797fa27714)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/fe1ad986237511ec86e8b763a2d3f710)
 """
 
 import random

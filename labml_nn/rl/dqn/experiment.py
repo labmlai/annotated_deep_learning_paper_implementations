@@ -10,7 +10,7 @@ This experiment trains a Deep Q Network (DQN) to play Atari Breakout game on Ope
 It runs the [game environments on multiple processes](../game.html) to sample efficiently.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a0da8048235511ecb9affd797fa27714)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/fe1ad986237511ec86e8b763a2d3f710)
 """
 
 import numpy as np
