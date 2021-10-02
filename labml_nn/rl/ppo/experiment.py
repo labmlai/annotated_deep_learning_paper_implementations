@@ -388,17 +388,7 @@ def main():
     experiment.configs(configs)
 
     # Initialize the trainer
-    m = Trainer(
-        updates=configs['updates'],
-        epochs=configs['epochs'],
-        n_workers=configs['n_workers'],
-        worker_steps=configs['worker_steps'],
-        batches=configs['batches'],
-        value_loss_coef=configs['value_loss_coef'],
-        entropy_bonus_coef=configs['entropy_bonus_coef'],
-        clip_range=configs['clip_range'],
-        learning_rate=configs['learning_rate'],
-    )
+    m = Trainer(**configs)
 
     # Run and monitor the experiment
     with experiment.start():
