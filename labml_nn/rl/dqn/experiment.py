@@ -14,6 +14,7 @@ import numpy as np
 import torch
 
 from labml import tracker, experiment, logger, monit
+from labml.internal.configs.dynamic_hyperparam import FloatDynamicHyperParam
 from labml_helpers.schedule import Piecewise
 from labml_nn.rl.dqn import QFuncLoss
 from labml_nn.rl.dqn.model import Model
@@ -37,20 +38,31 @@ class Trainer:
     ## Trainer
     """
 
-    def __init__(self):
+    def __init__(self, *,
+                 updates: int, epochs: int,
+                 n_workers: int, worker_steps: int, mini_batch_size: int,
+                 update_target_model: int,
+                 learning_rate: FloatDynamicHyperParam,
+                 ):
         # #### Configurations
 
         # number of workers
-        self.n_workers = 8
+        self.n_workers = n_workers
         # steps sampled on each update
-        self.worker_steps = 4
+        self.worker_steps = worker_steps
         # number of training iterations
-        self.train_epochs = 8
+        self.train_epochs = epochs
 
         # number of updates
-        self.updates = 1_000_000
+        self.updates = updates
         # size of mini batch for training
-        self.mini_batch_size = 32
+        self.mini_batch_size = mini_batch_size
+
+        # update target network every 250 update
+        self.update_target_model = update_target_model
+
+        # learning rate
+        self.learning_rate = learning_rate
 
         # exploration as a function of updates
         self.exploration_coefficient = Piecewise(
@@ -59,9 +71,6 @@ class Trainer:
                 (25_000, 0.1),
                 (self.updates / 2, 0.01)
             ], outside_value=0.01)
-
-        # update target network every 250 update
-        self.update_target_model = 250
 
         # $\beta$ for replay buffer as a function of updates
         self.prioritized_replay_beta = Piecewise(
@@ -179,6 +188,9 @@ class Trainer:
             # Update replay buffer priorities
             self.replay_buffer.update_priorities(samples['indexes'], new_priorities)
 
+            # Set learning rate
+            for pg in self.optimizer.param_groups:
+                pg['lr'] = self.learning_rate()
             # Zero out the previously calculated gradients
             self.optimizer.zero_grad()
             # Calculate gradients
@@ -238,8 +250,30 @@ class Trainer:
 def main():
     # Create the experiment
     experiment.create(name='dqn')
+
+    # Configurations
+    configs = {
+        # Number of updates
+        'updates': 1_000_000,
+        # Number of epochs to train the model with sampled data.
+        'epochs': 8,
+        # Number of worker processes
+        'n_workers': 8,
+        # Number of steps to run on each process for a single update
+        'worker_steps': 4,
+        # Mini batch size
+        'mini_batch_size': 32,
+        # Target model updating interval
+        'update_target_model': 250,
+        # Learning rate.
+        'learning_rate': FloatDynamicHyperParam(2.5e-4, (0, 1e-3)),
+    }
+
+    # Configurations
+    experiment.configs(configs)
+
     # Initialize the trainer
-    m = Trainer()
+    m = Trainer(**configs)
     # Run and monitor the experiment
     with experiment.start():
         m.run_training_loop()
