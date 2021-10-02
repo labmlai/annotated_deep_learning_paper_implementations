@@ -18,10 +18,8 @@ This is a [PyTorch](https://pytorch.org) implementation of paper
 
 Here is the [experiment](experiment.html) and [model](model.html) implementation.
 
-\(
-   \def\green#1{{\color{yellowgreen}{#1}}}
-\)
-
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a0da8048235511ecb9affd797fa27714)
 """
 
 from typing import Tuple

@@ -5,6 +5,9 @@ summary: Implementation of neural network model for Deep Q Network (DQN).
 ---
 
 # Deep Q Network (DQN) Model
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a0da8048235511ecb9affd797fa27714)
 """
 
 import torch
