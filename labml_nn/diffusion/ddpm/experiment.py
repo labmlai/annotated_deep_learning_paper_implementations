@@ -1,3 +1,13 @@
+"""
+---
+title: Denoising Diffusion Probabilistic Models (DDPM) training
+summary: >
+  Training code for
+  Denoising Diffusion Probabilistic Model.
+---
+
+# [Denoising Diffusion Probabilistic Models (DDPM)](index.html) training
+"""
 from typing import List
 
 import torch

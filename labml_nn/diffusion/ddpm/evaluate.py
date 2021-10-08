@@ -1,3 +1,14 @@
+"""
+---
+title: Denoising Diffusion Probabilistic Models (DDPM) evaluation/sampling
+summary: >
+  Code to generate samples from a trained
+  Denoising Diffusion Probabilistic Model.
+---
+
+# [Denoising Diffusion Probabilistic Models (DDPM)](index.html) evaluation/sampling
+"""
+
 import numpy as np
 import torch
 from matplotlib import pyplot as plt

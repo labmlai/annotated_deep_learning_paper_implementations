@@ -1,3 +1,13 @@
+"""
+---
+title: UNet model for Denoising Diffusion Probabilistic Models (DDPM)
+summary: >
+  UNet model for Denoising Diffusion Probabilistic Models (DDPM)
+---
+
+# UNext model for [Denoising Diffusion Probabilistic Models (DDPM)](index.html)
+"""
+
 import math
 
 import torch

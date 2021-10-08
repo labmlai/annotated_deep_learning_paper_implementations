@@ -1,3 +1,20 @@
+"""
+---
+title: Denoising Diffusion Probabilistic Models (DDPM)
+summary: >
+  PyTorch implementation and tutorial of the paper
+  Denoising Diffusion Probabilistic Models (DDPM).
+---
+
+# Denoising Diffusion Probabilistic Models (DDPM)
+
+This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
+[Denoising Diffusion Probabilistic Models](https://papers.labml.ai/paper/2006.11239).
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a44333ea251411ec8007d1a1762ed686)
+"""
+
+
 import torch
 import torch.nn.functional as F
 import torch.utils.data
