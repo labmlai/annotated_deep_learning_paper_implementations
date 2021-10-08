@@ -149,6 +149,13 @@ This minimizes $-\log \color{cyan}{p_\theta}(x_0|x_1)$ when $t=1$ and $L_{t-1}$ 
 weighting in $L_{t-1}$. Discarding the weights $\frac{\beta_t^2}{2\sigma_t^2 \alpha_t (1 - \bar\alpha_t)}$
 increase the weight given to higher $t$ (which have higher noise levels), therefore increasing the sample quality.
 
+This file implements the loss calculation and a basic sampling method that we use to generate images during
+training.
+
+Here is the [UNet model](unet.html) that gives $\color{cyan}{\epsilon_\theta(x_t, t)$ and
+[training code](experiment.html).
+[This file](evaluate.html) can generate samples and interpolations from a trained model.
+
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a44333ea251411ec8007d1a1762ed686)
 """
 from typing import Tuple, Optional
