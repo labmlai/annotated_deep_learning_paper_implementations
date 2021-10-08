@@ -57,6 +57,11 @@ implementations almost weekly.
 * [Wasserstein GAN with Gradient Penalty](https://nn.labml.ai/gan/wasserstein/gradient_penalty/index.html)
 * [StyleGAN 2](https://nn.labml.ai/gan/stylegan/index.html)
 
+#### ✨ [Diffusion models](https://nn.labml.ai/diffusion/index.html)
+
+* [Denoising Diffusion Probabilistic Models (DDPM)](https://nn.labml.ai/diffusion/ddpm/index.html)
+
+
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
 #### ✨ Graph Neural Networks
