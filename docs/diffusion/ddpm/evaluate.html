@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Code to generate samples from a trained Denoising Diffusion Probabilistic Model."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Denoising Diffusion Probabilistic Models (DDPM) evaluation/sampling"/>
+    <meta name="twitter:description" content="Code to generate samples from a trained Denoising Diffusion Probabilistic Model."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/diffusion/ddpm/evaluate.html"/>
+    <meta property="og:title" content="Denoising Diffusion Probabilistic Models (DDPM) evaluation/sampling"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Denoising Diffusion Probabilistic Models (DDPM) evaluation/sampling"/>
+    <meta property="og:description" content="Code to generate samples from a trained Denoising Diffusion Probabilistic Model."/>
+
+    <title>Denoising Diffusion Probabilistic Models (DDPM) evaluation/sampling</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/diffusion/ddpm/evaluate.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">diffusion</a>
+                <a class="parent" href="index.html">ddpm</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/diffusion/ddpm/evaluate.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="index.html">Denoising Diffusion Probabilistic Models (DDPM)</a> evaluation/sampling</h1>
+<p>This is the code to generate images and create interpolations between given images.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">14</span><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">15</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">torchvision.transforms.functional</span> <span class="kn">import</span> <span class="n">to_pil_image</span><span class="p">,</span> <span class="n">resize</span>
+<span class="lineno">18</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.ddpm</span> <span class="kn">import</span> <span class="n">DenoiseDiffusion</span><span class="p">,</span> <span class="n">gather</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.ddpm.experiment</span> <span class="kn">import</span> <span class="n">Configs</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Sampler class</h2>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">24</span><span class="k">class</span> <span class="nc">Sampler</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul>
+<li><code>diffusion</code> is the <code>DenoiseDiffusion</code> instance</li>
+<li><code>image_channels</code> is the number of channels in the image</li>
+<li><code>image_size</code> is the image size</li>
+<li><code>device</code> is the device of the model</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">29</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">diffusion</span><span class="p">:</span> <span class="n">DenoiseDiffusion</span><span class="p">,</span> <span class="n">image_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">36</span>        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+<span class="lineno">37</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span> <span class="o">=</span> <span class="n">image_size</span>
+<span class="lineno">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_channels</span> <span class="o">=</span> <span class="n">image_channels</span>
+<span class="lineno">39</span>        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span> <span class="o">=</span> <span class="n">diffusion</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>$T$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_steps</span> <span class="o">=</span> <span class="n">diffusion</span><span class="o">.</span><span class="n">n_steps</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>$\color{cyan}{\epsilon_\theta}(x_t, t)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps_model</span> <span class="o">=</span> <span class="n">diffusion</span><span class="o">.</span><span class="n">eps_model</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>$\beta_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">diffusion</span><span class="o">.</span><span class="n">beta</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>$\alpha_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">48</span>        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">diffusion</span><span class="o">.</span><span class="n">alpha</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>$\bar\alpha_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span> <span class="o">=</span> <span class="n">diffusion</span><span class="o">.</span><span class="n">alpha_bar</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>$\bar\alpha_{t-1}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span>        <span class="n">alpha_bar_tm1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="o">.</span><span class="n">new_ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>To calculate
+<script type="math/tex; mode=display">\begin{align}
+q(x_{t-1}|x_t, x_0) &= \mathcal{N} \Big(x_{t-1}; \tilde\mu_t(x_t, x_0), \tilde\beta_t \mathbf{I} \Big) \\
+\tilde\mu_t(x_t, x_0) &= \frac{\sqrt{\bar\alpha_{t-1}}\beta_t}{1 - \bar\alpha_t}x_0
+                         + \frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1})}{1-\bar\alpha_t}x_t \\
+\tilde\beta_t &= \frac{1 - \bar\alpha_{t-1}}{a}
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>$\tilde\beta_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">63</span>        <span class="bp">self</span><span class="o">.</span><span class="n">beta_tilde</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_bar_tm1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\frac{\sqrt{\bar\alpha_{t-1}}\beta_t}{1 - \bar\alpha_t}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mu_tilde_coef1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha_bar_tm1</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1}}{1-\bar\alpha_t}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">67</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mu_tilde_coef2</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_bar_tm1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>$\sigma^2 = \beta$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">69</span>        <span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Helper function to display an image</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">71</span>    <span class="k">def</span> <span class="nf">show_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">73</span>        <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">74</span>        <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="lineno">75</span>        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="lineno">76</span>        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+<span class="lineno">77</span>        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Helper function to create a video</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">79</span>    <span class="k">def</span> <span class="nf">make_video</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;video.mp4&quot;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>        <span class="kn">import</span> <span class="nn">imageio</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>20 second video</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">83</span>        <span class="n">writer</span> <span class="o">=</span> <span class="n">imageio</span><span class="o">.</span><span class="n">get_writer</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">//</span> <span class="mi">20</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>Add each image</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">85</span>        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+<span class="lineno">86</span>            <span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="lineno">87</span>            <span class="n">f</span> <span class="o">=</span> <span class="n">to_pil_image</span><span class="p">(</span><span class="n">resize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mi">368</span><span class="p">,</span> <span class="mi">368</span><span class="p">]))</span>
+<span class="lineno">88</span>            <span class="n">writer</span><span class="o">.</span><span class="n">append_data</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <h4>Sample an image step-by-step using $\color{cyan}{p_\theta}(x_{t-1}|x_t)$</h4>
+<p>We sample an image step-by-step using $\color{cyan}{p_\theta}(x_{t-1}|x_t)$ and at each step
+show the estimate
+<script type="math/tex; mode=display">x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
+ \Big( x_t - \sqrt{1 - \bar\alpha_t} \color{cyan}{\epsilon_\theta}(x_t, t) \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">92</span>    <span class="k">def</span> <span class="nf">sample_animation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">create_video</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>$x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">103</span>        <span class="n">xt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_channels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>Interval to log $\hat{x}_0$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">106</span>        <span class="n">interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_steps</span> <span class="o">//</span> <span class="n">n_frames</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>Frames for video</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">108</span>        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>Sample $T$ steps</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">110</span>        <span class="k">for</span> <span class="n">t_inv</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Denoise&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_steps</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>$t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>            <span class="n">t_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_steps</span> <span class="o">-</span> <span class="n">t_inv</span> <span class="o">-</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>$t$ in a tensor</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>            <span class="n">t</span> <span class="o">=</span> <span class="n">xt</span><span class="o">.</span><span class="n">new_full</span><span class="p">((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">t_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>$\color{cyan}{\epsilon_\theta}(x_t, t)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>            <span class="n">eps_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_model</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="lineno">117</span>            <span class="k">if</span> <span class="n">t_</span> <span class="o">%</span> <span class="n">interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>Get $\hat{x}_0$ and add to frames</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>                <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_x0</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">eps_theta</span><span class="p">)</span>
+<span class="lineno">120</span>                <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="lineno">121</span>                <span class="k">if</span> <span class="ow">not</span> <span class="n">create_video</span><span class="p">:</span>
+<span class="lineno">122</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">show_image</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t_</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span>            <span class="n">xt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_sample</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">eps_theta</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>Make video</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>        <span class="k">if</span> <span class="n">create_video</span><span class="p">:</span>
+<span class="lineno">128</span>            <span class="bp">self</span><span class="o">.</span><span class="n">make_video</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <h4>Interpolate two images $x_0$ and $x&rsquo;_0$</h4>
+<p>We get $x_t \sim q(x_t|x_0)$ and $x&rsquo;_t \sim q(x&rsquo;_t|x_0)$.</p>
+<p>Then interpolate to
+ <script type="math/tex; mode=display">\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0</script>
+</p>
+<p>Then get
+ <script type="math/tex; mode=display">\bar{x}_0 \sim \color{cyan}{p_\theta}(x_0|\bar{x}_t)</script>
+</p>
+<ul>
+<li><code>x1</code> is $x_0$</li>
+<li><code>x2</code> is $x&rsquo;_0$</li>
+<li><code>lambda_</code> is $\lambda$</li>
+<li><code>t_</code> is $t$</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>    <span class="k">def</span> <span class="nf">interpolate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t_</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p>Number of samples</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">149</span>        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>$t$ tensor</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>        <span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n_samples</span><span class="p">,),</span> <span class="n">t_</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">153</span>        <span class="n">xt</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">lambda_</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">q_sample</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="n">lambda_</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">q_sample</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\bar{x}_0 \sim \color{cyan}{p_\theta}(x_0|\bar{x}_t)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">156</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_x0</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">t_</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <h4>Interpolate two images $x_0$ and $x&rsquo;_0$ and make a video</h4>
+<ul>
+<li><code>x1</code> is $x_0$</li>
+<li><code>x2</code> is $x&rsquo;_0$</li>
+<li><code>n_frames</code> is the number of frames for the image</li>
+<li><code>t_</code> is $t$</li>
+<li><code>create_video</code> specifies whether to make a video or to show each frame</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">158</span>    <span class="k">def</span> <span class="nf">interpolate_animate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">t_</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="lineno">159</span>                            <span class="n">create_video</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>Show original images</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">171</span>        <span class="bp">self</span><span class="o">.</span><span class="n">show_image</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="s2">&quot;x1&quot;</span><span class="p">)</span>
+<span class="lineno">172</span>        <span class="bp">self</span><span class="o">.</span><span class="n">show_image</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>Add batch dimension</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">174</span>        <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
+<span class="lineno">175</span>        <span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>$t$ tensor</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">177</span>        <span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">1</span><span class="p">,),</span> <span class="n">t_</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>$x_t \sim q(x_t|x_0)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">179</span>        <span class="n">x1t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">q_sample</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>$x&rsquo;_t \sim q(x&rsquo;_t|x_0)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">181</span>        <span class="n">x2t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">q_sample</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="lineno">182</span>
+<span class="lineno">183</span>        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>Get frames with different $\lambda$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">185</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Interpolate&#39;</span><span class="p">,</span> <span class="n">n_frames</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">is_children_silent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>$\lambda$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">187</span>            <span class="n">lambda_</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">n_frames</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">189</span>            <span class="n">xt</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">lambda_</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1t</span> <span class="o">+</span> <span class="n">lambda_</span> <span class="o">*</span> <span class="n">x2t</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\bar{x}_0 \sim \color{cyan}{p_\theta}(x_0|\bar{x}_t)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">191</span>            <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_x0</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">t_</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            <p>Add to frames</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">193</span>            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>Show frame</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">195</span>            <span class="k">if</span> <span class="ow">not</span> <span class="n">create_video</span><span class="p">:</span>
+<span class="lineno">196</span>                <span class="bp">self</span><span class="o">.</span><span class="n">show_image</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lambda_</span> <span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            <p>Make video</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">199</span>        <span class="k">if</span> <span class="n">create_video</span><span class="p">:</span>
+<span class="lineno">200</span>            <span class="bp">self</span><span class="o">.</span><span class="n">make_video</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <h4>Sample an image using $\color{cyan}{p_\theta}(x_{t-1}|x_t)$</h4>
+<ul>
+<li><code>xt</code> is $x_t$</li>
+<li><code>n_steps</code> is $t$</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">202</span>    <span class="k">def</span> <span class="nf">_sample_x0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xt</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            <p>Number of sampels</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">211</span>        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">xt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <p>Iterate until $t$ steps</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">213</span>        <span class="k">for</span> <span class="n">t_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Denoise&#39;</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>
+<span class="lineno">214</span>            <span class="n">t</span> <span class="o">=</span> <span class="n">n_steps</span> <span class="o">-</span> <span class="n">t_</span> <span class="o">-</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">216</span>            <span class="n">xt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">p_sample</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">xt</span><span class="o">.</span><span class="n">new_full</span><span class="p">((</span><span class="n">n_samples</span><span class="p">,),</span> <span class="n">t</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>Return $x_0$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">219</span>        <span class="k">return</span> <span class="n">xt</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <h4>Generate images</h4>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">221</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>$x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">226</span>        <span class="n">xt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">([</span><span class="n">n_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_channels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">x_0 \sim \color{cyan}{p_\theta}(x_0|x_t)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">229</span>        <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_x0</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_steps</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>Show images</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">232</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+<span class="lineno">233</span>            <span class="bp">self</span><span class="o">.</span><span class="n">show_image</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <h4>Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$</h4>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\color{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
+\color{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big) \\
+\color{cyan}{\mu_\theta}(x_t, t)
+  &= \frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+    \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\color{cyan}{\epsilon_\theta}(x_t, t) \Big)
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">235</span>    <span class="k">def</span> <span class="nf">p_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xt</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps_theta</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-61'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-61'>#</a>
+            </div>
+            <p><a href="utils.html">gather</a> $\bar\alpha_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">248</span>        <span class="n">alpha_bar</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-62'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-62'>#</a>
+            </div>
+            <p>$\alpha_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">250</span>        <span class="n">alpha</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-63'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-63'>#</a>
+            </div>
+            <p>$\frac{\beta}{\sqrt{1-\bar\alpha_t}}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">252</span>        <span class="n">eps_coef</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_bar</span><span class="p">)</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-64'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-64'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+     \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\color{cyan}{\epsilon_\theta}(x_t, t) \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">255</span>        <span class="n">mean</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">xt</span> <span class="o">-</span> <span class="n">eps_coef</span> <span class="o">*</span> <span class="n">eps_theta</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-65'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-65'>#</a>
+            </div>
+            <p>$\sigma^2$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">257</span>        <span class="n">var</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-66'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-66'>#</a>
+            </div>
+            <p>$\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">260</span>        <span class="n">eps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">xt</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">xt</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-67'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-67'>#</a>
+            </div>
+            <p>Sample</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">262</span>        <span class="k">return</span> <span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="n">var</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">eps</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-68'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-68'>#</a>
+            </div>
+            <h4>Estimate $x_0$</h4>
+<p>
+<script type="math/tex; mode=display">x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
+ \Big( x_t - \sqrt{1 - \bar\alpha_t} \color{cyan}{\epsilon_\theta}(x_t, t) \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">264</span>    <span class="k">def</span> <span class="nf">p_x0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xt</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-69'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-69'>#</a>
+            </div>
+            <p><a href="utils.html">gather</a> $\bar\alpha_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">272</span>        <span class="n">alpha_bar</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_bar</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-70'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-70'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
+ \Big( x_t - \sqrt{1 - \bar\alpha_t} \color{cyan}{\epsilon_\theta}(x_t, t) \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">276</span>        <span class="k">return</span> <span class="p">(</span><span class="n">xt</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_bar</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">alpha_bar</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-71'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-71'>#</a>
+            </div>
+            <p>Generate samples</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">279</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-72'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-72'>#</a>
+            </div>
+            <p>Training experiment run UUID</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">283</span>    <span class="n">run_uuid</span> <span class="o">=</span> <span class="s2">&quot;a44333ea251411ec8007d1a1762ed686&quot;</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-73'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-73'>#</a>
+            </div>
+            <p>Start an evaluation</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">286</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-74'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-74'>#</a>
+            </div>
+            <p>Create configs</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">289</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-75'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-75'>#</a>
+            </div>
+            <p>Load custom configuration of the training run</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">291</span>    <span class="n">configs_dict</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">load_configs</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-76'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-76'>#</a>
+            </div>
+            <p>Set configurations</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">293</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">configs_dict</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-77'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-77'>#</a>
+            </div>
+            <p>Initialize</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">296</span>    <span class="n">configs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-78'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-78'>#</a>
+            </div>
+            <p>Set PyTorch modules for saving and loading</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">299</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;eps_model&#39;</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">eps_model</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-79'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-79'>#</a>
+            </div>
+            <p>Load training experiment</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">302</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-80'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-80'>#</a>
+            </div>
+            <p>Create sampler</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">305</span>    <span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">diffusion</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">diffusion</span><span class="p">,</span>
+<span class="lineno">306</span>                      <span class="n">image_channels</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">image_channels</span><span class="p">,</span>
+<span class="lineno">307</span>                      <span class="n">image_size</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span>
+<span class="lineno">308</span>                      <span class="n">device</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-81'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-81'>#</a>
+            </div>
+            <p>Start evaluation</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">311</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-82'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-82'>#</a>
+            </div>
+            <p>No gradients</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">313</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-83'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-83'>#</a>
+            </div>
+            <p>Sample an image with an denoising animation</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">315</span>            <span class="n">sampler</span><span class="o">.</span><span class="n">sample_animation</span><span class="p">()</span>
+<span class="lineno">316</span>
+<span class="lineno">317</span>            <span class="k">if</span> <span class="kc">False</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-84'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-84'>#</a>
+            </div>
+            <p>Get some images fro data</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">319</span>                <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">data_loader</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-85'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-85'>#</a>
+            </div>
+            <p>Create an interpolation animation</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">322</span>                <span class="n">sampler</span><span class="o">.</span><span class="n">interpolate_animate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-86'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-86'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">326</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">327</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

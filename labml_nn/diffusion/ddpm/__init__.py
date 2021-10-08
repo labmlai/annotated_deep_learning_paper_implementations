@@ -15,7 +15,8 @@ In simple terms, we get an image from data and add noise step by step.
 Then We train a model to predict that noise at each step and use the model to
 generate images.
 
-The following definitions and theory shows how this works.
+The following definitions and derivation shows how this works.
+For details please refer to [the paper](https://papers.labml.ai/paper/2006.11239).
 
 ## Forward Process
 
@@ -85,7 +86,7 @@ The forward process posterior conditioned by $x_0$ is,
 \begin{align}
 q(x_{t-1}|x_t, x_0) &= \mathcal{N} \Big(x_{t-1}; \tilde\mu_t(x_t, x_0), \tilde\beta_t \mathbf{I} \Big) \\
 \tilde\mu_t(x_t, x_0) &= \frac{\sqrt{\bar\alpha_{t-1}}\beta_t}{1 - \bar\alpha_t}x_0
-                         + \frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1}}{1-\bar\alpha_t}x_t \\
+                         + \frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1})}{1-\bar\alpha_t}x_t \\
 \tilde\beta_t &= \frac{1 - \bar\alpha_{t-1}}{a}
 \end{align}
 
@@ -152,7 +153,7 @@ increase the weight given to higher $t$ (which have higher noise levels), theref
 This file implements the loss calculation and a basic sampling method that we use to generate images during
 training.
 
-Here is the [UNet model](unet.html) that gives $\color{cyan}{\epsilon_\theta(x_t, t)$ and
+Here is the [UNet model](unet.html) that gives $\color{cyan}{\epsilon_\theta}(x_t, t)$ and
 [training code](experiment.html).
 [This file](evaluate.html) can generate samples and interpolations from a trained model.
 
@@ -203,7 +204,7 @@ class DenoiseDiffusion:
         \end{align}
         """
 
-        # $\sqrt{\bar\alpha_t} x_0$
+        # [gather](utils.html) $\alpha_t$ and compute $\sqrt{\bar\alpha_t} x_0$
         mean = gather(self.alpha_bar, t) ** 0.5 * x0
         # $(1-\bar\alpha_t) \mathbf{I}$
         var = 1 - gather(self.alpha_bar, t)
@@ -230,7 +231,7 @@ class DenoiseDiffusion:
 
     def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
         """
-        #### Sample from $p(x_{t-1}|x_t)$
+        #### Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$
 
         \begin{align}
         \color{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
@@ -243,7 +244,7 @@ class DenoiseDiffusion:
 
         # $\color{cyan}{\epsilon_\theta}(x_t, t)$
         eps_theta = self.eps_model(xt, t)
-        # $\bar\alpha_t$
+        # [gather](utils.html) $\bar\alpha_t$
         alpha_bar = gather(self.alpha_bar, t)
         # $\alpha_t$
         alpha = gather(self.alpha, t)
