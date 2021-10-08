@@ -15,12 +15,12 @@ from matplotlib import pyplot as plt
 from torchvision.transforms.functional import to_pil_image, resize
 
 from labml import experiment, monit
-from labml_nn.diffusion.ddpm import GaussianDiffusion, gather
+from labml_nn.diffusion.ddpm import DenoiseDiffusion, gather
 from labml_nn.diffusion.ddpm.experiment import Configs
 
 
 class Sampler:
-    def __init__(self, diffusion: GaussianDiffusion, n_steps: int, image_channels: int, image_size: int,
+    def __init__(self, diffusion: DenoiseDiffusion, n_steps: int, image_channels: int, image_size: int,
                  device: torch.device):
         self.device = device
         self.image_size = image_size

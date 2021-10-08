@@ -15,7 +15,7 @@ import torch.utils.data
 import torchvision
 from PIL import Image
 
-from labml_nn.diffusion.ddpm import GaussianDiffusion
+from labml_nn.diffusion.ddpm import DenoiseDiffusion
 from labml_nn.diffusion.ddpm.unet import UNet
 from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs, option
@@ -26,7 +26,7 @@ class Configs(BaseConfigs):
     device: torch.device = DeviceConfigs()
 
     eps_model: UNet
-    diffusion: GaussianDiffusion
+    diffusion: DenoiseDiffusion
 
     image_channels: int = 3
     image_size: int = 32
@@ -54,7 +54,7 @@ class Configs(BaseConfigs):
             is_attn=self.is_attention,
         ).to(self.device)
 
-        self.diffusion = GaussianDiffusion(
+        self.diffusion = DenoiseDiffusion(
             eps_model=self.eps_model,
             n_steps=self.n_steps,
             device=self.device,
