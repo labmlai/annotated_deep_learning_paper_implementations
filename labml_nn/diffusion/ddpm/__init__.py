@@ -15,7 +15,7 @@ In simple terms, we get an image from data and add noise step by step.
 Then We train a model to predict that noise at each step and use the model to
 generate images.
 
-The following definitions and derivation shows how this works.
+The following definitions and derivations show how this works.
 For details please refer to [the paper](https://papers.labml.ai/paper/2006.11239).
 
 ## Forward Process

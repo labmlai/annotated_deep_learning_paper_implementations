@@ -52,6 +52,10 @@ implementations.
 * [Wasserstein GAN with Gradient Penalty](gan/wasserstein/gradient_penalty/index.html)
 * [StyleGAN 2](gan/stylegan/index.html)
 
+#### ✨ [Diffusion models](diffusion/index.html)
+
+* [Denoising Diffusion Probabilistic Models (DDPM)](diffusion/ddpm/index.html)
+
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
 #### ✨ Graph Neural Networks
