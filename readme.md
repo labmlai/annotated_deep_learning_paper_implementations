@@ -47,6 +47,8 @@ implementations almost weekly.
 
 #### ✨ [ResNet](https://nn.labml.ai/resnet/index.html)
 
+#### ✨ [ConvMixer](https://nn.labml.ai/conv_mixer/index.html)
+
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)

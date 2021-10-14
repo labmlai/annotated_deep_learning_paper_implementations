@@ -42,6 +42,8 @@ implementations.
 
 #### ✨ [ResNet](resnet/index.html)
 
+#### ✨ [ConvMixer](conv_mixer/index.html)
+
 #### ✨ [Capsule Networks](capsule_networks/index.html)
 
 #### ✨ [Generative Adversarial Networks](gan/index.html)
