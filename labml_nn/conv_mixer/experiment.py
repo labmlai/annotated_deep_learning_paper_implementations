@@ -7,7 +7,14 @@ summary: >
 
 #  Train a [ConvMixer](index.html) on CIFAR 10
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8b531d9ce3dc11eb84fc87df6756eb8f)
+This script trains a ConvMixer on CIFAR 10 dataset.
+
+This is not an attempt to reproduce the results of the paper.
+The paper uses  image augmentations
+present in [PyTorch Image Models (timm)](https://github.com/rwightman/pytorch-image-models)
+for training. We haven't done this for simplicity - which causes our validation accuracy to drop.
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d)
 """
 
 from labml import experiment
@@ -23,10 +30,13 @@ class Configs(CIFAR10Configs):
     dataset related configurations, optimizer, and a training loop.
     """
 
-    # Size of a patch
+    # Size of a patch, $p$
     patch_size: int = 2
+    # Number of channels in patch embeddings, $h$
     d_model: int = 256
+    # Number of [ConvMixer layers](#ConvMixerLayer) or depth, $d$
     n_layers: int = 8
+    # Kernel size of the depth-wise convolution, $k$
     kernel_size: int = 7
     # Number of classes in the task
     n_classes: int = 10
@@ -60,9 +70,9 @@ def main():
         'epochs': 150,
         'train_batch_size': 64,
 
-        # Augment CIFAR 10 images for training
+        # Simple image augmentations
         'train_dataset': 'cifar10_train_augmented',
-        # Do not augment CIFAR 10 images for validation
+        # Do not augment images for validation
         'valid_dataset': 'cifar10_valid_no_augment',
     })
     # Set model for saving/loading
