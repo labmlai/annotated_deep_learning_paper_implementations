@@ -14,18 +14,18 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 ![ConvMixer diagram from the paper](conv_mixer.png)
 
 ConvMixer is Similar to [MLP-Mixer](../transformers/mlp_mixer/index.html).
-MLP-Mixer separates mixing of spatial and channel dimensions, by applying a MLP across spatial dimension
+MLP-Mixer separates mixing of spatial and channel dimensions, by applying an MLP across spatial dimension
 and then an MLP across the channel dimension
 (spatial MLP replaces the [ViT](../transformers/vit/index.html) attention
 and channel MLP is the [FFN](../transformers/feed_forward.html) of ViT).
 
-ConvMixer use a $1 \times 1$ convolution for channel mixing and a
+ConvMixer uses a $1 \times 1$ convolution for channel mixing and a
 depth-wise convolution for spatial mixing.
 Since it's a convolution instead of a full MLP across the space, it mixes only the nearby batches in
 contrast to ViT or MLP-Mixer.
-Also the MLP-mixer uses MLPs of two layers for each mixing and ConvMixer uses a single layer for each mixing.
+Also, the MLP-mixer uses MLPs of two layers for each mixing and ConvMixer uses a single layer for each mixing.
 
-The paper recommends removing the residual connection across the channel mixing (point-wise convolution),
+The paper recommends removing the residual connection across the channel mixing (point-wise convolution)
 and having only a residual connection over the spatial mixing (depth-wise convolution).
 They also use [Batch normalization](../normalization/batch_norm/index.html) instead
 of [Layer normalization)(../normalization/layer_norm/index.html).
