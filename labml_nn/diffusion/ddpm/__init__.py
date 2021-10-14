@@ -285,6 +285,3 @@ class DenoiseDiffusion:
 
         # MSE loss
         return F.mse_loss(noise, eps_theta)
-
-# ## Here's our Twitter thread with a summary
-# <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Annotated <a href="https://twitter.com/PyTorch?ref_src=twsrc%5Etfw">@PyTorch</a> implementation of &quot;Denoising Diffusion Probabilistic Models&quot; by <a href="https://twitter.com/hojonathanho?ref_src=twsrc%5Etfw">@hojonathanho</a> <a href="https://twitter.com/ajayj_?ref_src=twsrc%5Etfw">@ajayj_</a> <a href="https://twitter.com/pabbeel?ref_src=twsrc%5Etfw">@pabbeel</a> <a href="https://twitter.com/berkeley_ai?ref_src=twsrc%5Etfw">@berkeley_ai</a><br><br>📝 Annotated code <a href="https://t.co/IxJMNQxJMa">https://t.co/IxJMNQxJMa</a><br>🖥 Github <a href="https://t.co/he5yIZZlB2">https://t.co/he5yIZZlB2</a><br>📎 Paper <a href="https://t.co/FjpamUVhLI">https://t.co/FjpamUVhLI</a><br><br>🧵👇 <a href="https://t.co/5SIZud6OnH">pic.twitter.com/5SIZud6OnH</a></p>&mdash; labml.ai (@labmlai) <a href="https://twitter.com/labmlai/status/1446676487361290240?ref_src=twsrc%5Etfw">October 9, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
