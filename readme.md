@@ -10,7 +10,7 @@ These implementations are documented with explanations,
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
-![Screenshot](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/images/dqn.png)
+![Screenshot](https://nn.labml.ai/dqn-light.png)
 
 We are actively maintaining this repo and adding new 
 implementations almost weekly.

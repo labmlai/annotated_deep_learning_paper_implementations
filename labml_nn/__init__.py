@@ -8,8 +8,11 @@ and the [website](index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
+![Screenshot](https://nn.labml.ai/dqn-light.png)
+
 We are actively maintaining this repo and adding new
 implementations.
+[![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai) for updates.
 
 ## Modules
 
