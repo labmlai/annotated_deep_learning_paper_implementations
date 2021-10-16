@@ -10,7 +10,7 @@ These implementations are documented with explanations,
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
-![Screenshot](https://nn.labml.ai/dqn-light.png)
+![Screenshot](https://nn.labml.ai/dqn-dark.png)
 
 We are actively maintaining this repo and adding new 
 implementations almost weekly.
