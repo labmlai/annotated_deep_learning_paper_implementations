@@ -32,7 +32,7 @@ We have implemented the latter here since it gives better results.
 
 This implementation uses pre-layer normalization
 while the paper uses post-layer normalization.
-Pre-layer norm does the layer norm before FFN[../feedforward.html) and
+Pre-layer norm does the layer norm before [FFN](../feedforward.html) and
 self-attention, and the pass-through in the residual connection is not normalized.
 This is supposed to be more stable in standard transformer setups.
 

@@ -83,7 +83,7 @@ where the factors of variations are more linear (disentangled).
 
 #### AdaIN
 
-Then $w$ is transformed into two vectors (***styles***) per layer,
+Then $w$ is transformed into two vectors (**styles**) per layer,
  $i$, $y_i = (y_{s,i}, y_{b,i}) = f_{A_i}(w)$ and used for scaling and shifting (biasing)
  in each layer with $\text{AdaIN}$ operator (normalize and scale):
 $$\text{AdaIN}(x_i, y_i) = y_{s, i} \frac{x_i - \mu(x_i)}{\sigma(x_i)} + y_{b,i}$$
@@ -202,7 +202,7 @@ class Generator(nn.Module):
 
     *<small>$A$ denotes a linear layer.
     $B$ denotes a broadcast and scaling operation (noise is a single channel).
-    [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
+    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
 
     The generator starts with a learned constant.
     Then it has a series of blocks. The feature map resolution is doubled at each block
@@ -243,7 +243,7 @@ class Generator(nn.Module):
     def forward(self, w: torch.Tensor, input_noise: List[Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]]):
         """
         * `w` is $w$. In order to mix-styles (use different $w$ for different layers), we provide a separate
-        $w$ for each [generator block](#generator_block). It has shape `[n_blocks, batch_size, d_latent]1.
+        $w$ for each [generator block](#generator_block). It has shape `[n_blocks, batch_size, d_latent]`.
         * `input_noise` is the noise for each block.
         It's a list of pairs of noise sensors because each block (except the initial) has two noise inputs
         after each convolution layer (see the diagram).
@@ -282,7 +282,7 @@ class GeneratorBlock(nn.Module):
 
     *<small>$A$ denotes a linear layer.
     $B$ denotes a broadcast and scaling operation (noise is a single channel).
-    [*toRGB*](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
+    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
 
     The generator block consists of two [style blocks](#style_block) ($3 \times 3$ convolutions with style modulation)
     and an RGB output.
@@ -731,7 +731,7 @@ class EqualizedLinear(nn.Module):
     <a id="equalized_linear"></a>
     ## Learning-rate Equalized Linear Layer
 
-    This uses [learning-rate equalized weights]($equalized_weights) for a linear layer.
+    This uses [learning-rate equalized weights](#equalized_weights) for a linear layer.
     """
 
     def __init__(self, in_features: int, out_features: int, bias: float = 0.):
@@ -742,7 +742,7 @@ class EqualizedLinear(nn.Module):
         """
 
         super().__init__()
-        # [Learning-rate equalized weights]($equalized_weights)
+        # [Learning-rate equalized weights](#equalized_weights)
         self.weight = EqualizedWeight([out_features, in_features])
         # Bias
         self.bias = nn.Parameter(torch.ones(out_features) * bias)
@@ -757,7 +757,7 @@ class EqualizedConv2d(nn.Module):
     <a id="equalized_conv2d"></a>
     ## Learning-rate Equalized 2D Convolution Layer
 
-    This uses [learning-rate equalized weights]($equalized_weights) for a convolution layer.
+    This uses [learning-rate equalized weights](#equalized_weights) for a convolution layer.
     """
 
     def __init__(self, in_features: int, out_features: int,
@@ -771,7 +771,7 @@ class EqualizedConv2d(nn.Module):
         super().__init__()
         # Padding size
         self.padding = padding
-        # [Learning-rate equalized weights]($equalized_weights)
+        # [Learning-rate equalized weights](#equalized_weights)
         self.weight = EqualizedWeight([out_features, in_features, kernel_size, kernel_size])
         # Bias
         self.bias = nn.Parameter(torch.ones(out_features))

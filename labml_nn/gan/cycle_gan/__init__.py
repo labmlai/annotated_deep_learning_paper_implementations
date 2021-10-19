@@ -145,7 +145,7 @@ class Discriminator(Module):
         super().__init__()
         channels, height, width = input_shape
 
-        # Output of the discriminator is also a map of probabilities*
+        # Output of the discriminator is also a map of probabilities,
         # whether each region of the image is real or generated
         self.output_shape = (1, height // 2 ** 4, width // 2 ** 4)
 
@@ -528,8 +528,8 @@ class Configs(BaseConfigs):
         \Bigg]
         \end{align}
 
-        We use `generator_xy` for $G$ and `generator_yx$ for $F$.
-        We use `discriminator_x$ for $D_X$ and `discriminator_y` for $D_Y$.
+        We use `generator_xy` for $G$ and `generator_yx` for $F$.
+        We use `discriminator_x` for $D_X$ and `discriminator_y` for $D_Y$.
         """
 
         # Replay buffers to keep generated samples

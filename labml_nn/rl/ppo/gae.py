@@ -45,10 +45,10 @@ class GAE:
         $\hat{A_t}$
 
         \begin{align}
-        \delta_t &= r_t + \gamma V(s_{t+1}) - V(s_t)$
+        \delta_t &= r_t + \gamma V(s_{t+1}) - V(s_t)
         \\
         \hat{A_t} &= \delta_t + \gamma \lambda \delta_{t+1} + ... +
-                             (\gamma \lambda)^{T - t + 1} \delta_{T - 1}$
+                             (\gamma \lambda)^{T - t + 1} \delta_{T - 1}
         \\
         &= \delta_t + \gamma \lambda \hat{A_{t+1}}
         \end{align}

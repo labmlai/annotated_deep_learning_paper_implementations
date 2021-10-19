@@ -51,7 +51,7 @@ class MNISTCapsuleNetworkModel(Module):
 
         # This is the decoder mentioned in the paper.
         # It takes the outputs of the $10$ digit capsules, each with $16$ features to reproduce the
-        # image. It goes through linear layers of sizes $512% and $1024$ with $ReLU$ activations.
+        # image. It goes through linear layers of sizes $512$ and $1024$ with $ReLU$ activations.
         self.decoder = nn.Sequential(
             nn.Linear(16 * 10, 512),
             nn.ReLU(),
@@ -70,7 +70,7 @@ class MNISTCapsuleNetworkModel(Module):
         x = F.relu(self.conv1(data))
         # Pass through the second convolution layer.
         # Output of this has shape `[batch_size, 32 * 8, 6, 6]`.
-        # *Note that this layer has a stride length of $2$.
+        # *Note that this layer has a stride length of $2$*.
         x = self.conv2(x)
 
         # Resize and permutate to get the capsules

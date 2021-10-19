@@ -155,11 +155,13 @@ class SwitchFeedForward(Module):
         final_output = final_output.view(seq_len, batch_size, d_model)
 
         # Return
+        #
         # * the final output
         # * number of tokens routed to each expert
         # * sum of probabilities for each expert
         # * number of tokens dropped.
         # * routing probabilities of the selected experts
+        #
         # These are used for the load balancing loss and logging
         return final_output, counts, route_prob.sum(0), len(dropped), route_prob_max
 

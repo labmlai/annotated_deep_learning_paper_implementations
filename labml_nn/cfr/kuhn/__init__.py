@@ -85,6 +85,7 @@ class History(_History):
     This defines when a game ends, calculates the utility and sample chance events (dealing cards).
 
     The history is stored in a string:
+
     * First two characters are the cards dealt to player 1 and player 2
     * The third character is the action by the first player
     * Fourth character is the action by the second player

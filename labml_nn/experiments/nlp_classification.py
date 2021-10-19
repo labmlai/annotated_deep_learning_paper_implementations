@@ -245,7 +245,7 @@ def ag_news(c: NLPClassificationConfigs):
     ### AG News dataset
 
     This loads the AG News dataset and the set the values for
-     `n_classes', `vocab`, `train_loader`, and `valid_loader`.
+     `n_classes`, `vocab`, `train_loader`, and `valid_loader`.
     """
 
     # Get training and validation datasets
@@ -279,5 +279,5 @@ def ag_news(c: NLPClassificationConfigs):
     valid_loader = DataLoader(valid, batch_size=c.batch_size, shuffle=True,
                               collate_fn=CollateFunc(tokenizer, vocab, c.seq_len, len(vocab), len(vocab) + 1))
 
-    # Return `n_classes', `vocab`, `train_loader`, and `valid_loader`
+    # Return `n_classes`, `vocab`, `train_loader`, and `valid_loader`
     return 4, vocab, train_loader, valid_loader

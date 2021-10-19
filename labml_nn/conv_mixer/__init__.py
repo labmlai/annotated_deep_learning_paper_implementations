@@ -28,7 +28,7 @@ Also, the MLP-mixer uses MLPs of two layers for each mixing and ConvMixer uses a
 The paper recommends removing the residual connection across the channel mixing (point-wise convolution)
 and having only a residual connection over the spatial mixing (depth-wise convolution).
 They also use [Batch normalization](../normalization/batch_norm/index.html) instead
-of [Layer normalization)(../normalization/layer_norm/index.html).
+of [Layer normalization](../normalization/layer_norm/index.html).
 
 Here's [an experiment](experiment.html) that trains ConvMixer on CIFAR-10.
 

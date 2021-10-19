@@ -36,14 +36,17 @@ Each group can have it's own hyper-parameters like learning rates.
 
 In most common cases there will be only one group.
 This is when you initialize your optimizer with,
+
 ```python
 Optimizer(model.parameters())
 ```
 
 You can define multiple parameter groups when initializing the optimizer:
+
 ```python
 Optimizer([{'params': model1.parameters()}, {'params': model2.parameters(), 'lr': 2}])
 ```
+
 Here we pass a list of groups. Each group is a dictionary with it's parameters under the key 'params'.
 You specify any hyper-parameters as well. If the hyper parameters are not defined they will default
 to the optimizer level defaults.
@@ -74,7 +77,7 @@ class GenericAdaptiveOptimizer(Optimizer):
 
         * `params` is the collection of parameters or set of parameter groups.
         * `defaults` a dictionary of default hyper-parameters
-        * 'lr` is the learning rate, $\alpha$
+        * `lr` is the learning rate, $\alpha$
         * `betas` is the tuple $(\beta_1, \beta_2)$
         * `eps` is $\epsilon$
         """
@@ -174,7 +177,8 @@ class WeightDecay:
         decay from the parameter. If added to the  gradient it will go through the normal optimizer update.
         * `absolute` this flag indicates whether the weight decay coefficient is absolute. This is applicable
         when the decay is performed directly on the parameter. If this is false the actual decay is
-        `weight_decay` * `learning_rate`.
+        `weight_decay`
+        * `learning_rate`.
         """
         # Check hyper-parameters
         if not 0.0 <= weight_decay:

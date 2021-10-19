@@ -46,7 +46,7 @@ def knn(queries: torch.Tensor, index: faiss.IndexFlatL2, keys_store: np.ndarray,
 
     # Normalize $f(c_i)$
     keys_found_n = keys_found / torch.sqrt((keys_found ** 2).sum(-1, keepdims=True) + 1e-10)
-    # Normalize $f($\color{yellowgreen}{c_t})$
+    # Normalize $f(\color{yellowgreen}{c_t})$
     queries_n = queries / torch.sqrt((queries ** 2).sum(-1, keepdims=True) + 1e-10)
 
     # Get the dot-product, or cosine similarity

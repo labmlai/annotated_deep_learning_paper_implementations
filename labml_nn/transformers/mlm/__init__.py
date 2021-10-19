@@ -81,7 +81,7 @@ class MLM:
                  masking_prob: float = 0.15, randomize_prob: float = 0.1, no_change_prob: float = 0.1,
                  ):
         """
-        * `padding_token` is the padding token `[PAD].
+        * `padding_token` is the padding token `[PAD]`.
           We will use this to mark the labels that shouldn't be used for loss calculation.
         * `mask_token` is the masking token `[MASK]`.
         * `no_mask_tokens` is a list of tokens that should not be masked.

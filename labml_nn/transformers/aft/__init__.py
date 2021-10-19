@@ -42,7 +42,7 @@ AFT Local only apply learned pair-wise position biases locally:
 \begin{align}
 w'_{t,t'} =
 \begin{cases}
-w_{t,t'},  & \text{for $\lvert t-t' \rvert \lt s$} \\
+w_{t,t'},  & {\text{for } \lvert t-t' \rvert \lt s} \\
 0, & \text{otherwise}
 \end{cases}
 \end{align}
@@ -79,7 +79,7 @@ class AFTLocal(Module):
     \begin{align}
     w'_{t,t'} =
     \begin{cases}
-    w_{t,t'},  & \text{for $\lvert t-t' \rvert \lt s$} \\
+    w_{t,t'},  & {\text{for } \lvert t-t' \rvert \lt s} \\
     0, & \text{otherwise}
     \end{cases}
     \end{align}
@@ -119,7 +119,7 @@ class AFTLocal(Module):
         \begin{align}
         m_{t,t'} =
         \begin{cases}
-        1,  & \text{for $\lvert t-t' \rvert \lt s$} \\
+        1,  & {\text{for } \lvert t-t' \rvert \lt s} \\
         0, & \text{otherwise}
         \end{cases}
         \end{align}
@@ -170,7 +170,7 @@ class AFTLocal(Module):
         #     \begin{align}
         #     w'_{t,t'} =
         #     \begin{cases}
-        #     w_{t,t'},  & \text{for $\lvert t-t' \rvert \lt s$} \\
+        #     w_{t,t'},  & {\text{for }\lvert t-t' \rvert \lt s} \\
         #     0, & \text{otherwise}
         #     \end{cases}
         #     \end{align}

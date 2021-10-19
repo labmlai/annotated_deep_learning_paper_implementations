@@ -201,7 +201,7 @@ class Trainer:
         # Cross-entropy loss
         self.loss_func = nn.CrossEntropyLoss()
         # Number of training epochs;
-        # *note that our dataset definition repeats the data `seq_len` times in a single epoch
+        # *note that our dataset definition repeats the data `seq_len` times in a single epoch*
         self.epochs = configs.epochs
         # Gradient clipping norm
         self.grad_norm_clip = configs.grad_norm_clip

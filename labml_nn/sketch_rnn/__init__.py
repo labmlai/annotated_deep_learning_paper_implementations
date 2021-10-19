@@ -114,7 +114,7 @@ class StrokesDataset(Dataset):
             # Mask is on until end of sequence
             self.mask[i, :len_seq + 1] = 1
 
-        # Start-of-sequence is $(0, 0, 1, 0, 0)
+        # Start-of-sequence is $(0, 0, 1, 0, 0)$
         self.data[:, 0, 2] = 1
 
     def __len__(self):

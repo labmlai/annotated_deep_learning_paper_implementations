@@ -40,7 +40,7 @@ We have implemented the latter here since it gives better results.
 
 This implementation uses pre-layer normalization
 while the paper uses post-layer normalization.
-Pre-layer norm does the layer norm before FFN[../feedforward.html) and
+Pre-layer norm does the layer norm before [FFN](../feedforward.html) and
 self-attention, and the pass-through in the residual connection is not normalized.
 This is supposed to be more stable in standard transformer setups.
 
@@ -246,7 +246,7 @@ class AttentionReconstructionLoss:
         This is a reimplementation of ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA)
         where the projections are done with the parameters detached from gradient computation.
 
-        * `pmha* is the ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA) module
+        * `pmha` is the ['PrepareForMultiHeadAttention'](../mha.html#PrepareMHA) module
         * `x` is tensor with the token embeddings
         """
 
