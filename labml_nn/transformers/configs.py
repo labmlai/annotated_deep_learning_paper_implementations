@@ -20,9 +20,8 @@ from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPosit
 
 class FeedForwardConfigs(BaseConfigs):
     """
-    <a id="FFN">
+    <a id="FFN"></a>
     ## FFN Configurations
-    </a>
 
     Creates a Position-wise FeedForward Network defined in
     [`feed_forward.py`](feed_forward.html).
@@ -143,10 +142,9 @@ aggregate(FeedForwardConfigs.glu_variant, 'SwiGLU',
 
 class TransformerConfigs(BaseConfigs):
     """
-    <a id="TransformerConfigs">
+    <a id="TransformerConfigs"></a>
     ## Transformer Configurations
-    </a>
-    
+
     This defines configurations for a transformer.
     The configurations are calculate using option functions.
     These are lazy loaded and therefore only the necessary modules

@@ -5,9 +5,8 @@ from labml.configs import BaseConfigs, option
 
 class TokenizerConfigs(BaseConfigs):
     """
-    <a id="OptimizerConfigs">
-    ## Optimizer Configurations
-    </a>
+    <a id="TokenizerConfigs"></a>
+    ## Tokenizer Configurations
     """
 
     tokenizer: Callable = 'character'

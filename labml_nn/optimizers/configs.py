@@ -17,9 +17,8 @@ from labml_nn.optimizers import WeightDecay
 
 class OptimizerConfigs(BaseConfigs):
     """
-    <a id="OptimizerConfigs">
+    <a id="OptimizerConfigs"></a>
     ## Optimizer Configurations
-    </a>
     """
 
     # Optimizer

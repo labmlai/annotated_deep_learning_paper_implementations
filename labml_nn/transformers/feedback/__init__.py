@@ -311,9 +311,8 @@ class FeedbackTransformer(Module):
         return self.norm(res)
 
 
-# <a id="shared_kv">
+# <a id="shared_kv"></a>
 # # Shared keys and values among layers
-# </a>
 
 class StackFunction(torch.autograd.Function):
     """

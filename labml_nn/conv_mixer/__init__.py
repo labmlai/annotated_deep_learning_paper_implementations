@@ -44,9 +44,8 @@ from labml_nn.utils import clone_module_list
 
 class ConvMixerLayer(Module):
     """
-    <a id="ConvMixerLayer">
+    <a id="ConvMixerLayer"></a>
     ## ConvMixer layer
-    </a>
 
     This is a single ConvMixer layer. The model will have a series of these.
     """
@@ -100,9 +99,8 @@ class ConvMixerLayer(Module):
 
 class PatchEmbeddings(Module):
     """
-    <a id="PatchEmbeddings">
+    <a id="PatchEmbeddings"></a>
     ## Get patch embeddings
-    </a>
 
     This splits the image into patches of size $p \times p$ and gives an embedding for each patch.
     """
@@ -140,9 +138,8 @@ class PatchEmbeddings(Module):
 
 class ClassificationHead(Module):
     """
-    <a id="ClassificationHead">
+    <a id="ClassificationHead"></a>
     ## Classification Head
-    </a>
 
     They do average pooling (taking the mean of all patch embeddings) and a final linear transformation
     to predict the log-probabilities of the image classes.
