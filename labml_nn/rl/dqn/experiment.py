@@ -85,7 +85,7 @@ class Trainer:
 
         # Model for sampling and training
         self.model = Model().to(device)
-        # target model to get $\color{orange}Q(s';\color{orange}{\theta_i^{-}})$
+        # target model to get $\textcolor{orange}Q(s';\textcolor{orange}{\theta_i^{-}})$
         self.target_model = Model().to(device)
 
         # create workers
@@ -175,9 +175,9 @@ class Trainer:
             # Get the Q-values of the next state for [Double Q-learning](index.html).
             # Gradients shouldn't propagate for these
             with torch.no_grad():
-                # Get $\color{cyan}Q(s';\color{cyan}{\theta_i})$
+                # Get $\textcolor{cyan}Q(s';\textcolor{cyan}{\theta_i})$
                 double_q_value = self.model(obs_to_torch(samples['next_obs']))
-                # Get $\color{orange}Q(s';\color{orange}{\theta_i^{-}})$
+                # Get $\textcolor{orange}Q(s';\textcolor{orange}{\theta_i^{-}})$
                 target_q_value = self.target_model(obs_to_torch(samples['next_obs']))
 
             # Compute Temporal Difference (TD) errors, $\delta$, and the loss, $\mathcal{L}(\theta)$.

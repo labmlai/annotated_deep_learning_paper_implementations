@@ -8,7 +8,7 @@ summary: >
 # U-Net model for [Denoising Diffusion Probabilistic Models (DDPM)](index.html)
 
 This is a [U-Net](https://papers.labml.ai/paper/1505.04597) based model to predict noise
-$\color{cyan}{\epsilon_\theta}(x_t, t)$.
+$\textcolor{cyan}{\epsilon_\theta}(x_t, t)$.
 
 U-Net is a gets it's name from the U shape in the model diagram.
 It processes a given image by progressively lowering (halving) the feature map resolution and then

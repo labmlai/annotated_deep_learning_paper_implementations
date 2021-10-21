@@ -33,9 +33,9 @@ each step are changed by a smaller LSTM network.
 
 In the basic form, a Dynamic HyperNetwork has a smaller recurrent network that generates
 a feature vector corresponding to each parameter tensor of the larger recurrent network.
-Let's say the larger network has some parameter $\color{cyan}{W_h}$ the smaller network generates a feature
-vector $z_h$ and we dynamically compute $\color{cyan}{W_h}$ as a linear transformation of $z_h$.
-For instance $\color{cyan}{W_h} =  \langle W_{hz}, z_h \rangle$ where
+Let's say the larger network has some parameter $\textcolor{cyan}{W_h}$ the smaller network generates a feature
+vector $z_h$ and we dynamically compute $\textcolor{cyan}{W_h}$ as a linear transformation of $z_h$.
+For instance $\textcolor{cyan}{W_h} =  \langle W_{hz}, z_h \rangle$ where
 $W_{hz}$ is a 3-d tensor parameter and $\langle . \rangle$ is a tensor-vector multiplication.
 $z_h$ is usually a linear transformation of the output of the smaller recurrent network.
 
@@ -44,7 +44,7 @@ $z_h$ is usually a linear transformation of the output of the smaller recurrent 
 Large recurrent networks have large dynamically computed parameters.
 These are calculated using linear transformation of feature vector $z$.
 And this transformation requires an even larger weight tensor.
-That is, when $\color{cyan}{W_h}$ has shape $N_h \times N_h$,
+That is, when $\textcolor{cyan}{W_h}$ has shape $N_h \times N_h$,
 $W_{hz}$ will be $N_h \times N_h \times N_z$.
 
 To overcome this, we compute the weight parameters of the recurrent network by
@@ -52,7 +52,7 @@ dynamically scaling each row of a matrix of same size.
 \begin{align}
 d(z) = W_{hz} z_h \\
 \\
-\color{cyan}{W_h} =
+\textcolor{cyan}{W_h} =
 \begin{pmatrix}
 d_0(z) W_{hd_0} \\
 d_1(z) W_{hd_1} \\
@@ -62,9 +62,9 @@ d_{N_h}(z) W_{hd_{N_h}} \\
 \end{align}
 where $W_{hd}$ is a $N_h \times N_h$ parameter matrix.
 
-We can further optimize this when we compute $\color{cyan}{W_h} h$,
+We can further optimize this when we compute $\textcolor{cyan}{W_h} h$,
 as
-$$\color{lightgreen}{d(z) \odot (W_{hd} h)}$$
+$$\textcolor{lightgreen}{d(z) \odot (W_{hd} h)}$$
 where $\odot$ stands for element-wise multiplication.
 """
 
@@ -120,7 +120,7 @@ class HyperLSTMCell(Module):
 
         # $$z_h^{i,f,g,o} = lin_{h}^{i,f,g,o}(\hat{h}_t)$$
         # 🤔 In the paper it was specified as
-        # $$z_h^{i,f,g,o} = lin_{h}^{i,f,g,o}(\hat{h}_{\color{red}{t-1}})$$
+        # $$z_h^{i,f,g,o} = lin_{h}^{i,f,g,o}(\hat{h}_{\textcolor{red}{t-1}})$$
         # I feel that it's a typo.
         self.z_h = nn.Linear(hyper_size, 4 * n_z)
         # $$z_x^{i,f,g,o} = lin_x^{i,f,g,o}(\hat{h}_t)$$
@@ -176,8 +176,8 @@ class HyperLSTMCell(Module):
             d_x = self.d_x[i](z_x[i])
 
             # \begin{align}
-            # {i,f,g,o} = LN(&\color{lightgreen}{d_h^{i,f,g,o}(z_h) \odot (W_h^{i,f,g,o} h_{t-1})} \\
-            #              + &\color{lightgreen}{d_x^{i,f,g,o}(z_x) \odot (W_h^{i,f,g,o} x_t)} \\
+            # {i,f,g,o} = LN(&\textcolor{lightgreen}{d_h^{i,f,g,o}(z_h) \odot (W_h^{i,f,g,o} h_{t-1})} \\
+            #              + &\textcolor{lightgreen}{d_x^{i,f,g,o}(z_x) \odot (W_h^{i,f,g,o} x_t)} \\
             #              + &d_b^{i,f,g,o}(z_b))
             # \end{align}
             y = d_h * torch.einsum('ij,bj->bi', self.w_h[i], h) + \

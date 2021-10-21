@@ -38,7 +38,7 @@ class Configs(BaseConfigs):
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 
-    # U-Net model for $\color{cyan}{\epsilon_\theta}(x_t, t)$
+    # U-Net model for $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$
     eps_model: UNet
     # [DDPM algorithm](index.html)
     diffusion: DenoiseDiffusion
@@ -76,7 +76,7 @@ class Configs(BaseConfigs):
     optimizer: torch.optim.Adam
 
     def init(self):
-        # Create $\color{cyan}{\epsilon_\theta}(x_t, t)$ model
+        # Create $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$ model
         self.eps_model = UNet(
             image_channels=self.image_channels,
             n_channels=self.n_channels,
@@ -112,7 +112,7 @@ class Configs(BaseConfigs):
             for t_ in monit.iterate('Sample', self.n_steps):
                 # $t$
                 t = self.n_steps - t_ - 1
-                # Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$
+                # Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
                 x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
 
             # Log samples

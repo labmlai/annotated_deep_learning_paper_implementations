@@ -134,7 +134,8 @@ class RHN(Module):
         if state is None:
             s = [x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)]
         else:
-            # Reverse stack the state to get the state of each layer <br />
+            # Reverse stack the state to get the state of each layer
+            #
             # 📝 You can just work with the tensor itself but this is easier to debug
             s = torch.unbind(state)
 

@@ -132,7 +132,8 @@ class LSTM(Module):
             c = [x.new_zeros(batch_size, self.hidden_size) for _ in range(self.n_layers)]
         else:
             (h, c) = state
-            # Reverse stack the tensors to get the states of each layer <br />
+            # Reverse stack the tensors to get the states of each layer
+            #
             # 📝 You can just work with the tensor itself but this is easier to debug
             h, c = list(torch.unbind(h)), list(torch.unbind(c))
 

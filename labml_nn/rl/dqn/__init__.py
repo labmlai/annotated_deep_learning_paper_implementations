@@ -51,8 +51,8 @@ class QFuncLoss(Module):
     ### Target network 🎯
     In order to improve stability we use experience replay that randomly sample
     from previous experience $U(D)$. We also use a Q network
-    with a separate set of paramters $\color{orangle}{\theta_i^{-}}$ to calculate the target.
-    $\color{orangle}{\theta_i^{-}}$ is updated periodically.
+    with a separate set of paramters $\textcolor{orangle}{\theta_i^{-}}$ to calculate the target.
+    $\textcolor{orangle}{\theta_i^{-}}$ is updated periodically.
     This is according to paper
     [Human Level Control Through Deep Reinforcement Learning](https://deepmind.com/research/dqn/).
 
@@ -61,7 +61,7 @@ class QFuncLoss(Module):
     \mathcal{L}_i(\theta_i) = \mathop{\mathbb{E}}_{(s,a,r,s') \sim U(D)}
     \bigg[
         \Big(
-            r + \gamma \max_{a'} Q(s', a'; \color{orange}{\theta_i^{-}}) - Q(s,a;\theta_i)
+            r + \gamma \max_{a'} Q(s', a'; \textcolor{orange}{\theta_i^{-}}) - Q(s,a;\theta_i)
         \Big) ^ 2
     \bigg]
     $$
@@ -71,26 +71,26 @@ class QFuncLoss(Module):
     selecting the best action and for evaluating the value.
     That is,
     $$
-    \max_{a'} Q(s', a'; \theta) = \color{cyan}{Q}
+    \max_{a'} Q(s', a'; \theta) = \textcolor{cyan}{Q}
     \Big(
         s', \mathop{\operatorname{argmax}}_{a'}
-        \color{cyan}{Q}(s', a'; \color{cyan}{\theta}); \color{cyan}{\theta}
+        \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta}); \textcolor{cyan}{\theta}
     \Big)
     $$
     We use [double Q-learning](https://papers.labml.ai/paper/1509.06461), where
-    the $\operatorname{argmax}$ is taken from $\color{cyan}{\theta_i}$ and
-    the value is taken from $\color{orange}{\theta_i^{-}}$.
+    the $\operatorname{argmax}$ is taken from $\textcolor{cyan}{\theta_i}$ and
+    the value is taken from $\textcolor{orange}{\theta_i^{-}}$.
 
     And the loss function becomes,
     \begin{align}
         \mathcal{L}_i(\theta_i) = \mathop{\mathbb{E}}_{(s,a,r,s') \sim U(D)}
         \Bigg[
             \bigg(
-                &r + \gamma \color{orange}{Q}
+                &r + \gamma \textcolor{orange}{Q}
                 \Big(
                     s',
                     \mathop{\operatorname{argmax}}_{a'}
-                        \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+                        \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta_i}); \textcolor{orange}{\theta_i^{-}}
                 \Big)
                 \\
                 - &Q(s,a;\theta_i)
@@ -110,8 +110,8 @@ class QFuncLoss(Module):
         """
         * `q` - $Q(s;\theta_i)$
         * `action` - $a$
-        * `double_q` - $\color{cyan}Q(s';\color{cyan}{\theta_i})$
-        * `target_q` - $\color{orange}Q(s';\color{orange}{\theta_i^{-}})$
+        * `double_q` - $\textcolor{cyan}Q(s';\textcolor{cyan}{\theta_i})$
+        * `target_q` - $\textcolor{orange}Q(s';\textcolor{orange}{\theta_i^{-}})$
         * `done` - whether the game ended after taking the action
         * `reward` - $r$
         * `weights` - weights of the samples from prioritized experienced replay
@@ -122,20 +122,20 @@ class QFuncLoss(Module):
         tracker.add('q_sampled_action', q_sampled_action)
 
         # Gradients shouldn't propagate gradients
-        # $$r + \gamma \color{orange}{Q}
+        # $$r + \gamma \textcolor{orange}{Q}
         #                 \Big(s',
         #                     \mathop{\operatorname{argmax}}_{a'}
-        #                         \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+        #                         \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta_i}); \textcolor{orange}{\theta_i^{-}}
         #                 \Big)$$
         with torch.no_grad():
             # Get the best action at state $s'$
             # $$\mathop{\operatorname{argmax}}_{a'}
-            #  \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i})$$
+            #  \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta_i})$$
             best_next_action = torch.argmax(double_q, -1)
             # Get the q value from the target network for the best action at state $s'$
-            # $$\color{orange}{Q}
+            # $$\textcolor{orange}{Q}
             # \Big(s',\mathop{\operatorname{argmax}}_{a'}
-            # \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+            # \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta_i}); \textcolor{orange}{\theta_i^{-}}
             # \Big)$$
             best_next_q_value = target_q.gather(-1, best_next_action.unsqueeze(-1)).squeeze(-1)
 
@@ -143,10 +143,10 @@ class QFuncLoss(Module):
             # We multiply by `(1 - done)` to zero out
             # the next state Q values if the game ended.
             #
-            # $$r + \gamma \color{orange}{Q}
+            # $$r + \gamma \textcolor{orange}{Q}
             #                 \Big(s',
             #                     \mathop{\operatorname{argmax}}_{a'}
-            #                         \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+            #                         \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta_i}); \textcolor{orange}{\theta_i^{-}}
             #                 \Big)$$
             q_update = reward + self.gamma * best_next_q_value * (1 - done)
             tracker.add('q_update', q_update)

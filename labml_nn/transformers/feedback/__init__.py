@@ -126,10 +126,10 @@ class FeedbackAttention(Module):
         A_{j} &= Q^\top K_j \\
             &= lin_q(X^q + P_q)^\top lin_k(X^k_j + P_j) \\
             &= (Q + U^Q)^\top(K_j + U^K_j) \\
-            &= \underset{\color{lightgreen}{A}}{Q^\top K_j} +
-               \underset{\color{lightgreen}{B}}{Q^\top U^K_j} +
-               \underset{\color{lightgreen}{C}}{{U^Q}^\top K_j} +
-               \underset{\color{lightgreen}{D}}{{U^Q}^\top U^K_j}
+            &= \underset{\textcolor{lightgreen}{A}}{Q^\top K_j} +
+               \underset{\textcolor{lightgreen}{B}}{Q^\top U^K_j} +
+               \underset{\textcolor{lightgreen}{C}}{{U^Q}^\top K_j} +
+               \underset{\textcolor{lightgreen}{D}}{{U^Q}^\top U^K_j}
         \end{align}
 
         where $Q, K_j$, are linear transformations of
@@ -137,7 +137,7 @@ class FeedbackAttention(Module):
          and $U^Q, U^K_j$ are linear transformations of
          positional encodings $P_q, P_j$.
 
-        We replace term $\color{lightgreen}{D}$ with $S_j$.
+        We replace term $\textcolor{lightgreen}{D}$ with $S_j$.
         """
 
         # $U^K_j$
@@ -147,9 +147,9 @@ class FeedbackAttention(Module):
         # $S_j$
         key_pos_bias = self.key_pos_bias[-key.shape[0]:]
 
-        # $\underset{\color{lightgreen}{A}}{Q^\top K_j} + \underset{\color{lightgreen}{C}}{{U^Q}^\top K_j}$
+        # $\underset{\textcolor{lightgreen}{A}}{Q^\top K_j} + \underset{\textcolor{lightgreen}{C}}{{U^Q}^\top K_j}$
         ac = torch.einsum('bhd,jbhd->jbh', query + query_pos_bias, key)
-        # $\underset{\color{lightgreen}{B}}{Q^\top U^K_j} + \underset{\color{lightgreen}{D}}{S_j}$
+        # $\underset{\textcolor{lightgreen}{B}}{Q^\top U^K_j} + \underset{\textcolor{lightgreen}{D}}{S_j}$
         bd = torch.einsum('bhd,jhd->jbh', query, key_pos_emb) + key_pos_bias[:, None, :]
 
         # $A_j$

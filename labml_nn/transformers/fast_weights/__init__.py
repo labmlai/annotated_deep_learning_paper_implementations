@@ -25,16 +25,16 @@ The fast weight model generates a weight matrix at each step to produce output
 $\big\\{y^{(i)}\big\\}^L_{i=1}$, $y \in \mathbb{R}^{d_{out}}$
 
 \begin{align}
-a^{(i)}, b^{(i)} &= \color{orange}{W_a} x^{(i)}, \color{orange}{W_b} x^{(i)} \\
-\color{cyan}{W^{(i)}} &= \sigma \Big( \color{cyan}{W^{(i-1)}} + a^{(i)} \otimes b^{(i)} \Big) \\
-y^{(i)} &= \color{cyan}{W^{(i)}} x^{(i)}
+a^{(i)}, b^{(i)} &= \textcolor{orange}{W_a} x^{(i)}, \textcolor{orange}{W_b} x^{(i)} \\
+\textcolor{cyan}{W^{(i)}} &= \sigma \Big( \textcolor{cyan}{W^{(i-1)}} + a^{(i)} \otimes b^{(i)} \Big) \\
+y^{(i)} &= \textcolor{cyan}{W^{(i)}} x^{(i)}
 \end{align}
 
 $\otimes$ is the outer product ($a \otimes b = a b^\top$), where elements of the two vectors are multiplied with each other
 to give a matrix.
 $\sigma$ is an activation function.
-$\color{orange}{W_a}$ and $\color{orange}{W_b}$ are trainable weights (parameters).
-$\color{cyan}{W^{(i)}}$ are the fast weights that are generated at each step.
+$\textcolor{orange}{W_a}$ and $\textcolor{orange}{W_b}$ are trainable weights (parameters).
+$\textcolor{cyan}{W^{(i)}}$ are the fast weights that are generated at each step.
 
 ## Linear self-attention
 
@@ -57,33 +57,33 @@ The idea behind linearizing self attention is to replace softmax
 kernel $\kappa$ with a different kernel $\kappa '$ so that we can calculate the
 denominator of the self attention function faster:
 
-$$\kappa '(k, q) = \color{lightgreen}{\phi(k)}^\top \color{lightgreen}{\phi(q)}$$
+$$\kappa '(k, q) = \textcolor{lightgreen}{\phi(k)}^\top \textcolor{lightgreen}{\phi(q)}$$
 
 This gives
 
 \begin{align}
 y^{(i)} &= \frac
- {\Big( \sum^i_{j=1} v^{(j)} \otimes \color{lightgreen}{\phi(k^{(j)})} \Big)
-  \color{lightgreen}{\phi(q^{(i)})} }
+ {\Big( \sum^i_{j=1} v^{(j)} \otimes \textcolor{lightgreen}{\phi(k^{(j)})} \Big)
+  \textcolor{lightgreen}{\phi(q^{(i)})} }
  { \Big( \sum^i_{j'=1}
-   \color{lightgreen}{\phi(k^{(j')})} \Big)
-    \color{lightgreen}{\phi(q^{(i)})} }
+   \textcolor{lightgreen}{\phi(k^{(j')})} \Big)
+    \textcolor{lightgreen}{\phi(q^{(i)})} }
 \end{align}
 
-With $\color{cyan}{W^{(i)}} = \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)})$ and
-$z^{(i)} = \sum^i_{j=1} \color{lightgreen}{\phi(k^{(j)})}$, we can calculate them efficiently:
+With $\textcolor{cyan}{W^{(i)}} = \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)})$ and
+$z^{(i)} = \sum^i_{j=1} \textcolor{lightgreen}{\phi(k^{(j)})}$, we can calculate them efficiently:
 \begin{align}
-\color{cyan}{W^{(i)}} &= \color{cyan}{W^{(i-1)}} + v^{(i)} \otimes \color{lightgreen}{\phi(k^{(i)})} \\
-z^{(i)} &= z{(i)} + \color{lightgreen}{\phi(k^{(i)})} \\
-y^{(i)} &= \frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}
-    W^{(i)} \color{lightgreen}{\phi(q^{(i)})}
+\textcolor{cyan}{W^{(i)}} &= \textcolor{cyan}{W^{(i-1)}} + v^{(i)} \otimes \textcolor{lightgreen}{\phi(k^{(i)})} \\
+z^{(i)} &= z{(i)} + \textcolor{lightgreen}{\phi(k^{(i)})} \\
+y^{(i)} &= \frac{1}{z^{(i)} \cdot \textcolor{lightgreen}{\phi(q^{(i)})}}
+    W^{(i)} \textcolor{lightgreen}{\phi(q^{(i)})}
 \end{align}
 
 This is quite similar to fast weights.
 
-The paper introduces a new linear attention projection function $\color{lightgreen}{\phi}$
-a new update rule for $\color{cyan}{W^{(i)}} = f(\color{cyan}{W^{(i-1)}})$ and change the normalization
-$\frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}$
+The paper introduces a new linear attention projection function $\textcolor{lightgreen}{\phi}$
+a new update rule for $\textcolor{cyan}{W^{(i)}} = f(\textcolor{cyan}{W^{(i-1)}})$ and change the normalization
+$\frac{1}{z^{(i)} \cdot \textcolor{lightgreen}{\phi(q^{(i)})}}$
 
 Here are [the training code](experiment.html) and a notebook for training a fast weights
  transformer on the Tiny Shakespeare dataset.
@@ -105,11 +105,11 @@ class DPFP(Module):
     """
     ## Deterministic Parameter Free Project (DPFP)
 
-    This is the new projection function $\color{lightgreen}{\phi}$ introduced in the paper.
+    This is the new projection function $\textcolor{lightgreen}{\phi}$ introduced in the paper.
     DPFP projects $k$ of dimensionality $d_{key}$ to dimensionality $d_{dot} = 2 d_{key} \nu$,
     where $\nu \in \\{1, 2, ..., 2 d_{key} - 1 \\}$ is a hyper-parameter.
 
-    $$\color{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
+    $$\textcolor{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
      = \text{ReLU}\Big(\big[k, -k\big]\Big)_{j}
                         \text{ReLU}\Big(\big[k, -k\big]\Big)_{i + j}$$
 
@@ -121,16 +121,16 @@ class DPFP(Module):
     Basically, it creates a new vector by multiplying elements of $[k, -k]$ shifted by $i$.
 
     This produces projections that are sparse (only a few elements of $phi$ are non-zero) and
-    orthogonal ($\color{lightgreen}{\phi(k^{(i)})} \cdot \color{lightgreen}{\phi(k^{(j)})}
+    orthogonal ($\textcolor{lightgreen}{\phi(k^{(i)})} \cdot \textcolor{lightgreen}{\phi(k^{(j)})}
      \approx 0$ for most $i, j$
     unless $k^{(i)}$ and $k^{(j)}$ are very similar.
 
     ### Normalization
 
-    Paper introduces a simple normalization for $\color{lightgreen}{\phi}$,
+    Paper introduces a simple normalization for $\textcolor{lightgreen}{\phi}$,
 
-    $$\color{lightgreen}{\phi '(k)} =
-     \frac{\color{lightgreen}{\phi(k)}}{\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}}$$
+    $$\textcolor{lightgreen}{\phi '(k)} =
+     \frac{\textcolor{lightgreen}{\phi(k)}}{\sum^{d_{dot}}_{j=1} \textcolor{lightgreen}{\phi(k)_j}}$$
 
     *Check the paper for derivation.*
     """
@@ -146,14 +146,14 @@ class DPFP(Module):
         self.eps = eps
 
     def forward(self, k: torch.Tensor):
-        # Get $\color{lightgreen}{\phi(k)}$
+        # Get $\textcolor{lightgreen}{\phi(k)}$
         k = self.dpfp(k)
-        # Normalize by $\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}$
+        # Normalize by $\sum^{d_{dot}}_{j=1} \textcolor{lightgreen}{\phi(k)_j}$
         return k / (torch.sum(k, dim=-1, keepdim=True) + self.eps)
 
     def dpfp(self, k: torch.Tensor):
         """
-        $$\color{lightgreen}{\phi(k)}$$
+        $$\textcolor{lightgreen}{\phi(k)}$$
         """
         # $x = \text{ReLU}\Big(\big[k, -k\big]\Big)$
         x = self.relu(torch.cat([k, -k], dim=-1))
@@ -167,7 +167,7 @@ class DPFP(Module):
         x_repeat = torch.cat([x] * self.nu, dim=-1)
 
         # Multiply them,
-        # $$\color{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
+        # $$\textcolor{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
         # = \text{ReLU}\Big(\big[k, -k\big]\Big)_{j}
         #                         \text{ReLU}\Big(\big[k, -k\big]\Big)_{i + j}$$
         return x_repeat * x_rolled
@@ -177,7 +177,7 @@ class FastWeightsAttention(Module):
     """
     ## Fast Weights Attention
 
-    The paper introduces a new update rule for calculating $\color{cyan}{W^{(i)}}$.
+    The paper introduces a new update rule for calculating $\textcolor{cyan}{W^{(i)}}$.
     The model first retrieves the current value
     $\bar{v}^{(i)}$ paired with the key $k^{(i)}$.
     Then stores a combination $v^{(i)}_{new}$
@@ -185,20 +185,20 @@ class FastWeightsAttention(Module):
 
     \begin{align}
     k^{(i)}, v^{(i)}, q^{(i)} &=
-     \color{orange}{W_k} x^{(i)}, \color{orange}{W_v} x^{(i)}, \color{orange}{W_q} x^{(i)} \\
-    \bar{v}^{(i)} &= \color{cyan}{W^{(i-1)}} \color{lightgreen}{\phi'(k^{(i)})} \\
-    \beta^{(i)} &= \sigma \Big(\color{orange}{W_\beta} x^{(i)} \Big) \\
+     \textcolor{orange}{W_k} x^{(i)}, \textcolor{orange}{W_v} x^{(i)}, \textcolor{orange}{W_q} x^{(i)} \\
+    \bar{v}^{(i)} &= \textcolor{cyan}{W^{(i-1)}} \textcolor{lightgreen}{\phi'(k^{(i)})} \\
+    \beta^{(i)} &= \sigma \Big(\textcolor{orange}{W_\beta} x^{(i)} \Big) \\
     v^{(i)}_{new} &= \beta^{(i)} v^{(i)} + \Big(1 - \beta^{(i)} \Big) \bar{v}^{(i)} \\
-    \color{cyan}{W^{(i)}}
-     &= \color{cyan}{W^{(i-1)}} + v^{(i)}_{new} \otimes \color{lightgreen}{\phi'(k^{(i)})} \\
-     &= \color{cyan}{W^{(i-1)}} +
-     \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \color{lightgreen}{\phi'(k^{(i)})} \\
-    y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
+    \textcolor{cyan}{W^{(i)}}
+     &= \textcolor{cyan}{W^{(i-1)}} + v^{(i)}_{new} \otimes \textcolor{lightgreen}{\phi'(k^{(i)})} \\
+     &= \textcolor{cyan}{W^{(i-1)}} +
+     \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \textcolor{lightgreen}{\phi'(k^{(i)})} \\
+    y^{(i)} &= \textcolor{cyan}{W^{(i)}} \textcolor{lightgreen}{\phi'(q^{(i)})}
     \end{align}
 
-    where $\color{orange}{W_\beta}$ is a trainable parameter and $\sigma$ is the sigmoid function.
+    where $\textcolor{orange}{W_\beta}$ is a trainable parameter and $\sigma$ is the sigmoid function.
 
-    Note that we don't need the normalization term $z$ because $\color{lightgreen}{\phi'}$ is normalized.
+    Note that we don't need the normalization term $z$ because $\textcolor{lightgreen}{\phi'}$ is normalized.
     """
 
     def __init__(self, heads: int, d_model: int, dropout_prob: float, phi: DPFP):
@@ -214,13 +214,13 @@ class FastWeightsAttention(Module):
         self.key = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
         self.value = PrepareForMultiHeadAttention(d_model, heads, self.d_k, bias=False)
 
-        # Interpolation weight function $\sigma \Big(\color{orange}{W_\beta} x^{(i)} \Big)$ for each head
+        # Interpolation weight function $\sigma \Big(\textcolor{orange}{W_\beta} x^{(i)} \Big)$ for each head
         self.interpolation_weight = nn.Sequential(
             PrepareForMultiHeadAttention(d_model, heads, 1, bias=False),
             nn.Sigmoid()
         )
 
-        # $\color{lightgreen}{\phi'}$
+        # $\textcolor{lightgreen}{\phi'}$
         self.phi = phi
 
         # Output layer
@@ -231,31 +231,31 @@ class FastWeightsAttention(Module):
     def forward(self, x: torch.Tensor):
         # Get the number of steps $L$
         seq_len = x.shape[0]
-        # $\color{lightgreen}{\phi'(q^{(i)})}$ for all steps and heads
+        # $\textcolor{lightgreen}{\phi'(q^{(i)})}$ for all steps and heads
         query = self.phi(self.query(x))
-        # $\color{lightgreen}{\phi'(k^{(i)})}$ for all steps and heads
+        # $\textcolor{lightgreen}{\phi'(k^{(i)})}$ for all steps and heads
         key = self.phi(self.key(x))
         # $v^{(i)}$ for all steps and heads
         value = self.value(x)
         # $\beta^{(i)}$ for all steps and heads
         beta = self.interpolation_weight(x)
 
-        # $\color{cyan}{W^{(0)}}$
+        # $\textcolor{cyan}{W^{(0)}}$
         weights = key.new_zeros((key.shape[1], key.shape[2], value.shape[3], key.shape[3]))
         # List to store outputs $y^{(i)}$
         outputs = []
 
         # Iterate through steps
         for i in range(seq_len):
-            # $$\bar{v}^{(i)} = \color{cyan}{W^{(i-1)}} \color{lightgreen}{\phi'(k^{(i)})}$$
+            # $$\bar{v}^{(i)} = \textcolor{cyan}{W^{(i-1)}} \textcolor{lightgreen}{\phi'(k^{(i)})}$$
             value_existing = torch.einsum('bhvk,bhk->bhv', weights, key[i])
 
-            # $$\color{cyan}{W^{(i)}}
-            #      = \color{cyan}{W^{(i-1)}} +
-            #      \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \color{lightgreen}{\phi'(k^{(i)})}$$
+            # $$\textcolor{cyan}{W^{(i)}}
+            #      = \textcolor{cyan}{W^{(i-1)}} +
+            #      \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \textcolor{lightgreen}{\phi'(k^{(i)})}$$
             weights = weights + torch.einsum('bhv,bhk->bhvk', beta[i] * (value[i] - value_existing), key[i])
 
-            # $$y^{(i)} = \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}$$
+            # $$y^{(i)} = \textcolor{cyan}{W^{(i)}} \textcolor{lightgreen}{\phi'(q^{(i)})}$$
             y = torch.einsum('bhvk,bhk->bhv', weights, query[i])
 
             # Merge multiple heads and append to `outputs`

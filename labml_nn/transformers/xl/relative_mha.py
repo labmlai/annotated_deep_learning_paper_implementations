@@ -74,10 +74,10 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
 
         \begin{align}
         A^{abs}_{j} &= lin_q(X^q_i + P_i)^\top lin_k(X^k_j + P_j) \\
-                      &= \underset{\color{lightgreen}{A}}{Q_i^\top K_j} +
-                         \underset{\color{lightgreen}{B}}{Q_i^\top U^K_j} +
-                         \underset{\color{lightgreen}{C}}{{U^Q_i}^\top K_j} +
-                         \underset{\color{lightgreen}{D}}{{U^Q_i}^\top U^K_j}
+                      &= \underset{\textcolor{lightgreen}{A}}{Q_i^\top K_j} +
+                         \underset{\textcolor{lightgreen}{B}}{Q_i^\top U^K_j} +
+                         \underset{\textcolor{lightgreen}{C}}{{U^Q_i}^\top K_j} +
+                         \underset{\textcolor{lightgreen}{D}}{{U^Q_i}^\top U^K_j}
         \end{align}
 
         where $Q_i, K_j$, are linear transformations of
@@ -87,49 +87,49 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
 
         They reason out that the attention to a given key should be the same regardless of
         the position of query.
-        Hence replace $\underset{\color{lightgreen}{C}}{{U^Q_i}^\top K_j}$
-        with a constant $\underset{\color{lightgreen}{C}}{\color{orange}{v^\top} K_j}$.
+        Hence replace $\underset{\textcolor{lightgreen}{C}}{{U^Q_i}^\top K_j}$
+        with a constant $\underset{\textcolor{lightgreen}{C}}{\textcolor{orange}{v^\top} K_j}$.
 
         For the second and third terms relative positional encodings are introduced.
-        So $\underset{\color{lightgreen}{B}}{Q_i^\top U^K_j}$ is
-        replaced with $\underset{\color{lightgreen}{B}}{Q_i^\top \color{orange}{R_{i - j}}}$
-        and $\underset{\color{lightgreen}{D}}{{U^Q_i}^\top U^K_j}$
-        with $\underset{\color{lightgreen}{D}}{\color{orange}{S_{i-j}}}$.
+        So $\underset{\textcolor{lightgreen}{B}}{Q_i^\top U^K_j}$ is
+        replaced with $\underset{\textcolor{lightgreen}{B}}{Q_i^\top \textcolor{orange}{R_{i - j}}}$
+        and $\underset{\textcolor{lightgreen}{D}}{{U^Q_i}^\top U^K_j}$
+        with $\underset{\textcolor{lightgreen}{D}}{\textcolor{orange}{S_{i-j}}}$.
 
         \begin{align}
-        A^{rel}_{i,j} &= \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
-                         \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^\top \color{orange}{R_{i - j}}} +
-                         \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^\top} K_j} +
-                         \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
+        A^{rel}_{i,j} &= \underset{\mathbf{\textcolor{lightgreen}{A}}}{Q_i^\top K_j} +
+                         \underset{\mathbf{\textcolor{lightgreen}{B}}}{Q_i^\top \textcolor{orange}{R_{i - j}}} +
+                         \underset{\mathbf{\textcolor{lightgreen}{C}}}{\textcolor{orange}{v^\top} K_j} +
+                         \underset{\mathbf{\textcolor{lightgreen}{D}}}{\textcolor{orange}{S_{i-j}}}
         \end{align}
         """
 
-        # $\color{orange}{R_k}$
+        # $\textcolor{orange}{R_k}$
         key_pos_emb = self.key_pos_embeddings[self.P - key.shape[0]:self.P + query.shape[0]]
-        # $\color{orange}{S_k}$
+        # $\textcolor{orange}{S_k}$
         key_pos_bias = self.key_pos_bias[self.P - key.shape[0]:self.P + query.shape[0]]
-        # $\color{orange}{v^\top}$
+        # $\textcolor{orange}{v^\top}$
         query_pos_bias = self.query_pos_bias[None, None, :, :]
 
-        # ${(\color{lightgreen}{\mathbf{A + C}})}_{i,j} =
+        # ${(\textcolor{lightgreen}{\mathbf{A + C}})}_{i,j} =
         # Q_i^\top K_j +
-        # \color{orange}{v^\top} K_jZ$
+        # \textcolor{orange}{v^\top} K_jZ$
         ac = torch.einsum('ibhd,jbhd->ijbh', query + query_pos_bias, key)
-        # $\color{lightgreen}{\mathbf{B'}_{i,k}} = Q_i^\top \color{orange}{R_k}$
+        # $\textcolor{lightgreen}{\mathbf{B'}_{i,k}} = Q_i^\top \textcolor{orange}{R_k}$
         b = torch.einsum('ibhd,jhd->ijbh', query, key_pos_emb)
-        # $\color{lightgreen}{\mathbf{D'}_{i,k}} = \color{orange}{S_k}$
+        # $\textcolor{lightgreen}{\mathbf{D'}_{i,k}} = \textcolor{orange}{S_k}$
         d = key_pos_bias[None, :, None, :]
-        # Shift the rows of $\color{lightgreen}{\mathbf{(B' + D')}_{i,k}}$
-        # to get $$\color{lightgreen}{\mathbf{(B + D)}_{i,j} = \mathbf{(B' + D')}_{i,i - j}}$$
+        # Shift the rows of $\textcolor{lightgreen}{\mathbf{(B' + D')}_{i,k}}$
+        # to get $$\textcolor{lightgreen}{\mathbf{(B + D)}_{i,j} = \mathbf{(B' + D')}_{i,i - j}}$$
         bd = shift_right(b + d)
         # Remove extra positions
         bd = bd[:, -key.shape[0]:]
 
         # Return the sum $$
-        # \underset{\mathbf{\color{lightgreen}{A}}}{Q_i^\top K_j} +
-        # \underset{\mathbf{\color{lightgreen}{B}}}{Q_i^\top \color{orange}{R_{i - j}}} +
-        # \underset{\mathbf{\color{lightgreen}{C}}}{\color{orange}{v^\top} K_j} +
-        # \underset{\mathbf{\color{lightgreen}{D}}}{\color{orange}{S_{i-j}}}
+        # \underset{\mathbf{\textcolor{lightgreen}{A}}}{Q_i^\top K_j} +
+        # \underset{\mathbf{\textcolor{lightgreen}{B}}}{Q_i^\top \textcolor{orange}{R_{i - j}}} +
+        # \underset{\mathbf{\textcolor{lightgreen}{C}}}{\textcolor{orange}{v^\top} K_j} +
+        # \underset{\mathbf{\textcolor{lightgreen}{D}}}{\textcolor{orange}{S_{i-j}}}
         # $$
         return ac + bd
 

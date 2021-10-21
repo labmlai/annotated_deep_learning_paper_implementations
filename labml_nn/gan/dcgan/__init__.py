@@ -27,7 +27,7 @@ class Generator(Module):
     This is similar to the de-convolutional network used for CelebA faces,
     but modified for MNIST images.
 
-    <img src="https://pytorch.org/tutorials/_images/dcgan_generator.png" style="max-width:90%" />
+    ![DCGan Architecture](https://pytorch.org/tutorials/_images/dcgan_generator.png)
     """
 
     def __init__(self):

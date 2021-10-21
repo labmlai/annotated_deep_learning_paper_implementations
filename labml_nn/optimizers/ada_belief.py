@@ -20,15 +20,15 @@ AdaBelief divides by the exponential mean of variance.
 
 \begin{align}
 m_t &\leftarrow \beta_1 m_{t-1} + (1 - \beta_1) \cdot g_t \\
-\color{cyan}{s_t} &\color{cyan}{\leftarrow} \color{cyan}{\beta_2 s_{t-1} + (1 - \beta_2) \cdot (g_t - m_t)^2} \\
+\textcolor{cyan}{s_t} &\textcolor{cyan}{\leftarrow} \textcolor{cyan}{\beta_2 s_{t-1} + (1 - \beta_2) \cdot (g_t - m_t)^2} \\
 \hat{m}_t &\leftarrow \frac{m_t}{1-\beta_1^t} \\
-\color{cyan}{\hat{s}_t} &\color{cyan}{\leftarrow} \frac{\color{cyan}{s_t} + \color{red}{\epsilon}}{\color{cyan}{1-\beta_2^t}} \\
-\theta_t &\leftarrow \theta_{t-1} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\color{cyan}{\hat{s}_t}} + \epsilon}
+\textcolor{cyan}{\hat{s}_t} &\textcolor{cyan}{\leftarrow} \frac{\textcolor{cyan}{s_t} + \textcolor{red}{\epsilon}}{\textcolor{cyan}{1-\beta_2^t}} \\
+\theta_t &\leftarrow \theta_{t-1} - \alpha \cdot \frac{\hat{m}_t}{\sqrt{\textcolor{cyan}{\hat{s}_t}} + \epsilon}
 \end{align}
 
 🤔 The paper calculates variance as $(g_t - m_t)^2$,
 but I feel it should use the bias corrected momentum
-$(g_t - \color{orange}{\hat{m}_t})^2$.
+$(g_t - \textcolor{orange}{\hat{m}_t})^2$.
 I guess this doesn't affect things much because
 bias correction is $\approx 1$ after the initial training steps.
 """
@@ -151,9 +151,9 @@ class AdaBelief(RAdam):
 
         if not self.rectify:
             # Perform *Adam* update, defined in [`adam.py`](adam.html), with
-            # $\color{cyan}{s_t} + \color{red}{\epsilon}$ in place of $v_t$.
+            # $\textcolor{cyan}{s_t} + \textcolor{red}{\epsilon}$ in place of $v_t$.
             self.adam_update(state, group, param, m, s + group['eps'])
         else:
             # Perform *Rectified Adam* update defined in [`radam.py`](radam.html), with
-            # $\color{cyan}{s_t} + \color{red}{\epsilon}$ in place of $v_t$.
+            # $\textcolor{cyan}{s_t} + \textcolor{red}{\epsilon}$ in place of $v_t$.
             self.r_adam_update(state, group, param, m, s + group['eps'])

@@ -29,15 +29,15 @@ Paper uses term evidence as a measure of the amount of support
 collected from data in favor of a sample to be classified into a certain class.
 
 This corresponds to a [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution)
-with parameters $\color{orange}{\alpha_k} = e_k + 1$, and
- $\color{orange}{\alpha_0} = S = \sum_{k=1}^K \color{orange}{\alpha_k}$ is known as the Dirichlet strength.
-Dirichlet distribution $D(\mathbf{p} \vert \color{orange}{\mathbf{\alpha}})$
+with parameters $\textcolor{orange}{\alpha_k} = e_k + 1$, and
+ $\textcolor{orange}{\alpha_0} = S = \sum_{k=1}^K \textcolor{orange}{\alpha_k}$ is known as the Dirichlet strength.
+Dirichlet distribution $D(\mathbf{p} \vert \textcolor{orange}{\mathbf{\alpha}})$
  is a distribution over categorical distribution; i.e. you can sample class probabilities
 from a Dirichlet distribution.
-The expected probability for class $k$ is $\hat{p}_k = \frac{\color{orange}{\alpha_k}}{S}$.
+The expected probability for class $k$ is $\hat{p}_k = \frac{\textcolor{orange}{\alpha_k}}{S}$.
 
 We get the model to output evidences
-$$\mathbf{e} = \color{orange}{\mathbf{\alpha}} - 1 = f(\mathbf{x} | \Theta)$$
+$$\mathbf{e} = \textcolor{orange}{\mathbf{\alpha}} - 1 = f(\mathbf{x} | \Theta)$$
  for a given input $\mathbf{x}$.
 We use a function such as
  [ReLU](https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html) or a
@@ -63,7 +63,7 @@ class MaximumLikelihoodLoss(Module):
 
     ## Type II Maximum Likelihood Loss
 
-    The distribution $D(\mathbf{p} \vert \color{orange}{\mathbf{\alpha}})$ is a prior on the likelihood
+    The distribution $D(\mathbf{p} \vert \textcolor{orange}{\mathbf{\alpha}})$ is a prior on the likelihood
     $Multi(\mathbf{y} \vert p)$,
      and the negative log marginal likelihood is calculated by integrating over class probabilities
      $\mathbf{p}$.
@@ -75,11 +75,11 @@ class MaximumLikelihoodLoss(Module):
     &= -\log \Bigg(
      \int
       \prod_{k=1}^K p_k^{y_k}
-      \frac{1}{B(\color{orange}{\mathbf{\alpha}})}
-      \prod_{k=1}^K p_k^{\color{orange}{\alpha_k} - 1}
+      \frac{1}{B(\textcolor{orange}{\mathbf{\alpha}})}
+      \prod_{k=1}^K p_k^{\textcolor{orange}{\alpha_k} - 1}
      d\mathbf{p}
      \Bigg ) \\
-    &= \sum_{k=1}^K y_k \bigg( \log S - \log \color{orange}{\alpha_k} \bigg)
+    &= \sum_{k=1}^K y_k \bigg( \log S - \log \textcolor{orange}{\alpha_k} \bigg)
     \end{align}
     """
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
@@ -87,12 +87,12 @@ class MaximumLikelihoodLoss(Module):
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
-        # $\color{orange}{\alpha_k} = e_k + 1$
+        # $\textcolor{orange}{\alpha_k} = e_k + 1$
         alpha = evidence + 1.
-        # $S = \sum_{k=1}^K \color{orange}{\alpha_k}$
+        # $S = \sum_{k=1}^K \textcolor{orange}{\alpha_k}$
         strength = alpha.sum(dim=-1)
 
-        # Losses $\mathcal{L}(\Theta) = \sum_{k=1}^K y_k \bigg( \log S - \log \color{orange}{\alpha_k} \bigg)$
+        # Losses $\mathcal{L}(\Theta) = \sum_{k=1}^K y_k \bigg( \log S - \log \textcolor{orange}{\alpha_k} \bigg)$
         loss = (target * (strength.log()[:, None] - alpha.log())).sum(dim=-1)
 
         # Mean loss over the batch
@@ -119,11 +119,11 @@ class CrossEntropyBayesRisk(Module):
     &= -\log \Bigg(
      \int
       \Big[ \sum_{k=1}^K -y_k \log p_k \Big]
-      \frac{1}{B(\color{orange}{\mathbf{\alpha}})}
-      \prod_{k=1}^K p_k^{\color{orange}{\alpha_k} - 1}
+      \frac{1}{B(\textcolor{orange}{\mathbf{\alpha}})}
+      \prod_{k=1}^K p_k^{\textcolor{orange}{\alpha_k} - 1}
      d\mathbf{p}
      \Bigg ) \\
-    &= \sum_{k=1}^K y_k \bigg( \psi(S) - \psi( \color{orange}{\alpha_k} ) \bigg)
+    &= \sum_{k=1}^K y_k \bigg( \psi(S) - \psi( \textcolor{orange}{\alpha_k} ) \bigg)
     \end{align}
 
     where $\psi(\cdot)$ is the $digamma$ function.
@@ -134,12 +134,12 @@ class CrossEntropyBayesRisk(Module):
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
-        # $\color{orange}{\alpha_k} = e_k + 1$
+        # $\textcolor{orange}{\alpha_k} = e_k + 1$
         alpha = evidence + 1.
-        # $S = \sum_{k=1}^K \color{orange}{\alpha_k}$
+        # $S = \sum_{k=1}^K \textcolor{orange}{\alpha_k}$
         strength = alpha.sum(dim=-1)
 
-        # Losses $\mathcal{L}(\Theta) = \sum_{k=1}^K y_k \bigg( \psi(S) - \psi( \color{orange}{\alpha_k} ) \bigg)$
+        # Losses $\mathcal{L}(\Theta) = \sum_{k=1}^K y_k \bigg( \psi(S) - \psi( \textcolor{orange}{\alpha_k} ) \bigg)$
         loss = (target * (torch.digamma(strength)[:, None] - torch.digamma(alpha))).sum(dim=-1)
 
         # Mean loss over the batch
@@ -162,19 +162,19 @@ class SquaredErrorBayesRisk(Module):
     &= -\log \Bigg(
      \int
       \Big[ \sum_{k=1}^K (y_k - p_k)^2 \Big]
-      \frac{1}{B(\color{orange}{\mathbf{\alpha}})}
-      \prod_{k=1}^K p_k^{\color{orange}{\alpha_k} - 1}
+      \frac{1}{B(\textcolor{orange}{\mathbf{\alpha}})}
+      \prod_{k=1}^K p_k^{\textcolor{orange}{\alpha_k} - 1}
      d\mathbf{p}
      \Bigg ) \\
     &= \sum_{k=1}^K \mathbb{E} \Big[ y_k^2 -2 y_k p_k + p_k^2 \Big] \\
     &= \sum_{k=1}^K \Big( y_k^2 -2 y_k \mathbb{E}[p_k] + \mathbb{E}[p_k^2] \Big)
     \end{align}
 
-    Where $$\mathbb{E}[p_k] = \hat{p}_k = \frac{\color{orange}{\alpha_k}}{S}$$
+    Where $$\mathbb{E}[p_k] = \hat{p}_k = \frac{\textcolor{orange}{\alpha_k}}{S}$$
     is the expected probability when sampled from the Dirichlet distribution
     and $$\mathbb{E}[p_k^2] = \mathbb{E}[p_k]^2 + \text{Var}(p_k)$$
      where
-    $$\text{Var}(p_k) = \frac{\color{orange}{\alpha_k}(S - \color{orange}{\alpha_k})}{S^2 (S + 1)}
+    $$\text{Var}(p_k) = \frac{\textcolor{orange}{\alpha_k}(S - \textcolor{orange}{\alpha_k})}{S^2 (S + 1)}
     = \frac{\hat{p}_k(1 - \hat{p}_k)}{S + 1}$$
      is the variance.
 
@@ -196,11 +196,11 @@ class SquaredErrorBayesRisk(Module):
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
-        # $\color{orange}{\alpha_k} = e_k + 1$
+        # $\textcolor{orange}{\alpha_k} = e_k + 1$
         alpha = evidence + 1.
-        # $S = \sum_{k=1}^K \color{orange}{\alpha_k}$
+        # $S = \sum_{k=1}^K \textcolor{orange}{\alpha_k}$
         strength = alpha.sum(dim=-1)
-        # $\hat{p}_k = \frac{\color{orange}{\alpha_k}}{S}$
+        # $\hat{p}_k = \frac{\textcolor{orange}{\alpha_k}}{S}$
         p = alpha / strength[:, None]
 
         # Error $(y_k -\hat{p}_k)^2$
@@ -223,7 +223,7 @@ class KLDivergenceLoss(Module):
 
     This tries to shrink the total evidence to zero if the sample cannot be correctly classified.
 
-    First we calculate $\tilde{\alpha}_k = y_k + (1 - y_k) \color{orange}{\alpha_k}$ the
+    First we calculate $\tilde{\alpha}_k = y_k + (1 - y_k) \textcolor{orange}{\alpha_k}$ the
     Dirichlet parameters after remove the correct evidence.
 
     \begin{align}
@@ -244,12 +244,12 @@ class KLDivergenceLoss(Module):
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
-        # $\color{orange}{\alpha_k} = e_k + 1$
+        # $\textcolor{orange}{\alpha_k} = e_k + 1$
         alpha = evidence + 1.
         # Number of classes
         n_classes = evidence.shape[-1]
         # Remove non-misleading evidence
-        # $$\tilde{\alpha}_k = y_k + (1 - y_k) \color{orange}{\alpha_k}$$
+        # $$\tilde{\alpha}_k = y_k + (1 - y_k) \textcolor{orange}{\alpha_k}$$
         alpha_tilde = target + (1 - target) * alpha
         # $\tilde{S} = \sum_{k=1}^K \tilde{\alpha}_k$
         strength_tilde = alpha_tilde.sum(dim=-1)
@@ -297,12 +297,12 @@ class TrackStatistics(Module):
         # Track accuracy
         tracker.add('accuracy.', match.sum() / match.shape[0])
 
-        # $\color{orange}{\alpha_k} = e_k + 1$
+        # $\textcolor{orange}{\alpha_k} = e_k + 1$
         alpha = evidence + 1.
-        # $S = \sum_{k=1}^K \color{orange}{\alpha_k}$
+        # $S = \sum_{k=1}^K \textcolor{orange}{\alpha_k}$
         strength = alpha.sum(dim=-1)
 
-        # $\hat{p}_k = \frac{\color{orange}{\alpha_k}}{S}$
+        # $\hat{p}_k = \frac{\textcolor{orange}{\alpha_k}}{S}$
         expected_probability = alpha / strength[:, None]
         # Expected probability of the selected (greedy highset probability) class
         expected_probability, _ = expected_probability.max(dim=-1)

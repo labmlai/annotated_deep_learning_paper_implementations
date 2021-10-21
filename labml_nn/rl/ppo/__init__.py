@@ -124,7 +124,7 @@ class ClippedPPOLoss(Module):
      \Biggr]
     \\
     &\approx \frac{1}{1 - \gamma}
-     \mathop{\mathbb{E}}_{\color{orange}{s \sim d^{\pi_{\theta_{OLD}}}}
+     \mathop{\mathbb{E}}_{\textcolor{orange}{s \sim d^{\pi_{\theta_{OLD}}}}
      \atop a \sim \pi_{\theta_{OLD}}} \Biggl[
       \frac{\pi_\theta(a|s)}{\pi_{\theta_{OLD}}(a|s)} A^{\pi_{OLD}}(s, a)
      \Biggr]

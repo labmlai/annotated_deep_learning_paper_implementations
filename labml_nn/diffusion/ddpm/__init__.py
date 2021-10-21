@@ -43,21 +43,21 @@ The reverse process removes noise starting at $p(x_T) = \mathcal{N}(x_T; \mathbf
 for $T$ time steps.
 
 \begin{align}
-\color{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
- \color{cyan}{\mu_\theta}x_t, t), \color{cyan}{\Sigma_\theta}(x_t, t)\big) \\
-\color{cyan}{p_\theta}(x_{0:T}) &= \color{cyan}{p_\theta}(x_T) \prod_{t = 1}^{T} \color{cyan}{p_\theta}(x_{t-1} | x_t) \\
-\color{cyan}{p_\theta}(x_0) &= \int \color{cyan}{p_\theta}(x_{0:T}) dx_{1:T}
+\textcolor{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
+ \textcolor{cyan}{\mu_\theta}x_t, t), \textcolor{cyan}{\Sigma_\theta}(x_t, t)\big) \\
+\textcolor{cyan}{p_\theta}(x_{0:T}) &= \textcolor{cyan}{p_\theta}(x_T) \prod_{t = 1}^{T} \textcolor{cyan}{p_\theta}(x_{t-1} | x_t) \\
+\textcolor{cyan}{p_\theta}(x_0) &= \int \textcolor{cyan}{p_\theta}(x_{0:T}) dx_{1:T}
 \end{align}
 
-$\color{cyan}\theta$ are the parameters we train.
+$\textcolor{cyan}\theta$ are the parameters we train.
 
 ## Loss
 
 We optimize the ELBO (from Jenson's inequality) on the negative log likelihood.
 
 \begin{align}
-\mathbb{E}[-\log \color{cyan}{p_\theta}(x_0)]
- &\le \mathbb{E}_q [ -\log \frac{\color{cyan}{p_\theta}(x_{0:T})}{q(x_{1:T}|x_0)} ] \\
+\mathbb{E}[-\log \textcolor{cyan}{p_\theta}(x_0)]
+ &\le \mathbb{E}_q [ -\log \frac{\textcolor{cyan}{p_\theta}(x_{0:T})}{q(x_{1:T}|x_0)} ] \\
  &=L
 \end{align}
 
@@ -65,21 +65,21 @@ The loss can be rewritten as  follows.
 
 \begin{align}
 L
- &= \mathbb{E}_q [ -\log \frac{\color{cyan}{p_\theta}(x_{0:T})}{q(x_{1:T}|x_0)} ] \\
- &= \mathbb{E}_q [ -\log p(x_T) - \sum_{t=1}^T \log \frac{\color{cyan}{p_\theta}(x_{t-1}|x_t)}{q(x_t|x_{t-1})} ] \\
+ &= \mathbb{E}_q [ -\log \frac{\textcolor{cyan}{p_\theta}(x_{0:T})}{q(x_{1:T}|x_0)} ] \\
+ &= \mathbb{E}_q [ -\log p(x_T) - \sum_{t=1}^T \log \frac{\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)}{q(x_t|x_{t-1})} ] \\
  &= \mathbb{E}_q [
   -\log \frac{p(x_T)}{q(x_T|x_0)}
-  -\sum_{t=2}^T \log \frac{\color{cyan}{p_\theta}(x_{t-1}|x_t)}{q(x_{t-1}|x_t,x_0)}
-  -\log \color{cyan}{p_\theta}(x_0|x_1)] \\
+  -\sum_{t=2}^T \log \frac{\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)}{q(x_{t-1}|x_t,x_0)}
+  -\log \textcolor{cyan}{p_\theta}(x_0|x_1)] \\
  &= \mathbb{E}_q [
    D_{KL}(q(x_T|x_0) \Vert p(x_T))
-  +\sum_{t=2}^T D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \color{cyan}{p_\theta}(x_{t-1}|x_t))
-  -\log \color{cyan}{p_\theta}(x_0|x_1)]
+  +\sum_{t=2}^T D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \textcolor{cyan}{p_\theta}(x_{t-1}|x_t))
+  -\log \textcolor{cyan}{p_\theta}(x_0|x_1)]
 \end{align}
 
 $D_{KL}(q(x_T|x_0) \Vert p(x_T))$ is constant since we keep $\beta_1, \dots, \beta_T$ constant.
 
-### Computing $L_{t-1} = D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \color{cyan}{p_\theta}(x_{t-1}|x_t))$
+### Computing $L_{t-1} = D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \textcolor{cyan}{p_\theta}(x_{t-1}|x_t))$
 
 The forward process posterior conditioned by $x_0$ is,
 
@@ -90,11 +90,11 @@ q(x_{t-1}|x_t, x_0) &= \mathcal{N} \Big(x_{t-1}; \tilde\mu_t(x_t, x_0), \tilde\b
 \tilde\beta_t &= \frac{1 - \bar\alpha_{t-1}}{a}
 \end{align}
 
-The paper sets $\color{cyan}{\Sigma_\theta}(x_t, t) = \sigma_t^2 \mathbf{I}$ where $\sigma_t^2$ is set to constants
+The paper sets $\textcolor{cyan}{\Sigma_\theta}(x_t, t) = \sigma_t^2 \mathbf{I}$ where $\sigma_t^2$ is set to constants
 $\beta_t$ or $\tilde\beta_t$.
 
 Then,
-$$\color{cyan}{p_\theta}(x_{t-1} | x_t) = \mathcal{N}\big(x_{t-1}; \color{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big)$$
+$$\textcolor{cyan}{p_\theta}(x_{t-1} | x_t) = \mathcal{N}\big(x_{t-1}; \textcolor{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big)$$
 
 For given noise $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$ using $q(x_t|x_0)$
 
@@ -107,23 +107,23 @@ This gives,
 
 \begin{align}
 L_{t-1}
- &= D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \color{cyan}{p_\theta}(x_{t-1}|x_t)) \\
+ &= D_{KL}(q(x_{t-1}|x_t,x_0) \Vert \textcolor{cyan}{p_\theta}(x_{t-1}|x_t)) \\
  &= \mathbb{E}_q \Bigg[ \frac{1}{2\sigma_t^2}
- \Big \Vert \tilde\mu(x_t, x_0) - \color{cyan}{\mu_\theta}(x_t, t) \Big \Vert^2 \Bigg] \\
+ \Big \Vert \tilde\mu(x_t, x_0) - \textcolor{cyan}{\mu_\theta}(x_t, t) \Big \Vert^2 \Bigg] \\
  &= \mathbb{E}_{x_0, \epsilon} \Bigg[ \frac{1}{2\sigma_t^2}
   \bigg\Vert \frac{1}{\sqrt{\alpha_t}} \Big(
   x_t(x_0, \epsilon) - \frac{\beta_t}{\sqrt{1 - \bar\alpha_t}} \epsilon
-  \Big) - \color{cyan}{\mu_\theta}(x_t(x_0, \epsilon), t) \bigg\Vert^2 \Bigg] \\
+  \Big) - \textcolor{cyan}{\mu_\theta}(x_t(x_0, \epsilon), t) \bigg\Vert^2 \Bigg] \\
 \end{align}
 
 Re-parameterizing with a model to predict noise
 
 \begin{align}
-\color{cyan}{\mu_\theta}(x_t, t) &= \tilde\mu \bigg(x_t,
+\textcolor{cyan}{\mu_\theta}(x_t, t) &= \tilde\mu \bigg(x_t,
   \frac{1}{\sqrt{\bar\alpha_t}} \Big(x_t -
-   \sqrt{1-\bar\alpha_t}\color{cyan}{\epsilon_\theta}(x_t, t) \Big) \bigg) \\
+   \sqrt{1-\bar\alpha_t}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big) \bigg) \\
   &= \frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-  \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\color{cyan}{\epsilon_\theta}(x_t, t) \Big)
+  \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)
 \end{align}
 
 where $\epsilon_theta$ is a learned function that predicts $\epsilon$ given $(x_t, t)$.
@@ -134,7 +134,7 @@ This gives,
 L_{t-1}
 &= \mathbb{E}_{x_0, \epsilon} \Bigg[ \frac{\beta_t^2}{2\sigma_t^2 \alpha_t (1 - \bar\alpha_t)}
   \Big\Vert
-  \epsilon - \color{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
+  \epsilon - \textcolor{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
   \Big\Vert^2 \Bigg]
 \end{align}
 
@@ -143,17 +143,17 @@ That is, we are training to predict the noise.
 ### Simplified loss
 
 $$L_simple(\theta) = \mathbb{E}_{t,x_0, \epsilon} \Bigg[ \bigg\Vert
-\epsilon - \color{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
+\epsilon - \textcolor{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
 \bigg\Vert^2 \Bigg]$$
 
-This minimizes $-\log \color{cyan}{p_\theta}(x_0|x_1)$ when $t=1$ and $L_{t-1}$ for $t\gt1$ discarding the
+This minimizes $-\log \textcolor{cyan}{p_\theta}(x_0|x_1)$ when $t=1$ and $L_{t-1}$ for $t\gt1$ discarding the
 weighting in $L_{t-1}$. Discarding the weights $\frac{\beta_t^2}{2\sigma_t^2 \alpha_t (1 - \bar\alpha_t)}$
 increase the weight given to higher $t$ (which have higher noise levels), therefore increasing the sample quality.
 
 This file implements the loss calculation and a basic sampling method that we use to generate images during
 training.
 
-Here is the [UNet model](unet.html) that gives $\color{cyan}{\epsilon_\theta}(x_t, t)$ and
+Here is the [UNet model](unet.html) that gives $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$ and
 [training code](experiment.html).
 [This file](evaluate.html) can generate samples and interpolations from a trained model.
 
@@ -176,7 +176,7 @@ class DenoiseDiffusion:
 
     def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
         """
-        * `eps_model` is $\color{cyan}{\epsilon_\theta}(x_t, t)$ model
+        * `eps_model` is $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$ model
         * `n_steps` is $t$
         * `device` is the device to place constants on
         """
@@ -231,18 +231,18 @@ class DenoiseDiffusion:
 
     def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
         """
-        #### Sample from $\color{cyan}{p_\theta}(x_{t-1}|x_t)$
+        #### Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
 
         \begin{align}
-        \color{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
-        \color{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big) \\
-        \color{cyan}{\mu_\theta}(x_t, t)
+        \textcolor{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
+        \textcolor{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big) \\
+        \textcolor{cyan}{\mu_\theta}(x_t, t)
           &= \frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-            \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\color{cyan}{\epsilon_\theta}(x_t, t) \Big)
+            \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)
         \end{align}
         """
 
-        # $\color{cyan}{\epsilon_\theta}(x_t, t)$
+        # $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$
         eps_theta = self.eps_model(xt, t)
         # [gather](utils.html) $\bar\alpha_t$
         alpha_bar = gather(self.alpha_bar, t)
@@ -251,7 +251,7 @@ class DenoiseDiffusion:
         # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
         eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
         # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\color{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
+        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
         mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
         # $\sigma^2$
         var = gather(self.sigma2, t)
@@ -266,7 +266,7 @@ class DenoiseDiffusion:
         #### Simplified Loss
 
         $$L_simple(\theta) = \mathbb{E}_{t,x_0, \epsilon} \Bigg[ \bigg\Vert
-        \epsilon - \color{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
+        \epsilon - \textcolor{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)
         \bigg\Vert^2 \Bigg]$$
         """
         # Get batch size
@@ -280,7 +280,7 @@ class DenoiseDiffusion:
 
         # Sample $x_t$ for $q(x_t|x_0)$
         xt = self.q_sample(x0, t, eps=noise)
-        # Get $\color{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)$
+        # Get $\textcolor{cyan}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)$
         eps_theta = self.eps_model(xt, t)
 
         # MSE loss
