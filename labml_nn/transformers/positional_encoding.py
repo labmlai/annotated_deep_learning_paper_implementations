@@ -50,7 +50,7 @@ def get_positional_encoding(d_model: int, max_len: int = 5000):
     position = torch.arange(0, max_len, dtype=torch.float32).unsqueeze(1)
     # $2 * i$
     two_i = torch.arange(0, d_model, 2, dtype=torch.float32)
-    # $10000^{\frac{2i}{d_{model}}$
+    # $10000^{\frac{2i}{d_{model}}}$
     div_term = torch.exp(two_i * -(math.log(10000.0) / d_model))
     # $PE_{p,2i} = sin\Bigg(\frac{p}{10000^{\frac{2i}{d_{model}}}}\Bigg)$
     encodings[:, 0::2] = torch.sin(position * div_term)

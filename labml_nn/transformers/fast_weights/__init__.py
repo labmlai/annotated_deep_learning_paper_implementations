@@ -181,7 +181,7 @@ class FastWeightsAttention(Module):
     The model first retrieves the current value
     $\bar{v}^{(i)}$ paired with the key $k^{(i)}$.
     Then stores a combination $v^{(i)}_{new}$
-    of the retrieved value $\bar{v}^{̄(i)}$ and the input $v^{(i)}$.
+    of the retrieved value $\bar{v}^{(i)}$ and the input $v^{(i)}$.
 
     \begin{align}
     k^{(i)}, v^{(i)}, q^{(i)} &=
