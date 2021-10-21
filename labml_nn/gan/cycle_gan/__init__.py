@@ -488,7 +488,7 @@ class Configs(BaseConfigs):
         This was used to encourage the mapping to preserve color composition between
         the input and the output.
 
-        To solve $G^{\*}, F^{\*}$,
+        To solve $$G^*, F^*$$,
         discriminators $D_X$ and $D_Y$ should **ascend** on the gradient,
         \begin{align}
         \nabla_{\theta_{D_X, D_Y}} \frac{1}{m} \sum_{i=1}^m
