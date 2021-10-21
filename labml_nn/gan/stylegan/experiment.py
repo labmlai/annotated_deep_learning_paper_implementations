@@ -11,7 +11,7 @@ This is the training code for [StyleGAN 2](index.html) model.
 
 ![Generated Images](generated_64.png)
 
-*<small>These are $64 \times 64$ images generated after training for about 80K steps.</small>*
+---*These are $64 \times 64$ images generated after training for about 80K steps.*---
 
 *Our implementation is a minimalistic StyleGAN 2 model training code.
 Only single GPU training is supported to keep the implementation simple.

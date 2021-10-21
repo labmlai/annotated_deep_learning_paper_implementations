@@ -24,7 +24,7 @@ We managed to shrink it to keep it at less than 500 lines of code, including the
 
 ![Generated Images](generated_64.png)
 
-*<small>These are $64 \times 64$ images generated after training for about 80K steps.</small>*
+---*These are $64 \times 64$ images generated after training for about 80K steps.*---
 
 
 We'll first introduce the three papers at a high level.
@@ -59,9 +59,9 @@ The progressive growth of the discriminator is done similarly.
 
 ![progressive_gan.svg](progressive_gan.svg)
 
-*<small>$2\times$ and $0.5\times$ denote feature map resolution scaling and scaling.
+---*$2\times$ and $0.5\times$ denote feature map resolution scaling and scaling.
 $4\times4$, $8\times4$, ... denote feature map resolution at the generator or discriminator block.
-Each discriminator and generator block consists of 2 convolution layers with leaky ReLU activations.</small>*
+Each discriminator and generator block consists of 2 convolution layers with leaky ReLU activations.*---
 
 They use **minibatch standard deviation** to increase variation and
  **equalized learning rate** which we discussed below in the implementation.
@@ -106,9 +106,9 @@ All the up and down-sampling operations are accompanied by bilinear smoothing.
 
 ![style_gan.svg](style_gan.svg)
 
-*<small>$A$ denotes a linear layer.
+---*$A$ denotes a linear layer.
 $B$ denotes a broadcast and scaling operation (noise is a single channel).
-StyleGAN also uses progressive growing like Progressive GAN</small>*
+StyleGAN also uses progressive growing like Progressive GAN.*---
 
 ## StyleGAN 2
 
@@ -202,9 +202,9 @@ class Generator(nn.Module):
 
     ![Generator](style_gan2.svg)
 
-    *<small>$A$ denotes a linear layer.
+    ---*$A$ denotes a linear layer.
     $B$ denotes a broadcast and scaling operation (noise is a single channel).
-    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
+    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.*---
 
     The generator starts with a learned constant.
     Then it has a series of blocks. The feature map resolution is doubled at each block
@@ -283,9 +283,9 @@ class GeneratorBlock(nn.Module):
 
     ![Generator block](generator_block.svg)
 
-    *<small>$A$ denotes a linear layer.
+    ---*$A$ denotes a linear layer.
     $B$ denotes a broadcast and scaling operation (noise is a single channel).
-    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.</small>*
+    [`toRGB`](#to_rgb) also has a style modulation which is not shown in the diagram to keep it simple.*---
 
     The generator block consists of two [style blocks](#style_block) ($3 \times 3$ convolutions with style modulation)
     and an RGB output.
@@ -335,8 +335,8 @@ class StyleBlock(nn.Module):
 
     ![Style block](style_block.svg)
 
-    *<small>$A$ denotes a linear layer.
-    $B$ denotes a broadcast and scaling operation (noise is single channel).</small>*
+    ---*$A$ denotes a linear layer.
+    $B$ denotes a broadcast and scaling operation (noise is single channel).*---
 
     Style block has a weight modulation convolution layer.
     """
@@ -386,7 +386,7 @@ class ToRGB(nn.Module):
 
     ![To RGB](to_rgb.svg)
 
-    *<small>$A$ denotes a linear layer.</small>*
+    ---*$A$ denotes a linear layer.*---
 
     Generates an RGB image from a feature map using $1 \times 1$ convolution.
     """
