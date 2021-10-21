@@ -153,8 +153,8 @@ replaced with $\sigma^*_i$.
 The average strategy is the average of strategies followed in each round,
  for all $I \in \mathcal{I}, a \in A(I)$
 
-$$\color{cyan}{\bar{\sigma}^T_i(I)(a)} =
- \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I)\color{lightgreen}{\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
+$${\color{cyan}\bar{\sigma}^T_i(I)(a)} =
+ \frac{\sum_{t=1}^T \pi_i^{\sigma^t}(I){\color{lightgreen}\sigma^t(I)(a)}}{\sum_{t=1}^T \pi_i^{\sigma^t}(I)}$$
 
 That is the mean regret of not playing with the optimal strategy.
 
