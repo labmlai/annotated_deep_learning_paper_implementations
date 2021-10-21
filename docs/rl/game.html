@@ -24,8 +24,6 @@
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/rl/game.html"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
-
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
     <script>
@@ -69,7 +67,6 @@
                 <a href='#section-0'>#</a>
             </div>
             <h1>Atari wrapper with multi-processing</h1>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">9</span><span></span><span class="kn">import</span> <span class="nn">multiprocessing</span>
@@ -85,12 +82,20 @@
             <div class='section-link'>
                 <a href='#section-1'>#</a>
             </div>
-            <h2>&lt;a name=&quot;game-environment&quot;&gt;&lt;/a&gt;Game environment</h2>
-<p>This is a wrapper for OpenAI gym game environment. We do a few things here:</p>
-<p>1. Apply the same action on four frames and get the last frame 2. Convert observation frames to gray and scale it to (84, 84) 3. Stack four frames of the last four actions 4. Add episode information (total reward for the entire episode) for monitoring 5. Restrict an episode to a single life (game has 5 lives, we reset after every single life)</p>
+            <h2><a name="game-environment"></a>Game environment</h2>
+<p>This is a wrapper for OpenAI gym game environment.
+We do a few things here:</p>
+<ol>
+<li>Apply the same action on four frames and get the last frame</li>
+<li>Convert observation frames to gray and scale it to (84, 84)</li>
+<li>Stack four frames of the last four actions</li>
+<li>Add episode information (total reward for the entire episode) for monitoring</li>
+<li>Restrict an episode to a single life (game has 5 lives, we reset after every single life)</li>
+</ol>
 <h4>Observation format</h4>
-<p>Observation is tensor of size (4, 84, 84). It is four frames (images of the game screen) stacked on first axis. i.e, each channel is a frame.</p>
-
+<p>Observation is tensor of size (4, 84, 84). It is four frames
+(images of the game screen) stacked on first axis.
+i.e, each channel is a frame.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">17</span><span class="k">class</span> <span class="nc">Game</span><span class="p">:</span></pre></div>
@@ -112,8 +117,7 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            <p>create environment </p>
-
+            <p>create environment</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">37</span>        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="s1">&#39;BreakoutNoFrameskip-v4&#39;</span><span class="p">)</span>
@@ -125,8 +129,7 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <p>tensor for a stack of 4 frames </p>
-
+            <p>tensor for a stack of 4 frames</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">41</span>        <span class="bp">self</span><span class="o">.</span><span class="n">obs_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">))</span></pre></div>
@@ -137,8 +140,7 @@
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            <p>buffer to keep the maximum of last 2 frames </p>
-
+            <p>buffer to keep the maximum of last 2 frames</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">obs_2_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">84</span><span class="p">))</span></pre></div>
@@ -149,8 +151,7 @@
             <div class='section-link'>
                 <a href='#section-6'>#</a>
             </div>
-            <p>keep track of the episode rewards </p>
-
+            <p>keep track of the episode rewards</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">47</span>        <span class="bp">self</span><span class="o">.</span><span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
@@ -161,8 +162,7 @@
             <div class='section-link'>
                 <a href='#section-7'>#</a>
             </div>
-            <p>and number of lives left </p>
-
+            <p>and number of lives left</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">49</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lives</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
@@ -174,17 +174,14 @@
                 <a href='#section-8'>#</a>
             </div>
             <h3>Step</h3>
-<p>Executes <code>action</code>
- for 4 time steps and  returns a tuple of (observation, reward, done, episode_info).</p>
-<ul><li><code>observation</code>
-: stacked 4 frames (this frame and frames for last 3 actions) </li>
-<li><code>reward</code>
-: total reward while the action was executed </li>
-<li><code>done</code>
-: whether the episode finished (a life lost) </li>
-<li><code>episode_info</code>
-: episode information if completed</li></ul>
-
+<p>Executes <code>action</code> for 4 time steps and
+ returns a tuple of (observation, reward, done, episode_info).</p>
+<ul>
+<li><code>observation</code>: stacked 4 frames (this frame and frames for last 3 actions)</li>
+<li><code>reward</code>: total reward while the action was executed</li>
+<li><code>done</code>: whether the episode finished (a life lost)</li>
+<li><code>episode_info</code>: episode information if completed</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">51</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span></pre></div>
@@ -207,8 +204,7 @@
             <div class='section-link'>
                 <a href='#section-10'>#</a>
             </div>
-            <p>run for 4 steps </p>
-
+            <p>run for 4 steps</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">67</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span></pre></div>
@@ -219,8 +215,7 @@
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>execute the action in the OpenAI Gym environment </p>
-
+            <p>execute the action in the OpenAI Gym environment</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">69</span>            <span class="n">obs</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
@@ -236,8 +231,7 @@
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>get number of lives left </p>
-
+            <p>get number of lives left</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">77</span>            <span class="n">lives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">unwrapped</span><span class="o">.</span><span class="n">ale</span><span class="o">.</span><span class="n">lives</span><span class="p">()</span></pre></div>
@@ -248,8 +242,7 @@
             <div class='section-link'>
                 <a href='#section-13'>#</a>
             </div>
-            <p>reset if a life is lost </p>
-
+            <p>reset if a life is lost</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">79</span>            <span class="k">if</span> <span class="n">lives</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lives</span><span class="p">:</span>
@@ -262,8 +255,7 @@
             <div class='section-link'>
                 <a href='#section-14'>#</a>
             </div>
-            <p>maintain rewards for each step </p>
-
+            <p>maintain rewards for each step</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">84</span>        <span class="bp">self</span><span class="o">.</span><span class="n">rewards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
@@ -276,8 +268,7 @@
             <div class='section-link'>
                 <a href='#section-15'>#</a>
             </div>
-            <p>if finished, set episode information if episode is over, and reset </p>
-
+            <p>if finished, set episode information if episode is over, and reset</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">88</span>            <span class="n">episode_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reward&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rewards</span><span class="p">),</span> <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rewards</span><span class="p">)}</span>
@@ -291,8 +282,7 @@
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <p>get the max of last two frames </p>
-
+            <p>get the max of last two frames</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">94</span>            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs_2_max</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
@@ -303,8 +293,7 @@
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <p>push it to the stack of 4 frames </p>
-
+            <p>push it to the stack of 4 frames</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">97</span>            <span class="bp">self</span><span class="o">.</span><span class="n">obs_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs_4</span><span class="p">,</span> <span class="n">shift</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -320,7 +309,6 @@
             </div>
             <h3>Reset environment</h3>
 <p>Clean up episode info and 4 frame stack</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">102</span>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
@@ -331,8 +319,7 @@
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>reset OpenAI Gym environment </p>
-
+            <p>reset OpenAI Gym environment</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">109</span>        <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span></pre></div>
@@ -343,8 +330,7 @@
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <p>reset caches </p>
-
+            <p>reset caches</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">112</span>        <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_obs</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
@@ -364,7 +350,6 @@
             </div>
             <h4>Process game frames</h4>
 <p>Convert game frames to gray and rescale to 84x84</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">121</span>    <span class="nd">@staticmethod</span>
@@ -391,7 +376,6 @@
             </div>
             <h2>Worker Process</h2>
 <p>Each worker process runs this method</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">132</span><span class="k">def</span> <span class="nf">worker_process</span><span class="p">(</span><span class="n">remote</span><span class="p">:</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">Connection</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -402,8 +386,7 @@
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>create game </p>
-
+            <p>create game</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">140</span>    <span class="n">game</span> <span class="o">=</span> <span class="n">Game</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span></pre></div>
@@ -414,8 +397,7 @@
             <div class='section-link'>
                 <a href='#section-25'>#</a>
             </div>
-            <p>wait for instructions from the connection and execute them </p>
-
+            <p>wait for instructions from the connection and execute them</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">143</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -436,8 +418,7 @@
             <div class='section-link'>
                 <a href='#section-26'>#</a>
             </div>
-            <p> Creates a new worker and runs it in a separate process.</p>
-
+            <p>Creates a new worker and runs it in a separate process.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">156</span><span class="k">class</span> <span class="nc">Worker</span><span class="p">:</span></pre></div>
@@ -462,6 +443,24 @@
         <a href="https://labml.ai">labml.ai</a>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
 <script>
     function handleImages() {
         var images = document.querySelectorAll('p>img')

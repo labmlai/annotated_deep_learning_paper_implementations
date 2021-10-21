@@ -24,8 +24,6 @@
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/diffusion/ddpm/unet.html"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
-
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
     <script>
@@ -70,11 +68,15 @@
                 <a href='#section-0'>#</a>
             </div>
             <h1>U-Net model for <a href="index.html">Denoising Diffusion Probabilistic Models (DDPM)</a></h1>
-<p>This is a <a href="https://papers.labml.ai/paper/1505.04597">U-Net</a> based model to predict noise <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord" style="color:cyan;"><span class="mord" style="color:cyan;"><span class="mord mathnormal" style="color:cyan;">Ïµ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style="color:cyan;"><span class="mord mathnormal mtight" style="margin-right:0.02778em;color:cyan;">Î¸</span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mopen" style="color:cyan;">(</span><span class="mord" style="color:cyan;"><span class="mord mathnormal" style="color:cyan;">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style="color:cyan;"><span class="mord mathnormal mtight" style="color:cyan;">t</span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct" style="color:cyan;">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="color:cyan;">t</span><span class="mclose" style="color:cyan;">)</span></span></span></span>.</p>
-<p>U-Net is a gets it&#x27;s name from the U shape in the model diagram. It processes a given image by progressively lowering (halving) the feature map resolution and then increasing the resolution. There are pass-through connection at each resolution.</p>
-<p><img alt="U-Net diagram from paper" src="unet.png"></p>
-<p>This implementation contains a bunch of modifications to original U-Net (residual blocks, multi-head attention)  and also adds time-step embeddings <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord mathnormal">t</span></span></span></span>.</p>
-
+<p>This is a <a href="https://papers.labml.ai/paper/1505.04597">U-Net</a> based model to predict noise
+$\color{cyan}{\epsilon_\theta}(x_t, t)$.</p>
+<p>U-Net is a gets it&rsquo;s name from the U shape in the model diagram.
+It processes a given image by progressively lowering (halving) the feature map resolution and then
+increasing the resolution.
+There are pass-through connection at each resolution.</p>
+<p><img alt="U-Net diagram from paper" src="unet.png" /></p>
+<p>This implementation contains a bunch of modifications to original U-Net (residual blocks, multi-head attention)
+ and also adds time-step embeddings $t$.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">24</span><span></span><span class="kn">import</span> <span class="nn">math</span>
@@ -92,8 +94,9 @@
                 <a href='#section-1'>#</a>
             </div>
             <h3>Swish actiavation function</h3>
-<p><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.44445em;vertical-align:0em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">â‹…</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">Ïƒ</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span></p>
-
+<p>
+<script type="math/tex; mode=display">x \cdot \sigma(x)</script>
+</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">33</span><span class="k">class</span> <span class="nc">Swish</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -116,8 +119,7 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            <h3>Embeddings for <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord mathnormal">t</span></span></span></span></h3>
-
+            <h3>Embeddings for $t$</h3>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">44</span><span class="k">class</span> <span class="nc">TimeEmbedding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -128,9 +130,9 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <ul><li><code>n_channels</code>
- is the number of dimensions in the embedding</li></ul>
-
+            <ul>
+<li><code>n_channels</code> is the number of dimensions in the embedding</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">49</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -153,8 +155,7 @@
             <div class='section-link'>
                 <a href='#section-6'>#</a>
             </div>
-            <p>First linear layer </p>
-
+            <p>First linear layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lin1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -165,8 +166,7 @@
             <div class='section-link'>
                 <a href='#section-7'>#</a>
             </div>
-            <p>Activation </p>
-
+            <p>Activation</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">58</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act</span> <span class="o">=</span> <span class="n">Swish</span><span class="p">()</span></pre></div>
@@ -177,8 +177,7 @@
             <div class='section-link'>
                 <a href='#section-8'>#</a>
             </div>
-            <p>Second linear layer </p>
-
+            <p>Second linear layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">60</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lin2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -200,9 +199,13 @@
             <div class='section-link'>
                 <a href='#section-10'>#</a>
             </div>
-            <p>Create sinusoidal position embeddings <a href="../../transformers/positional_encoding.html">same as those from the transformer</a> begin{align} PE^{(1)}_{t,i} &amp;= sinBigg(frac{t}{10000^{frac{i}{d - 1}}}Bigg) \ PE^{(2)}_{t,i} &amp;= cosBigg(frac{t}{10000^{frac{i}{d - 1}}}Bigg) end{align} where <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">d</span></span></span></span> is <code>half_dim</code>
- </p>
-
+            <p>Create sinusoidal position embeddings
+<a href="../../transformers/positional_encoding.html">same as those from the transformer</a>
+<script type="math/tex; mode=display">\begin{align}
+PE^{(1)}_{t,i} &= sin\Bigg(\frac{t}{10000^{\frac{i}{d - 1}}}\Bigg) \\
+PE^{(2)}_{t,i} &= cos\Bigg(\frac{t}{10000^{\frac{i}{d - 1}}}\Bigg)
+\end{align}</script>
+where $d$ is <code>half_dim</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">70</span>        <span class="n">half_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_channels</span> <span class="o">//</span> <span class="mi">8</span>
@@ -217,8 +220,7 @@
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>Transform with the MLP </p>
-
+            <p>Transform with the MLP</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">77</span>        <span class="n">emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lin1</span><span class="p">(</span><span class="n">emb</span><span class="p">))</span>
@@ -230,8 +232,7 @@
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">81</span>        <span class="k">return</span> <span class="n">emb</span></pre></div>
@@ -243,8 +244,8 @@
                 <a href='#section-13'>#</a>
             </div>
             <h3>Residual block</h3>
-<p>A residual block has two convolution layers with group normalization. Each resolution is processed with two residual blocks.</p>
-
+<p>A residual block has two convolution layers with group normalization.
+Each resolution is processed with two residual blocks.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">84</span><span class="k">class</span> <span class="nc">ResidualBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -255,15 +256,12 @@
             <div class='section-link'>
                 <a href='#section-14'>#</a>
             </div>
-            <ul><li><code>in_channels</code>
- is the number of input channels </li>
-<li><code>out_channels</code>
- is the number of input channels </li>
-<li><code>time_channels</code>
- is the number channels in the time step (<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord mathnormal">t</span></span></span></span>) embeddings </li>
-<li><code>n_groups</code>
- is the number of groups for <a href="../../normalization/group_norm/index.html">group normalization</a></li></ul>
-
+            <ul>
+<li><code>in_channels</code> is the number of input channels</li>
+<li><code>out_channels</code> is the number of input channels</li>
+<li><code>time_channels</code> is the number channels in the time step ($t$) embeddings</li>
+<li><code>n_groups</code> is the number of groups for <a href="../../normalization/group_norm/index.html">group normalization</a></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">92</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">time_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">):</span></pre></div>
@@ -285,8 +283,7 @@
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <p>Group normalization and the first convolution layer </p>
-
+            <p>Group normalization and the first convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">)</span>
@@ -299,8 +296,7 @@
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <p>Group normalization and the second convolution layer </p>
-
+            <p>Group normalization and the second convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">106</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
@@ -313,8 +309,8 @@
             <div class='section-link'>
                 <a href='#section-18'>#</a>
             </div>
-            <p>If the number of input channels is not equal to the number of output channels we have to project the shortcut connection </p>
-
+            <p>If the number of input channels is not equal to the number of output channels we have to
+project the shortcut connection</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">112</span>        <span class="k">if</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span>
@@ -328,8 +324,7 @@
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>Linear layer for time embeddings </p>
-
+            <p>Linear layer for time embeddings</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">118</span>        <span class="bp">self</span><span class="o">.</span><span class="n">time_emb</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">time_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span></pre></div>
@@ -340,13 +335,10 @@
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <ul><li><code>x</code>
- has shape <code>[batch_size, in_channels, height, width]</code>
- </li>
-<li><code>t</code>
- has shape <code>[batch_size, time_channels]</code>
-</li></ul>
-
+            <ul>
+<li><code>x</code> has shape <code>[batch_size, in_channels, height, width]</code></li>
+<li><code>t</code> has shape <code>[batch_size, time_channels]</code></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">120</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -357,8 +349,7 @@
             <div class='section-link'>
                 <a href='#section-21'>#</a>
             </div>
-            <p>First convolution layer </p>
-
+            <p>First convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">126</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">act1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm1</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
@@ -369,8 +360,7 @@
             <div class='section-link'>
                 <a href='#section-22'>#</a>
             </div>
-            <p>Add time embeddings </p>
-
+            <p>Add time embeddings</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">128</span>        <span class="n">h</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_emb</span><span class="p">(</span><span class="n">t</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span></pre></div>
@@ -381,8 +371,7 @@
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>Second convolution layer </p>
-
+            <p>Second convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">130</span>        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">act2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm2</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span></pre></div>
@@ -393,8 +382,7 @@
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>Add the shortcut connection and return </p>
-
+            <p>Add the shortcut connection and return</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">133</span>        <span class="k">return</span> <span class="n">h</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -407,7 +395,6 @@
             </div>
             <h3>Attention block</h3>
 <p>This is similar to <a href="../../transformers/mha.html">transformer multi-head attention</a>.</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">136</span><span class="k">class</span> <span class="nc">AttentionBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -418,15 +405,12 @@
             <div class='section-link'>
                 <a href='#section-26'>#</a>
             </div>
-            <ul><li><code>n_channels</code>
- is the number of channels in the input </li>
-<li><code>n_heads</code>
- is the number of heads in multi-head attention </li>
-<li><code>d_k</code>
- is the number of dimensions in each head </li>
-<li><code>n_groups</code>
- is the number of groups for <a href="../../normalization/group_norm/index.html">group normalization</a></li></ul>
-
+            <ul>
+<li><code>n_channels</code> is the number of channels in the input</li>
+<li><code>n_heads</code> is the number of heads in multi-head attention</li>
+<li><code>d_k</code> is the number of dimensions in each head</li>
+<li><code>n_groups</code> is the number of groups for <a href="../../normalization/group_norm/index.html">group normalization</a></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">143</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">):</span></pre></div>
@@ -448,9 +432,7 @@
             <div class='section-link'>
                 <a href='#section-28'>#</a>
             </div>
-            <p>Default <code>d_k</code>
- </p>
-
+            <p>Default <code>d_k</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">153</span>        <span class="k">if</span> <span class="n">d_k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -462,8 +444,7 @@
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Normalization layer </p>
-
+            <p>Normalization layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">156</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -474,8 +455,7 @@
             <div class='section-link'>
                 <a href='#section-30'>#</a>
             </div>
-            <p>Projections for query, key and values </p>
-
+            <p>Projections for query, key and values</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">158</span>        <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">n_heads</span> <span class="o">*</span> <span class="n">d_k</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span></pre></div>
@@ -486,8 +466,7 @@
             <div class='section-link'>
                 <a href='#section-31'>#</a>
             </div>
-            <p>Linear layer for final transformation </p>
-
+            <p>Linear layer for final transformation</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">160</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_heads</span> <span class="o">*</span> <span class="n">d_k</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -498,8 +477,7 @@
             <div class='section-link'>
                 <a href='#section-32'>#</a>
             </div>
-            <p>Scale for dot-product attention </p>
-
+            <p>Scale for dot-product attention</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">162</span>        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">d_k</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.5</span></pre></div>
@@ -510,8 +488,7 @@
             <div class='section-link'>
                 <a href='#section-33'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">164</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_heads</span> <span class="o">=</span> <span class="n">n_heads</span>
@@ -523,13 +500,10 @@
             <div class='section-link'>
                 <a href='#section-34'>#</a>
             </div>
-            <ul><li><code>x</code>
- has shape <code>[batch_size, in_channels, height, width]</code>
- </li>
-<li><code>t</code>
- has shape <code>[batch_size, time_channels]</code>
-</li></ul>
-
+            <ul>
+<li><code>x</code> has shape <code>[batch_size, in_channels, height, width]</code></li>
+<li><code>t</code> has shape <code>[batch_size, time_channels]</code></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">167</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
@@ -540,10 +514,8 @@
             <div class='section-link'>
                 <a href='#section-35'>#</a>
             </div>
-            <p><code>t</code>
- is not used, but it&#x27;s kept in the arguments because for the attention layer function signature to match with <code>ResidualBlock</code>
-. </p>
-
+            <p><code>t</code> is not used, but it&rsquo;s kept in the arguments because for the attention layer function signature
+to match with <code>ResidualBlock</code>.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">174</span>        <span class="n">_</span> <span class="o">=</span> <span class="n">t</span></pre></div>
@@ -554,8 +526,7 @@
             <div class='section-link'>
                 <a href='#section-36'>#</a>
             </div>
-            <p>Get shape </p>
-
+            <p>Get shape</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">176</span>        <span class="n">batch_size</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span></pre></div>
@@ -566,10 +537,7 @@
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <p>Change <code>x</code>
- to shape <code>[batch_size, seq, n_channels]</code>
- </p>
-
+            <p>Change <code>x</code> to shape <code>[batch_size, seq, n_channels]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">178</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
@@ -580,9 +548,7 @@
             <div class='section-link'>
                 <a href='#section-38'>#</a>
             </div>
-            <p>Get query, key, and values (concatenated) and shape it to <code>[batch_size, seq, n_heads, 3 * d_k]</code>
- </p>
-
+            <p>Get query, key, and values (concatenated) and shape it to <code>[batch_size, seq, n_heads, 3 * d_k]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">180</span>        <span class="n">qkv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)</span></pre></div>
@@ -593,9 +559,7 @@
             <div class='section-link'>
                 <a href='#section-39'>#</a>
             </div>
-            <p>Split query, key, and values. Each of them will have shape <code>[batch_size, seq, n_heads, d_k]</code>
- </p>
-
+            <p>Split query, key, and values. Each of them will have shape <code>[batch_size, seq, n_heads, d_k]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">182</span>        <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">qkv</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -606,19 +570,7 @@
             <div class='section-link'>
                 <a href='#section-40'>#</a>
             </div>
-            <p>Calculate scaled dot-product <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.633028em;vertical-align:-0.538em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.095028em;"><span style="top:-2.5864385em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord sqrt mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8622307142857143em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style="padding-left:0.833em;"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8222307142857144em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail mtight" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width='400em' height='1.08em' viewBox='0 0 400000 1080' preserveAspectRatio='xMinYMin slice'><path d='M95,702
-c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
-c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
-c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
-s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
-c69,-144,104.5,-217.7,106.5,-221
-l0 -0
-c5.3,-9.3,12,-14,20,-14
-H400000v40H845.2724
-s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
-c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
-M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.17776928571428574em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.446108em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">Q</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9270285714285713em;"><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">âŠ¤</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.538em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span> </p>
-
+            <p>Calculate scaled dot-product $\frac{Q K^\top}{\sqrt{d_k}}$</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">184</span>        <span class="n">attn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bihd,bjhd-&gt;bijh&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span></pre></div>
@@ -629,19 +581,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-41'>#</a>
             </div>
-            <p>Softmax along the sequence dimension <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.0000299999999998em;vertical-align:-1.25003em;"></span><span class="mord"><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944399999999998em;"><span style="top:-2.20556em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">se</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop"><span class="mord mathnormal">so</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ma</span><span class="mord mathnormal">x</span></span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:1.030548em;"><span></span></span></span></span></span></span><span class="mord"><span class="delimsizing size4">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.095028em;"><span style="top:-2.5864385em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord sqrt mtight"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8622307142857143em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style="padding-left:0.833em;"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8222307142857144em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail mtight" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width='400em' height='1.08em' viewBox='0 0 400000 1080' preserveAspectRatio='xMinYMin slice'><path d='M95,702
-c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
-c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
-c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
-s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
-c69,-144,104.5,-217.7,106.5,-221
-l0 -0
-c5.3,-9.3,12,-14,20,-14
-H400000v40H845.2724
-s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
-c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
-M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.17776928571428574em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.446108em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">Q</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9270285714285713em;"><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">âŠ¤</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.538em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size4">)</span></span></span></span></span> </p>
-
+            <p>Softmax along the sequence dimension $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">186</span>        <span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -652,8 +592,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-42'>#</a>
             </div>
-            <p>Multiply by values </p>
-
+            <p>Multiply by values</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">188</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bijh,bjhd-&gt;bihd&#39;</span><span class="p">,</span> <span class="n">attn</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span></pre></div>
@@ -664,9 +603,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-43'>#</a>
             </div>
-            <p>Reshape to <code>[batch_size, seq, n_heads * d_k]</code>
- </p>
-
+            <p>Reshape to <code>[batch_size, seq, n_heads * d_k]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">190</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_heads</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">)</span></pre></div>
@@ -677,9 +614,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-44'>#</a>
             </div>
-            <p>Transform to <code>[batch_size, seq, n_channels]</code>
- </p>
-
+            <p>Transform to <code>[batch_size, seq, n_channels]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">192</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
@@ -690,8 +625,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-45'>#</a>
             </div>
-            <p>Add skip connection </p>
-
+            <p>Add skip connection</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">195</span>        <span class="n">res</span> <span class="o">+=</span> <span class="n">x</span></pre></div>
@@ -702,9 +636,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-46'>#</a>
             </div>
-            <p>Change to shape <code>[batch_size, in_channels, height, width]</code>
- </p>
-
+            <p>Change to shape <code>[batch_size, in_channels, height, width]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">198</span>        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></pre></div>
@@ -715,8 +647,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-47'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">201</span>        <span class="k">return</span> <span class="n">res</span></pre></div>
@@ -728,10 +659,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-48'>#</a>
             </div>
             <h3>Down block</h3>
-<p>This combines <code>ResidualBlock</code>
- and <code>AttentionBlock</code>
-. These are used in the first half of U-Net at each resolution.</p>
-
+<p>This combines <code>ResidualBlock</code> and <code>AttentionBlock</code>. These are used in the first half of U-Net at each resolution.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">204</span><span class="k">class</span> <span class="nc">DownBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -774,10 +702,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-51'>#</a>
             </div>
             <h3>Up block</h3>
-<p>This combines <code>ResidualBlock</code>
- and <code>AttentionBlock</code>
-. These are used in the second half of U-Net at each resolution.</p>
-
+<p>This combines <code>ResidualBlock</code> and <code>AttentionBlock</code>. These are used in the second half of U-Net at each resolution.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">225</span><span class="k">class</span> <span class="nc">UpBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -800,9 +725,8 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-53'>#</a>
             </div>
-            <p>The input has <code>in_channels + out_channels</code>
- because we concatenate the output of the same resolution from the first half of the U-Net </p>
-
+            <p>The input has <code>in_channels + out_channels</code> because we concatenate the output of the same resolution
+from the first half of the U-Net</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">236</span>        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">ResidualBlock</span><span class="p">(</span><span class="n">in_channels</span> <span class="o">+</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">time_channels</span><span class="p">)</span>
@@ -832,11 +756,8 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-55'>#</a>
             </div>
             <h3>Middle block</h3>
-<p>It combines a <code>ResidualBlock</code>
-, <code>AttentionBlock</code>
-, followed by another <code>ResidualBlock</code>
-. This block is applied at the lowest resolution of the U-Net.</p>
-
+<p>It combines a <code>ResidualBlock</code>, <code>AttentionBlock</code>, followed by another <code>ResidualBlock</code>.
+This block is applied at the lowest resolution of the U-Net.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">248</span><span class="k">class</span> <span class="nc">MiddleBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -877,8 +798,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-58'>#</a>
             </div>
-            <h3>Scale up the feature map by <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord">Ã—</span></span></span></span></h3>
-
+            <h3>Scale up the feature map by $2 \times$</h3>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">269</span><span class="k">class</span> <span class="nc">Upsample</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -913,10 +833,8 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-61'>#</a>
             </div>
-            <p><code>t</code>
- is not used, but it&#x27;s kept in the arguments because for the attention layer function signature to match with <code>ResidualBlock</code>
-. </p>
-
+            <p><code>t</code> is not used, but it&rsquo;s kept in the arguments because for the attention layer function signature
+to match with <code>ResidualBlock</code>.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">281</span>        <span class="n">_</span> <span class="o">=</span> <span class="n">t</span>
@@ -928,8 +846,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-62'>#</a>
             </div>
-            <h3>Scale down the feature map by <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.190108em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">â€‹</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">Ã—</span></span></span></span></h3>
-
+            <h3>Scale down the feature map by $\frac{1}{2} \times$</h3>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">285</span><span class="k">class</span> <span class="nc">Downsample</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -964,10 +881,8 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-65'>#</a>
             </div>
-            <p><code>t</code>
- is not used, but it&#x27;s kept in the arguments because for the attention layer function signature to match with <code>ResidualBlock</code>
-. </p>
-
+            <p><code>t</code> is not used, but it&rsquo;s kept in the arguments because for the attention layer function signature
+to match with <code>ResidualBlock</code>.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">297</span>        <span class="n">_</span> <span class="o">=</span> <span class="n">t</span>
@@ -980,7 +895,6 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-66'>#</a>
             </div>
             <h2>U-Net</h2>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">301</span><span class="k">class</span> <span class="nc">UNet</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -991,19 +905,13 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-67'>#</a>
             </div>
-            <ul><li><code>image_channels</code>
- is the number of channels in the image. <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span> for RGB. </li>
-<li><code>n_channels</code>
- is number of channels in the initial feature map that we transform the image into </li>
-<li><code>ch_mults</code>
- is the list of channel numbers at each resolution. The number of channels is <code>ch_mults[i] * n_channels</code>
- </li>
-<li><code>is_attn</code>
- is a list of booleans that indicate whether to use attention at each resolution </li>
-<li><code>n_blocks</code>
- is the number of <code>UpDownBlocks</code>
- at each resolution</li></ul>
-
+            <ul>
+<li><code>image_channels</code> is the number of channels in the image. $3$ for RGB.</li>
+<li><code>n_channels</code> is number of channels in the initial feature map that we transform the image into</li>
+<li><code>ch_mults</code> is the list of channel numbers at each resolution. The number of channels is <code>ch_mults[i] * n_channels</code></li>
+<li><code>is_attn</code> is a list of booleans that indicate whether to use attention at each resolution</li>
+<li><code>n_blocks</code> is the number of <code>UpDownBlocks</code> at each resolution</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">306</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
@@ -1028,8 +936,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-69'>#</a>
             </div>
-            <p>Number of resolutions </p>
-
+            <p>Number of resolutions</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">320</span>        <span class="n">n_resolutions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_mults</span><span class="p">)</span></pre></div>
@@ -1040,8 +947,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-70'>#</a>
             </div>
-            <p>Project image into feature map </p>
-
+            <p>Project image into feature map</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">323</span>        <span class="bp">self</span><span class="o">.</span><span class="n">image_proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">image_channels</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></pre></div>
@@ -1052,9 +958,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-71'>#</a>
             </div>
-            <p>Time embedding layer. Time embedding has <code>n_channels * 4</code>
- channels </p>
-
+            <p>Time embedding layer. Time embedding has <code>n_channels * 4</code> channels</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">326</span>        <span class="bp">self</span><span class="o">.</span><span class="n">time_emb</span> <span class="o">=</span> <span class="n">TimeEmbedding</span><span class="p">(</span><span class="n">n_channels</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span></pre></div>
@@ -1066,7 +970,6 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-72'>#</a>
             </div>
             <h4>First half of U-Net - decreasing resolution</h4>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">329</span>        <span class="n">down</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
@@ -1077,8 +980,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-73'>#</a>
             </div>
-            <p>Number of channels </p>
-
+            <p>Number of channels</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">331</span>        <span class="n">out_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="o">=</span> <span class="n">n_channels</span></pre></div>
@@ -1089,8 +991,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-74'>#</a>
             </div>
-            <p>For each resolution </p>
-
+            <p>For each resolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">333</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_resolutions</span><span class="p">):</span></pre></div>
@@ -1101,8 +1002,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-75'>#</a>
             </div>
-            <p>Number of output channels at this resolution </p>
-
+            <p>Number of output channels at this resolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">335</span>            <span class="n">out_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="o">*</span> <span class="n">ch_mults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></pre></div>
@@ -1113,9 +1013,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-76'>#</a>
             </div>
-            <p>Add <code>n_blocks</code>
- </p>
-
+            <p>Add <code>n_blocks</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">337</span>            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">):</span>
@@ -1128,8 +1026,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-77'>#</a>
             </div>
-            <p>Down sample at all resolutions except the last </p>
-
+            <p>Down sample at all resolutions except the last</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">341</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_resolutions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
@@ -1141,8 +1038,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-78'>#</a>
             </div>
-            <p>Combine the set of modules </p>
-
+            <p>Combine the set of modules</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">345</span>        <span class="bp">self</span><span class="o">.</span><span class="n">down</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span><span class="n">down</span><span class="p">)</span></pre></div>
@@ -1153,8 +1049,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-79'>#</a>
             </div>
-            <p>Middle block </p>
-
+            <p>Middle block</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">348</span>        <span class="bp">self</span><span class="o">.</span><span class="n">middle</span> <span class="o">=</span> <span class="n">MiddleBlock</span><span class="p">(</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">n_channels</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="p">)</span></pre></div>
@@ -1166,7 +1061,6 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
                 <a href='#section-80'>#</a>
             </div>
             <h4>Second half of U-Net - increasing resolution</h4>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">351</span>        <span class="n">up</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
@@ -1177,8 +1071,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-81'>#</a>
             </div>
-            <p>Number of channels </p>
-
+            <p>Number of channels</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">353</span>        <span class="n">in_channels</span> <span class="o">=</span> <span class="n">out_channels</span></pre></div>
@@ -1189,8 +1082,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-82'>#</a>
             </div>
-            <p>For each resolution </p>
-
+            <p>For each resolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">355</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_resolutions</span><span class="p">)):</span></pre></div>
@@ -1201,9 +1093,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-83'>#</a>
             </div>
-            <p><code>n_blocks</code>
- at the same resolution </p>
-
+            <p><code>n_blocks</code> at the same resolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">357</span>            <span class="n">out_channels</span> <span class="o">=</span> <span class="n">in_channels</span>
@@ -1216,8 +1106,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-84'>#</a>
             </div>
-            <p>Final block to reduce the number of channels </p>
-
+            <p>Final block to reduce the number of channels</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">361</span>            <span class="n">out_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="o">//</span> <span class="n">ch_mults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -1230,8 +1119,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-85'>#</a>
             </div>
-            <p>Up sample at all resolutions except last </p>
-
+            <p>Up sample at all resolutions except last</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">365</span>            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -1243,8 +1131,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-86'>#</a>
             </div>
-            <p>Combine the set of modules </p>
-
+            <p>Combine the set of modules</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">369</span>        <span class="bp">self</span><span class="o">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span><span class="n">up</span><span class="p">)</span></pre></div>
@@ -1255,8 +1142,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-87'>#</a>
             </div>
-            <p>Final normalization and convolution layer </p>
-
+            <p>Final normalization and convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">372</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">)</span>
@@ -1269,13 +1155,10 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-88'>#</a>
             </div>
-            <ul><li><code>x</code>
- has shape <code>[batch_size, in_channels, height, width]</code>
- </li>
-<li><code>t</code>
- has shape <code>[batch_size]</code>
-</li></ul>
-
+            <ul>
+<li><code>x</code> has shape <code>[batch_size, in_channels, height, width]</code></li>
+<li><code>t</code> has shape <code>[batch_size]</code></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">376</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -1286,8 +1169,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-89'>#</a>
             </div>
-            <p>Get time-step embeddings </p>
-
+            <p>Get time-step embeddings</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">383</span>        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_emb</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></pre></div>
@@ -1298,8 +1180,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-90'>#</a>
             </div>
-            <p>Get image projection </p>
-
+            <p>Get image projection</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">386</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_proj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -1310,9 +1191,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-91'>#</a>
             </div>
-            <p><code>h</code>
- will store outputs at each resolution for skip connection </p>
-
+            <p><code>h</code> will store outputs at each resolution for skip connection</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">389</span>        <span class="n">h</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span></pre></div>
@@ -1323,8 +1202,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-92'>#</a>
             </div>
-            <p>First half of U-Net </p>
-
+            <p>First half of U-Net</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">391</span>        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">down</span><span class="p">:</span>
@@ -1337,8 +1215,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-93'>#</a>
             </div>
-            <p>Middle (bottom) </p>
-
+            <p>Middle (bottom)</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">396</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">middle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
@@ -1349,8 +1226,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-94'>#</a>
             </div>
-            <p>Second half of U-Net </p>
-
+            <p>Second half of U-Net</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">399</span>        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">up</span><span class="p">:</span>
@@ -1364,8 +1240,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-95'>#</a>
             </div>
-            <p>Get the skip connection from first half of U-Net and concatenate </p>
-
+            <p>Get the skip connection from first half of U-Net and concatenate</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">404</span>                <span class="n">s</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
@@ -1377,8 +1252,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-96'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">407</span>                <span class="n">x</span> <span class="o">=</span> <span class="n">m</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span></pre></div>
@@ -1389,8 +1263,7 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
             <div class='section-link'>
                 <a href='#section-97'>#</a>
             </div>
-            <p>Final normalization and convolution </p>
-
+            <p>Final normalization and convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">410</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
@@ -1401,6 +1274,24 @@ M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">â€
         <a href="https://labml.ai">labml.ai</a>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
 <script>
     function handleImages() {
         var images = document.querySelectorAll('p>img')

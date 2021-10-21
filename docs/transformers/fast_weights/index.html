@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Linear Transformers Are Secretly Fast Weight Memory Systems"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/fast_weights/index.html"/>
+    <meta property="og:title" content="Linear Transformers Are Secretly Fast Weight Memory Systems"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Linear Transformers Are Secretly Fast Weight Memory Systems"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch."/>
+
+    <title>Linear Transformers Are Secretly Fast Weight Memory Systems</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/fast_weights/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">fast_weights</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/fast_weights/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Fast weights transformer</h1>
+<p>The paper
+<a href="https://papers.labml.ai/paper/2102.11174">Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch</a>
+finds similarities between linear self-attention and fast weight systems
+and makes modifications to self-attention update rule based on that.
+It also introduces a simpler, yet effective kernel function.</p>
+<p><em>The authors have provided an <a href="https://github.com/ischlag/fast-weight-transformers">official implementation</a>
+of the paper including other variants they compare with in the paper.</em></p>
+<h2>Fast weights</h2>
+<p>Consider a sequence of inputs $\big\{x^{(i)}\big\}^L_{i=1}$ or length $L$
+and each step is a vector of size $d_{in}$; i.e. $x \in \mathbb{R}^{d_{in}}$.
+The fast weight model generates a weight matrix at each step to produce output
+$\big\{y^{(i)}\big\}^L_{i=1}$, $y \in \mathbb{R}^{d_{out}}$</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+a^{(i)}, b^{(i)} &= \color{orange}{W_a} x^{(i)}, \color{orange}{W_b} x^{(i)} \\
+\color{cyan}{W^{(i)}} &= \sigma \Big( \color{cyan}{W^{(i-1)}} + a^{(i)} \otimes b^{(i)} \Big) \\
+y^{(i)} &= \color{cyan}{W^{(i)}} x^{(i)}
+\end{align}</script>
+</p>
+<p>$\otimes$ is the outer product ($a \otimes b = a b^\top$), where elements of the two vectors are multiplied with each other
+to give a matrix.
+$\sigma$ is an activation function.
+$\color{orange}{W_a}$ and $\color{orange}{W_b}$ are trainable weights (parameters).
+$\color{cyan}{W^{(i)}}$ are the fast weights that are generated at each step.</p>
+<h2>Linear self-attention</h2>
+<p>Original transformer self-attention is, (omitting $\frac{1}{d_k}$ for clarity)</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+y^{(i)} &= \Big[v^{(1)}, v^{(2)}, ..., v^{(i)}\Big] \text{softmax}
+ \bigg(
+    \Big[k^{(1)}, k^{(2)}, ..., k^{(i)}\Big] ^\top
+    q^{(i)}
+ \bigg) \\
+ &= \sum^i_{j=1} \frac
+ { v^{(j)} \kappa(k^{(j)}, q^{(i)}) }
+ { \sum^i_{j'=1} \kappa(k^{(j')}, q^{(i)}) } \\
+\end{align}</script>
+</p>
+<p>where $\kappa(k, q) = \text{exp}(k \cdot q)$</p>
+<p>The idea behind linearizing self attention is to replace softmax
+kernel $\kappa$ with a different kernel $\kappa &lsquo;$ so that we can calculate the
+denominator of the self attention function faster:</p>
+<p>
+<script type="math/tex; mode=display">\kappa '(k, q) = \color{lightgreen}{\phi(k)}^\top \color{lightgreen}{\phi(q)}</script>
+</p>
+<p>This gives</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+y^{(i)} &= \frac
+ {\Big( \sum^i_{j=1} v^{(j)} \otimes \color{lightgreen}{\phi(k^{(j)})} \Big)
+  \color{lightgreen}{\phi(q^{(i)})} }
+ { \Big( \sum^i_{j'=1}
+   \color{lightgreen}{\phi(k^{(j')})} \Big)
+    \color{lightgreen}{\phi(q^{(i)})} }
+\end{align}</script>
+</p>
+<p>With $\color{cyan}{W^{(i)}} = \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)})$ and
+$z^{(i)} = \sum^i_{j=1} \color{lightgreen}{\phi(k^{(j)})}$, we can calculate them efficiently:
+<script type="math/tex; mode=display">\begin{align}
+\color{cyan}{W^{(i)}} &= \color{cyan}{W^{(i-1)}} + v^{(i)} \otimes \color{lightgreen}{\phi(k^{(i)})} \\
+z^{(i)} &= z{(i)} + \color{lightgreen}{\phi(k^{(i)})} \\
+y^{(i)} &= \frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}
+    W^{(i)} \color{lightgreen}{\phi(q^{(i)})}
+\end{align}</script>
+</p>
+<p>This is quite similar to fast weights.</p>
+<p>The paper introduces a new linear attention projection function $\color{lightgreen}{\phi}$
+a new update rule for $\color{cyan}{W^{(i)}} = f(\color{cyan}{W^{(i-1)}})$ and change the normalization
+$\frac{1}{z^{(i)} \cdot \color{lightgreen}{\phi(q^{(i)})}}$</p>
+<p>Here are <a href="experiment.html">the training code</a> and a notebook for training a fast weights
+ transformer on the Tiny Shakespeare dataset.</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/fast_weights/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://app.labml.ai/run/928aadc0846c11eb85710242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">96</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">97</span>
+<span class="lineno">98</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">99</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">100</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.mha</span> <span class="kn">import</span> <span class="n">PrepareForMultiHeadAttention</span>
+<span class="lineno">101</span><span class="kn">from</span> <span class="nn">labml_nn.utils</span> <span class="kn">import</span> <span class="n">clone_module_list</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Deterministic Parameter Free Project (DPFP)</h2>
+<p>This is the new projection function $\color{lightgreen}{\phi}$ introduced in the paper.
+DPFP projects $k$ of dimensionality $d_{key}$ to dimensionality $d_{dot} = 2 d_{key} \nu$,
+where $\nu \in \{1, 2, &hellip;, 2 d_{key} - 1 \}$ is a hyper-parameter.</p>
+<p>
+<script type="math/tex; mode=display">\color{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
+ = \text{ReLU}\Big(\big[k, -k\big]\Big)_{j}
+                    \text{ReLU}\Big(\big[k, -k\big]\Big)_{i + j}</script>
+</p>
+<p>where $\big[k, -k\big]$ is the concatenation of $k$ and $-k$ to give a vector of
+size $2 d_{key}$, $i \in \{1, 2, &hellip;, \nu \}$, and $j \in \{1, 2, &hellip;, 2 d_{key}\}$.
+$x_i$ is the $i$-th element of vector $x$ and is rolled around if
+$i$ is larger than the number of elements in $x$.</p>
+<p>Basically, it creates a new vector by multiplying elements of $[k, -k]$ shifted by $i$.</p>
+<p>This produces projections that are sparse (only a few elements of $phi$ are non-zero) and
+orthogonal ($\color{lightgreen}{\phi(k^{(i)})} \cdot \color{lightgreen}{\phi(k^{(j)})}
+ \approx 0$ for most $i, j$
+unless $k^{(i)}$ and $k^{(j)}$ are very similar.</p>
+<h3>Normalization</h3>
+<p>Paper introduces a simple normalization for $\color{lightgreen}{\phi}$,</p>
+<p>
+<script type="math/tex; mode=display">\color{lightgreen}{\phi '(k)} =
+ \frac{\color{lightgreen}{\phi(k)}}{\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}}</script>
+</p>
+<p><em>Check the paper for derivation.</em></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span><span class="k">class</span> <span class="nc">DPFP</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul>
+<li><code>nu</code> is the hyper-parameter $\nu$.</li>
+<li><code>eps</code> is the small value used to make sure there is no division-by-zero when normalizing.</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">138</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">143</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">144</span>        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="n">nu</span>
+<span class="lineno">145</span>        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+<span class="lineno">146</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">148</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Get $\color{lightgreen}{\phi(k)}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">150</span>        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpfp</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Normalize by $\sum^{d_{dot}}_{j=1} \color{lightgreen}{\phi(k)_j}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">152</span>        <span class="k">return</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\color{lightgreen}{\phi(k)}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>    <span class="k">def</span> <span class="nf">dpfp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>$x = \text{ReLU}\Big(\big[k, -k\big]\Big)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">159</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="n">k</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Shift and roll by $i \in \{1, 2, &hellip;, \nu \}$,
+to get <script type="math/tex; mode=display">x'_{i,j} = \text{ReLU}\Big(\big[k, -k\big]\Big)_{i+j}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">162</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">shifts</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">dims</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Concatenate to get
+<script type="math/tex; mode=display">x'_{2 d_{key} (i - 1)  + j} = \text{ReLU}\Big(\big[k, -k\big]\Big)_{i+j}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">165</span>        <span class="n">x_rolled</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">x_rolled</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Concatenate copies of $x$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">167</span>        <span class="n">x_repeat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Multiply them,
+<script type="math/tex; mode=display">\color{lightgreen}{\phi_{2 d_{key} (i - 1)  + j}(k)}
+= \text{ReLU}\Big(\big[k, -k\big]\Big)_{j}
+                        \text{ReLU}\Big(\big[k, -k\big]\Big)_{i + j}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">173</span>        <span class="k">return</span> <span class="n">x_repeat</span> <span class="o">*</span> <span class="n">x_rolled</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <h2>Fast Weights Attention</h2>
+<p>The paper introduces a new update rule for calculating $\color{cyan}{W^{(i)}}$.
+The model first retrieves the current value
+$\bar{v}^{(i)}$ paired with the key $k^{(i)}$.
+Then stores a combination $v^{(i)}_{new}$
+of the retrieved value $\bar{v}^{̄(i)}$ and the input $v^{(i)}$.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+k^{(i)}, v^{(i)}, q^{(i)} &=
+ \color{orange}{W_k} x^{(i)}, \color{orange}{W_v} x^{(i)}, \color{orange}{W_q} x^{(i)} \\
+\bar{v}^{(i)} &= \color{cyan}{W^{(i-1)}} \color{lightgreen}{\phi'(k^{(i)})} \\
+\beta^{(i)} &= \sigma \Big(\color{orange}{W_\beta} x^{(i)} \Big) \\
+v^{(i)}_{new} &= \beta^{(i)} v^{(i)} + \Big(1 - \beta^{(i)} \Big) \bar{v}^{(i)} \\
+\color{cyan}{W^{(i)}}
+ &= \color{cyan}{W^{(i-1)}} + v^{(i)}_{new} \otimes \color{lightgreen}{\phi'(k^{(i)})} \\
+ &= \color{cyan}{W^{(i-1)}} +
+ \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \color{lightgreen}{\phi'(k^{(i)})} \\
+y^{(i)} &= \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}
+\end{align}</script>
+</p>
+<p>where $\color{orange}{W_\beta}$ is a trainable parameter and $\sigma$ is the sigmoid function.</p>
+<p>Note that we don&rsquo;t need the normalization term $z$ because $\color{lightgreen}{\phi&rsquo;}$ is normalized.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">176</span><span class="k">class</span> <span class="nc">FastWeightsAttention</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">204</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">DPFP</span><span class="p">):</span>
+<span class="lineno">205</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Number of features per head $d_k$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">208</span>        <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span> <span class="o">=</span> <span class="n">d_model</span> <span class="o">//</span> <span class="n">heads</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Number of heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">210</span>        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>These transform the <code>query</code>, <code>key</code> and <code>value</code> multi-headed attention.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">213</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">214</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">215</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_k</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Interpolation weight function $\sigma \Big(\color{orange}{W_\beta} x^{(i)} \Big)$ for each head</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">218</span>        <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+<span class="lineno">219</span>            <span class="n">PrepareForMultiHeadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="lineno">220</span>            <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+<span class="lineno">221</span>        <span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>$\color{lightgreen}{\phi&rsquo;}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>Output layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">227</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>Dropout</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">229</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">231</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>Get the number of steps $L$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">233</span>        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>$\color{lightgreen}{\phi&rsquo;(q^{(i)})}$ for all steps and heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>$\color{lightgreen}{\phi&rsquo;(k^{(i)})}$ for all steps and heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">237</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>$v^{(i)}$ for all steps and heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">239</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>$\beta^{(i)}$ for all steps and heads</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">241</span>        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation_weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>$\color{cyan}{W^{(0)}}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">244</span>        <span class="n">weights</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>List to store outputs $y^{(i)}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">246</span>        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>Iterate through steps</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">249</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_len</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\bar{v}^{(i)} = \color{cyan}{W^{(i-1)}} \color{lightgreen}{\phi'(k^{(i)})}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">251</span>            <span class="n">value_existing</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\color{cyan}{W^{(i)}}
+     = \color{cyan}{W^{(i-1)}} +
+     \beta^{(i)} \Big( v^{(i)} - \bar{v}^{(i)} \Big ) \otimes \color{lightgreen}{\phi'(k^{(i)})}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">256</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhv,bhk-&gt;bhvk&#39;</span><span class="p">,</span> <span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">value_existing</span><span class="p">),</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">y^{(i)} = \color{cyan}{W^{(i)}} \color{lightgreen}{\phi'(q^{(i)})}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">259</span>            <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;bhvk,bhk-&gt;bhv&#39;</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p>Merge multiple heads and append to <code>outputs</code></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">262</span>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>Stack outputs at each step into a single tensor</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">265</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>Output layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">268</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>This is a general transformer layer that combines self attention and feedforward network.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">271</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">275</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">276</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">277</span>                 <span class="n">attn</span><span class="p">:</span> <span class="n">FastWeightsAttention</span><span class="p">,</span>
+<span class="lineno">278</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
+<span class="lineno">279</span>                 <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">280</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>Transformer size $d_{model}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">282</span>        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">d_model</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>Fast weights attention module</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">284</span>        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">attn</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>Feed-forward network</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">286</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>Dropout layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">288</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>Normalization layers</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">291</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_self_attn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">292</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">294</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>Calculate fast weights self attention</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">296</span>        <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>Add the self attention results</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">298</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>Normalize for feed-forward</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">301</span>        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_ff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            <p>Pass through the feed-forward network</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">303</span>        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>Add the feed-forward results back</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">305</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">308</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p>This is a general transformer module with multiple transformer layers</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">311</span><span class="k">class</span> <span class="nc">FastWeightsAttentionTransformer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">315</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">FastWeightsAttentionTransformerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">316</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <p>Make copies of the transformer layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">318</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>Final normalization layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">320</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">322</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">323</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>Get layer output</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">325</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>Normalize the output</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">328</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

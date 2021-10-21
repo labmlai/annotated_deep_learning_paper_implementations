@@ -24,8 +24,6 @@
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/conv_mixer/index.html"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
-
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
     <script>
@@ -69,14 +67,25 @@
                 <a href='#section-0'>#</a>
             </div>
             <h1>Patches Are All You Need? (ConvMixer)</h1>
-<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper <a href="https://papers.labml.ai/paper/TVHS5Y4dNvM">Patches Are All You Need?</a>.</p>
-<p><img alt="ConvMixer diagram from the paper" src="conv_mixer.png"></p>
-<p>ConvMixer is Similar to <a href="../transformers/mlp_mixer/index.html">MLP-Mixer</a>. MLP-Mixer separates mixing of spatial and channel dimensions, by applying an MLP across spatial dimension and then an MLP across the channel dimension (spatial MLP replaces the <a href="../transformers/vit/index.html">ViT</a> attention and channel MLP is the <a href="../transformers/feed_forward.html">FFN</a> of ViT).</p>
-<p>ConvMixer uses a <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> convolution for channel mixing and a depth-wise convolution for spatial mixing. Since it&#x27;s a convolution instead of a full MLP across the space, it mixes only the nearby batches in contrast to ViT or MLP-Mixer. Also, the MLP-mixer uses MLPs of two layers for each mixing and ConvMixer uses a single layer for each mixing.</p>
-<p>The paper recommends removing the residual connection across the channel mixing (point-wise convolution) and having only a residual connection over the spatial mixing (depth-wise convolution). They also use <a href="../normalization/batch_norm/index.html">Batch normalization</a> instead of <a href="../normalization/layer_norm/index.html">Layer normalization</a>.</p>
-<p>Here&#x27;s <a href="experiment.html">an experiment</a> that trains ConvMixer on CIFAR-10.</p>
-<p><a href="https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
-
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
+<a href="https://papers.labml.ai/paper/TVHS5Y4dNvM">Patches Are All You Need?</a>.</p>
+<p><img alt="ConvMixer diagram from the paper" src="conv_mixer.png" /></p>
+<p>ConvMixer is Similar to <a href="../transformers/mlp_mixer/index.html">MLP-Mixer</a>.
+MLP-Mixer separates mixing of spatial and channel dimensions, by applying an MLP across spatial dimension
+and then an MLP across the channel dimension
+(spatial MLP replaces the <a href="../transformers/vit/index.html">ViT</a> attention
+and channel MLP is the <a href="../transformers/feed_forward.html">FFN</a> of ViT).</p>
+<p>ConvMixer uses a $1 \times 1$ convolution for channel mixing and a
+depth-wise convolution for spatial mixing.
+Since it&rsquo;s a convolution instead of a full MLP across the space, it mixes only the nearby batches in
+contrast to ViT or MLP-Mixer.
+Also, the MLP-mixer uses MLPs of two layers for each mixing and ConvMixer uses a single layer for each mixing.</p>
+<p>The paper recommends removing the residual connection across the channel mixing (point-wise convolution)
+and having only a residual connection over the spatial mixing (depth-wise convolution).
+They also use <a href="../normalization/batch_norm/index.html">Batch normalization</a> instead
+of <a href="../normalization/layer_norm/index.html">Layer normalization</a>.</p>
+<p>Here&rsquo;s <a href="experiment.html">an experiment</a> that trains ConvMixer on CIFAR-10.</p>
+<p><a href="https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">38</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
@@ -91,9 +100,10 @@
             <div class='section-link'>
                 <a href='#section-1'>#</a>
             </div>
-            <p> &lt;a id=&quot;ConvMixerLayer&quot;&gt; ## ConvMixer layer &lt;/a&gt;</p>
+            <p><a id="ConvMixerLayer"></p>
+<h2>ConvMixer layer</h2>
+<p></a></p>
 <p>This is a single ConvMixer layer. The model will have a series of these.</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">45</span><span class="k">class</span> <span class="nc">ConvMixerLayer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -104,11 +114,10 @@
             <div class='section-link'>
                 <a href='#section-2'>#</a>
             </div>
-            <ul><li><code>d_model</code>
- is the number of channels in patch embeddings, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> </li>
-<li><code>kernel_size</code>
- is the size of the kernel of spatial convolution, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></li></ul>
-
+            <ul>
+<li><code>d_model</code> is the number of channels in patch embeddings, $h$</li>
+<li><code>kernel_size</code> is the size of the kernel of spatial convolution, $k$</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">54</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -130,8 +139,9 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <p>Depth-wise convolution is separate convolution for each channel. We do this with a convolution layer with the number of groups equal to the number of channels. So that each channel is it&#x27;s own group. </p>
-
+            <p>Depth-wise convolution is separate convolution for each channel.
+We do this with a convolution layer with the number of groups equal to the number of channels.
+So that each channel is it&rsquo;s own group.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">63</span>        <span class="bp">self</span><span class="o">.</span><span class="n">depth_wise_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span>
@@ -145,8 +155,7 @@
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            <p>Activation after depth-wise convolution </p>
-
+            <p>Activation after depth-wise convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">68</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">()</span></pre></div>
@@ -157,8 +166,7 @@
             <div class='section-link'>
                 <a href='#section-6'>#</a>
             </div>
-            <p>Normalization after depth-wise convolution </p>
-
+            <p>Normalization after depth-wise convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">70</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span></pre></div>
@@ -169,8 +177,8 @@
             <div class='section-link'>
                 <a href='#section-7'>#</a>
             </div>
-            <p>Point-wise convolution is a <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> convolution. i.e. a linear transformation of patch embeddings </p>
-
+            <p>Point-wise convolution is a $1 \times 1$ convolution.
+i.e. a linear transformation of patch embeddings</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">74</span>        <span class="bp">self</span><span class="o">.</span><span class="n">point_wise_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -181,8 +189,7 @@
             <div class='section-link'>
                 <a href='#section-8'>#</a>
             </div>
-            <p>Activation after point-wise convolution </p>
-
+            <p>Activation after point-wise convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">76</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">()</span></pre></div>
@@ -193,8 +200,7 @@
             <div class='section-link'>
                 <a href='#section-9'>#</a>
             </div>
-            <p>Normalization after point-wise convolution </p>
-
+            <p>Normalization after point-wise convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span></pre></div>
@@ -216,8 +222,7 @@
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>For the residual connection around the depth-wise convolution </p>
-
+            <p>For the residual connection around the depth-wise convolution</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">82</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span></pre></div>
@@ -228,8 +233,7 @@
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>Depth-wise convolution, activation and normalization </p>
-
+            <p>Depth-wise convolution, activation and normalization</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">85</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_wise_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -242,8 +246,7 @@
             <div class='section-link'>
                 <a href='#section-13'>#</a>
             </div>
-            <p>Add residual connection </p>
-
+            <p>Add residual connection</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">x</span> <span class="o">+=</span> <span class="n">residual</span></pre></div>
@@ -254,8 +257,7 @@
             <div class='section-link'>
                 <a href='#section-14'>#</a>
             </div>
-            <p>Point-wise convolution, activation and normalization </p>
-
+            <p>Point-wise convolution, activation and normalization</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">93</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_wise_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -268,8 +270,7 @@
             <div class='section-link'>
                 <a href='#section-15'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">98</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
@@ -280,9 +281,10 @@
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <p> &lt;a id=&quot;PatchEmbeddings&quot;&gt; ## Get patch embeddings &lt;/a&gt;</p>
-<p>This splits the image into patches of size <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7777700000000001em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span></span></span></span> and gives an embedding for each patch.</p>
-
+            <p><a id="PatchEmbeddings"></p>
+<h2>Get patch embeddings</h2>
+<p></a></p>
+<p>This splits the image into patches of size $p \times p$ and gives an embedding for each patch.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">101</span><span class="k">class</span> <span class="nc">PatchEmbeddings</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -293,13 +295,11 @@
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <ul><li><code>d_model</code>
- is the number of channels in patch embeddings <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> </li>
-<li><code>patch_size</code>
- is the size of the patch, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span></span></span></span> </li>
-<li><code>in_channels</code>
- is the number of channels in the input image (3 for rgb)</li></ul>
-
+            <ul>
+<li><code>d_model</code> is the number of channels in patch embeddings $h$</li>
+<li><code>patch_size</code> is the size of the patch, $p$</li>
+<li><code>in_channels</code> is the number of channels in the input image (3 for rgb)</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">110</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -321,8 +321,9 @@
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>We create a convolution layer with a kernel size and and stride length equal to patch size. This is equivalent to splitting the image into patches and doing a linear transformation on each patch. </p>
-
+            <p>We create a convolution layer with a kernel size and and stride length equal to patch size.
+This is equivalent to splitting the image into patches and doing a linear
+transformation on each patch.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">121</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">patch_size</span><span class="p">)</span></pre></div>
@@ -333,8 +334,7 @@
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <p>Activation function </p>
-
+            <p>Activation function</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">123</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">()</span></pre></div>
@@ -345,8 +345,7 @@
             <div class='section-link'>
                 <a href='#section-21'>#</a>
             </div>
-            <p>Batch normalization </p>
-
+            <p>Batch normalization</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span></pre></div>
@@ -357,10 +356,9 @@
             <div class='section-link'>
                 <a href='#section-22'>#</a>
             </div>
-            <ul><li><code>x</code>
- is the input image of shape <code>[batch_size, channels, height, width]</code>
-</li></ul>
-
+            <ul>
+<li><code>x</code> is the input image of shape <code>[batch_size, channels, height, width]</code></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">127</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -371,8 +369,7 @@
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>Apply convolution layer </p>
-
+            <p>Apply convolution layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">132</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -383,8 +380,7 @@
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>Activation and normalization </p>
-
+            <p>Activation and normalization</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">134</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -396,8 +392,7 @@
             <div class='section-link'>
                 <a href='#section-25'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">138</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
@@ -408,9 +403,11 @@
             <div class='section-link'>
                 <a href='#section-26'>#</a>
             </div>
-            <p> &lt;a id=&quot;ClassificationHead&quot;&gt; ## Classification Head &lt;/a&gt;</p>
-<p>They do average pooling (taking the mean of all patch embeddings) and a final linear transformation to predict the log-probabilities of the image classes.</p>
-
+            <p><a id="ClassificationHead"></p>
+<h2>Classification Head</h2>
+<p></a></p>
+<p>They do average pooling (taking the mean of all patch embeddings) and a final linear transformation
+to predict the log-probabilities of the image classes.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">141</span><span class="k">class</span> <span class="nc">ClassificationHead</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -421,11 +418,10 @@
             <div class='section-link'>
                 <a href='#section-27'>#</a>
             </div>
-            <ul><li><code>d_model</code>
- is the number of channels in patch embeddings, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> </li>
-<li><code>n_classes</code>
- is the number of classes in the classification task</li></ul>
-
+            <ul>
+<li><code>d_model</code> is the number of channels in patch embeddings, $h$</li>
+<li><code>n_classes</code> is the number of classes in the classification task</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">151</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -447,8 +443,7 @@
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Average Pool </p>
-
+            <p>Average Pool</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">158</span>        <span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">AdaptiveAvgPool2d</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></pre></div>
@@ -459,8 +454,7 @@
             <div class='section-link'>
                 <a href='#section-30'>#</a>
             </div>
-            <p>Linear layer </p>
-
+            <p>Linear layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">160</span>        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">)</span></pre></div>
@@ -482,8 +476,7 @@
             <div class='section-link'>
                 <a href='#section-32'>#</a>
             </div>
-            <p>Average pooling </p>
-
+            <p>Average pooling</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">164</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -494,10 +487,7 @@
             <div class='section-link'>
                 <a href='#section-33'>#</a>
             </div>
-            <p>Get the embedding, <code>x</code>
- will have shape <code>[batch_size, d_model, 1, 1]</code>
- </p>
-
+            <p>Get the embedding, <code>x</code> will have shape <code>[batch_size, d_model, 1, 1]</code></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">166</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span></pre></div>
@@ -508,8 +498,7 @@
             <div class='section-link'>
                 <a href='#section-34'>#</a>
             </div>
-            <p>Linear layer </p>
-
+            <p>Linear layer</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">168</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -520,8 +509,7 @@
             <div class='section-link'>
                 <a href='#section-35'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">171</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
@@ -534,7 +522,6 @@
             </div>
             <h2>ConvMixer</h2>
 <p>This combines the patch embeddings block, a number of ConvMixer layers and a classification head.</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">174</span><span class="k">class</span> <span class="nc">ConvMixer</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -545,16 +532,13 @@
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <ul><li><code>conv_mixer_layer</code>
- is a copy of a single <a href="#ConvMixerLayer">ConvMixer layer</a>.  We make copies of it to make ConvMixer with <code>n_layers</code>
-. </li>
-<li><code>n_layers</code>
- is the number of ConvMixer layers (or depth), <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">d</span></span></span></span>. </li>
-<li><code>patch_emb</code>
- is the <a href="#PatchEmbeddings">patch embeddings layer</a>. </li>
-<li><code>classification</code>
- is the <a href="#ClassificationHead">classification head</a>.</li></ul>
-
+            <ul>
+<li><code>conv_mixer_layer</code> is a copy of a single <a href="#ConvMixerLayer">ConvMixer layer</a>.
+ We make copies of it to make ConvMixer with <code>n_layers</code>.</li>
+<li><code>n_layers</code> is the number of ConvMixer layers (or depth), $d$.</li>
+<li><code>patch_emb</code> is the <a href="#PatchEmbeddings">patch embeddings layer</a>.</li>
+<li><code>classification</code> is the <a href="#ClassificationHead">classification head</a>.</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">181</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conv_mixer_layer</span><span class="p">:</span> <span class="n">ConvMixerLayer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -578,8 +562,7 @@
             <div class='section-link'>
                 <a href='#section-39'>#</a>
             </div>
-            <p>Patch embeddings </p>
-
+            <p>Patch embeddings</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">193</span>        <span class="bp">self</span><span class="o">.</span><span class="n">patch_emb</span> <span class="o">=</span> <span class="n">patch_emb</span></pre></div>
@@ -590,8 +573,7 @@
             <div class='section-link'>
                 <a href='#section-40'>#</a>
             </div>
-            <p>Classification head </p>
-
+            <p>Classification head</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">195</span>        <span class="bp">self</span><span class="o">.</span><span class="n">classification</span> <span class="o">=</span> <span class="n">classification</span></pre></div>
@@ -602,8 +584,7 @@
             <div class='section-link'>
                 <a href='#section-41'>#</a>
             </div>
-            <p>Make copies of the <a href="#ConvMixerLayer">ConvMixer layer</a> </p>
-
+            <p>Make copies of the <a href="#ConvMixerLayer">ConvMixer layer</a></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">197</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv_mixer_layers</span> <span class="o">=</span> <span class="n">clone_module_list</span><span class="p">(</span><span class="n">conv_mixer_layer</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span></pre></div>
@@ -614,10 +595,9 @@
             <div class='section-link'>
                 <a href='#section-42'>#</a>
             </div>
-            <ul><li><code>x</code>
- is the input image of shape <code>[batch_size, channels, height, width]</code>
-</li></ul>
-
+            <ul>
+<li><code>x</code> is the input image of shape <code>[batch_size, channels, height, width]</code></li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">199</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -628,9 +608,7 @@
             <div class='section-link'>
                 <a href='#section-43'>#</a>
             </div>
-            <p>Get patch embeddings. This gives a tensor of shape <code>[batch_size, d_model, height / patch_size, width / patch_size]</code>
-. </p>
-
+            <p>Get patch embeddings. This gives a tensor of shape <code>[batch_size, d_model, height / patch_size, width / patch_size]</code>.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">204</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch_emb</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -641,8 +619,7 @@
             <div class='section-link'>
                 <a href='#section-44'>#</a>
             </div>
-            <p>Pass through <a href="#ConvMixerLayer">ConvMixer layers</a> </p>
-
+            <p>Pass through <a href="#ConvMixerLayer">ConvMixer layers</a></p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">207</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_mixer_layers</span><span class="p">:</span>
@@ -654,8 +631,7 @@
             <div class='section-link'>
                 <a href='#section-45'>#</a>
             </div>
-            <p>Classification head, to get logits </p>
-
+            <p>Classification head, to get logits</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">211</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classification</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -666,8 +642,7 @@
             <div class='section-link'>
                 <a href='#section-46'>#</a>
             </div>
-            <p> </p>
-
+            
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">214</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
@@ -678,6 +653,24 @@
         <a href="https://labml.ai">labml.ai</a>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
 <script>
     function handleImages() {
         var images = document.querySelectorAll('p>img')

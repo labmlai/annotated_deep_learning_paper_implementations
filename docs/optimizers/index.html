@@ -24,8 +24,6 @@
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/optimizers/index.html"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
-
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
     <script>
@@ -70,32 +68,44 @@
             </div>
             <h1>Optimizers</h1>
 <h2>Optimizer Implementations</h2>
-<ul><li><a href="adam.html">Adam Optimizer</a> </li>
-<li><a href="amsgrad.html">AMSGrad Optimizer</a> </li>
-<li><a href="adam_warmup.html">Adam Optimizer with warmup</a> </li>
-<li><a href="noam.html">Noam Optimizer</a> </li>
-<li><a href="radam.html">Rectified Adam Optimizer</a> </li>
-<li><a href="ada_belief.html">AdaBelief Optimizer</a></li></ul>
+<ul>
+<li><a href="adam.html">Adam Optimizer</a></li>
+<li><a href="amsgrad.html">AMSGrad Optimizer</a></li>
+<li><a href="adam_warmup.html">Adam Optimizer with warmup</a></li>
+<li><a href="noam.html">Noam Optimizer</a></li>
+<li><a href="radam.html">Rectified Adam Optimizer</a></li>
+<li><a href="ada_belief.html">AdaBelief Optimizer</a></li>
+</ul>
 <p>This <a href="mnist_experiment.html">MNIST example</a> uses these optimizers.</p>
 <h2>Generic Adaptive Optimizer Base class and Weight Decay</h2>
-<p>This file defines a common base class for <em>Adam</em> and extensions of it. The base class helps use implement other optimizers with minimal code because of re-usability.</p>
-<p>We also define a special class for L2 weight decay, so that we don&#x27;t have to implement it inside each of the optimizers, and can easily extend to other weight decays like L1 without changing the optimizers.</p>
+<p>This file defines a common base class for <em>Adam</em> and extensions of it.
+The base class helps use implement other optimizers with minimal code
+because of re-usability.</p>
+<p>We also define a special class for L2 weight decay, so that we don&rsquo;t
+have to implement it inside each of the optimizers,
+and can easily extend to other weight decays like L1 without
+changing the optimizers.</p>
 <p>Here are some concepts on PyTorch optimizers:</p>
 <h3>Parameter groups</h3>
-<p>PyTorch optimizers group parameters into sets called groups. Each group can have it&#x27;s own hyper-parameters like learning rates.</p>
-<p>In most common cases there will be only one group. This is when you initialize your optimizer with,</p>
-<pre class="lang-python">Optimizer(model.parameters())
-</pre>
-<p>You can define multiple parameter groups when initializing the optimizer:</p>
-<pre class="lang-python">Optimizer([{&#x27;params&#x27;: model1.parameters()}, {&#x27;params&#x27;: model2.parameters(), &#x27;lr&#x27;: 2}])
-</pre>
-<p>Here we pass a list of groups. Each group is a dictionary with it&#x27;s parameters under the key &#x27;params&#x27;. You specify any hyper-parameters as well. If the hyper parameters are not defined they will default to the optimizer level defaults.</p>
-<p>You can access (and even change) these groups, and their hyper-parameters with <code>optimizer.param_groups</code>
-. Most learning rate schedule implementations I&#x27;ve come across do access this and change &#x27;lr&#x27;.</p>
-<h3>States</h3>
-<p>Optimizer maintains states (a dictionary) for each parameter (a tensor), in a dictionary <code>optimizer.state</code>
-. This is where the optimizer maintains things like exponential averages.</p>
+<p>PyTorch optimizers group parameters into sets called groups.
+Each group can have it&rsquo;s own hyper-parameters like learning rates.</p>
+<p>In most common cases there will be only one group.
+This is when you initialize your optimizer with,</p>
+<pre><code class="python">Optimizer(model.parameters())
+</code></pre>
 
+<p>You can define multiple parameter groups when initializing the optimizer:</p>
+<pre><code class="python">Optimizer([{'params': model1.parameters()}, {'params': model2.parameters(), 'lr': 2}])
+</code></pre>
+
+<p>Here we pass a list of groups. Each group is a dictionary with it&rsquo;s parameters under the key &lsquo;params&rsquo;.
+You specify any hyper-parameters as well. If the hyper parameters are not defined they will default
+to the optimizer level defaults.</p>
+<p>You can access (and even change) these groups, and their hyper-parameters with <code>optimizer.param_groups</code>.
+Most learning rate schedule implementations I&rsquo;ve come across do access this and change &lsquo;lr&rsquo;.</p>
+<h3>States</h3>
+<p>Optimizer maintains states (a dictionary) for each parameter (a tensor), in a dictionary <code>optimizer.state</code>.
+This is where the optimizer maintains things like exponential averages.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">62</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span>
@@ -111,7 +121,6 @@
                 <a href='#section-1'>#</a>
             </div>
             <h2>Base class for <em>Adam</em> and extensions</h2>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">69</span><span class="k">class</span> <span class="nc">GenericAdaptiveOptimizer</span><span class="p">(</span><span class="n">Optimizer</span><span class="p">):</span></pre></div>
@@ -123,17 +132,13 @@
                 <a href='#section-2'>#</a>
             </div>
             <h3>Initialize</h3>
-<ul><li><code>params</code>
- is the collection of parameters or set of parameter groups. </li>
-<li><code>defaults</code>
- a dictionary of default hyper-parameters </li>
-<li><code>lr</code>
- is the learning rate, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> </li>
-<li><code>betas</code>
- is the tuple <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> </li>
-<li><code>eps</code>
- is <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">ϵ</span></span></span></span></li></ul>
-
+<ul>
+<li><code>params</code> is the collection of parameters or set of parameter groups.</li>
+<li><code>defaults</code> a dictionary of default hyper-parameters</li>
+<li><code>lr</code> is the learning rate, $\alpha$</li>
+<li><code>betas</code> is the tuple $(\beta_1, \beta_2)$</li>
+<li><code>eps</code> is $\epsilon$</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">74</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">betas</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span></pre></div>
@@ -144,8 +149,7 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            <p>Check the hyper-parameters </p>
-
+            <p>Check the hyper-parameters</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">86</span>        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">lr</span><span class="p">:</span>
@@ -163,8 +167,7 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <p>Add the hyper-parameters to the defaults </p>
-
+            <p>Add the hyper-parameters to the defaults</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">96</span>        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="n">betas</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">))</span></pre></div>
@@ -175,8 +178,8 @@
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            <p>Initialize the PyTorch optimizer. This will create parameter groups with the default hyper-parameters </p>
-
+            <p>Initialize the PyTorch optimizer.
+This will create parameter groups with the default hyper-parameters</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">99</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)</span></pre></div>
@@ -188,12 +191,8 @@
                 <a href='#section-6'>#</a>
             </div>
             <h3>Initialize state for a given parameter tensor</h3>
-<p>This should be overridden with code to initialize <code>state</code>
- for parameters <code>param</code>
-. <code>group</code>
- is the parameter group dictionary to which <code>param</code>
- belongs.</p>
-
+<p>This should be overridden with code to initialize <code>state</code> for parameters <code>param</code>.
+<code>group</code> is the parameter group dictionary to which <code>param</code> belongs.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">101</span>    <span class="k">def</span> <span class="nf">init_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">param</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span></pre></div>
@@ -216,13 +215,10 @@
                 <a href='#section-8'>#</a>
             </div>
             <h3>Take optimizer step on a parameter tensor</h3>
-<p>This should be overridden and take the optimization step on <code>param</code>
- tensor <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>, where <code>grad</code>
- is the gradient for that parameter, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, <code>state</code>
- is the optimizer state dictionary for that parameter, and <code>group</code>
- is the parameter group dictionary <code>param</code>
- belongs to.</p>
-
+<p>This should be overridden and take the optimization step on <code>param</code> tensor $\theta$,
+where <code>grad</code> is the gradient for that parameter, $g_t$,
+<code>state</code> is the optimizer state dictionary for that parameter, and
+<code>group</code> is the parameter group dictionary <code>param</code> belongs to.</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">110</span>    <span class="k">def</span> <span class="nf">step_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -246,7 +242,6 @@
             </div>
             <h3>Optimizer step</h3>
 <p>We have created a template method that does the common stuff every <em>Adam</em> based optimizer needs.</p>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">121</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
@@ -259,10 +254,9 @@
                 <a href='#section-11'>#</a>
             </div>
             <p>Calculate loss.</p>
-<p>🤔 I&#x27;m not sure when you need this. I guess it&#x27;s if you define a function that calculates the loss, does <code>loss.backward</code>
- and return the loss, instead of calling it on your own you could pass it to <code>optimizer.step</code>
-. 🤷‍♂️ </p>
-
+<p>🤔 I&rsquo;m not sure when you need this. I guess it&rsquo;s if you define a function that
+calculates the loss, does <code>loss.backward</code> and return the loss, instead of calling
+it on your own you could pass it to <code>optimizer.step</code>. 🤷‍♂️</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">133</span>        <span class="n">loss</span> <span class="o">=</span> <span class="kc">None</span>
@@ -276,8 +270,7 @@
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>Iterate through the parameter groups </p>
-
+            <p>Iterate through the parameter groups</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">139</span>        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span></pre></div>
@@ -288,8 +281,7 @@
             <div class='section-link'>
                 <a href='#section-13'>#</a>
             </div>
-            <p>Iterate through the parameters in the parameter group </p>
-
+            <p>Iterate through the parameters in the parameter group</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">141</span>            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">]:</span></pre></div>
@@ -300,8 +292,7 @@
             <div class='section-link'>
                 <a href='#section-14'>#</a>
             </div>
-            <p>Skip if the parameter has no gradient </p>
-
+            <p>Skip if the parameter has no gradient</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">143</span>                <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -313,8 +304,7 @@
             <div class='section-link'>
                 <a href='#section-15'>#</a>
             </div>
-            <p>Get the gradient tensor </p>
-
+            <p>Get the gradient tensor</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">146</span>                <span class="n">grad</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">data</span></pre></div>
@@ -325,8 +315,7 @@
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <p>We don&#x27;t handle sparse gradients </p>
-
+            <p>We don&rsquo;t handle sparse gradients</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">148</span>                <span class="k">if</span> <span class="n">grad</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
@@ -339,8 +328,7 @@
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <p>Get the state for the parameter </p>
-
+            <p>Get the state for the parameter</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">153</span>                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">param</span><span class="p">]</span></pre></div>
@@ -351,8 +339,7 @@
             <div class='section-link'>
                 <a href='#section-18'>#</a>
             </div>
-            <p>Initialize the state if state is uninitialized </p>
-
+            <p>Initialize the state if state is uninitialized</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">156</span>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -364,8 +351,7 @@
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>Take the optimization step on the parameter </p>
-
+            <p>Take the optimization step on the parameter</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">160</span>                <span class="bp">self</span><span class="o">.</span><span class="n">step_param</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">grad</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span></pre></div>
@@ -376,8 +362,7 @@
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <p>Return the loss, calculated from closure </p>
-
+            <p>Return the loss, calculated from closure</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">163</span>        <span class="k">return</span> <span class="n">loss</span></pre></div>
@@ -389,7 +374,6 @@
                 <a href='#section-21'>#</a>
             </div>
             <h2>L2 Weight decay</h2>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">166</span><span class="k">class</span> <span class="nc">WeightDecay</span><span class="p">:</span></pre></div>
@@ -401,16 +385,15 @@
                 <a href='#section-22'>#</a>
             </div>
             <h3>Initialize weight decay</h3>
-<ul><li><code>weight_decay</code>
- is the decay coefficient </li>
-<li><code>weight_decouple</code>
- is a flag indicating whether to add the weight decay to the gradient or directly decay from the parameter. If added to the gradient it will go through the normal optimizer update. </li>
-<li><code>absolute</code>
- this flag indicates whether the weight decay coefficient is absolute. This is applicable when the decay is performed directly on the parameter. If this is false the actual decay is <code>weight_decay</code>
- </li>
-<li><code>learning_rate</code>
-.</li></ul>
-
+<ul>
+<li><code>weight_decay</code> is the decay coefficient</li>
+<li><code>weight_decouple</code> is a flag indicating whether to add the weight decay to the gradient or directly
+decay from the parameter. If added to the  gradient it will go through the normal optimizer update.</li>
+<li><code>absolute</code> this flag indicates whether the weight decay coefficient is absolute. This is applicable
+when the decay is performed directly on the parameter. If this is false the actual decay is
+<code>weight_decay</code></li>
+<li><code>learning_rate</code>.</li>
+</ul>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">171</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weight_decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">weight_decouple</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">absolute</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span></pre></div>
@@ -421,8 +404,7 @@
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>Check hyper-parameters </p>
-
+            <p>Check hyper-parameters</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">184</span>        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">weight_decay</span><span class="p">:</span>
@@ -438,8 +420,7 @@
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p> Return defaults for parameter groups</p>
-
+            <p>Return defaults for parameter groups</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">191</span>    <span class="k">def</span> <span class="nf">defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
@@ -462,7 +443,6 @@
                 <a href='#section-26'>#</a>
             </div>
             <h3>Perform weight decay and return the gradient</h3>
-
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">197</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span></pre></div>
@@ -473,8 +453,7 @@
             <div class='section-link'>
                 <a href='#section-27'>#</a>
             </div>
-            <p>If we are doing the decay on the parameter directly </p>
-
+            <p>If we are doing the decay on the parameter directly</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">203</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_decouple</span><span class="p">:</span></pre></div>
@@ -485,8 +464,7 @@
             <div class='section-link'>
                 <a href='#section-28'>#</a>
             </div>
-            <p>If the weight decay coefficient is absolute </p>
-
+            <p>If the weight decay coefficient is absolute</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">205</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute</span><span class="p">:</span>
@@ -498,8 +476,7 @@
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Otherwise, </p>
-
+            <p>Otherwise,</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">208</span>            <span class="k">else</span><span class="p">:</span>
@@ -511,8 +488,7 @@
             <div class='section-link'>
                 <a href='#section-30'>#</a>
             </div>
-            <p>Return the unmodified gradient </p>
-
+            <p>Return the unmodified gradient</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">211</span>            <span class="k">return</span> <span class="n">grad</span>
@@ -525,8 +501,7 @@
             <div class='section-link'>
                 <a href='#section-31'>#</a>
             </div>
-            <p>Add the weight decay to the gradient and return the modified gradient </p>
-
+            <p>Add the weight decay to the gradient and return the modified gradient</p>
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">215</span>                <span class="k">return</span> <span class="n">grad</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">group</span><span class="p">[</span><span class="s1">&#39;weight_decay&#39;</span><span class="p">])</span>
@@ -539,6 +514,24 @@
         <a href="https://labml.ai">labml.ai</a>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
 <script>
     function handleImages() {
         var images = document.querySelectorAll('p>img')
