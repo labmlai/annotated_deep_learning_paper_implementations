@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A PyTorch implementation/tutorial of group normalization."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Group Normalization"/>
+    <meta name="twitter:description" content="A PyTorch implementation/tutorial of group normalization."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/normalization/group_norm/index.html"/>
+    <meta property="og:title" content="Group Normalization"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Group Normalization"/>
+    <meta property="og:description" content="A PyTorch implementation/tutorial of group normalization."/>
+
+    <title>Group Normalization</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/normalization/group_norm/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">normalization</a>
+                <a class="parent" href="index.html">group_norm</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/normalization/group_norm/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Group Normalization</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of
+the <a href="https://papers.labml.ai/paper/1803.08494">Group Normalization</a> paper.</p>
+<p><a href="../batch_norm/index.html">Batch Normalization</a> works well for large enough batch sizes
+but not well for small batch sizes, because it normalizes over the batch.
+Training large models with large batch sizes is not possible due to the memory capacity of the
+devices.</p>
+<p>This paper introduces Group Normalization, which normalizes a set of features together as a group.
+This is based on the observation that classical features such as
+<a href="https://en.wikipedia.org/wiki/Scale-invariant_feature_transform">SIFT</a> and
+<a href="https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients">HOG</a> are group-wise features.
+The paper proposes dividing feature channels into groups and then separately normalizing
+all channels within each group.</p>
+<h2>Formulation</h2>
+<p>All normalization layers can be defined by the following computation.</p>
+<p>
+<script type="math/tex; mode=display">\hat{x}_i = \frac{1}{\sigma_i} (x_i - \mu_i)</script>
+</p>
+<p>where $x$ is the tensor representing the batch,
+and $i$ is the index of a single value.
+For instance, when it&rsquo;s 2D images
+$i = (i_N, i_C, i_H, i_W)$ is a 4-d vector for indexing
+image within batch, feature channel, vertical coordinate and horizontal coordinate.
+$\mu_i$ and $\sigma_i$ are mean and standard deviation.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\mu_i &= \frac{1}{m} \sum_{k \in \mathcal{S}_i} x_k \\
+\sigma_i  &= \sqrt{\frac{1}{m} \sum_{k \in \mathcal{S}_i} (x_k - \mu_i)^2 + \epsilon}
+\end{align}</script>
+</p>
+<p>$\mathcal{S}_i$ is the set of indexes across which the mean and standard deviation
+are calculated for index $i$.
+$m$ is the size of the set $\mathcal{S}_i$ which is the same for all $i$.</p>
+<p>The definition of $\mathcal{S}_i$ is different for
+<a href="../batch_norm/index.html">Batch normalization</a>,
+<a href="../layer_norm/index.html">Layer normalization</a>, and
+<a href="../instance_norm/index.html">Instance normalization</a>.</p>
+<h3><a href="../batch_norm/index.html">Batch Normalization</a></h3>
+<p>
+<script type="math/tex; mode=display">\mathcal{S}_i = \{k | k_C = i_C\}</script>
+</p>
+<p>The values that share the same feature channel are normalized together.</p>
+<h3><a href="../layer_norm/index.html">Layer Normalization</a></h3>
+<p>
+<script type="math/tex; mode=display">\mathcal{S}_i = \{k | k_N = i_N\}</script>
+</p>
+<p>The values from the same sample in the batch are normalized together.</p>
+<h3><a href="../instance_norm/index.html">Instance Normalization</a></h3>
+<p>
+<script type="math/tex; mode=display">\mathcal{S}_i = \{k | k_N = i_N, k_C = i_C\}</script>
+</p>
+<p>The values from the same sample and same feature channel are normalized together.</p>
+<h3>Group Normalization</h3>
+<p>
+<script type="math/tex; mode=display">\mathcal{S}_i = \{k | k_N = i_N,
+ \bigg \lfloor \frac{k_C}{C/G} \bigg \rfloor = \bigg \lfloor \frac{i_C}{C/G} \bigg \rfloor\}</script>
+</p>
+<p>where $G$ is the number of groups and $C$ is the number of channels.</p>
+<p>Group normalization normalizes values of the same sample and the same group of channels together.</p>
+<p>Here&rsquo;s a <a href="experiment.html">CIFAR 10 classification model</a> that uses instance normalization.</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/group_norm/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://app.labml.ai/run/081d950aa4e011eb8f9f0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a>
+<a href="https://wandb.ai/vpj/cifar10/runs/310etthp"><img alt="WandB" src="https://img.shields.io/badge/wandb-run-yellow" /></a></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">86</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">87</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">88</span>
+<span class="lineno">89</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Group Normalization Layer</h2>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">92</span><span class="k">class</span> <span class="nc">GroupNorm</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul>
+<li><code>groups</code> is the number of groups the features are divided into</li>
+<li><code>channels</code> is the number of features in the input</li>
+<li><code>eps</code> is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability</li>
+<li><code>affine</code> is whether to scale and shift the normalized value</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">97</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">98</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="n">affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">105</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">106</span>
+<span class="lineno">107</span>        <span class="k">assert</span> <span class="n">channels</span> <span class="o">%</span> <span class="n">groups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of channels should be evenly divisible by the number of groups&quot;</span>
+<span class="lineno">108</span>        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span>
+<span class="lineno">109</span>        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="n">channels</span>
+<span class="lineno">110</span>
+<span class="lineno">111</span>        <span class="bp">self</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+<span class="lineno">112</span>        <span class="bp">self</span><span class="o">.</span><span class="n">affine</span> <span class="o">=</span> <span class="n">affine</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Create parameters for $\gamma$ and $\beta$ for scale and shift</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
+<span class="lineno">115</span>            <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+<span class="lineno">116</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shift</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p><code>x</code> is a tensor of shape <code>[batch_size, channels, *]</code>.
+<code>*</code> denotes any number of (possibly 0) dimensions.
+ For example, in an image (2D) convolution this will be
+<code>[batch_size, channels, height, width]</code></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">118</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Keep the original shape</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">126</span>        <span class="n">x_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Get the batch size</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">128</span>        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Sanity check to make sure the number of features is the same</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Reshape into <code>[batch_size, groups, n]</code></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Calculate the mean across last dimension;
+i.e. the means for each sample and channel group $\mathbb{E}[x_{(i_N, i_G)}]$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">137</span>        <span class="n">mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Calculate the squared mean across last dimension;
+i.e. the means for each sample and channel group $\mathbb{E}[x^2_{(i_N, i_G)}]$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>        <span class="n">mean_x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Variance for each sample and feature group
+$Var[x_{(i_N, i_G)}] = \mathbb{E}[x^2_{(i_N, i_G)}] - \mathbb{E}[x_{(i_N, i_G)}]^2$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">143</span>        <span class="n">var</span> <span class="o">=</span> <span class="n">mean_x2</span> <span class="o">-</span> <span class="n">mean</span> <span class="o">**</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Normalize
+<script type="math/tex; mode=display">\hat{x}_{(i_N, i_G)} =
+\frac{x_{(i_N, i_G)} - \mathbb{E}[x_{(i_N, i_G)}]}{\sqrt{Var[x_{(i_N, i_G)}] + \epsilon}}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">148</span>        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>Scale and shift channel-wise
+<script type="math/tex; mode=display">y_{i_C} =\gamma_{i_C} \hat{x}_{i_C} + \beta_{i_C}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">152</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">affine</span><span class="p">:</span>
+<span class="lineno">153</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="n">x_norm</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">154</span>            <span class="n">x_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shift</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Reshape to original and return</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">157</span>        <span class="k">return</span> <span class="n">x_norm</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x_shape</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Simple test</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">160</span><span class="k">def</span> <span class="nf">_test</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">164</span>    <span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
+<span class="lineno">165</span>
+<span class="lineno">166</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="lineno">167</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="lineno">168</span>    <span class="n">bn</span> <span class="o">=</span> <span class="n">GroupNorm</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="lineno">169</span>
+<span class="lineno">170</span>    <span class="n">x</span> <span class="o">=</span> <span class="n">bn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">171</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">175</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">176</span>    <span class="n">_test</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

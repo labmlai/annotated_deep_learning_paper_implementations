@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of the AFT (Attention Free Transformer) in PyTorch."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="An Attention Free Transformer"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of the AFT (Attention Free Transformer) in PyTorch."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/aft/index.html"/>
+    <meta property="og:title" content="An Attention Free Transformer"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="An Attention Free Transformer"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of the AFT (Attention Free Transformer) in PyTorch."/>
+
+    <title>An Attention Free Transformer</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/aft/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">aft</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/aft/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>An Attention Free Transformer</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
+<a href="https://papers.labml.ai/paper/2105.14103">An Attention Free Transformer</a>.</p>
+<p>This paper replaces the <a href="../mha.html">self-attention layer</a> with a new efficient operation,
+that has memory complexity of $\mathcal{O}(Td)$, where $T$ is the sequence length
+and $d$ is the dimensionality of embeddings.</p>
+<p>The paper introduces AFT along with AFT-local and AFT-conv.
+Here we have implemented AFT-local which pays attention to closeby tokens
+in an autoregressive model.</p>
+<h2>Attention Free Transformer</h2>
+<p>AFT (similar to <a href="../mha.html">MHA</a>) first transforms the embeddings $X$ into
+query $Q = XW^Q$, key $K = XW^K$ and value $V = XW^V$ tensors with learned weights.
+The output for each position $t \in [1, T]$ is calculated with the following operation.</p>
+<p>
+<script type="math/tex; mode=display">Y_t = \sigma(Q_t) \odot
+ \frac{\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'}) \odot V_{t'}}
+ {\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'})}</script>
+</p>
+<p>, where $\odot$ is element-wise product, $\sigma$ is a non-linearity (sigmoid) and
+$w \in \mathbb{R}^{T \times T}$ is a learned matrix of pair-wise position biases.</p>
+<p>This means that we take the weighted average of values
+and multiply them by the query. This eliminates the need to calculate the $T \times T$ attention
+matrix that <a href="../mha.html">MHA</a> requires, and therefore reduce the memory requirement.</p>
+<h2>AFT Local</h2>
+<p>AFT Local only apply learned pair-wise position biases locally:</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+w'_{t,t'} =
+\begin{cases}
+w_{t,t'},  & {\text{for } \lvert t-t' \rvert \lt s} \\
+0, & \text{otherwise}
+\end{cases}
+\end{align}</script>
+</p>
+<p>, where $s \le T$ is the local window size.</p>
+<p>Although $w&rsquo;_{t,t&rsquo;}$ is $0$ outside the local window the AFT operation still uses key-value pairs from
+other areas. This is different from local transformers where embeddings outside the local window are
+ completely not visible.</p>
+<p>Here is <a href="experiment.html">the training code</a> for a AFT Local model.</p>
+<p><a href="https://app.labml.ai/run/6348e504c3a511eba9529daa283fb495"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">61</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">62</span>
+<span class="lineno">63</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">64</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">65</span>
+<span class="lineno">66</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h3>AFT Local Operation</h3>
+<p>
+<script type="math/tex; mode=display">Y_t = \sigma(Q_t) \odot
+ \frac{\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'}) \odot V_{t'}}
+ {\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'})}</script>
+</p>
+<p>where,</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+w'_{t,t'} =
+\begin{cases}
+w_{t,t'},  & {\text{for } \lvert t-t' \rvert \lt s} \\
+0, & \text{otherwise}
+\end{cases}
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">69</span><span class="k">class</span> <span class="nc">AFTLocal</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul>
+<li><code>d_model</code> is the number of features in the <code>query</code>, <code>key</code> and <code>value</code> vectors.</li>
+<li><code>seq_len</code> is $T$</li>
+<li><code>local_window_size</code> is the local window size $s$</li>
+<li><code>bias</code> is whether to have a bias parameter for transformations for $Q$, $K$ and $V$.</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">88</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">local_window_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">96</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Local window size $s$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">99</span>        <span class="bp">self</span><span class="o">.</span><span class="n">local_window_size</span> <span class="o">=</span> <span class="n">local_window_size</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>These transform the <code>query</code>, <code>key</code> and <code>value</code> vectors.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">)</span>
+<span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">)</span>
+<span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">bias</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Pair-wise positional biases $w \in \mathbb{R}^{T \times T}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">pos_bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Mask for $w_{t,t&rsquo;}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">107</span>        <span class="bp">self</span><span class="o">.</span><span class="n">local_mask</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_local_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">local_window_size</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Activation $\sigma$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">109</span>        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Output layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">111</span>        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <h4>Create local mask</h4>
+<p>This creates a mask for
+<script type="math/tex; mode=display">\begin{align}
+m_{t,t'} =
+\begin{cases}
+1,  & {\text{for } \lvert t-t' \rvert \lt s} \\
+0, & \text{otherwise}
+\end{cases}
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">113</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">114</span>    <span class="k">def</span> <span class="nf">create_local_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">local_window_size</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Initialize to ones</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">129</span>        <span class="n">local_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Make $t&rsquo; - t \ge s$ zero</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">131</span>        <span class="n">local_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tril</span><span class="p">(</span><span class="n">local_mask</span><span class="p">,</span> <span class="n">local_window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Make $t - t&rsquo; \ge s$ zero</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="n">local_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">local_mask</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">local_window_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">return</span> <span class="n">local_mask</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p><code>query</code>, <code>key</code> and <code>value</code> are the tensors that store
+collection of token embeddings for  <em>query</em>, <em>key</em> and <em>value</em>.
+They have shape <code>[seq_len, batch_size, d_model]</code>.</p>
+<p><code>mask</code> has shape <code>[seq_len, seq_len, batch_size]</code> and
+<code>mask[i, j, b]</code> indicates whether for batch <code>b</code>,
+query at position <code>i</code> has access to key-value at position <code>j</code>.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">138</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">139</span>                <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">140</span>                <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">141</span>                <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">142</span>                <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p><code>query</code>, <code>key</code> and <code>value</code>  have shape <code>[seq_len, batch_size, d_model]</code></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>        <span class="n">seq_len</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span>
+<span class="lineno">155</span>
+<span class="lineno">156</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p><code>mask</code> has shape <code>[seq_len_q, seq_len_k, batch_size]</code>,
+where first dimension is the query dimension.
+If the query dimension is equal to $1$ it will be broadcasted.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">160</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">161</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">162</span>            <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Transform query, key and value embeddings</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">165</span>        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="lineno">166</span>        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="lineno">167</span>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Get
+    <script type="math/tex; mode=display">\begin{align}
+    w'_{t,t'} =
+    \begin{cases}
+    w_{t,t'},  & {\text{for }\lvert t-t' \rvert \lt s} \\
+    0, & \text{otherwise}
+    \end{cases}
+    \end{align}</script>
+using the mask</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">178</span>        <span class="n">pos_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_bias</span><span class="p">[:</span><span class="n">seq_len</span><span class="p">,</span> <span class="p">:</span><span class="n">seq_len</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_mask</span><span class="p">[:</span><span class="n">seq_len</span><span class="p">,</span> <span class="p">:</span><span class="n">seq_len</span><span class="p">]</span>
+<span class="lineno">179</span>        <span class="n">pos_bias</span> <span class="o">=</span> <span class="n">pos_bias</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">180</span>        <span class="n">pos_bias</span><span class="o">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>
+<script type="math/tex; mode=display">\begin{align}
+Y_t &= \sigma(Q_t) \odot
+\frac{\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'}) \odot V_{t'}}
+{\sum_{t'=1}^T \exp(K_{t'} + w_{t,t'})} \\
+&= \sigma(Q_t) \odot
+   \frac{\sum_{t'=1}^T \exp(w_{t,t'}) \odot \exp(K_{t'}) \odot V_{t'}}
+   {\sum_{t'=1}^T \exp(w_{t,t'}) \odot \exp(K_{t'})}
+\end{align}</script>
+</p>
+<p>We compute $\exp(w_{t,t&rsquo;})$, $\exp(K_{t&rsquo;}) \odot V_{t&rsquo;}$ and $\exp(K_{t&rsquo;})$
+separately and do a matrix multiplication. We use einsum for clarity.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>We subtract $\max_{t&rsquo;}(K_{t&rsquo;})$ and $\max_{t&rsquo;}(w_{t,t&rsquo;})$ before calculating the exponents to stabilize
+the softmax calculation.</p>
+<p>If $x_i$ is large $\exp(x_i)$ becomes huge and the computation of
+$\frac{\sum\exp(x_i)y_i}{\sum\exp(x_i)}$becomes unstable.
+Subtracting a constant before calculating the exponent from numerator and denominator will cancel out.
+and can help stabilize the computation.
+So we subtract $\max(x_i)$ to stabilize the computation.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">202</span>        <span class="n">max_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">203</span>        <span class="n">max_pos_bias</span> <span class="o">=</span> <span class="n">pos_bias</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>$\exp \big(K_{t&rsquo;}- \max_{t&rsquo;}(K_{t&rsquo;})\big)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">206</span>        <span class="n">exp_key</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">key</span> <span class="o">-</span> <span class="n">max_key</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>$\exp \big(w_{t,t&rsquo;} - \max_{t&rsquo;}(w_{t,t&rsquo;})\big)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">208</span>        <span class="n">exp_pos_bias</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">pos_bias</span> <span class="o">-</span> <span class="n">max_pos_bias</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>The numerator part $\sum_{t&rsquo;=1}^T \exp(w_{t,t&rsquo;}) \odot \exp(K_{t&rsquo;}) \odot V_{t&rsquo;}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">211</span>        <span class="n">num</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijb,jbd-&gt;ibd&#39;</span><span class="p">,</span> <span class="n">exp_pos_bias</span><span class="p">,</span> <span class="n">exp_key</span> <span class="o">*</span> <span class="n">value</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>The denominator part $\sum_{t&rsquo;=1}^T \exp(w_{t,t&rsquo;}) \odot \exp(K_{t&rsquo;})$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">213</span>        <span class="n">den</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijb,jbd-&gt;ibd&#39;</span><span class="p">,</span> <span class="n">exp_pos_bias</span><span class="p">,</span> <span class="n">exp_key</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>Output <script type="math/tex; mode=display">Y_t = \sigma(Q_t) \odot
+        \frac{\sum_{t'=1}^T \exp(w_{t,t'}) \odot \exp(K_{t'}) \odot V_{t'}}
+        {\sum_{t'=1}^T \exp(w_{t,t'}) \odot \exp(K_{t'})}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">218</span>        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">*</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>Output layer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">221</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">y</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>Test local mask</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span><span class="k">def</span> <span class="nf">_test_local_mask</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">228</span>    <span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
+<span class="lineno">229</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">AFTLocal</span><span class="o">.</span><span class="n">create_local_mask</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">233</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">234</span>    <span class="n">_test_local_mask</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

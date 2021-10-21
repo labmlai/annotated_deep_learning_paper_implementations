@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is a PyTorch implementation/tutorial of Deep Q Networks (DQN) from paper Playing Atari with Deep Reinforcement Learning. This includes dueling network architecture, a prioritized replay buffer and double-Q-network training."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Deep Q Networks (DQN)"/>
+    <meta name="twitter:description" content="This is a PyTorch implementation/tutorial of Deep Q Networks (DQN) from paper Playing Atari with Deep Reinforcement Learning. This includes dueling network architecture, a prioritized replay buffer and double-Q-network training."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/rl/dqn/index.html"/>
+    <meta property="og:title" content="Deep Q Networks (DQN)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Deep Q Networks (DQN)"/>
+    <meta property="og:description" content="This is a PyTorch implementation/tutorial of Deep Q Networks (DQN) from paper Playing Atari with Deep Reinforcement Learning. This includes dueling network architecture, a prioritized replay buffer and double-Q-network training."/>
+
+    <title>Deep Q Networks (DQN)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/rl/dqn/index.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">rl</a>
+                <a class="parent" href="index.html">dqn</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/rl/dqn/__init__.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Deep Q Networks (DQN)</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of paper
+ <a href="https://papers.labml.ai/paper/1312.5602">Playing Atari with Deep Reinforcement Learning</a>
+ along with <a href="model.html">Dueling Network</a>, <a href="replay_buffer.html">Prioritized Replay</a>
+ and Double Q Network.</p>
+<p>Here is the <a href="experiment.html">experiment</a> and <a href="model.html">model</a> implementation.</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a href="https://app.labml.ai/run/fe1ad986237511ec86e8b763a2d3f710"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">25</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="lineno">26</span>
+<span class="lineno">27</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">28</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">29</span>
+<span class="lineno">30</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">tracker</span>
+<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">32</span><span class="kn">from</span> <span class="nn">labml_nn.rl.dqn.replay_buffer</span> <span class="kn">import</span> <span class="n">ReplayBuffer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Train the model</h2>
+<p>We want to find optimal action-value function.</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+    Q^*(s,a) &= \max_\pi \mathbb{E} \Big[
+        r_t + \gamma r_{t + 1} + \gamma^2 r_{t + 2} + ... | s_t = s, a_t = a, \pi
+    \Big]
+\\
+    Q^*(s,a) &= \mathop{\mathbb{E}}_{s' \sim \large{\varepsilon}} \Big[
+        r + \gamma \max_{a'} Q^* (s', a') | s, a
+    \Big]
+\end{align}</script>
+</p>
+<h3>Target network 🎯</h3>
+<p>In order to improve stability we use experience replay that randomly sample
+from previous experience $U(D)$. We also use a Q network
+with a separate set of paramters $\color{orangle}{\theta_i^{-}}$ to calculate the target.
+$\color{orangle}{\theta_i^{-}}$ is updated periodically.
+This is according to paper
+<a href="https://deepmind.com/research/dqn/">Human Level Control Through Deep Reinforcement Learning</a>.</p>
+<p>So the loss function is,
+<script type="math/tex; mode=display">
+\mathcal{L}_i(\theta_i) = \mathop{\mathbb{E}}_{(s,a,r,s') \sim U(D)}
+\bigg[
+    \Big(
+        r + \gamma \max_{a'} Q(s', a'; \color{orange}{\theta_i^{-}}) - Q(s,a;\theta_i)
+    \Big) ^ 2
+\bigg]
+</script>
+</p>
+<h3>Double $Q$-Learning</h3>
+<p>The max operator in the above calculation uses same network for both
+selecting the best action and for evaluating the value.
+That is,
+<script type="math/tex; mode=display">
+\max_{a'} Q(s', a'; \theta) = \color{cyan}{Q}
+\Big(
+    s', \mathop{\operatorname{argmax}}_{a'}
+    \color{cyan}{Q}(s', a'; \color{cyan}{\theta}); \color{cyan}{\theta}
+\Big)
+</script>
+We use <a href="https://papers.labml.ai/paper/1509.06461">double Q-learning</a>, where
+the $\operatorname{argmax}$ is taken from $\color{cyan}{\theta_i}$ and
+the value is taken from $\color{orange}{\theta_i^{-}}$.</p>
+<p>And the loss function becomes,
+<script type="math/tex; mode=display">\begin{align}
+    \mathcal{L}_i(\theta_i) = \mathop{\mathbb{E}}_{(s,a,r,s') \sim U(D)}
+    \Bigg[
+        \bigg(
+            &r + \gamma \color{orange}{Q}
+            \Big(
+                s',
+                \mathop{\operatorname{argmax}}_{a'}
+                    \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+            \Big)
+            \\
+            - &Q(s,a;\theta_i)
+        \bigg) ^ 2
+    \Bigg]
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">35</span><span class="k">class</span> <span class="nc">QFuncLoss</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">102</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">103</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">104</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+<span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">huber_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">SmoothL1Loss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <ul>
+<li><code>q</code> - $Q(s;\theta_i)$</li>
+<li><code>action</code> - $a$</li>
+<li><code>double_q</code> - $\color{cyan}Q(s&rsquo;;\color{cyan}{\theta_i})$</li>
+<li><code>target_q</code> - $\color{orange}Q(s&rsquo;;\color{orange}{\theta_i^{-}})$</li>
+<li><code>done</code> - whether the game ended after taking the action</li>
+<li><code>reward</code> - $r$</li>
+<li><code>weights</code> - weights of the samples from prioritized experienced replay</li>
+</ul>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">107</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">double_q</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">108</span>                <span class="n">target_q</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">done</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">reward</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+<span class="lineno">109</span>                <span class="n">weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>$Q(s,a;\theta_i)$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>        <span class="n">q_sampled_action</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">action</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">122</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;q_sampled_action&#39;</span><span class="p">,</span> <span class="n">q_sampled_action</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Gradients shouldn&rsquo;t propagate gradients
+<script type="math/tex; mode=display">r + \gamma \color{orange}{Q}
+                \Big(s',
+                    \mathop{\operatorname{argmax}}_{a'}
+                        \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+                \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Get the best action at state $s&rsquo;$
+<script type="math/tex; mode=display">\mathop{\operatorname{argmax}}_{a'}
+ \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i})</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>            <span class="n">best_next_action</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">double_q</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Get the q value from the target network for the best action at state $s&rsquo;$
+<script type="math/tex; mode=display">\color{orange}{Q}
+\Big(s',\mathop{\operatorname{argmax}}_{a'}
+\color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+\Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>            <span class="n">best_next_q_value</span> <span class="o">=</span> <span class="n">target_q</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">best_next_action</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Calculate the desired Q value.
+We multiply by <code>(1 - done)</code> to zero out
+the next state Q values if the game ended.</p>
+<p>
+<script type="math/tex; mode=display">r + \gamma \color{orange}{Q}
+                \Big(s',
+                    \mathop{\operatorname{argmax}}_{a'}
+                        \color{cyan}{Q}(s', a'; \color{cyan}{\theta_i}); \color{orange}{\theta_i^{-}}
+                \Big)</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>            <span class="n">q_update</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">best_next_q_value</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">done</span><span class="p">)</span>
+<span class="lineno">152</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;q_update&#39;</span><span class="p">,</span> <span class="n">q_update</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Temporal difference error $\delta$ is used to weigh samples in replay buffer</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">155</span>            <span class="n">td_error</span> <span class="o">=</span> <span class="n">q_sampled_action</span> <span class="o">-</span> <span class="n">q_update</span>
+<span class="lineno">156</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;td_error&#39;</span><span class="p">,</span> <span class="n">td_error</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>We take <a href="https://en.wikipedia.org/wiki/Huber_loss">Huber loss</a> instead of
+mean squared error loss because it is less sensitive to outliers</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">160</span>        <span class="n">losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">huber_loss</span><span class="p">(</span><span class="n">q_sampled_action</span><span class="p">,</span> <span class="n">q_update</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Get weighted means</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">162</span>        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">losses</span><span class="p">)</span>
+<span class="lineno">163</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;loss&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+<span class="lineno">164</span>
+<span class="lineno">165</span>        <span class="k">return</span> <span class="n">td_error</span><span class="p">,</span> <span class="n">loss</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

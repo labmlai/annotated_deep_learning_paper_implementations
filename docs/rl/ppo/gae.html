@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A PyTorch implementation/tutorial of Generalized Advantage Estimation (GAE)."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Generalized Advantage Estimation (GAE)"/>
+    <meta name="twitter:description" content="A PyTorch implementation/tutorial of Generalized Advantage Estimation (GAE)."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/rl/ppo/gae.html"/>
+    <meta property="og:title" content="Generalized Advantage Estimation (GAE)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LabML Neural Networks"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Generalized Advantage Estimation (GAE)"/>
+    <meta property="og:description" content="A PyTorch implementation/tutorial of Generalized Advantage Estimation (GAE)."/>
+
+    <title>Generalized Advantage Estimation (GAE)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css">
+    <link rel="canonical" href="https://nn.labml.ai/rl/ppo/gae.html"/>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">rl</a>
+                <a class="parent" href="index.html">ppo</a>
+            </p>
+            <p>
+
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/rl/ppo/gae.py">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai"
+                   rel="nofollow">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Generalized Advantage Estimation (GAE)</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of paper
+<a href="https://papers.labml.ai/paper/1506.02438">Generalized Advantage Estimation</a>.</p>
+<p>You can find an experiment that uses it <a href="experiment.html">here</a>.</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">15</span><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">18</span><span class="k">class</span> <span class="nc">GAE</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">19</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_workers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">worker_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="lineno">20</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_</span> <span class="o">=</span> <span class="n">lambda_</span>
+<span class="lineno">21</span>        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+<span class="lineno">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span> <span class="o">=</span> <span class="n">worker_steps</span>
+<span class="lineno">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_workers</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <h3>Calculate advantages</h3>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\hat{A_t^{(1)}} &= r_t + \gamma V(s_{t+1}) - V(s)
+\\
+\hat{A_t^{(2)}} &= r_t + \gamma r_{t+1} +\gamma^2 V(s_{t+2}) - V(s)
+\\
+...
+\\
+\hat{A_t^{(\infty)}} &= r_t + \gamma r_{t+1} +\gamma^2 r_{t+1} + ... - V(s)
+\end{align}</script>
+</p>
+<p>$\hat{A_t^{(1)}}$ is high bias, low variance, whilst
+$\hat{A_t^{(\infty)}}$ is unbiased, high variance.</p>
+<p>We take a weighted average of $\hat{A_t^{(k)}}$ to balance bias and variance.
+This is called Generalized Advantage Estimation.
+<script type="math/tex; mode=display">\hat{A_t} = \hat{A_t^{GAE}} = \sum_k w_k \hat{A_t^{(k)}}</script>
+We set $w_k = \lambda^{k-1}$, this gives clean calculation for
+$\hat{A_t}$</p>
+<p>
+<script type="math/tex; mode=display">\begin{align}
+\delta_t &= r_t + \gamma V(s_{t+1}) - V(s_t)
+\\
+\hat{A_t} &= \delta_t + \gamma \lambda \delta_{t+1} + ... +
+                     (\gamma \lambda)^{T - t + 1} \delta_{T - 1}
+\\
+&= \delta_t + \gamma \lambda \hat{A_{t+1}}
+\end{align}</script>
+</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">25</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">done</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rewards</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>advantages table</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">58</span>        <span class="n">advantages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="lineno">59</span>        <span class="n">last_advantage</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>$V(s_{t+1})$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">62</span>        <span class="n">last_value</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="lineno">63</span>
+<span class="lineno">64</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">worker_steps</span><span class="p">)):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>mask if episode completed after step $t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>            <span class="n">mask</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">done</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span>
+<span class="lineno">67</span>            <span class="n">last_value</span> <span class="o">=</span> <span class="n">last_value</span> <span class="o">*</span> <span class="n">mask</span>
+<span class="lineno">68</span>            <span class="n">last_advantage</span> <span class="o">=</span> <span class="n">last_advantage</span> <span class="o">*</span> <span class="n">mask</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>$\delta_t$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>            <span class="n">delta</span> <span class="o">=</span> <span class="n">rewards</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">last_value</span> <span class="o">-</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>$\hat{A_t} = \delta_t + \gamma \lambda \hat{A_{t+1}}$</p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">73</span>            <span class="n">last_advantage</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_</span> <span class="o">*</span> <span class="n">last_advantage</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>note that we are collecting in reverse order.
+<em>My initial code was appending to a list and
+  I forgot to reverse it later.
+It took me around 4 to 5 hours to find the bug.
+The performance of the model was improving
+ slightly during initial runs,
+ probably because the samples are similar.</em></p>
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">82</span>            <span class="n">advantages</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_advantage</span>
+<span class="lineno">83</span>
+<span class="lineno">84</span>            <span class="n">last_value</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span> <span class="n">t</span><span class="p">]</span>
+<span class="lineno">85</span>
+<span class="lineno">86</span>        <span class="k">return</span> <span class="n">advantages</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
+</script>
+<!-- MathJax configuration -->
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'] ],
+            displayMath: [ ['$$','$$'] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": { fonts: ["TeX"] }
+    });
+
+</script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        console.log(images);
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
