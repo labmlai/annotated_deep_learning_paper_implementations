@@ -16,7 +16,7 @@ import numpy as np
 
 class Game:
     """
-    <a name="game-environment"></a>
+    <a id="GameEnvironment"></a>
 
     ## Game environment
 
