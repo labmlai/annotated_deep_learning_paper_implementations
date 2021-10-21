@@ -19,10 +19,10 @@ of the paper including other variants they compare with in the paper.*
 
 ## Fast weights
 
-Consider a sequence of inputs $\big\\{x^{(i)}\big\\}^L_{i=1}$ or length $L$
+Consider a sequence of inputs $\big\{x^{(i)}\big\}^L_{i=1}$ or length $L$
 and each step is a vector of size $d_{in}$; i.e. $x \in \mathbb{R}^{d_{in}}$.
 The fast weight model generates a weight matrix at each step to produce output
-$\big\\{y^{(i)}\big\\}^L_{i=1}$, $y \in \mathbb{R}^{d_{out}}$
+$\big\{y^{(i)}\big\}^L_{i=1}$, $y \in \mathbb{R}^{d_{out}}$
 
 \begin{align}
 a^{(i)}, b^{(i)} &= \textcolor{orange}{W_a} x^{(i)}, \textcolor{orange}{W_b} x^{(i)} \\

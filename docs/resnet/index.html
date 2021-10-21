@@ -24,6 +24,8 @@
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../pylit.css">
     <link rel="canonical" href="https://nn.labml.ai/resnet/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
     <script>
@@ -67,42 +69,23 @@
                 <a href='#section-0'>#</a>
             </div>
             <h1>Deep Residual Learning for Image Recognition (ResNet)</h1>
-<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper
-<a href="https://papers.labml.ai/paper/1512.03385">Deep Residual Learning for Image Recognition</a>.</p>
-<p>ResNets train layers as residual functions to overcome the
-<em>degradation problem</em>.
-The degradation problem is the accuracy of deep neural networks degrading when
-the number of layers becomes very high.
-The accuracy increases as the number of layers increase, then saturates,
-and then starts to degrade.</p>
-<p>The paper argues that deeper models should perform at least as well as shallower
-models because the extra layers can just learn to perform an identity mapping.</p>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper <a href="https://papers.labml.ai/paper/1512.03385">Deep Residual Learning for Image Recognition</a>.</p>
+<p>ResNets train layers as residual functions to overcome the <em>degradation problem</em>. The degradation problem is the accuracy of deep neural networks degrading when the number of layers becomes very high. The accuracy increases as the number of layers increase, then saturates, and then starts to degrade.</p>
+<p>The paper argues that deeper models should perform at least as well as shallower models because the extra layers can just learn to perform an identity mapping.</p>
 <h2>Residual Learning</h2>
-<p>If $\mathcal{H}(x)$ is the mapping that needs to be learned by a few layers,
-they train the residual function</p>
-<p>
-<script type="math/tex; mode=display">\mathcal{F}(x) = \mathcal{H}(x) - x</script>
-</p>
-<p>instead. And the original function becomes $\mathcal{F}(x) + x$.</p>
-<p>In this case, learning identity mapping for $\mathcal{H}(x)$ is
-equivalent to learning $\mathcal{F}(x)$ to be $0$, which is easier to
-learn.</p>
+<p>If <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.00965em;">H</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span> is the mapping that needs to be learned by a few layers, they train the residual function</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.00965em;">H</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span></span></p>
+<p>instead. And the original function becomes <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span>.</p>
+<p>In this case, learning identity mapping for <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.00965em;">H</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span> is equivalent to learning <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span> to be <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span>, which is easier to learn.</p>
 <p>In the parameterized form this can be written as,</p>
-<p>
-<script type="math/tex; mode=display">\mathcal{F}(x, \{W_i\}) + x</script>
-</p>
-<p>and when the feature map sizes of $\mathcal{F}(x, {W_i})$ and $x$ are different
-the paper suggests doing a linear projection, with learned weights $W_s$.</p>
-<p>
-<script type="math/tex; mode=display">\mathcal{F}(x, \{W_i\}) + W_s x</script>
-</p>
-<p>Paper experimented with zero padding instead of linear projections and found linear projections
-to work better. Also when the feature map sizes match they found identity mapping
-to be better than linear projections.</p>
-<p>$\mathcal{F}$ should have more than one layer, otherwise the sum $\mathcal{F}(x, {W_i}) + W_s x$
-also won&rsquo;t have non-linearities and will be like a linear layer.</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen">{</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">})</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span></span></p>
+<p>and when the feature map sizes of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> and <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> are different the paper suggests doing a linear projection, with learned weights <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen">{</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">})</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span></span></p>
+<p>Paper experimented with zero padding instead of linear projections and found linear projections to work better. Also when the feature map sizes match they found identity mapping to be better than linear projections.</p>
+<p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span></span></span></span> should have more than one layer, otherwise the sum <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen">{</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">})</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span> also won&#x27;t have non-linearities and will be like a linear layer.</p>
 <p>Here is <a href="experiment.html">the training code</a> for training a ResNet on CIFAR-10.</p>
-<p><a href="https://app.labml.ai/run/fc5ad600e4af11ebbafd23b8665193c1"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen" /></a></p>
+<p><a href="https://app.labml.ai/run/fc5ad600e4af11ebbafd23b8665193c1"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">57</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
@@ -119,7 +102,8 @@ also won&rsquo;t have non-linearities and will be like a linear layer.</p>
                 <a href='#section-1'>#</a>
             </div>
             <h2>Linear projections for shortcut connection</h2>
-<p>This does the $W_s x$ projection described above.</p>
+<p>This does the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span> projection described above.</p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">65</span><span class="k">class</span> <span class="nc">ShortcutProjection</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -130,12 +114,13 @@ also won&rsquo;t have non-linearities and will be like a linear layer.</p>
             <div class='section-link'>
                 <a href='#section-2'>#</a>
             </div>
-            <ul>
-<li><code>in_channels</code> is the number of channels in $x$</li>
-<li><code>out_channels</code> is the number of channels in $\mathcal{F}(x, {W_i})$</li>
-<li><code>stride</code> is the stride length in the convolution operation for $F$.
-We do the same stride on the shortcut connection, to match the feature-map size.</li>
-</ul>
+            <ul><li><code>in_channels</code>
+ is the number of channels in <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> </li>
+<li><code>out_channels</code>
+ is the number of channels in <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.09931em;">F</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen">{</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">})</span></span></span></span> </li>
+<li><code>stride</code>
+ is the stride length in the convolution operation for <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span>. We do the same stride on the shortcut connection, to match the feature-map size.</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -157,7 +142,8 @@ We do the same stride on the shortcut connection, to match the feature-map size.
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <p>Convolution layer for linear projection $W_s x$</p>
+            <p>Convolution layer for linear projection <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">82</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">)</span></pre></div>
@@ -168,7 +154,8 @@ We do the same stride on the shortcut connection, to match the feature-map size.
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            <p>Paper suggests adding batch normalization after each convolution operation</p>
+            <p>Paper suggests adding batch normalization after each convolution operation </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">84</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
@@ -190,7 +177,8 @@ We do the same stride on the shortcut connection, to match the feature-map size.
             <div class='section-link'>
                 <a href='#section-7'>#</a>
             </div>
-            <p>Convolution and batch normalization</p>
+            <p>Convolution and batch normalization </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">88</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
@@ -201,17 +189,20 @@ We do the same stride on the shortcut connection, to match the feature-map size.
             <div class='section-link'>
                 <a href='#section-8'>#</a>
             </div>
-            <p><a id="residual_block"></a></p>
+            <p> <a id="residual_block"></a></p>
 <h2>Residual Block</h2>
-<p>This implements the residual block described in the paper.
-It has two $3 \times 3$ convolution layers.</p>
-<p><img alt="Residual Block" src="residual_block.svg" /></p>
-<p>The first convolution layer maps from <code>in_channels</code> to <code>out_channels</code>,
-where the <code>out_channels</code> is higher than <code>in_channels</code> when we reduce the
-feature map size with a stride length greater than $1$.</p>
-<p>The second convolution layer maps from <code>out_channels</code> to <code>out_channels</code> and
-always has a stride length of 1.</p>
+<p>This implements the residual block described in the paper. It has two <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span> convolution layers.</p>
+<p><img alt="Residual Block" src="residual_block.svg"></p>
+<p>The first convolution layer maps from <code>in_channels</code>
+ to <code>out_channels</code>
+, where the <code>out_channels</code>
+ is higher than <code>in_channels</code>
+ when we reduce the feature map size with a stride length greater than <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span>.</p>
+<p>The second convolution layer maps from <code>out_channels</code>
+ to <code>out_channels</code>
+ and always has a stride length of 1.</p>
 <p>Both convolution layers are followed by batch normalization.</p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">91</span><span class="k">class</span> <span class="nc">ResidualBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -222,11 +213,13 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-9'>#</a>
             </div>
-            <ul>
-<li><code>in_channels</code> is the number of channels in $x$</li>
-<li><code>out_channels</code> is the number of output channels</li>
-<li><code>stride</code> is the stride length in the convolution operation.</li>
-</ul>
+            <ul><li><code>in_channels</code>
+ is the number of channels in <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> </li>
+<li><code>out_channels</code>
+ is the number of output channels </li>
+<li><code>stride</code>
+ is the stride length in the convolution operation.</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">112</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -248,7 +241,9 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>First $3 \times 3$ convolution layer, this maps to <code>out_channels</code></p>
+            <p>First <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span> convolution layer, this maps to <code>out_channels</code>
+ </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">121</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -259,7 +254,8 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>Batch normalization after the first convolution</p>
+            <p>Batch normalization after the first convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">123</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
@@ -270,7 +266,8 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-13'>#</a>
             </div>
-            <p>First activation function (ReLU)</p>
+            <p>First activation function (ReLU) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
@@ -281,7 +278,8 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-14'>#</a>
             </div>
-            <p>Second $3 \times 3$ convolution layer</p>
+            <p>Second <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span> convolution layer </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">128</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -292,7 +290,8 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-15'>#</a>
             </div>
-            <p>Batch normalization after the second convolution</p>
+            <p>Batch normalization after the second convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">130</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
@@ -303,8 +302,8 @@ always has a stride length of 1.</p>
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <p>Shortcut connection should be a projection if the stride length is not $1$
-of if the number of channels change</p>
+            <p>Shortcut connection should be a projection if the stride length is not <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> of if the number of channels change </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">134</span>        <span class="k">if</span> <span class="n">stride</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span></pre></div>
@@ -315,7 +314,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-17'>#</a>
             </div>
-            <p>Projection $W_s x$</p>
+            <p>Projection <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">136</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">ShortcutProjection</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span>
@@ -327,7 +327,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-18'>#</a>
             </div>
-            <p>Identity $x$</p>
+            <p>Identity <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">139</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span></pre></div>
@@ -338,7 +339,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-19'>#</a>
             </div>
-            <p>Second activation function (ReLU) (after adding the shortcut)</p>
+            <p>Second activation function (ReLU) (after adding the shortcut) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">142</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
@@ -349,9 +351,10 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-20'>#</a>
             </div>
-            <ul>
-<li><code>x</code> is the input of shape <code>[batch_size, in_channels, height, width]</code></li>
-</ul>
+            <ul><li><code>x</code>
+ is the input of shape <code>[batch_size, in_channels, height, width]</code>
+</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">144</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -362,7 +365,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-21'>#</a>
             </div>
-            <p>Get the shortcut connection</p>
+            <p>Get the shortcut connection </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">149</span>        <span class="n">shortcut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -373,7 +377,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-22'>#</a>
             </div>
-            <p>First convolution and activation</p>
+            <p>First convolution and activation </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">151</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
@@ -384,7 +389,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>Second convolution</p>
+            <p>Second convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">153</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
@@ -395,7 +401,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>Activation function after adding the shortcut</p>
+            <p>Activation function after adding the shortcut </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">155</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">act2</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">shortcut</span><span class="p">)</span></pre></div>
@@ -406,23 +413,27 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-25'>#</a>
             </div>
-            <p><a id="bottleneck_residual_block"></a></p>
+            <p> <a id="bottleneck_residual_block"></a></p>
 <h2>Bottleneck Residual Block</h2>
-<p>This implements the bottleneck block described in the paper.
-It has $1 \times 1$, $3 \times 3$, and $1 \times 1$ convolution layers.</p>
-<p><img alt="Bottlenext Block" src="bottleneck_block.svg" /></p>
-<p>The first convolution layer maps from <code>in_channels</code> to <code>bottleneck_channels</code> with a $1x1$
-convolution,
-where the <code>bottleneck_channels</code> is lower than <code>in_channels</code>.</p>
-<p>The second $3x3$ convolution layer maps from <code>bottleneck_channels</code> to <code>bottleneck_channels</code>.
-This can have a stride length greater than $1$ when we want to compress the
-feature map size.</p>
-<p>The third, final $1x1$ convolution layer maps to <code>out_channels</code>.
-<code>out_channels</code> is higher than <code>in_channels</code> if the stride length is greater than $1$;
-otherwise, $out_channels$ is equal to <code>in_channels</code>.</p>
-<p><code>bottleneck_channels</code> is less than <code>in_channels</code> and the $3x3$ convolution is performed
-on this shrunk space (hence the bottleneck). The two $1x1$ convolution decreases and increases
-the number of channels.</p>
+<p>This implements the bottleneck block described in the paper. It has <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span>, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span>, and <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> convolution layers.</p>
+<p><img alt="Bottlenext Block" src="bottleneck_block.svg"></p>
+<p>The first convolution layer maps from <code>in_channels</code>
+ to <code>bottleneck_channels</code>
+ with a <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord mathnormal">x</span><span class="mord">1</span></span></span></span> convolution, where the <code>bottleneck_channels</code>
+ is lower than <code>in_channels</code>
+.</p>
+<p>The second <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span><span class="mord mathnormal">x</span><span class="mord">3</span></span></span></span> convolution layer maps from <code>bottleneck_channels</code>
+ to <code>bottleneck_channels</code>
+. This can have a stride length greater than <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> when we want to compress the feature map size.</p>
+<p>The third, final <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord mathnormal">x</span><span class="mord">1</span></span></span></span> convolution layer maps to <code>out_channels</code>
+. <code>out_channels</code>
+ is higher than <code>in_channels</code>
+ if the stride length is greater than <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span>; otherwise, <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathnormal">o</span><span class="mord mathnormal">u</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">hann</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">s</span></span></span></span> is equal to <code>in_channels</code>
+.</p>
+<p><code>bottleneck_channels</code>
+ is less than <code>in_channels</code>
+ and the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span><span class="mord mathnormal">x</span><span class="mord">3</span></span></span></span> convolution is performed on this shrunk space (hence the bottleneck). The two <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord mathnormal">x</span><span class="mord">1</span></span></span></span> convolution decreases and increases the number of channels.</p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">158</span><span class="k">class</span> <span class="nc">BottleneckResidualBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -433,12 +444,15 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-26'>#</a>
             </div>
-            <ul>
-<li><code>in_channels</code> is the number of channels in $x$</li>
-<li><code>bottleneck_channels</code> is the number of channels for the $3x3$ convlution</li>
-<li><code>out_channels</code> is the number of output channels</li>
-<li><code>stride</code> is the stride length in the $3x3$ convolution operation.</li>
-</ul>
+            <ul><li><code>in_channels</code>
+ is the number of channels in <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> </li>
+<li><code>bottleneck_channels</code>
+ is the number of channels for the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span><span class="mord mathnormal">x</span><span class="mord">3</span></span></span></span> convlution </li>
+<li><code>out_channels</code>
+ is the number of output channels </li>
+<li><code>stride</code>
+ is the stride length in the <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span><span class="mord mathnormal">x</span><span class="mord">3</span></span></span></span> convolution operation.</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">186</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
@@ -460,7 +474,9 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-28'>#</a>
             </div>
-            <p>First $1 \times 1$ convolution layer, this maps to <code>bottleneck_channels</code></p>
+            <p>First <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> convolution layer, this maps to <code>bottleneck_channels</code>
+ </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">196</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -471,7 +487,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Batch normalization after the first convolution</p>
+            <p>Batch normalization after the first convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">198</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">)</span></pre></div>
@@ -482,7 +499,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-30'>#</a>
             </div>
-            <p>First activation function (ReLU)</p>
+            <p>First activation function (ReLU) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">200</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
@@ -493,7 +511,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-31'>#</a>
             </div>
-            <p>Second $3 \times 3$ convolution layer</p>
+            <p>Second <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span> convolution layer </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">203</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -504,7 +523,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-32'>#</a>
             </div>
-            <p>Batch normalization after the second convolution</p>
+            <p>Batch normalization after the second convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">)</span></pre></div>
@@ -515,7 +535,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-33'>#</a>
             </div>
-            <p>Second activation function (ReLU)</p>
+            <p>Second activation function (ReLU) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">207</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
@@ -526,7 +547,9 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-34'>#</a>
             </div>
-            <p>Third $1 \times 1$ convolution layer, this maps to <code>out_channels</code>.</p>
+            <p>Third <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> convolution layer, this maps to <code>out_channels</code>
+. </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">210</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -537,7 +560,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-35'>#</a>
             </div>
-            <p>Batch normalization after the second convolution</p>
+            <p>Batch normalization after the second convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">212</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
@@ -548,8 +572,8 @@ the number of channels.</p>
             <div class='section-link'>
                 <a href='#section-36'>#</a>
             </div>
-            <p>Shortcut connection should be a projection if the stride length is not $1$
-of if the number of channels change</p>
+            <p>Shortcut connection should be a projection if the stride length is not <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> of if the number of channels change </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">216</span>        <span class="k">if</span> <span class="n">stride</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span></pre></div>
@@ -560,7 +584,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <p>Projection $W_s x$</p>
+            <p>Projection <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">x</span></span></span></span> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">218</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">ShortcutProjection</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span>
@@ -572,7 +597,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-38'>#</a>
             </div>
-            <p>Identity $x$</p>
+            <p>Identity <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">221</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span></pre></div>
@@ -583,7 +609,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-39'>#</a>
             </div>
-            <p>Second activation function (ReLU) (after adding the shortcut)</p>
+            <p>Second activation function (ReLU) (after adding the shortcut) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
@@ -594,9 +621,10 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-40'>#</a>
             </div>
-            <ul>
-<li><code>x</code> is the input of shape <code>[batch_size, in_channels, height, width]</code></li>
-</ul>
+            <ul><li><code>x</code>
+ is the input of shape <code>[batch_size, in_channels, height, width]</code>
+</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">226</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -607,7 +635,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-41'>#</a>
             </div>
-            <p>Get the shortcut connection</p>
+            <p>Get the shortcut connection </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">231</span>        <span class="n">shortcut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -618,7 +647,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-42'>#</a>
             </div>
-            <p>First convolution and activation</p>
+            <p>First convolution and activation </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">233</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
@@ -629,7 +659,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-43'>#</a>
             </div>
-            <p>Second convolution and activation</p>
+            <p>Second convolution and activation </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
@@ -640,7 +671,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-44'>#</a>
             </div>
-            <p>Third convolution</p>
+            <p>Third convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">237</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv3</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
@@ -651,7 +683,8 @@ of if the number of channels change</p>
             <div class='section-link'>
                 <a href='#section-45'>#</a>
             </div>
-            <p>Activation function after adding the shortcut</p>
+            <p>Activation function after adding the shortcut </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">239</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">act3</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">shortcut</span><span class="p">)</span></pre></div>
@@ -663,13 +696,9 @@ of if the number of channels change</p>
                 <a href='#section-46'>#</a>
             </div>
             <h2>ResNet Model</h2>
-<p>This is a the base of the resnet model without
-the final linear layer and softmax for classification.</p>
-<p>The resnet is made of stacked <a href="#residual_block">residual blocks</a> or
-<a href="#bottleneck_residual_block">bottleneck residual blocks</a>.
-The feature map size is halved after a few blocks with a block of stride length $2$.
-The number of channels is increased when the feature map size is reduced.
-Finally the feature map is average pooled to get a vector representation.</p>
+<p>This is a the base of the resnet model without the final linear layer and softmax for classification.</p>
+<p>The resnet is made of stacked <a href="#residual_block">residual blocks</a> or <a href="#bottleneck_residual_block">bottleneck residual blocks</a>. The feature map size is halved after a few blocks with a block of stride length <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span>. The number of channels is increased when the feature map size is reduced. Finally the feature map is average pooled to get a vector representation.</p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">242</span><span class="k">class</span> <span class="nc">ResNetBase</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
@@ -680,14 +709,18 @@ Finally the feature map is average pooled to get a vector representation.</p>
             <div class='section-link'>
                 <a href='#section-47'>#</a>
             </div>
-            <ul>
-<li><code>n_blocks</code> is a list of of number of blocks for each feature map size.</li>
-<li><code>n_channels</code> is the number of channels for each feature map size.</li>
-<li><code>bottlenecks</code> is the number of channels the bottlenecks.
-If this is <code>None</code>, <a href="#residual_block">residual blocks</a> are used.</li>
-<li><code>img_channels</code> is the number of channels in the input.</li>
-<li><code>first_kernel_size</code> is the kernel size of the initial convolution layer</li>
-</ul>
+            <ul><li><code>n_blocks</code>
+ is a list of of number of blocks for each feature map size. </li>
+<li><code>n_channels</code>
+ is the number of channels for each feature map size. </li>
+<li><code>bottlenecks</code>
+ is the number of channels the bottlenecks. If this is <code>None</code>
+, <a href="#residual_block">residual blocks</a> are used. </li>
+<li><code>img_channels</code>
+ is the number of channels in the input. </li>
+<li><code>first_kernel_size</code>
+ is the kernel size of the initial convolution layer</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">256</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">n_channels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -711,7 +744,8 @@ If this is <code>None</code>, <a href="#residual_block">residual blocks</a> are 
             <div class='section-link'>
                 <a href='#section-49'>#</a>
             </div>
-            <p>Number of blocks and number of channels for each feature map size</p>
+            <p>Number of blocks and number of channels for each feature map size </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">270</span>        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -722,8 +756,8 @@ If this is <code>None</code>, <a href="#residual_block">residual blocks</a> are 
             <div class='section-link'>
                 <a href='#section-50'>#</a>
             </div>
-            <p>If <a href="#bottleneck_residual_block">bottleneck residual blocks</a> are used,
-the number of channels in bottlenecks should be provided for each feature map size</p>
+            <p>If <a href="#bottleneck_residual_block">bottleneck residual blocks</a> are used, the number of channels in bottlenecks should be provided for each feature map size </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">273</span>        <span class="k">assert</span> <span class="n">bottlenecks</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">bottlenecks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
@@ -734,8 +768,10 @@ the number of channels in bottlenecks should be provided for each feature map si
             <div class='section-link'>
                 <a href='#section-51'>#</a>
             </div>
-            <p>Initial convolution layer maps from <code>img_channels</code> to number of channels in the first
-residual block (<code>n_channels[0]</code>)</p>
+            <p>Initial convolution layer maps from <code>img_channels</code>
+ to number of channels in the first residual block (<code>n_channels[0]</code>
+) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">277</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">img_channels</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
@@ -747,7 +783,8 @@ residual block (<code>n_channels[0]</code>)</p>
             <div class='section-link'>
                 <a href='#section-52'>#</a>
             </div>
-            <p>Batch norm after initial convolution</p>
+            <p>Batch norm after initial convolution </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">280</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
@@ -758,7 +795,8 @@ residual block (<code>n_channels[0]</code>)</p>
             <div class='section-link'>
                 <a href='#section-53'>#</a>
             </div>
-            <p>List of blocks</p>
+            <p>List of blocks </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">283</span>        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
@@ -769,7 +807,8 @@ residual block (<code>n_channels[0]</code>)</p>
             <div class='section-link'>
                 <a href='#section-54'>#</a>
             </div>
-            <p>Number of channels from previous layer (or block)</p>
+            <p>Number of channels from previous layer (or block) </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">285</span>        <span class="n">prev_channels</span> <span class="o">=</span> <span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
@@ -780,7 +819,8 @@ residual block (<code>n_channels[0]</code>)</p>
             <div class='section-link'>
                 <a href='#section-55'>#</a>
             </div>
-            <p>Loop through each feature map size</p>
+            <p>Loop through each feature map size </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">287</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">channels</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span></pre></div>
@@ -791,8 +831,8 @@ residual block (<code>n_channels[0]</code>)</p>
             <div class='section-link'>
                 <a href='#section-56'>#</a>
             </div>
-            <p>The first block for the new feature map size, will have a stride length of $2$
-except fro the very first block</p>
+            <p>The first block for the new feature map size, will have a stride length of <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span> except fro the very first block </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">290</span>            <span class="n">stride</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
@@ -805,7 +845,10 @@ except fro the very first block</p>
             <div class='section-link'>
                 <a href='#section-57'>#</a>
             </div>
-            <p><a href="#residual_block">residual blocks</a> that maps from <code>prev_channels</code> to <code>channels</code></p>
+            <p><a href="#residual_block">residual blocks</a> that maps from <code>prev_channels</code>
+ to <code>channels</code>
+ </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">294</span>                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ResidualBlock</span><span class="p">(</span><span class="n">prev_channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">))</span>
@@ -817,8 +860,10 @@ except fro the very first block</p>
             <div class='section-link'>
                 <a href='#section-58'>#</a>
             </div>
-            <p><a href="#bottleneck_residual_block">bottleneck residual blocks</a>
-that maps from <code>prev_channels</code> to <code>channels</code></p>
+            <p><a href="#bottleneck_residual_block">bottleneck residual blocks</a> that maps from <code>prev_channels</code>
+ to <code>channels</code>
+ </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">298</span>                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BottleneckResidualBlock</span><span class="p">(</span><span class="n">prev_channels</span><span class="p">,</span> <span class="n">bottlenecks</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">channels</span><span class="p">,</span>
@@ -830,7 +875,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-59'>#</a>
             </div>
-            <p>Change the number of channels</p>
+            <p>Change the number of channels </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">302</span>            <span class="n">prev_channels</span> <span class="o">=</span> <span class="n">channels</span></pre></div>
@@ -841,7 +887,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-60'>#</a>
             </div>
-            <p>Add rest of the blocks - no change in feature map size or channels</p>
+            <p>Add rest of the blocks - no change in feature map size or channels </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">304</span>            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
@@ -853,7 +900,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-61'>#</a>
             </div>
-            <p><a href="#residual_block">residual blocks</a></p>
+            <p><a href="#residual_block">residual blocks</a> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">307</span>                    <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ResidualBlock</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
@@ -865,7 +913,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-62'>#</a>
             </div>
-            <p><a href="#bottleneck_residual_block">bottleneck residual blocks</a></p>
+            <p><a href="#bottleneck_residual_block">bottleneck residual blocks</a> </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">310</span>                    <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BottleneckResidualBlock</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">bottlenecks</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></pre></div>
@@ -876,7 +925,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-63'>#</a>
             </div>
-            <p>Stack the blocks</p>
+            <p>Stack the blocks </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">313</span>        <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">blocks</span><span class="p">)</span></pre></div>
@@ -887,9 +937,10 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-64'>#</a>
             </div>
-            <ul>
-<li><code>x</code> has shape <code>[batch_size, img_channels, height, width]</code></li>
-</ul>
+            <ul><li><code>x</code>
+ has shape <code>[batch_size, img_channels, height, width]</code>
+</li></ul>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">315</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
@@ -900,7 +951,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-65'>#</a>
             </div>
-            <p>Initial convolution and batch normalization</p>
+            <p>Initial convolution and batch normalization </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">321</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
@@ -911,7 +963,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-66'>#</a>
             </div>
-            <p>Residual (or bottleneck) blocks</p>
+            <p>Residual (or bottleneck) blocks </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">323</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
@@ -922,7 +975,11 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-67'>#</a>
             </div>
-            <p>Change <code>x</code> from shape <code>[batch_size, channels, h, w]</code> to <code>[batch_size, channels, h * w]</code></p>
+            <p>Change <code>x</code>
+ from shape <code>[batch_size, channels, h, w]</code>
+ to <code>[batch_size, channels, h * w]</code>
+ </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">325</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -933,7 +990,8 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
             <div class='section-link'>
                 <a href='#section-68'>#</a>
             </div>
-            <p>Global average pooling</p>
+            <p>Global average pooling </p>
+
         </div>
         <div class='code'>
             <div class="highlight"><pre><span class="lineno">327</span>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
@@ -944,24 +1002,6 @@ that maps from <code>prev_channels</code> to <code>channels</code></p>
         <a href="https://labml.ai">labml.ai</a>
     </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML">
-</script>
-<!-- MathJax configuration -->
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ['$','$'] ],
-            displayMath: [ ['$$','$$'] ],
-            processEscapes: true,
-            processEnvironments: true
-        },
-        // Center justify equations in code and markdown cells. Elsewhere
-        // we use CSS to left justify single line equations in code cells.
-        displayAlign: 'center',
-        "HTML-CSS": { fonts: ["TeX"] }
-    });
-
-</script>
 <script>
     function handleImages() {
         var images = document.querySelectorAll('p>img')
