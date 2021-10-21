@@ -52,7 +52,7 @@ $Z \subseteq H$ is the set of terminal histories (game over).
 
 ### Action
 
-Action $a$, $A(h) = \{a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History).
+Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History).
 
 ### [Information Set $I_i$](#InfoSet)
 
@@ -324,7 +324,7 @@ from labml.configs import BaseConfigs, option
 
 # A player $i \in N$ where $N$ is the set of players
 Player = NewType('Player', int)
-# Action $a$, $A(h) = \{a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History)
+# Action $a$, $A(h) = {a: (h, a) \in H}$ where $h \in H$ is a non-terminal [history](#History)
 Action = NewType('Action', str)
 
 
