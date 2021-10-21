@@ -53,6 +53,7 @@ from labml_nn.utils import clone_module_list
 class PatchEmbeddings(Module):
     """
     <a id="PatchEmbeddings"></a>
+
     ## Get patch embeddings
 
     The paper splits the image into patches of equal size and do a linear transformation
@@ -93,6 +94,7 @@ class PatchEmbeddings(Module):
 class LearnedPositionalEmbeddings(Module):
     """
     <a id="LearnedPositionalEmbeddings"></a>
+
     ## Add parameterized positional encodings
 
     This adds learned positional embeddings to patch embeddings.
@@ -120,6 +122,7 @@ class LearnedPositionalEmbeddings(Module):
 class ClassificationHead(Module):
     """
     <a id="ClassificationHead"></a>
+
     ## MLP Classification Head
 
     This is the two layer MLP head to classify the image based on `[CLS]` token embedding.

@@ -6,6 +6,7 @@ from labml.configs import BaseConfigs, option
 class TokenizerConfigs(BaseConfigs):
     """
     <a id="TokenizerConfigs"></a>
+
     ## Tokenizer Configurations
     """
 

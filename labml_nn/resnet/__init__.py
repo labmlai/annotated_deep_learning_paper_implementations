@@ -91,6 +91,7 @@ class ShortcutProjection(Module):
 class ResidualBlock(Module):
     """
     <a id="residual_block"></a>
+
     ## Residual Block
 
     This implements the residual block described in the paper.
@@ -157,6 +158,7 @@ class ResidualBlock(Module):
 class BottleneckResidualBlock(Module):
     """
     <a id="bottleneck_residual_block"></a>
+
     ## Bottleneck Residual Block
 
     This implements the bottleneck block described in the paper.

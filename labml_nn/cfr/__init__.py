@@ -68,6 +68,7 @@ $h \in I$ is the set of all histories that belong to a given information set;
 i.e. all those histories look the same in the eye of the player.
 
 <a id="Strategy"></a>
+
 ### Strategy
 
 **Strategy of player** $i$, $\sigma_i \in \Sigma_i$ is a distribution over actions $A(I_i)$,
@@ -84,6 +85,7 @@ $\sigma$ is the **strategy profile** which consists of strategies of all players
 $\sigma_{-i}$ is strategies of all players except $\sigma_i$
 
 <a id="HistoryProbability"></a>
+
 ### Probability of History
 
 $\pi^\sigma(h)$ is the probability of reaching the history $h$ with strategy profile $\sigma$.
@@ -109,6 +111,7 @@ $u_i(\sigma)$ is the expected utility (payoff) for player $i$ with strategy prof
 $$u_i(\sigma) = \sum_{h \in Z} u_i(h) \pi^\sigma(h)$$
 
 <a id="NashEquilibrium"></a>
+
 ### Nash Equilibrium
 
 Nash equilibrium is a state where none of the players can increase their expected utility (or payoff)
@@ -204,6 +207,7 @@ You can similarly prove for games with more than 2 players.
 So we need to minimize $R^T_i$ to get close to a Nash equilibrium.
 
 <a id="CounterfactualRegret"></a>
+
 ### Counterfactual regret
 
 **Counterfactual value** $\color{pink}{v_i(\sigma, I)}$ is the expected utility for player $i$ if
@@ -235,6 +239,7 @@ $$R^T_i \le \sum_{I \in \mathcal{I}} R^{T,+}_{i,imm}(I)$$
 where $$R^{T,+}_{i,imm}(I) = \max(R^T_{i,imm}(I), 0)$$
 
 <a id="RegretMatching"></a>
+
 ### Regret Matching
 
 The strategy is calculated using regret matching.
@@ -271,6 +276,7 @@ $R^T_i$ gets smaller proportionate to $\frac{1}{\sqrt T}$, and
 therefore reaches $\epsilon$-[Nash equilibrium](#NashEquilibrium).
 
 <a id="MCCFR"></a>
+
 ### Monte Carlo CFR (MCCFR)
 
 Computing $\color{coral}{r^t_i(I, a)}$ requires expanding the full game tree
@@ -331,6 +337,7 @@ Action = NewType('Action', str)
 class History:
     """
     <a id="History"></a>
+
     ## History
 
     History $h \in H$ is a sequence of actions including chance events,
@@ -404,6 +411,7 @@ class History:
 class InfoSet:
     """
     <a id="InfoSet"></a>
+
     ## Information Set $I_i$
     """
 

@@ -23,6 +23,7 @@ from .positional_encoding import get_positional_encoding
 class EmbeddingsWithPositionalEncoding(Module):
     """
     <a id="EmbeddingsWithPositionalEncoding"></a>
+
     ## Embed tokens and add [fixed positional encoding](positional_encoding.html)
     """
 
@@ -40,6 +41,7 @@ class EmbeddingsWithPositionalEncoding(Module):
 class EmbeddingsWithLearnedPositionalEncoding(Module):
     """
     <a id="EmbeddingsWithLearnedPositionalEncoding"></a>
+
     ## Embed tokens and add parameterized positional encodings
     """
 
@@ -57,6 +59,7 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
 class TransformerLayer(Module):
     """
     <a id="TransformerLayer"></a>
+
     ## Transformer Layer
 
     This can act as an encoder layer or a decoder layer.
@@ -136,6 +139,7 @@ class TransformerLayer(Module):
 class Encoder(Module):
     """
     <a id="Encoder"></a>
+
     ## Transformer Encoder
     """
 
@@ -157,6 +161,7 @@ class Encoder(Module):
 class Decoder(Module):
     """
     <a id="Decoder"></a>
+
     ## Transformer Decoder
     """
 
@@ -178,6 +183,7 @@ class Decoder(Module):
 class Generator(Module):
     """
     <a id="Generator"></a>
+
     ## Generator
 
     This predicts the tokens and gives the lof softmax of those.
@@ -195,6 +201,7 @@ class Generator(Module):
 class EncoderDecoder(Module):
     """
     <a id="EncoderDecoder"></a>
+
     ## Combined Encoder-Decoder
     """
 

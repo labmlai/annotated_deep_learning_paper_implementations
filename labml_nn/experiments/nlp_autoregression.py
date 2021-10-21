@@ -41,6 +41,7 @@ class CrossEntropyLoss(Module):
 class NLPAutoRegressionConfigs(TrainValidConfigs):
     """
     <a id="NLPAutoRegressionConfigs"></a>
+
     ## Trainer configurations
 
     This has the basic configurations for NLP auto-regressive task training.

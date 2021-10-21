@@ -158,6 +158,7 @@ from torch import nn
 class MappingNetwork(nn.Module):
     """
     <a id="mapping_network"></a>
+
     ## Mapping Network
 
     ![Mapping Network](mapping_network.svg)
@@ -196,6 +197,7 @@ class MappingNetwork(nn.Module):
 class Generator(nn.Module):
     """
     <a id="generator"></a>
+
     ## StyleGAN2 Generator
 
     ![Generator](style_gan2.svg)
@@ -276,6 +278,7 @@ class Generator(nn.Module):
 class GeneratorBlock(nn.Module):
     """
     <a id="generator_block"></a>
+
     ### Generator Block
 
     ![Generator block](generator_block.svg)
@@ -327,6 +330,7 @@ class GeneratorBlock(nn.Module):
 class StyleBlock(nn.Module):
     """
     <a id="style_block"></a>
+
     ### Style Block
 
     ![Style block](style_block.svg)
@@ -377,6 +381,7 @@ class StyleBlock(nn.Module):
 class ToRGB(nn.Module):
     """
     <a id="to_rgb"></a>
+
     ### To RGB
 
     ![To RGB](to_rgb.svg)
@@ -489,6 +494,7 @@ class Conv2dWeightModulate(nn.Module):
 class Discriminator(nn.Module):
     """
     <a id="discriminator"></a>
+
     ## StyleGAN 2 Discriminator
 
     ![Discriminator](style_gan2_disc.svg)
@@ -557,6 +563,7 @@ class Discriminator(nn.Module):
 class DiscriminatorBlock(nn.Module):
     """
     <a id="discriminator_black"></a>
+
     ### Discriminator Block
 
     ![Discriminator block](discriminator_block.svg)
@@ -645,6 +652,7 @@ class MiniBatchStdDev(nn.Module):
 class DownSample(nn.Module):
     """
     <a id="down_sample"></a>
+
     ### Down-sample
 
     The down-sample operation [smoothens](#smooth) each feature channel and
@@ -668,6 +676,7 @@ class DownSample(nn.Module):
 class UpSample(nn.Module):
     """
     <a id="up_sample"></a>
+
     ### Up-sample
 
     The up-sample operation scales the image up by $2 \times$ and [smoothens](#smooth) each feature channel.
@@ -690,6 +699,7 @@ class UpSample(nn.Module):
 class Smooth(nn.Module):
     """
     <a id="smooth"></a>
+
     ### Smoothing Layer
 
     This layer blurs each channel
@@ -729,6 +739,7 @@ class Smooth(nn.Module):
 class EqualizedLinear(nn.Module):
     """
     <a id="equalized_linear"></a>
+
     ## Learning-rate Equalized Linear Layer
 
     This uses [learning-rate equalized weights](#equalized_weights) for a linear layer.
@@ -755,6 +766,7 @@ class EqualizedLinear(nn.Module):
 class EqualizedConv2d(nn.Module):
     """
     <a id="equalized_conv2d"></a>
+
     ## Learning-rate Equalized 2D Convolution Layer
 
     This uses [learning-rate equalized weights](#equalized_weights) for a convolution layer.
@@ -784,6 +796,7 @@ class EqualizedConv2d(nn.Module):
 class EqualizedWeight(nn.Module):
     """
     <a id="equalized_weight"></a>
+
     ## Learning-rate Equalized Weights Parameter
 
     This is based on equalized learning rate introduced in the Progressive GAN paper.
@@ -821,6 +834,7 @@ class EqualizedWeight(nn.Module):
 class GradientPenalty(nn.Module):
     """
     <a id="gradient_penalty"></a>
+
     ## Gradient Penalty
 
     This is the $R_1$ regularization penality from the paper
@@ -862,6 +876,7 @@ class GradientPenalty(nn.Module):
 class PathLengthPenalty(nn.Module):
     """
     <a id="path_length_penalty"></a>
+
     ## Path Length Penalty
 
     This regularization encourages a fixed-size step in $w$ to result in a fixed-magnitude

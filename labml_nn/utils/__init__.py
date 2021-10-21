@@ -26,6 +26,7 @@ def clone_module_list(module: M, n: int) -> TypedModuleList[M]:
 def cycle_dataloader(data_loader):
     """
     <a id="cycle_dataloader"></a>
+
     ## Cycle Data Loader
 
     Infinite loader that recycles the data loader after each epoch
@@ -38,6 +39,7 @@ def cycle_dataloader(data_loader):
 class MapStyleDataset(Dataset):
     """
     <a id="map_style_dataset"></a>
+
     ## Map Style Dataset
 
     This converts an [`IterableDataset`](https://pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset)

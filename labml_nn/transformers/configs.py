@@ -21,6 +21,7 @@ from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPosit
 class FeedForwardConfigs(BaseConfigs):
     """
     <a id="FFN"></a>
+
     ## FFN Configurations
 
     Creates a Position-wise FeedForward Network defined in
@@ -143,6 +144,7 @@ aggregate(FeedForwardConfigs.glu_variant, 'SwiGLU',
 class TransformerConfigs(BaseConfigs):
     """
     <a id="TransformerConfigs"></a>
+
     ## Transformer Configurations
 
     This defines configurations for a transformer.

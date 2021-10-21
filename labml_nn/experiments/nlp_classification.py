@@ -29,6 +29,7 @@ from labml_nn.optimizers.configs import OptimizerConfigs
 class NLPClassificationConfigs(TrainValidConfigs):
     """
     <a id="NLPClassificationConfigs"></a>
+
     ## Trainer configurations
 
     This has the basic configurations for NLP classification task training.

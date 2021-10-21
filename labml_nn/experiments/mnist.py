@@ -24,6 +24,7 @@ from labml_nn.optimizers.configs import OptimizerConfigs
 class MNISTConfigs(MNISTDatasetConfigs, TrainValidConfigs):
     """
     <a id="MNISTConfigs"></a>
+
     ## Trainer configurations
     """
 

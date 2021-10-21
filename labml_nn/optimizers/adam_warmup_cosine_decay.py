@@ -18,6 +18,7 @@ from labml_nn.optimizers.amsgrad import AMSGrad
 class AdamWarmupCosineDecay(AMSGrad):
     """
     <a id="EmbeddingsWithPositionalEncoding"></a>
+
     ## Adam Optimizer with Warmup and Cosine Decay
 
     This class extends from AMSGrad optimizer defined in [`amsgrad.py`](amsgrad.html).

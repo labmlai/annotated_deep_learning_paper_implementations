@@ -30,6 +30,7 @@ from labml_helpers.module import Module
 class PrepareForMultiHeadAttention(Module):
     """
     <a id="PrepareMHA"></a>
+
     ## Prepare for multi-head attention
 
     This module does a linear transformation and splits the vector into given
@@ -65,6 +66,7 @@ class PrepareForMultiHeadAttention(Module):
 class MultiHeadAttention(Module):
     r"""
     <a id="MHA"></a>
+
     ## Multi-Head Attention Module
 
     This computes scaled multi-headed attention for given `query`, `key` and `value` vectors.

@@ -60,6 +60,7 @@ from labml_helpers.module import Module
 class MaximumLikelihoodLoss(Module):
     """
     <a id="MaximumLikelihoodLoss"></a>
+
     ## Type II Maximum Likelihood Loss
 
     The distribution $D(\mathbf{p} \vert \color{orange}{\mathbf{\alpha}})$ is a prior on the likelihood
@@ -101,6 +102,7 @@ class MaximumLikelihoodLoss(Module):
 class CrossEntropyBayesRisk(Module):
     """
     <a id="CrossEntropyBayesRisk"></a>
+
     ## Bayes Risk with Cross Entropy Loss
 
     Bayes risk is the overall maximum cost of making incorrect estimates.
@@ -147,6 +149,7 @@ class CrossEntropyBayesRisk(Module):
 class SquaredErrorBayesRisk(Module):
     """
     <a id="SquaredErrorBayesRisk"></a>
+
     ## Bayes Risk with Squared Error Loss
 
     Here the cost function is squared error,
@@ -215,6 +218,7 @@ class SquaredErrorBayesRisk(Module):
 class KLDivergenceLoss(Module):
     """
     <a id="KLDivergenceLoss"></a>
+
     ## KL Divergence Regularization Loss
 
     This tries to shrink the total evidence to zero if the sample cannot be correctly classified.
@@ -280,6 +284,7 @@ class KLDivergenceLoss(Module):
 class TrackStatistics(Module):
     """
     <a id="TrackStatistics"></a>
+
     ### Track statistics
 
     This module computes statistics and tracks them with [labml `tracker`](https://docs.labml.ai/api/tracker.html).
