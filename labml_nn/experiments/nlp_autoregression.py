@@ -214,12 +214,12 @@ def basic_english():
     You can switch by setting,
 
     ```
-        'tokenizer': 'basic_english',
+    'tokenizer': 'basic_english',
     ```
 
-    as the configurations dictionary when starting the experiment.
-
+    in the configurations dictionary when starting the experiment.
     """
+
     from torchtext.data import get_tokenizer
     return get_tokenizer('basic_english')
 

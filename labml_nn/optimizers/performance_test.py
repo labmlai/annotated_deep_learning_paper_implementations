@@ -6,7 +6,7 @@ summary: This experiment compares performance of Adam implementations.
 
 # Performance testing Adam
 
-```
+```text
 TorchAdam warmup...[DONE]	222.59ms
 TorchAdam...[DONE]	1,356.01ms
 MyAdam warmup...[DONE]	119.15ms
