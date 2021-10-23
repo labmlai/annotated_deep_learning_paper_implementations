@@ -47,9 +47,9 @@ class GMLPBlock(nn.Module):
 
     def __init__(self, d_model: int, d_ffn: int, seq_len: int):
         """
-        `d_model` is the dimensionality ($d$) of $X$
-        `d_ffn` is the dimensionality of $Z$
-        `seq_len` is the length of the token sequence ($n$)
+        * `d_model` is the dimensionality ($d$) of $X$
+        * `d_ffn` is the dimensionality of $Z$
+        * `seq_len` is the length of the token sequence ($n$)
         """
         super().__init__()
         # Normalization layer fro Pre-Norm
