@@ -81,6 +81,7 @@ class ClippedPPOLoss(Module):
      $$d^\pi(s) = (1 - \gamma) \sum_{t=0}^\infty \gamma^t P(s_t = s | \pi)$$
 
     Then,
+
     \begin{align}
     J(\pi_\theta) - J(\pi_{\theta_{OLD}})
     &= \mathbb{E}_{\tau \sim \pi_\theta} \Biggl[

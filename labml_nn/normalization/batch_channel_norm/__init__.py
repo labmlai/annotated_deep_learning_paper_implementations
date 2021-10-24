@@ -146,6 +146,7 @@ class EstimatedBatchNorm(Module):
                 var = mean_x2 - mean ** 2
 
                 # Update exponential moving averages
+                #
                 # \begin{align}
                 # \hat{\mu}_C &\longleftarrow (1 - r)\hat{\mu}_C + r \frac{1}{B H W} \sum_{b,h,w} X_{b,c,h,w} \\
                 # \hat{\sigma}^2_C &\longleftarrow (1 - r)\hat{\sigma}^2_C + r \frac{1}{B H W} \sum_{b,h,w} \big(X_{b,c,h,w} - \hat{\mu}_C \big)^2

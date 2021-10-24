@@ -116,6 +116,7 @@ class AFTLocal(Module):
         #### Create local mask
 
         This creates a mask for
+
         \begin{align}
         m_{t,t'} =
         \begin{cases}
@@ -167,6 +168,7 @@ class AFTLocal(Module):
         value = self.value(value)
 
         # Get
+        #
         #     \begin{align}
         #     w'_{t,t'} =
         #     \begin{cases}
@@ -174,6 +176,7 @@ class AFTLocal(Module):
         #     0, & \text{otherwise}
         #     \end{cases}
         #     \end{align}
+        #
         # using the mask
         pos_bias = self.pos_bias[:seq_len, :seq_len] * self.local_mask[:seq_len, :seq_len]
         pos_bias = pos_bias.unsqueeze(-1)

@@ -62,10 +62,12 @@ class TimeEmbedding(nn.Module):
     def forward(self, t: torch.Tensor):
         # Create sinusoidal position embeddings
         # [same as those from the transformer](../../transformers/positional_encoding.html)
+        #
         # \begin{align}
         # PE^{(1)}_{t,i} &= sin\Bigg(\frac{t}{10000^{\frac{i}{d - 1}}}\Bigg) \\
         # PE^{(2)}_{t,i} &= cos\Bigg(\frac{t}{10000^{\frac{i}{d - 1}}}\Bigg)
         # \end{align}
+        #
         # where $d$ is `half_dim`
         half_dim = self.n_channels // 8
         emb = math.log(10_000) / (half_dim - 1)

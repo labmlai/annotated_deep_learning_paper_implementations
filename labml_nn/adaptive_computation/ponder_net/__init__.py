@@ -39,6 +39,7 @@ $p_n$.
 The step function is applied to a maximum number of steps donated by $N$.
 
 The overall loss of PonderNet is
+
 \begin{align}
 L &= L_{Rec} + \beta L_{Reg} \\
 L_{Rec} &= \sum_{n=1}^N p_n \mathcal{L}(y, \hat{y}_n) \\

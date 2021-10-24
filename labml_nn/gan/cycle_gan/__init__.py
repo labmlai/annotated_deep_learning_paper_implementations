@@ -448,6 +448,7 @@ class Configs(BaseConfigs):
         $F$ translates images from $Y \rightarrow X$,
         $D_X$ tests if images are from $X$ space,
         $D_Y$ tests if images are from $Y$ space, and
+
         \begin{align}
         \mathcal{L}(G, F, D_X, D_Y)
             &= \mathcal{L}_{GAN}(G, D_Y, X, Y) \\
@@ -490,6 +491,7 @@ class Configs(BaseConfigs):
 
         To solve $$G^*, F^*$$,
         discriminators $D_X$ and $D_Y$ should **ascend** on the gradient,
+
         \begin{align}
         \nabla_{\theta_{D_X, D_Y}} \frac{1}{m} \sum_{i=1}^m
         &\Bigg[
@@ -499,6 +501,7 @@ class Configs(BaseConfigs):
         & +\log\Big(1 - D_X\Big(F\Big(y^{(i)}\Big)\Big)\Big)
         \Bigg]
         \end{align}
+
         That is descend on *negative* log-likelihood loss.
 
         In order to stabilize the training the negative log- likelihood objective
@@ -506,6 +509,7 @@ class Configs(BaseConfigs):
         the least-squared error of discriminator, labelling real images with 1,
         and generated images with 0.
         So we want to descend on the gradient,
+
         \begin{align}
         \nabla_{\theta_{D_X, D_Y}} \frac{1}{m} \sum_{i=1}^m
         &\Bigg[
@@ -518,6 +522,7 @@ class Configs(BaseConfigs):
 
         We use least-squares for generators also.
         The generators should *descend* on the gradient,
+
         \begin{align}
         \nabla_{\theta_{F, G}} \frac{1}{m} \sum_{i=1}^m
         &\Bigg[
@@ -635,7 +640,9 @@ class Configs(BaseConfigs):
         """
         ### Optimize the discriminators with gan loss.
         """
+
         # GAN Loss
+        #
         # \begin{align}
         # \bigg(D_Y\Big(y ^ {(i)}\Big) - 1\bigg) ^ 2
         # + D_Y\Big(G\Big(x ^ {(i)}\Big)\Big) ^ 2 + \\

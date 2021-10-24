@@ -33,6 +33,7 @@ without changing parameters or calculating momentum ($m_t$).
 Let $\sigma(g_1, ..., g_t)$ and $\psi(g_1, ..., g_t)$ be the functions to calculate
 momentum and adaptive learning rate.
 For Adam, they are
+
 \begin{align}
 \sigma(g_1, ..., g_t) &=  \frac{(1 - \beta_1)\sum_{i=1}^t \beta_1^{t-i} g_i}{1 - \beta_1^t} \\
 \psi(g_1, ..., g_t) &=  \sqrt \frac{1 - \beta_2^t}{(1 - \beta_2)\sum_{i=1}^t \beta_2^{t-i} g_i^2}
@@ -41,16 +42,20 @@ For Adam, they are
 ### Exponential moving average as simple moving average
 
 The distribution of exponential moving average can be approximated as a simple moving average.
+
 \begin{align}
 p\Bigg(\frac{(1-\beta_2) \sum_{i=1}^t \beta_2^{t-i} g_i^2}{1 - \beta_2^t} \Bigg) \approx
 p\Bigg(\frac{\sum_{i=1}^{f(t,\beta_2)} g_{t+1-i}^2}{f(t,\beta_2)} \Bigg)
 \end{align}
+
 Here we are taking the simple moving average of the last $f(t,\beta_2)$ gradients.
 $f(t,\beta_2)$ satisfies the following,
+
 \begin{align}
 \frac{(1-\beta_2) \sum_{i=1}^t \beta_2^{t-i} \cdot i}{1 - \beta_2^t} =
 \frac{\sum_{i=1}^{f(t,\beta_2)} (t+1-i)}{f(t,\beta_2)}
 \end{align}
+
 which gives,
 $$f(t,\beta_2) = \frac{2}{1-\beta_2} - 1 - \frac{2 t \beta_2^t}{1 - \beta_2^t}$$
 
@@ -83,6 +88,7 @@ $\rho_{\infty} = \frac{2}{1-\beta_2} - 1$. Let the minimum variance be $C_{\text
 
 In order to ensure that the adaptive learning
 rate $\psi(.)$ has consistent variance, we rectify the variance with $r$
+
 \begin{align}
 r = \sqrt{\frac{C_{\text{var}}}{Var\big[\psi(.)\big]}}
 \end{align}
@@ -94,10 +100,12 @@ based on first order expansion of $\sqrt{\psi^2(.)}$
 🤪 I didn't get how it was derived.
 
 From $\text{Scale-inv} \mathcal{X}^2$ distribution we have,
+
 \begin{align}
 \mathbb{E}\big[\psi^2(.)\big] &= \frac{\rho / \sigma^2}{\rho-2} \\
 Var\big[\psi^2(.)\big] &= \frac{2 \rho / \sigma^4}{(\rho-2)^2 (\rho - 2)}
 \end{align}
+
 which gives,
 $$
 Var[\psi(.)] \approx \frac{\rho}{2(\rho-2)(\rho-4)\sigma^2}
@@ -106,6 +114,7 @@ $$
 ### Rectification term
 
 We have
+
 \begin{align}
 r &= \sqrt{\frac{C_{\text{var}}}{Var\big[\psi(.)\big]}} \\
 Var[\psi(.)] &\approx \frac{\rho}{2(\rho-2)(\rho-4)\sigma^2}
@@ -121,6 +130,7 @@ Var[\psi(g_1,...,g_t)] &\approx \frac{\rho_t}{2(\rho_t-2)(\rho_t-4)\sigma^2}
 \end{align}
 
 This gives,
+
 \begin{align}
 r_t &= \sqrt{\frac{(\rho_t-2)(\rho_t-4)\rho_\infty}{(\rho_\infty-2)(\rho_\infty-4)\rho_t}}
 \end{align}

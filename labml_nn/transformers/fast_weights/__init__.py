@@ -72,6 +72,7 @@ y^{(i)} &= \frac
 
 With $\textcolor{cyan}{W^{(i)}} = \sum^i_{j=1} v^{(j)} \otimes \phi(k^{(j)})$ and
 $z^{(i)} = \sum^i_{j=1} \textcolor{lightgreen}{\phi(k^{(j)})}$, we can calculate them efficiently:
+
 \begin{align}
 \textcolor{cyan}{W^{(i)}} &= \textcolor{cyan}{W^{(i-1)}} + v^{(i)} \otimes \textcolor{lightgreen}{\phi(k^{(i)})} \\
 z^{(i)} &= z{(i)} + \textcolor{lightgreen}{\phi(k^{(i)})} \\

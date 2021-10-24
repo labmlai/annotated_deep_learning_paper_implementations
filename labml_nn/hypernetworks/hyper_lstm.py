@@ -49,6 +49,7 @@ $W_{hz}$ will be $N_h \times N_h \times N_z$.
 
 To overcome this, we compute the weight parameters of the recurrent network by
 dynamically scaling each row of a matrix of same size.
+
 \begin{align}
 d(z) = W_{hz} z_h \\
 \\
@@ -60,6 +61,7 @@ d_1(z) W_{hd_1} \\
 d_{N_h}(z) W_{hd_{N_h}} \\
 \end{pmatrix}
 \end{align}
+
 where $W_{hd}$ is a $N_h \times N_h$ parameter matrix.
 
 We can further optimize this when we compute $\textcolor{cyan}{W_h} h$,

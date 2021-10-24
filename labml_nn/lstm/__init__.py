@@ -52,7 +52,6 @@ class LSTMCell(Module):
     g_t &= lin_x^g(x_t) + lin_h^g(h_{t-1}) \\
     o_t &= lin_x^o(x_t) + lin_h^o(h_{t-1})
     \end{align}
-
     """
 
     def __init__(self, input_size: int, hidden_size: int, layer_norm: bool = False):

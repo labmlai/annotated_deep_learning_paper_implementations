@@ -179,6 +179,7 @@ class SquaredErrorBayesRisk(Module):
      is the variance.
 
     This gives,
+
     \begin{align}
     \mathcal{L}(\Theta)
     &= \sum_{k=1}^K \Big( y_k^2 -2 y_k \mathbb{E}[p_k] + \mathbb{E}[p_k^2] \Big) \\
@@ -255,6 +256,7 @@ class KLDivergenceLoss(Module):
         strength_tilde = alpha_tilde.sum(dim=-1)
 
         # The first term
+        #
         # \begin{align}
         # &\log \Bigg( \frac{\Gamma \Big( \sum_{k=1}^K \tilde{\alpha}_k \Big)}
         #     {\Gamma(K) \prod_{k=1}^K \Gamma(\tilde{\alpha}_k)} \Bigg) \\

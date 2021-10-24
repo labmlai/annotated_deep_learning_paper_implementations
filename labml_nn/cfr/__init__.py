@@ -183,6 +183,7 @@ The average of utilities over a set of strategies is equal to the utility of the
 $$\frac{1}{T} \sum_{t=1}^T u_i(\sigma^t) = u_i(\bar{\sigma}^T)$$
 
 Therefore,
+
 \begin{align}
 2\epsilon &>
 \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +
@@ -194,6 +195,7 @@ $$\max_{\sigma^*_2 \in \Sigma_2} u_2(\sigma^*_2, \bar{\sigma}^T_{-2}) \ge u_2(\b
  = -u_1(\bar{\sigma}^T)$$
 
 Then,
+
 \begin{align}
 2\epsilon &>
 \max_{\sigma^*_1 \in \Sigma_1} u_1(\sigma^*_1, \bar{\sigma}^T_{-1}) +

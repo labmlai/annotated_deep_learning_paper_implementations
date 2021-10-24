@@ -25,6 +25,7 @@ class GAE:
     def __call__(self, done: np.ndarray, rewards: np.ndarray, values: np.ndarray) -> np.ndarray:
         """
         ### Calculate advantages
+
         \begin{align}
         \hat{A_t^{(1)}} &= r_t + \gamma V(s_{t+1}) - V(s)
         \\

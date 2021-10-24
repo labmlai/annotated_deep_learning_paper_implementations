@@ -88,12 +88,14 @@ class RHNCell(Module):
                 hg = self.hidden_lin[d](s)
 
             # Use the first half of `hg` to get $h_d^t$
+            #
             # \begin{align}
             # h_0^t &= \tanh(lin_{hx}(x) + lin_{hs}(s_D^{t-1})) \\
             # h_d^t &= \tanh(lin_{hs}^d(s_d^t))
             # \end{align}
             h = torch.tanh(hg[:, :self.hidden_size])
             # Use the second half of `hg` to get $g_d^t$
+            #
             # \begin{align}
             # g_0^t &= \sigma(lin_{gx}(x) + lin_{gs}^1(s_D^{t-1})) \\
             # g_d^t &= \sigma(lin_{gs}^d(s_d^t))

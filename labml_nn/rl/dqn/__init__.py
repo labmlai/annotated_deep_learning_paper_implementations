@@ -82,6 +82,7 @@ class QFuncLoss(Module):
     the value is taken from $\textcolor{orange}{\theta_i^{-}}$.
 
     And the loss function becomes,
+
     \begin{align}
         \mathcal{L}_i(\theta_i) = \mathop{\mathbb{E}}_{(s,a,r,s') \sim U(D)}
         \Bigg[
