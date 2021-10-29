@@ -15,6 +15,7 @@ import torch
 import torchtext
 from torch import nn
 from torch.utils.data import DataLoader
+import torchtext.vocab
 from torchtext.vocab import Vocab
 
 from labml import lab, tracker, monit
@@ -270,7 +271,7 @@ def ag_news(c: NLPClassificationConfigs):
     for (label, line) in valid:
         counter.update(tokenizer(line))
     # Create vocabulary
-    vocab = Vocab(counter, min_freq=1)
+    vocab = torchtext.vocab.vocab(counter, min_freq=1)
 
     # Create training data loader
     train_loader = DataLoader(train, batch_size=c.batch_size, shuffle=True,
