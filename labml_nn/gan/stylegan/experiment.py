@@ -181,7 +181,7 @@ class Configs(BaseConfigs):
         # Create dataset
         dataset = Dataset(self.dataset_path, self.image_size)
         # Create data loader
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=self.batch_size, num_workers=32,
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=self.batch_size, num_workers=8,
                                                  shuffle=True, drop_last=True, pin_memory=True)
         # Continuous [cyclic loader](../../utils.html#cycle_dataloader)
         self.loader = cycle_dataloader(dataloader)
@@ -461,6 +461,7 @@ def main():
     with experiment.start():
         # Run the training loop
         configs.train()
+
 
 #
 if __name__ == '__main__':

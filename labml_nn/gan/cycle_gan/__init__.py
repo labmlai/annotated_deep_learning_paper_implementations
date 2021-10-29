@@ -43,6 +43,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
+from torchvision.transforms import InterpolationMode
 from torchvision.utils import make_grid
 
 from labml import lab, tracker, experiment, monit
@@ -413,7 +414,7 @@ class Configs(BaseConfigs):
 
         # Image transformations
         transforms_ = [
-            transforms.Resize(int(self.img_height * 1.12), Image.BICUBIC),
+            transforms.Resize(int(self.img_height * 1.12), InterpolationMode.BICUBIC),
             transforms.RandomCrop((self.img_height, self.img_width)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
