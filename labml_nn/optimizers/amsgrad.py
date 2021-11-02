@@ -138,7 +138,7 @@ def _synthetic_experiment(is_adam: bool):
     \begin{align}
     f_t(x) =
     \begin{cases}
-    1010 x,  & \text{for $t \mod 101 = 1$} \\
+    1010 x,  & \text{for } t \mod 101 = 1 \\
     -10  x, & \text{otherwise}
     \end{cases}
     \end{align}
