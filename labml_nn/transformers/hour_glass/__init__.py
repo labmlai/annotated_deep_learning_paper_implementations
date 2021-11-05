@@ -194,6 +194,7 @@ class NaiveUpSampling(Module):
 
     This up-samples by repeating
     """
+
     def __init__(self, k: int):
         """
         * `k` is the shortening factor
@@ -232,3 +233,50 @@ class AutoregressiveMask(Module):
 
         #
         return self.mask
+
+
+class LinearPoolingShortening(Module):
+    """
+    ### 🚧 Linear pooling for down-sampling
+
+    This concatenates the consecutive tokens embeddings that need to be merged and do a linear
+    transformation to map it to the size of a single token embedding.
+    """
+    raise NotImplementedError
+
+
+class AttentionBasedShortening(Module):
+    """
+    ### 🚧 Down-sampling with attention
+
+    \begin{align}
+    x' &= S(x) + Attention \Big(Q=S(x),K = x, V =x \Big) \\
+    x' &= x' + FFN(x')
+    \end{align}
+
+    where $S(x)$ is average pooling or linear pooling.
+    """
+    raise NotImplementedError
+
+
+class LinearUpSampling(Module):
+    """
+    ### 🚧 Linear projection for up-sampling
+
+    Make a linear projection of dense token embeddings to a size of $d_{\text{model}} k$.
+    """
+    raise NotImplementedError
+
+
+class AttentionBasedUpSampling(Module):
+    """
+    ### 🚧 Attention based up-sampling
+
+    \begin{align}
+    x &= U(x,x') + Attention \Big(Q=U(x,x'),K = x', V = x' \Big) \\
+    x &= x + FFN(x)
+    \end{align}
+
+    where $U(x,x') = x + LinearUpsampling(x')$
+    """
+    raise NotImplementedError
