@@ -7,8 +7,8 @@ from labml import experiment
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
+from labml_nn.transformers.hour_glass import HourGlass
 from labml_nn.transformers.positional_encoding import PositionalEncoding
-from transformer.hierarchy.hourglass import HourGlass
 
 
 class AutoregressiveTransformer(Module):
