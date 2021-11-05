@@ -113,14 +113,14 @@ class HourGlass(Module):
         x_short = self.shortening(self.shift_right(x))
 
         # If we are at the center of the hour glass,
-        # $$\textbf{if } \text{EMPTY}(shorten\_factors) \textbf{ then}$$
+        # $$\textbf{\small if } \text{\small E\scriptsize MPTY}(shorten\_factors) \textbf{\small then}$$
         if self.hour_glass is None:
             # Center transformer layer
             # $$x' \leftarrow ShortenedLayers(x')$$
             x_short = self.shortened(x=x_short, mask=self.mask_short(x_short))
         # $$\textbf{else}$$
         else:
-            # $$x' \leftarrow \text{HOURGLASS}(x, shorten\_factors)$$
+            # $$x' \leftarrow \text{\small H\scriptsize OURGLASS}(x, shorten\_factors)$$
             x_short = self.hour_glass(x_short)
 
         # Up-sample the shortened sequence and add a skip connection
@@ -140,6 +140,7 @@ class ShiftRight(Module):
 
     This shifts the sequence to the right by the given number of steps
     """
+
     def __init__(self, shift: int):
         """
         * `shift` is the number of steps to shift by
@@ -167,36 +168,67 @@ class AvgPoolShortening(Module):
     """
     ### Average pool shortening
 
-    This down-samples by a given factor by average pooling
+    This down-samples by a given factor with average pooling
     """
+
     def __init__(self, k: int):
+        """
+        * `k` is the shortening factor
+        """
         super().__init__()
+        # Average pooling layer
         self.pool = nn.AvgPool1d(k, ceil_mode=True)
 
     def forward(self, x: torch.Tensor):
+        """
+        * `x` is of shape `[seq_len, batch_size, d_model]`
+        """
+        # Pooling layer accepts shape `[batch_size, d_model, seq_len]` so we
+        # permute axes.
         return self.pool(x.permute(1, 2, 0)).permute(2, 0, 1)
 
 
 class NaiveUpSampling(Module):
+    """
+    ### Naive up-sampling
+
+    This up-samples by repeating
+    """
     def __init__(self, k: int):
+        """
+        * `k` is the shortening factor
+        """
         super().__init__()
         self.k = k
 
     def forward(self, x: torch.Tensor, x_short: torch.Tensor):
+        """
+        * `x` is the tensor with embeddings before down-sampling
+        * `x_short` is the tensor of higher density (to be up-sampled) representations
+        """
+        # Repeat across the sequence dimension
         expanded = torch.repeat_interleave(x_short, self.k, dim=0)
+        # Truncate the extra embeddings at the end
         expanded = expanded[:x.shape[0]]
 
+        #
         return expanded
 
 
 class AutoregressiveMask(Module):
+    """
+    ### Generate auto-regressive mask
+    """
+
     def __init__(self):
         super().__init__()
         self.mask = None
 
     def forward(self, x: torch.Tensor):
+        # Create a mask if we haven't created or sizes have changed
         if self.mask is None or self.mask.size(0) != len(x):
-            # Subsequent mask, will mask out tokens from seeing future tokens
+            # [Subsequent mask](../utils.html), will mask out tokens from seeing future tokens
             self.mask = subsequent_mask(len(x)).to(x.device)
 
+        #
         return self.mask
