@@ -242,7 +242,10 @@ class LinearPoolingShortening(Module):
     This concatenates the consecutive tokens embeddings that need to be merged and do a linear
     transformation to map it to the size of a single token embedding.
     """
-    raise NotImplementedError
+
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
 
 
 class AttentionBasedShortening(Module):
@@ -256,7 +259,10 @@ class AttentionBasedShortening(Module):
 
     where $S(x)$ is average pooling or linear pooling.
     """
-    raise NotImplementedError
+
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
 
 
 class LinearUpSampling(Module):
@@ -265,7 +271,10 @@ class LinearUpSampling(Module):
 
     Make a linear projection of dense token embeddings to a size of $d_{\text{model}} k$.
     """
-    raise NotImplementedError
+
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
 
 
 class AttentionBasedUpSampling(Module):
@@ -279,4 +288,7 @@ class AttentionBasedUpSampling(Module):
 
     where $U(x,x') = x + LinearUpsampling(x')$
     """
-    raise NotImplementedError
+
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError

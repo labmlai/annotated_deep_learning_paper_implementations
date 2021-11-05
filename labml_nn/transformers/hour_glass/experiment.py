@@ -88,13 +88,13 @@ class Configs(NLPAutoRegressionConfigs):
     # Model
     model: AutoregressiveTransformer
     # Number of attention heads
-    n_heads: int = 4
+    n_heads: int = 8
     # Dropout probability
     dropout: float = 0.1
     # Size of feed-forward hidden layer
     d_ff: int = 512
     # Token embedding size
-    d_model: int = 128
+    d_model: int = 256
     # Shortening factors
     shortening_factors: List[int] = [8, 4]
 
