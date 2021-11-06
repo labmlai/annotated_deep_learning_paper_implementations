@@ -38,7 +38,7 @@ implementations almost weekly.
 * [Pay Attention to MLPs (gMLP)](https://nn.labml.ai/transformers/gmlp/index.html)
 * [Vision Transformer (ViT)](https://nn.labml.ai/transformers/vit/index.html)
 * [Primer EZ](https://nn.labml.ai/transformers/primer_ez/index.html)
-* [Hourglass](https://nn.labml.ai/transformers/hourglass/index.html)
+* [Hourglass](https://nn.labml.ai/transformers/hour_glass/index.html)
 
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 
