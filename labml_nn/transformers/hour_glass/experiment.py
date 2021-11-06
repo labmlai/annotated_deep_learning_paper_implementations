@@ -1,12 +1,12 @@
 """
 ---
 title:  Hierarchical Transformers Are More Efficient Language Models Experiment
-summary: This experiment trains a hour glass model on Tiny Shakespeare dataset.
+summary: This experiment trains a hourglass model on Tiny Shakespeare dataset.
 ---
 
 # [Hierarchical Transformers Are More Efficient Language Models](index.html) Experiment
 
-This is an annotated PyTorch experiment to train a [hour glass](index.html).
+This is an annotated PyTorch experiment to train a [hourglass](index.html).
 
 This is based on
 [training loop and configurations for a simple transformer auto-regressive NLP task](../basic/autoregressive_experiment.html).
@@ -37,7 +37,7 @@ class AutoregressiveTransformer(Module):
         * `n_tokens` is the vocabulary size
         * `d_model` is the size of the token embeddings
         * `dropout` is the dropout probability
-        * `hour_glass` is the [hour glass model](index.html)
+        * `hour_glass` is the [hourglass model](index.html)
         """
         super().__init__()
         # Token embeddings
@@ -48,7 +48,7 @@ class AutoregressiveTransformer(Module):
         # [official paper implementation](https://github.com/google/trax/blob/master/trax/models/research/hourglass.py)
         # use [relative attention](../xl/relative_mha.html)
         self.pos_embedding = PositionalEncoding(d_model, dropout)
-        # [Hour glass model](index.html)
+        # [hourglass model](index.html)
         self.hour_glass = hour_glass
         # To normalize the final embeddings
         self.norm = nn.LayerNorm([d_model])
@@ -68,7 +68,7 @@ class AutoregressiveTransformer(Module):
         if self.pos_embedding is not None:
             x = self.pos_embedding(x * math.sqrt(self.d_model))
 
-        # Hour glass
+        # Hourglass
         x = self.hour_glass(x)
 
         # Get logits
@@ -105,7 +105,7 @@ def _model(c: Configs):
     Create the model
     """
 
-    # Create hour glass model
+    # Create hourglass model
     hour_glass = HourGlass(c.n_heads, c.d_model, c.dropout, c.d_ff, c.shortening_factors)
     # Create the auto-regressive wrapper
     m = AutoregressiveTransformer(c.n_tokens, c.d_model, c.dropout, hour_glass).to(c.device)

@@ -12,17 +12,17 @@ This is a [PyTorch](https://pytorch.org) implementation of the paper
 
 This paper introduces a hierarchical transformer architecture to handle long sequences
 efficiently. The first half of the transformer layers down-sample tokens and the second
-half up-samples with direct skip connections between layers of same resolution.
+half up-samples with direct skip connections between layers of the same resolution.
 This is a little similar to [U-Net](../../diffusion/ddpm/unet.html) for vision tasks.
 
 They try different up-sampling and down-sampling techniques and build a model
 with the best performing up and down-sampling techniques which they call the
-hour glass model.
+hourglass model.
 
 Here we have implemented the simplest up-sampling and down-sampling techniques for simplicity.
 We will consider adding more complex (and better performing) implementations later.
 
-Here is [the training code](experiment.html) for hour glass model.
+Here is [the training code](experiment.html) for the hourglass model.
 
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/855b82363e4911ec9ae4a5b9c69d5061)
 """
@@ -40,12 +40,12 @@ from labml_nn.transformers.utils import subsequent_mask
 
 class HourGlass(Module):
     """
-    ## Hour glass model
+    ## Hourglass model
 
     This model recursively adds layers to the middle while shortening the sequence by down-sampling.
-    The shortened sequence processed by another hour glass model is sandwitched between two normal transformer
-    layers. (A transformer layer has a [self attention layer](../mha.html)
-     and a [position wise feed forward layer](../feed_forward.html)).
+    The shortened sequence processed by another hourglass model is sandwiched between two normal transformer
+    layers. (A transformer layer has a [self-attention layer](../mha.html)
+     and a [position-wise feed-forward layer](../feed_forward.html)).
     """
 
     def __init__(self, n_heads: int, d_model: int, dropout: float, d_ff: int, shortening_factors: List[int]):
@@ -53,7 +53,7 @@ class HourGlass(Module):
         * `n_heads` is the number of heads in [multi-head attention layers](../mha.html)
         * `d_model` is the size of the token embeddings
         * `dropout` is the dropout probability
-        * `d_ff` is the dimensionality of the hidden layer in [position wise feed forward layers](../feed_forward.html)
+        * `d_ff` is the dimensionality of the hidden layer in [position-wise feed-forward layers](../feed_forward.html)
         * `shortening_factors` is the list of shortening factors
         """
         super().__init__()
@@ -62,7 +62,7 @@ class HourGlass(Module):
         self.pre = TransformerLayer(d_model=d_model,
                                     # [Multi-head attention layer](../mha.html)
                                     self_attn=MultiHeadAttention(n_heads, d_model, dropout),
-                                    # [Position wise feed forward layers](.. / feed_forward.html)
+                                    # [Position wise feed-forward layers](.. / feed_forward.html)
                                     feed_forward=FeedForward(d_model, d_ff, dropout),
                                     #
                                     dropout_prob=dropout)
@@ -80,7 +80,7 @@ class HourGlass(Module):
         # The paper shows that attention based down sampling works best, which we haven't implemented yet.
         self.shortening = AvgPoolShortening(k)
 
-        # If there are no more shortening (middle of the hour glass)
+        # If there are no more shortening (middle of the hourglass)
         if len(shortening_factors) == 1:
             # The center layer is another transformer layer
             self.shortened = TransformerLayer(d_model=d_model,
@@ -91,7 +91,7 @@ class HourGlass(Module):
             self.mask_short = AutoregressiveMask()
             self.hour_glass = None
         else:
-            # Insert another hour glass model recursively
+            # Insert another hourglass model recursively
             self.hour_glass = HourGlass(n_heads, d_model, dropout, d_ff, shortening_factors[1:])
 
         # Up-sampling layer. We use naive up-sampling for simplicity and the paper shows attention based up sampling
@@ -112,7 +112,7 @@ class HourGlass(Module):
         # $$x' \leftarrow Shortening(ShiftRight(x,k−1),k)$$
         x_short = self.shortening(self.shift_right(x))
 
-        # If we are at the center of the hour glass,
+        # If we are at the center of the hourglass,
         # $$\textbf{\small if } \text{\small E\scriptsize MPTY}(shorten\_factors) \textbf{\small then}$$
         if self.hour_glass is None:
             # Center transformer layer
