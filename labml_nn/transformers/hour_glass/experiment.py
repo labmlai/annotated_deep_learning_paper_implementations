@@ -11,7 +11,7 @@ This is an annotated PyTorch experiment to train a [hour glass](index.html).
 This is based on
 [training loop and configurations for a simple transformer auto-regressive NLP task](../basic/autoregressive_experiment.html).
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/855b82363e4911ec9ae4a5b9c69d5061)
 """
 import math
 from typing import List

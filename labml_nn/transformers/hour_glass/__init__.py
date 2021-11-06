@@ -24,7 +24,7 @@ We will consider adding more complex (and better performing) implementations lat
 
 Here is [the training code](experiment.html) for hour glass model.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/855b82363e4911ec9ae4a5b9c69d5061)
 """
 
 from typing import List
