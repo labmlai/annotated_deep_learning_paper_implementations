@@ -93,6 +93,11 @@ This is an implementation of the paper
 
 This is an implementation of the paper
 [Primer: Searching for Efficient Transformers for Language Modeling](https://papers.labml.ai/paper/2109.08668).
+
+## [Hourglass](hour_glass/index.html)
+
+This is an implementation of the paper
+[Hierarchical Transformers Are More Efficient Language Models](https://papers.labml.ai/paper/2110.13711)
 """
 
 from .configs import TransformerConfigs
