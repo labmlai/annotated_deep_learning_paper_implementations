@@ -51,8 +51,8 @@ class QFuncLoss(Module):
     ### Target network 🎯
     In order to improve stability we use experience replay that randomly sample
     from previous experience $U(D)$. We also use a Q network
-    with a separate set of paramters $\textcolor{orangle}{\theta_i^{-}}$ to calculate the target.
-    $\textcolor{orangle}{\theta_i^{-}}$ is updated periodically.
+    with a separate set of paramters $\textcolor{orange}{\theta_i^{-}}$ to calculate the target.
+    $\textcolor{orange}{\theta_i^{-}}$ is updated periodically.
     This is according to paper
     [Human Level Control Through Deep Reinforcement Learning](https://deepmind.com/research/dqn/).
 
