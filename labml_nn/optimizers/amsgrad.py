@@ -130,7 +130,7 @@ def _synthetic_experiment(is_adam: bool):
 
     We measure the performance of the optimizer as the regret,
     $$R(T) = \sum_{t=1}^T \big[ f_t(\theta_t) - f_t(\theta^*) \big]$$
-    where $theta_t$ is the parameters at time step $t$, and  $\theta^*$ is the
+    where $\theta_t$ is the parameters at time step $t$, and  $\theta^*$ is the
     optimal parameters that minimize $\mathbb{E}[f(\theta)]$.
 
     Now lets define the synthetic problem,
