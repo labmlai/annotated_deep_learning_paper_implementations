@@ -28,6 +28,7 @@ Here's a notebook for training a Capsule Network on MNIST dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/capsule_networks/mnist.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/e7c08e08586711ebb3e30242ac1c0002)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/capsule-networks/reports/capsule-networks)
 """
 
 import torch.nn as nn

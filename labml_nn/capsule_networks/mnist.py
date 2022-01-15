@@ -10,6 +10,8 @@ This is an annotated PyTorch code to classify MNIST digits with PyTorch.
 
 This paper implements the experiment described in paper
 [Dynamic Routing Between Capsules](https://papers.labml.ai/paper/1710.09829).
+
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=mnist)](https://www.comet.ml/labml/capsule-networks/reports/capsule-networks)
 """
 from typing import Any
 
