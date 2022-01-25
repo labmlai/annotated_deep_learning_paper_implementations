@@ -140,10 +140,10 @@ class GraphAttentionLayer(Module):
         g_repeat_interleave = g.repeat_interleave(n_nodes, dim=0)
         # Now we concatenate to get
         # $$\{\overrightarrow{g_1} \Vert \overrightarrow{g_1},
-        # \overrightarrow{g_1}, \Vert \overrightarrow{g_2},
+        # \overrightarrow{g_1} \Vert \overrightarrow{g_2},
         # \dots, \overrightarrow{g_1}  \Vert \overrightarrow{g_N},
         # \overrightarrow{g_2} \Vert \overrightarrow{g_1},
-        # \overrightarrow{g_2}, \Vert \overrightarrow{g_2},
+        # \overrightarrow{g_2} \Vert \overrightarrow{g_2},
         # \dots, \overrightarrow{g_2}  \Vert \overrightarrow{g_N}, ...\}$$
         g_concat = torch.cat([g_repeat_interleave, g_repeat], dim=-1)
         # Reshape so that `g_concat[i, j]` is $\overrightarrow{g_i} \Vert \overrightarrow{g_j}$
@@ -170,7 +170,7 @@ class GraphAttentionLayer(Module):
 
         # We then normalize attention scores (or coefficients)
         # $$\alpha_{ij} = \text{softmax}_j(e_{ij}) =
-        # \frac{\exp(e_{ij})}{\sum_{j \in \mathcal{N}_i} \exp(e_{ij})}$$
+        # \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}_i} \exp(e_{ik})}$$
         #
         # where $\mathcal{N}_i$ is the set of nodes connected to $i$.
         #
