@@ -184,10 +184,10 @@ class GraphAttentionV2Layer(Module):
         g_r_repeat_interleave = g_r.repeat_interleave(n_nodes, dim=0)
         # Now we add the two tensors to get
         # $$\{\overrightarrow{{g_l}_1} + \overrightarrow{{g_r}_1},
-        # \overrightarrow{{g_l}_1}, + \overrightarrow{{g_r}_2},
+        # \overrightarrow{{g_l}_1} + \overrightarrow{{g_r}_2},
         # \dots, \overrightarrow{{g_l}_1}  +\overrightarrow{{g_r}_N},
         # \overrightarrow{{g_l}_2} + \overrightarrow{{g_r}_1},
-        # \overrightarrow{{g_l}_2}, + \overrightarrow{{g_r}_2},
+        # \overrightarrow{{g_l}_2} + \overrightarrow{{g_r}_2},
         # \dots, \overrightarrow{{g_l}_2}  + \overrightarrow{{g_r}_N}, ...\}$$
         g_sum = g_l_repeat + g_r_repeat_interleave
         # Reshape so that `g_sum[i, j]` is $\overrightarrow{{g_l}_i} + \overrightarrow{{g_r}_j}$
@@ -214,7 +214,7 @@ class GraphAttentionV2Layer(Module):
 
         # We then normalize attention scores (or coefficients)
         # $$\alpha_{ij} = \text{softmax}_j(e_{ij}) =
-        # \frac{\exp(e_{ij})}{\sum_{j \in \mathcal{N}_i} \exp(e_{ij})}$$
+        # \frac{\exp(e_{ij})}{\sum_{j' \in \mathcal{N}_i} \exp(e_{ij'})}$$
         #
         # where $\mathcal{N}_i$ is the set of nodes connected to $i$.
         #
