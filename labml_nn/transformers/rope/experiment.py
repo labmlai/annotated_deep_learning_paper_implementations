@@ -40,7 +40,7 @@ def _model(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name="transformer")
+    experiment.create(name="rotary_pe_transformer")
     # Create configs
     conf = Configs()
     # Override configurations
