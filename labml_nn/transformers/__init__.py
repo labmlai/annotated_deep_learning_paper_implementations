@@ -22,6 +22,9 @@ and derivatives and enhancements of it.
 This implements Transformer XL model using
 [relative multi-head attention](xl/relative_mha.html)
 
+## [Rotary Positional Embeddings](rope/index.html)
+This implements Rotary Positional Embeddings (RoPE)
+
 ## [Compressive Transformer](compressive/index.html)
 
 This is an implementation of compressive transformer

@@ -24,6 +24,7 @@ implementations almost weekly.
 * [Transformer building blocks](https://nn.labml.ai/transformers/models.html) 
 * [Transformer XL](https://nn.labml.ai/transformers/xl/index.html)
     * [Relative multi-headed attention](https://nn.labml.ai/transformers/xl/relative_mha.html)
+* [Rotary Positional Embeddings](https://nn.labml.ai/transformers/rope/index.html)
 * [Compressive Transformer](https://nn.labml.ai/transformers/compressive/index.html)
 * [GPT Architecture](https://nn.labml.ai/transformers/gpt/index.html)
 * [GLU Variants](https://nn.labml.ai/transformers/glu_variants/simple.html)
