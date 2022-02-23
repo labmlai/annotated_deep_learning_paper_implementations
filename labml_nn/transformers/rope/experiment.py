@@ -1,12 +1,14 @@
 """
 ---
-title: Transformer XL Experiment
-summary: This experiment trains a transformer XL model on tiny Shakespeare dataset.
+title: Rotary Positional Embeddings (RoPE) Experiment
+summary: This experiment trains a transformer model with Rotary Positional Embeddings (RoPE) on tiny Shakespeare dataset.
 ---
 
-# Transformer XL Experiment
+# Rotary Positional Embeddings (RoPE) Experiment
 
-This is an annotated PyTorch experiment to train a transformer xl model.
+This is an annotated PyTorch experiment to train a transformer model with Rotary Positional Embeddings (RoPE).
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1cf508e693be11ecacc98de8b38a61fe)
 """
 
 from labml import experiment
@@ -21,6 +23,7 @@ def _rotary_pe_mha(c: TransformerConfigs):
     return RotaryPEMultiHeadAttention(c.n_heads, c.d_model)
 
 
+# Configuration options
 calculate(TransformerConfigs.encoder_attn, 'rotary', _rotary_pe_mha)
 calculate(TransformerConfigs.decoder_attn, 'rotary', _rotary_pe_mha)
 calculate(TransformerConfigs.decoder_mem_attn, 'rotary', _rotary_pe_mha)
@@ -29,7 +32,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary', _rotary_pe_mha)
 @option(Configs.model, 'rotary_pe_transformer')
 def _model(c: Configs):
     """
-    Create GPT model and initialize weights
+    Create an autoregressive model and initialize weights
     """
     m = AutoregressiveTransformer(c.transformer.encoder,
                                   c.transformer.src_embed,
@@ -47,11 +50,14 @@ def main():
     experiment.configs(conf, {
         'device.cuda_device': 1,
 
+        # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
         'transformer.tgt_embed': 'no_pos',
 
+        # Encoder with RoPE
         'transformer.encoder_attn': 'rotary',
 
+        #
         'model': 'rotary_pe_transformer',
 
         # Use character level tokenizer
