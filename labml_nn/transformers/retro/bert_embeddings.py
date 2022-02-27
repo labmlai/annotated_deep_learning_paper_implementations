@@ -22,18 +22,19 @@ class BERTChunkEmbeddings:
         self.device = device
 
     def __call__(self, chunks: List[str]):
-        tokens = self.tokenizer(chunks, return_tensors='pt', add_special_tokens=False, padding=True)
+        with torch.no_grad():
+            tokens = self.tokenizer(chunks, return_tensors='pt', add_special_tokens=False, padding=True)
 
-        input_ids = tokens['input_ids'].to(self.device)
-        attention_mask = tokens['attention_mask'].to(self.device)
-        output = self.model(input_ids=input_ids,
-                            attention_mask=attention_mask,
-                            token_type_ids=tokens['token_type_ids'].to(self.device))
+            input_ids = tokens['input_ids'].to(self.device)
+            attention_mask = tokens['attention_mask'].to(self.device)
+            output = self.model(input_ids=input_ids,
+                                attention_mask=attention_mask,
+                                token_type_ids=tokens['token_type_ids'].to(self.device))
 
-        state = output['last_hidden_state']
-        emb = (state * attention_mask[:, :, None]).sum(dim=1) / attention_mask[:, :, None].sum(dim=1)
+            state = output['last_hidden_state']
+            emb = (state * attention_mask[:, :, None]).sum(dim=1) / attention_mask[:, :, None].sum(dim=1)
 
-        return emb
+            return emb
 
 
 def _test():
