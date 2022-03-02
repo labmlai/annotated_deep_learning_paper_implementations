@@ -219,7 +219,7 @@ class Encoder(nn.Module):
         return e
 
 
-class Model(nn.Module):
+class RetroModel(nn.Module):
     def __init__(self, n_vocab: int, d_model: int, n_layers: int, ca_layers: Set[int], chunk_length: int,
                  n_heads: int, d_k: int, d_ff: int,
                  encoder: Encoder):
@@ -269,7 +269,7 @@ def _test():
     d_ff = 32
     n_heads = 2
     d_k = 4
-    m = Model(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
+    m = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
               encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
 
     x = [1, 2, 4, 4, 0, 1, 2, 3, 4, 3]
