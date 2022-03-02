@@ -22,7 +22,7 @@ class SelfAttention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
 
-        self.output = nn.Linear(d_model, d_model)
+        self.output = nn.Linear(n_heads * d_k, d_model)
 
     def mask_attention(self, attn: torch.Tensor):
         if not self.is_causal:
@@ -53,7 +53,7 @@ class SelfAttention(nn.Module):
 
         h = torch.einsum("bhij,bjhd->bihd", attn, v)
 
-        h = h.reshape(h_res.shape)
+        h = h.reshape(*h.shape[:-1], -1)
 
         h = self.output(h)
 
@@ -76,9 +76,9 @@ class CrossAttention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
 
-        self.output = nn.Linear(d_model, d_model)
+        self.output = nn.Linear(n_heads * d_k, d_model)
 
-    def forward(self, e: torch.Tensor, kv: torch.Tensor):
+    def forward(self, e: torch.Tensor, h: torch.Tensor):
         """
         e [batch_size, chunks, neighbors, seq, d_model]
         kv [batch_size, chunks, seq, d_model]
@@ -88,8 +88,8 @@ class CrossAttention(nn.Module):
         e = self.norm(e)
 
         q = self.query(e).view(*e.shape[:-1], self.n_heads, self.d_k)
-        k = self.key(e).view(*kv.shape[:-1], self.n_heads, self.d_k)
-        v = self.value(e).view(*kv.shape[:-1], self.n_heads, self.d_k)
+        k = self.key(e).view(*h.shape[:-1], self.n_heads, self.d_k)
+        v = self.value(e).view(*h.shape[:-1], self.n_heads, self.d_k)
 
         attn = torch.einsum('bcnihd,bcjhd->bcnhij', q, k)
         attn = attn * self.scale
@@ -98,7 +98,7 @@ class CrossAttention(nn.Module):
 
         e = torch.einsum("bcnhij,bcjhd->bcnihd", attn, v)
 
-        e = e.reshape(e_res.shape)
+        e = e.reshape(*e.shape[:-1], -1)
 
         e = self.output(e)
 
@@ -106,8 +106,58 @@ class CrossAttention(nn.Module):
 
 
 class ChunkedCrossAttention(nn.Module):
-    def __init__(self):
+    def __init__(self, d_model, n_heads, d_k, chunk_len):
         super().__init__()
+
+        self.chunk_len = chunk_len
+        self.n_heads = n_heads
+        self.d_k = d_k
+        self.scale = 1 / math.sqrt(self.d_k)
+
+        self.query = nn.Linear(d_model, n_heads * d_k)
+        self.key = nn.Linear(d_model, n_heads * d_k)
+        self.value = nn.Linear(d_model, n_heads * d_k)
+
+        self.norm = nn.LayerNorm(d_model)
+
+        self.softmax = nn.Softmax(dim=-1)
+
+        self.output = nn.Linear(d_model, d_model)
+
+    def forward(self, h: torch.Tensor, e: torch.Tensor):
+        """
+        e [batch_size, chunks, neighbors, seq, d_model]
+        h [batch_size, seq, d_model]
+        """
+
+        batch_size, chunks, neighbors, neighbor_len, d_model = e.shape
+
+        if chunks == 0:
+            return h
+
+        h_res = h
+
+        h = h[self.chunk_len - 1:]
+        h = self.norm(h)
+        h = torch.cat((h, h.new_zeros(batch_size, chunks * self.chunk_len - h.shape[1], d_model)), dim=1)
+        h = h.reshape(batch_size, chunks, self.chunk_len, d_model)
+
+        q = self.query(e).view(*h.shape[:-1], self.n_heads, self.d_k)
+        k = self.key(e).view(*e.shape[:-1], self.n_heads, self.d_k)
+        v = self.value(e).view(*e.shape[:-1], self.n_heads, self.d_k)
+
+        attn = torch.einsum('bcihd,bcnjhd->bchinj', q, k)
+        attn = attn * self.scale
+
+        attn = self.softmax(attn.view(*attn.shape[:-2], -1)).view(attn.shape)
+
+        h = torch.einsum("bchinj,bcnjhd->bcihd", attn, v)
+
+        h = e.reshape(*h.shape[:-1], -1)
+
+        h = self.output(h)
+
+        return h + h_res
 
 
 class FeedForward(nn.Module):
@@ -132,6 +182,7 @@ class Encoder(nn.Module):
 
         batch_size, chunks, neighbors, neighbor_len, d_model = e.shape
         h_split = h[:, self.chunk_len * chunks, :].reshape(batch_size, chunks, self.chunk_len, d_model)
+        h_split = self.norm_h(h_split)
 
         p_ca = 0
         for p in range(len(self.attn)):
@@ -165,6 +216,7 @@ class Model(nn.Module):
         """
 
         h = self.emb(x)
+
         ret_emb = self.emb(ret)
 
         p_ca = 0
@@ -173,6 +225,7 @@ class Model(nn.Module):
 
             if p == min(self.retro_layers):
                 e = self.encoder(ret_emb, h)
+                e = self.norm_e(e)
 
             if p in self.ca_layers:
                 h = self.cca[p_ca](h, e)
