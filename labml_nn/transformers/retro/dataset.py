@@ -1,12 +1,14 @@
 import json
-from typing import List
+from pathlib import Path
+from typing import List, Callable
 
 import faiss
 import numpy as np
 import torch
+from torch.utils.data import Dataset as PyTorchDataset
 
 from labml import lab, monit
-from labml_helpers.datasets.text import TextFileDataset
+from labml_helpers.datasets.text import TextFileDataset, TextDataset
 from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 
@@ -74,8 +76,25 @@ def build_database(chunk_length: int = 64, chunks_per_sample: int = 8, offset_no
 
         samples.append((sample[:-1], sample[1:], neighbors))
 
-    with open(str(lab.get_data_path() / 'dataset.json'), 'w') as f:
+    with open(str(lab.get_data_path() / 'retro_train_dataset.json'), 'w') as f:
         f.write(json.dumps(samples))
+
+
+class Dataset(PyTorchDataset):
+    def __init__(self, file_path: Path, tds: TextDataset = list):
+        self.tds = tds
+        with open(str(file_path), 'r') as f:
+            self.samples = json.loads(f.read())
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        s = self.samples[idx]
+        src = self.tds.text_to_i(s[0])
+        tgt = self.tds.text_to_i(s[1])
+        neighbors = torch.stack([torch.stack([self.tds.text_to_i(n) for n in chunks]) for chunks in s[2]])
+        return src, tgt, neighbors
 
 
 if __name__ == '__main__':

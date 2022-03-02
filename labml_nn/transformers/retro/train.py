@@ -1,5 +1,13 @@
-from labml import monit
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+
+from labml import monit, lab, tracker
+from labml_helpers.datasets.text import TextFileDataset
+from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
+from labml_nn.transformers.retro.dataset import Dataset
+from labml_nn.transformers.retro.model import RetroModel, Encoder
 
 
 class Sampler:
@@ -25,19 +33,55 @@ class Trainer:
     adam_betas = (0.5, 0.999)
     decay_start = 100
 
-    def __init__(self, model: retro.RetroModel):
+    def __init__(self, device: torch.device, model: retro.RetroModel, dataloader: DataLoader,
+                 optimizer: torch.optim.Adam):
+        self.optimizer = optimizer
+        self.device = device
+        self.dataloader = dataloader
         self.model = model
-        # Load dataset
-        # Initialize tokenizer
-        # Load dataloaders
+        self.loss_func = nn.CrossEntropyLoss()
 
-    def train(self):
-        # Loop through epochs
-        for epoch in monit.loop(self.epochs):
-            pass
-            # Loop through the train dataset
-            # Tokenize strings
-            # Train the model
+    def __call__(self):
+        for i, (src, tgt, neighbors) in monit.enum('Train', self.dataloader):
+            # Move images to the device
+            src, tgt, neighbors = src.to(self.device), tgt.to(self.device), neighbors.to(self.device)
 
-            # Loop through the eval dataset
-            # Tokenize strings
+            res = self.model(src, neighbors)
+            loss = self.loss_func(res, tgt)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            # Save training statistics and increment the global step counter
+            tracker.save({'loss.train': loss})
+            tracker.add_global_step(len(src))
+
+
+def train():
+    tds = TextFileDataset(
+        lab.get_data_path() / 'tiny_shakespeare.txt',
+        list,
+        url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
+
+    train_dataset = Dataset(lab.get_data_path() / 'retro_train_dataset.json', tds)
+    train_dl = DataLoader(train_dataset, batch_size=16)
+
+    chunk_length = 4
+    d_model = 8
+    d_ff = 32
+    n_heads = 2
+    d_k = 4
+    model = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
+                       encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
+
+    optimizer = Noam(model.parameters(), lr=1., d_model=d_model, warmup=2_000)
+
+    trainer = Trainer(torch.device('cuda:0'), model, train_dl, optimizer)
+
+    for epoch in monit.loop(16):
+        trainer()
+
+
+if __name__ == '__main__':
+    train()
