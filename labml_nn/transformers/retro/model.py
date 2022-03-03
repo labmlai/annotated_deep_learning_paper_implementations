@@ -6,6 +6,55 @@ from labml.logger import inspect
 from torch import nn
 
 
+class RotaryPositionalEmbeddings(nn.Module):
+    def __init__(self, d: int, base: int = 10_000):
+        """
+        * `d` is the number of features $d$
+        * `base` is the constant used for calculating $\Theta$
+        """
+        super().__init__()
+        # $\Theta = {\theta_i = 10000^{\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
+        self.theta = nn.Parameter(1. / (base ** (torch.arange(0, d, 2).float() / d)), requires_grad=False)
+
+    def forward(self, x: torch.Tensor):
+        """
+        * `x` is the Tensor at the head of a key or a query with shape `[ batch_size, seq_len, n_heads, d]`
+        """
+        # Extract the shape
+        batch_size, seq_len, n_heads, d = x.shape
+
+        # $\frac{d}{2}$
+        d_2 = d // 2
+
+        # Create position indexes `[0, 1, ..., seq_len - 1]`
+        seq_idx = torch.arange(seq_len, device=x.device).type_as(self.theta)
+
+        # Calculate the product of position index and $\theta_i$
+        idx_theta = torch.einsum('n,d->nd', seq_idx, self.theta)
+
+        # Concatenate so that for row $m$ we have
+        # $[m \theta_0, m \theta_1, ..., m \theta_{\frac{d}{2}}, m \theta 0, m \theta 1, ..., m \theta_{\frac{d}{2}}]$
+        idx_theta2 = torch.cat([idx_theta, idx_theta], dim=1)
+
+        # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., -x^{(\frac{d}{2})}]$
+        neg_half_x = torch.cat([-x[:, :, :, d_2:], x[:, :, :, :d_2]], dim=-1)
+
+        # Calculate
+        #
+        # \begin{align}
+        # \begin{pmatrix}
+        # x^{(i)}_m \cos m \theta_i - x^{(i + \frac{d}{2})}_m \sin m \theta_i \\
+        # x^{(i + \frac{d}{2})}_m \cos m\theta_i + x^{(i)}_m \sin m \theta_i \\
+        # \end{pmatrix} \\
+        # \end{align}
+        #
+        # for $i \in {1, 2, ..., \frac{d}{2}}$
+        rx = (x * idx_theta2.cos()[None, :, None, :]) + (neg_half_x * idx_theta2.sin()[None, :, None, :])
+
+        #
+        return rx
+
+
 class SelfAttention(nn.Module):
     def __init__(self, d_model, n_heads, d_k, is_causal: bool):
         super().__init__()
@@ -22,6 +71,7 @@ class SelfAttention(nn.Module):
         self.norm = nn.LayerNorm(d_model)
 
         self.softmax = nn.Softmax(dim=-1)
+        self.rotary_pe = RotaryPositionalEmbeddings(self.d_k)
 
         self.output = nn.Linear(n_heads * d_k, d_model)
 
@@ -44,6 +94,9 @@ class SelfAttention(nn.Module):
         q = self.query(h).view(mh_shape)
         k = self.key(h).view(mh_shape)
         v = self.value(h).view(mh_shape)
+
+        q = self.rotary_pe(q)
+        k = self.rotary_pe(k)
 
         attn = torch.einsum('bihd,bjhd->bhij', q, k)
         attn = attn * self.scale
