@@ -16,8 +16,8 @@ def build_database(chunk_length: int=64, batch_size: int = 64, d_emb: int = 768,
 
     text = dataset.train
 
-    chunks = [text[i:i + chunk_length] for i in range(0, len(text), chunk_length)]
-    chunk_offsets = np.array([i for i in range(0, len(text), chunk_length)])
+    chunks = [text[i:i + chunk_length] for i in range(0, len(text), chunk_length) if i + chunk_length * 2 < len(text)]
+    chunk_offsets = np.array([i for i in range(0, len(text), chunk_length) if i + chunk_length * 2 < len(text)])
     n_chunks = len(chunks)
 
     bert = BERTChunkEmbeddings(torch.device('cuda:0'))

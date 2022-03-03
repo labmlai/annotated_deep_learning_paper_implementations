@@ -56,7 +56,7 @@ def build_database(chunk_length: int = 64, chunks_per_sample: int = 8, offset_no
     while i < len(text):
         skip = np.random.randint(offset_noise)
         i += skip
-        if i >= len(text):
+        if i + chunks_per_sample * chunk_length > len(text):
             break
 
         sample_offsets.append(i)

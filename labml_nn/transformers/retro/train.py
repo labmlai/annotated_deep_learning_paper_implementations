@@ -47,7 +47,7 @@ class Trainer:
             src, tgt, neighbors = src.to(self.device), tgt.to(self.device), neighbors.to(self.device)
 
             res = self.model(src, neighbors)
-            loss = self.loss_func(res, tgt)
+            loss = self.loss_func(res.view(-1, res.shape[-1]), tgt.view(-1))
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -59,25 +59,28 @@ class Trainer:
 
 
 def train():
+    device = torch.device('cuda:0')
     tds = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
         list,
         url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
 
     train_dataset = Dataset(lab.get_data_path() / 'retro_train_dataset.json', tds)
-    train_dl = DataLoader(train_dataset, batch_size=16)
+    train_dl = DataLoader(train_dataset, batch_size=4)
 
-    chunk_length = 4
-    d_model = 8
-    d_ff = 32
-    n_heads = 2
-    d_k = 4
-    model = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
-                       encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
+    chunk_length = 64
+    d_model = 256
+    d_ff = 1024
+    n_heads = 8
+    d_k = 32
+    model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
+                       encoder=Encoder(chunk_length, 3, {2}, d_model, n_heads, d_k, d_ff))
+
+    model = model.to(device)
 
     optimizer = Noam(model.parameters(), lr=1., d_model=d_model, warmup=2_000)
 
-    trainer = Trainer(torch.device('cuda:0'), model, train_dl, optimizer)
+    trainer = Trainer(device, model, train_dl, optimizer)
 
     for epoch in monit.loop(16):
         trainer()

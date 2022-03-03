@@ -123,7 +123,7 @@ class ChunkedCrossAttention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
 
-        self.output = nn.Linear(d_model, d_model)
+        self.output = nn.Linear(n_heads * d_k, d_model)
 
     def forward(self, h: torch.Tensor, e: torch.Tensor):
         """
@@ -155,7 +155,7 @@ class ChunkedCrossAttention(nn.Module):
 
         h = torch.einsum("bchinj,bcnjhd->bcihd", attn, v)
 
-        h = h.reshape(batch_size, chunks * self.chunk_len, d_model)
+        h = h.reshape(batch_size, chunks * self.chunk_len, -1)
 
         h = self.output(h)
 
@@ -227,6 +227,7 @@ class RetroModel(nn.Module):
 
         self.ca_layers = ca_layers
         self.emb = nn.Embedding(n_vocab, d_model)
+        self.linear = nn.Linear(d_model, d_model)
         self.encoder = encoder
         self.cca = nn.ModuleList(
             [ChunkedCrossAttention(d_model, n_heads, d_k, chunk_length) for _ in range(len(ca_layers))])
@@ -269,15 +270,19 @@ def _test():
     d_ff = 32
     n_heads = 2
     d_k = 4
-    m = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
-              encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
 
+    device = torch.device('cuda:0')
+
+    m = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
+                   encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
+
+    m.to(device)
     x = [1, 2, 4, 4, 0, 1, 2, 3, 4, 3]
     ret = [
         [[0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1]],
         [[0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1]],
     ]
-    res = m(torch.tensor([x]), torch.tensor([ret]))
+    res = m(torch.tensor([x] * 10).to(device), torch.tensor([ret] * 10).to(device))
 
     inspect(res)
 
