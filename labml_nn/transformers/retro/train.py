@@ -6,23 +6,51 @@ from labml import monit, lab, tracker
 from labml_helpers.datasets.text import TextFileDataset
 from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
-from labml_nn.transformers.retro.dataset import Dataset
+from labml_nn.transformers.retro.dataset import Dataset, RetroIndex
 from labml_nn.transformers.retro.model import RetroModel, Encoder
 
 
 class Sampler:
-    def __init__(self, tokenizer, model):
-        pass
+    def __init__(self, device: torch.device, model: retro.RetroModel, tds: TextFileDataset, chunk_len: int):
+        self.chunk_len = chunk_len
+        self.tds = tds
+        self.model = model
+        self.device = device
+        self.index = RetroIndex()
+
+    def get_neighbours(self, chunk: str):
+        neighbor_offsets = self.index([chunk], None)
+        text = self.tds.train
+
+        neighbors = [text[j: j + self.chunk_len * 2] for j in neighbor_offsets[0]]
+
+        return neighbors
 
     def sample(self, prompt: str, sample_len):
-        neighbors = []
+        neighbors_str = []
+        sampled = ''
+        # prompt = self.tds.text_to_i(prompt)
         for i in range(sample_len):
-            pass
-            # retrieve neighbors if there are new chunks
-            # append to neighbors
+            while len(neighbors_str) < len(prompt) // self.chunk_len:
+                off = len(neighbors_str) * self.chunk_len
+                chunk = prompt[off: off + self.chunk_len]
+                neighbors_str.append(self.get_neighbours(chunk))
 
-            # evaluate model
-            # get the next token
+            src = self.tds.text_to_i(prompt)
+            neighbors = torch.stack([torch.stack([self.tds.text_to_i(n) for n in chunk]) for chunk in neighbors_str])
+
+            src = src.to(self.device)
+            neighbors = neighbors.to(self.device)
+
+            res = self.model(src[None, :], neighbors[None, :, :, :])
+
+            token = res[0, -1, :].argmax(dim=-1)
+
+            prompt += self.tds.itos[token.item()]
+
+            sampled += self.tds.itos[token.item()]
+
+        return sampled
 
 
 class Trainer:
@@ -66,12 +94,12 @@ def train():
         url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
 
     train_dataset = Dataset(lab.get_data_path() / 'retro_train_dataset.json', tds)
-    train_dl = DataLoader(train_dataset, batch_size=4)
+    train_dl = DataLoader(train_dataset, batch_size=8, shuffle=True)
 
     chunk_length = 64
-    d_model = 256
-    d_ff = 1024
-    n_heads = 8
+    d_model = 512
+    d_ff = 2048
+    n_heads = 16
     d_k = 32
     model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
                        encoder=Encoder(chunk_length, 3, {2}, d_model, n_heads, d_k, d_ff))
@@ -82,9 +110,61 @@ def train():
 
     trainer = Trainer(device, model, train_dl, optimizer)
 
-    for epoch in monit.loop(16):
+    sampler = Sampler(device, model, tds, chunk_length)
+
+    prompt = '''First Citizen:
+    We are accounted poor citizens, the patricians good.
+    What authority surfeits on would relieve us: if they
+    would yield us but the superfluity, while it were
+    wholesome, we might guess they relieved us humanely;
+    but they think we are too dear: the leanness that
+    afflicts us, the object of our misery, is as an
+    inventory to particularise their abundance; our
+    sufferance is a gain to them Let us revenge this with
+    our pikes, ere we become rakes: for the gods know I
+    speak this in hunger for bread, not in thirst for revenge.
+    '''
+
+    for epoch in monit.loop(32):
         trainer()
+        tracker.new_line()
+        print(sampler.sample(prompt, 128))
+
+
+def sample():
+    device = torch.device('cuda:0')
+    tds = TextFileDataset(
+        lab.get_data_path() / 'tiny_shakespeare.txt',
+        list,
+        url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
+
+    chunk_length = 64
+    d_model = 512
+    d_ff = 2048
+    n_heads = 16
+    d_k = 32
+    model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
+                       encoder=Encoder(chunk_length, 3, {2}, d_model, n_heads, d_k, d_ff))
+
+    model = model.to(device)
+
+    sampler = Sampler(device, model, tds, chunk_length)
+
+    prompt = '''First Citizen:
+We are accounted poor citizens, the patricians good.
+What authority surfeits on would relieve us: if they
+would yield us but the superfluity, while it were
+wholesome, we might guess they relieved us humanely;
+but they think we are too dear: the leanness that
+afflicts us, the object of our misery, is as an
+inventory to particularise their abundance; our
+sufferance is a gain to them Let us revenge this with
+our pikes, ere we become rakes: for the gods know I
+speak this in hunger for bread, not in thirst for revenge.
+'''
+    sampler.sample(prompt, 10)
 
 
 if __name__ == '__main__':
     train()
+    # sample()

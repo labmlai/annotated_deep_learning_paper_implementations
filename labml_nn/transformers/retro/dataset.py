@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 import faiss
 import numpy as np
@@ -12,7 +12,7 @@ from labml_helpers.datasets.text import TextFileDataset, TextDataset
 from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 
-class Index:
+class RetroIndex:
     def __init__(self, n_probe: int = 8,
                  n_extra: int = 4, n_neighbors: int = 4,
                  exclude_neighbor_span: int = 64, chunk_length: int = 64):
@@ -31,13 +31,16 @@ class Index:
                 if n < offset - (self.chunk_length + self.exclude_neighbor_span)
                 or n > offset + (self.chunk_length + self.exclude_neighbor_span)]
 
-    def __call__(self, chunks: List[str], offsets: List[int]):
+    def __call__(self, chunks: List[str], offsets: Optional[List[int]]):
         emb = self.bert(chunks).cpu()
 
         distance, neighbor_offsets = self.index.search(emb.numpy(), self.n_neighbors + self.n_extra)
 
-        neighbor_offsets = [self.filter_neighbors(off, n_off)[:self.n_neighbors] for off, n_off in
-                            zip(offsets, neighbor_offsets)]
+        if offsets is not None:
+            neighbor_offsets = [self.filter_neighbors(off, n_off)[:self.n_neighbors] for off, n_off in
+                                zip(offsets, neighbor_offsets)]
+        else:
+            neighbor_offsets = [n_off[:self.n_neighbors] for n_off in neighbor_offsets]
 
         return neighbor_offsets
 
@@ -50,7 +53,7 @@ def build_database(chunk_length: int = 64, chunks_per_sample: int = 8, offset_no
 
     text = dataset.train
 
-    index = Index()
+    index = RetroIndex()
     sample_offsets = []
     i = 0
     while i < len(text):
