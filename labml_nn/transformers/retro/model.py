@@ -304,7 +304,7 @@ class RetroModel(nn.Module):
         for p in range(len(self.attn)):
             h = self.attn[p](h)
 
-            if p == min(self.ca_layers):
+            if self.ca_layers and p == min(self.ca_layers):
                 e = self.encoder(ret_emb, h)
                 e = self.norm_e(e)
 
