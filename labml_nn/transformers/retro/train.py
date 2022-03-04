@@ -2,7 +2,8 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from labml import monit, lab, tracker
+from labml import monit, lab, tracker, experiment, logger
+from labml.logger import Text
 from labml_helpers.datasets.text import TextFileDataset
 from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
@@ -87,6 +88,8 @@ class Trainer:
 
 
 def train():
+    experiment.create(name='retro_small')
+
     device = torch.device('cuda:0')
     tds = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
@@ -94,7 +97,7 @@ def train():
         url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
 
     train_dataset = Dataset(lab.get_data_path() / 'retro_train_dataset.json', tds)
-    train_dl = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    train_dl = DataLoader(train_dataset, batch_size=4, shuffle=True)
 
     chunk_length = 64
     d_model = 512
@@ -113,22 +116,30 @@ def train():
     sampler = Sampler(device, model, tds, chunk_length)
 
     prompt = '''First Citizen:
-    We are accounted poor citizens, the patricians good.
-    What authority surfeits on would relieve us: if they
-    would yield us but the superfluity, while it were
-    wholesome, we might guess they relieved us humanely;
-    but they think we are too dear: the leanness that
-    afflicts us, the object of our misery, is as an
-    inventory to particularise their abundance; our
-    sufferance is a gain to them Let us revenge this with
-    our pikes, ere we become rakes: for the gods know I
-    speak this in hunger for bread, not in thirst for revenge.
-    '''
+We are accounted poor citizens, the patricians good.
+What authority surfeits on would relieve us: if they
+would yield us but the superfluity, while it were
+wholesome, we might guess they relieved us humanely;
+but they think we are too dear: the leanness that
+afflicts us, the object of our misery, is as an
+inventory to particularise their abundance; our
+sufferance is a gain to them Let us revenge this with
+our pikes, ere we become rakes: for the gods know I
+speak this in hunger for bread, not in '''
 
-    for epoch in monit.loop(32):
-        trainer()
-        tracker.new_line()
-        print(sampler.sample(prompt, 128))
+    experiment.add_pytorch_models(model=model)
+
+    # experiment.load('711813509ba211ecb9bcbf7bc5fb18d4')
+    with experiment.start():
+        logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
+                    (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
+
+        for epoch in monit.loop(32):
+            trainer()
+            tracker.new_line()
+            logger.log([(prompt[-10:].replace('\n', '\\n\n'), Text.subtle),
+                        (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
+            experiment.save_checkpoint()
 
 
 def sample():
