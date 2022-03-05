@@ -273,7 +273,7 @@ class Encoder(nn.Module):
 
 
 class RetroModel(nn.Module):
-    def __init__(self, n_vocab: int, d_model: int, n_layers: int, ca_layers: Set[int], chunk_length: int,
+    def __init__(self, n_vocab: int, d_model: int, n_layers: int, ca_layers: Set[int], chunk_len: int,
                  n_heads: int, d_k: int, d_ff: int,
                  encoder: Encoder):
         super().__init__()
@@ -283,7 +283,7 @@ class RetroModel(nn.Module):
         self.linear = nn.Linear(d_model, d_model)
         self.encoder = encoder
         self.cca = nn.ModuleList(
-            [ChunkedCrossAttention(d_model, n_heads, d_k, chunk_length) for _ in range(len(ca_layers))])
+            [ChunkedCrossAttention(d_model, n_heads, d_k, chunk_len) for _ in range(len(ca_layers))])
         self.attn = nn.ModuleList([SelfAttention(d_model, n_heads, d_k, is_causal=True) for _ in range(n_layers)])
         self.ffw = nn.ModuleList([FeedForward(d_model, d_ff) for _ in range(n_layers)])
         self.read = nn.Linear(d_model, n_vocab)
@@ -318,7 +318,7 @@ class RetroModel(nn.Module):
 
 
 def _test():
-    chunk_length = 4
+    chunk_len = 4
     d_model = 8
     d_ff = 32
     n_heads = 2
@@ -326,8 +326,8 @@ def _test():
 
     device = torch.device('cuda:0')
 
-    m = RetroModel(5, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
-                   encoder=Encoder(chunk_length, 2, {1}, d_model, n_heads, d_k, d_ff))
+    m = RetroModel(5, d_model, 6, {2, 5}, chunk_len, n_heads, d_k, d_ff,
+                   encoder=Encoder(chunk_len, 2, {1}, d_model, n_heads, d_k, d_ff))
 
     m.to(device)
     x = [1, 2, 4, 4, 0, 1, 2, 3, 4, 3]

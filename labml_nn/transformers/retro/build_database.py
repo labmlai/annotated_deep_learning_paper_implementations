@@ -7,7 +7,7 @@ from labml_helpers.datasets.text import TextFileDataset
 from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 
-def build_database(chunk_length: int=64, batch_size: int = 64, d_emb: int = 768, n_centeroids: int = 256,
+def build_database(chunk_len: int = 64, batch_size: int = 64, d_emb: int = 768, n_centeroids: int = 256,
                    code_size: int = 64, n_probe: int = 8, n_train: int = 50_000):
     dataset = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
@@ -16,8 +16,8 @@ def build_database(chunk_length: int=64, batch_size: int = 64, d_emb: int = 768,
 
     text = dataset.train
 
-    chunks = [text[i:i + chunk_length] for i in range(0, len(text), chunk_length) if i + chunk_length * 2 < len(text)]
-    chunk_offsets = np.array([i for i in range(0, len(text), chunk_length) if i + chunk_length * 2 < len(text)])
+    chunks = [text[i:i + chunk_len] for i in range(0, len(text), chunk_len) if i + chunk_len * 2 < len(text)]
+    chunk_offsets = np.array([i for i in range(0, len(text), chunk_len) if i + chunk_len * 2 < len(text)])
     n_chunks = len(chunks)
 
     bert = BERTChunkEmbeddings(torch.device('cuda:0'))

@@ -99,13 +99,13 @@ def train():
     train_dataset = Dataset(lab.get_data_path() / 'retro_train_dataset.json', tds)
     train_dl = DataLoader(train_dataset, batch_size=4, shuffle=True)
 
-    chunk_length = 64
-    d_model = 512
-    d_ff = 2048
+    chunk_len = 64
+    d_model = 256
+    d_ff = 1024
     n_heads = 16
-    d_k = 32
-    model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
-                       encoder=Encoder(chunk_length, 3, {2}, d_model, n_heads, d_k, d_ff))
+    d_k = 16
+    model = RetroModel(tds.n_tokens, d_model, 6, {3, 5}, chunk_len, n_heads, d_k, d_ff,
+                       encoder=Encoder(chunk_len, 3, {2}, d_model, n_heads, d_k, d_ff))
 
     model = model.to(device)
 
@@ -113,7 +113,7 @@ def train():
 
     trainer = Trainer(device, model, train_dl, optimizer)
 
-    sampler = Sampler(device, model, tds, chunk_length)
+    sampler = Sampler(device, model, tds, chunk_len)
 
     prompt = '''First Citizen:
 We are accounted poor citizens, the patricians good.
@@ -129,7 +129,7 @@ speak this in hunger for bread, not in '''
 
     experiment.add_pytorch_models(model=model)
 
-    # experiment.load('711813509ba211ecb9bcbf7bc5fb18d4')
+    # experiment.load('4fc65aa89c6111ecba19e333fa7f6b02')
     with experiment.start():
         logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
                     (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
@@ -149,17 +149,17 @@ def sample():
         list,
         url='https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
 
-    chunk_length = 64
+    chunk_len = 64
     d_model = 512
     d_ff = 2048
     n_heads = 16
     d_k = 32
-    model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_length, n_heads, d_k, d_ff,
-                       encoder=Encoder(chunk_length, 3, {2}, d_model, n_heads, d_k, d_ff))
+    model = RetroModel(tds.n_tokens, d_model, 6, {2, 5}, chunk_len, n_heads, d_k, d_ff,
+                       encoder=Encoder(chunk_len, 3, {2}, d_model, n_heads, d_k, d_ff))
 
     model = model.to(device)
 
-    sampler = Sampler(device, model, tds, chunk_length)
+    sampler = Sampler(device, model, tds, chunk_len)
 
     prompt = '''First Citizen:
 We are accounted poor citizens, the patricians good.

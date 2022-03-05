@@ -15,9 +15,9 @@ from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 class RetroIndex:
     def __init__(self, n_probe: int = 8,
                  n_extra: int = 4, n_neighbors: int = 4,
-                 exclude_neighbor_span: int = 64, chunk_length: int = 64):
+                 exclude_neighbor_span: int = 64, chunk_len: int = 64):
         self.n_neighbors = n_neighbors
-        self.chunk_length = chunk_length
+        self.chunk_len = chunk_len
         self.exclude_neighbor_span = exclude_neighbor_span
         self.n_extra = n_extra
 
@@ -28,8 +28,8 @@ class RetroIndex:
 
     def filter_neighbors(self, offset: int, neighbor_offsets: List[int]):
         return [n for n in neighbor_offsets
-                if n < offset - (self.chunk_length + self.exclude_neighbor_span)
-                or n > offset + (self.chunk_length + self.exclude_neighbor_span)]
+                if n < offset - (self.chunk_len + self.exclude_neighbor_span)
+                or n > offset + (self.chunk_len + self.exclude_neighbor_span)]
 
     def __call__(self, chunks: List[str], offsets: Optional[List[int]]):
         emb = self.bert(chunks).cpu()
@@ -45,7 +45,7 @@ class RetroIndex:
         return neighbor_offsets
 
 
-def build_database(chunk_length: int = 64, chunks_per_sample: int = 8, offset_noise: int = 8):
+def build_database(chunk_len: int = 64, chunks_per_sample: int = 8, offset_noise: int = 8):
     dataset = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
         list,
@@ -59,23 +59,23 @@ def build_database(chunk_length: int = 64, chunks_per_sample: int = 8, offset_no
     while i < len(text):
         skip = np.random.randint(offset_noise)
         i += skip
-        if i + chunks_per_sample * chunk_length > len(text):
+        if i + chunks_per_sample * chunk_len > len(text):
             break
 
         sample_offsets.append(i)
 
-        i += chunks_per_sample * chunk_length
+        i += chunks_per_sample * chunk_len
 
     samples = []
     for i in monit.iterate('Gather Neighbors', sample_offsets):
-        sample = text[i: i + chunks_per_sample * chunk_length + 1]
+        sample = text[i: i + chunks_per_sample * chunk_len + 1]
         src = sample[:-1]
-        chunks = [src[j:j + chunk_length] for j in range(0, len(src), chunk_length)]
-        chunk_offsets = [j for j in range(0, len(src), chunk_length)]
+        chunks = [src[j:j + chunk_len] for j in range(0, len(src), chunk_len)]
+        chunk_offsets = [j for j in range(0, len(src), chunk_len)]
 
         neighbor_offsets = index(chunks, chunk_offsets)
 
-        neighbors = [[text[j: j + chunk_length * 2] for j in n_off] for n_off in neighbor_offsets]
+        neighbors = [[text[j: j + chunk_len * 2] for j in n_off] for n_off in neighbor_offsets]
 
         samples.append((sample[:-1], sample[1:], neighbors))
 
