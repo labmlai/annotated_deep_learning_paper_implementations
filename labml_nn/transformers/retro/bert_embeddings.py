@@ -21,9 +21,22 @@ class BERTChunkEmbeddings:
 
         self.device = device
 
+    def trim_chunk(self, chunk: str):
+        stripped = chunk.strip()
+        parts = stripped.split()
+        stripped = stripped[len(parts[0]):-len(parts[-1])]
+
+        stripped = stripped.strip()
+
+        if not stripped:
+            return chunk
+        else:
+            return stripped
+
     def __call__(self, chunks: List[str]):
         with torch.no_grad():
-            tokens = self.tokenizer(chunks, return_tensors='pt', add_special_tokens=False, padding=True)
+            trimmed_chunks = [self.trim_chunk(c) for c in chunks]
+            tokens = self.tokenizer(trimmed_chunks, return_tensors='pt', add_special_tokens=False, padding=True)
 
             input_ids = tokens['input_ids'].to(self.device)
             attention_mask = tokens['attention_mask'].to(self.device)

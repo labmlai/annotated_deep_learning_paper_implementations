@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Callable, Optional
+from typing import List, Optional
 
 import faiss
 import numpy as np
@@ -14,8 +14,8 @@ from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 class RetroIndex:
     def __init__(self, n_probe: int = 8,
-                 n_extra: int = 4, n_neighbors: int = 4,
-                 exclude_neighbor_span: int = 64, chunk_len: int = 64):
+                 n_extra: int = 4, n_neighbors: int = 2,
+                 exclude_neighbor_span: int = 8, chunk_len: int = 16):
         self.n_neighbors = n_neighbors
         self.chunk_len = chunk_len
         self.exclude_neighbor_span = exclude_neighbor_span
@@ -27,6 +27,7 @@ class RetroIndex:
         self.index.nprobe = n_probe
 
     def filter_neighbors(self, offset: int, neighbor_offsets: List[int]):
+        # return neighbor_offsets
         return [n for n in neighbor_offsets
                 if n < offset - (self.chunk_len + self.exclude_neighbor_span)
                 or n > offset + (self.chunk_len + self.exclude_neighbor_span)]
@@ -45,7 +46,7 @@ class RetroIndex:
         return neighbor_offsets
 
 
-def build_database(chunk_len: int = 64, chunks_per_sample: int = 8, offset_noise: int = 8):
+def build_database(chunk_len: int = 16, chunks_per_sample: int = 32, offset_noise: int = 8):
     dataset = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
         list,
@@ -71,9 +72,12 @@ def build_database(chunk_len: int = 64, chunks_per_sample: int = 8, offset_noise
         sample = text[i: i + chunks_per_sample * chunk_len + 1]
         src = sample[:-1]
         chunks = [src[j:j + chunk_len] for j in range(0, len(src), chunk_len)]
-        chunk_offsets = [j for j in range(0, len(src), chunk_len)]
+        chunk_offsets = [j + i for j in range(0, len(src), chunk_len)]
 
         neighbor_offsets = index(chunks, chunk_offsets)
+
+        # for n_off, offset in zip(neighbor_offsets, chunk_offsets):
+        #     n_off[-1] = offset
 
         neighbors = [[text[j: j + chunk_len * 2] for j in n_off] for n_off in neighbor_offsets]
 
