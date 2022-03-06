@@ -70,7 +70,6 @@ def main():
     conf = Configs()
     # Load configurations
     experiment.configs(conf, {
-        'device.cuda_device': 1,
         'optimizer.optimizer': 'Adam',
         'optimizer.learning_rate': 2.5e-4,
     })

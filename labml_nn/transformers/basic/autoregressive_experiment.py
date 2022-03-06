@@ -110,7 +110,6 @@ def main():
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        'device.cuda_device': 1,
 
         # Use character level tokenizer
         'tokenizer': 'character',
@@ -122,18 +121,19 @@ def main():
         'text': 'tiny_shakespeare',
 
         # Use a context size of $256$
-        'seq_len': 256,
-        # Train for $128$ epochs
-        'epochs': 128,
+        'seq_len': 512,
+        # Train for 32 epochs
+        'epochs': 32,
         # Batch size $32$
-        'batch_size': 32,
+        'batch_size': 16,
         # Switch between training and validation for $10$ times
         # per epoch
         'inner_iterations': 10,
 
         # Model size
-        'd_model': 128,
-        'transformer.ffn.d_ff': 256,
+        'd_model': 256,
+        'transformer.n_heads': 16,
+        'transformer.ffn.d_ff': 1024,
 
         # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
