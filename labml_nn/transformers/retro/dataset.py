@@ -10,7 +10,7 @@ from labml_helpers.datasets.text import TextFileDataset, TextDataset
 from labml_nn.transformers.retro.database import RetroIndex
 
 
-def build_database(chunk_len: int = 16, chunks_per_sample: int = 32, offset_noise: int = 8):
+def build_dataset(chunk_len: int = 16, chunks_per_sample: int = 32, offset_noise: int = 8):
     dataset = TextFileDataset(
         lab.get_data_path() / 'tiny_shakespeare.txt',
         list,
@@ -69,4 +69,4 @@ class Dataset(PyTorchDataset):
 
 
 if __name__ == '__main__':
-    build_database()
+    build_dataset()

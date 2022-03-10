@@ -1,3 +1,16 @@
+"""
+---
+title: RETRO model
+summary: >
+  RETRO model with encoder for neighbors and autoregressive decoder
+---
+
+# RETRO model
+
+This is the model definition for
+ [RETRO](index.html).
+"""
+
 import math
 from typing import Set
 
@@ -7,6 +20,11 @@ from torch import nn
 
 
 class RotaryPositionalEmbeddings(nn.Module):
+    """
+    ## [RoPE embeddings](../rope/index.html)
+
+    We use rotary position embeddings in self attention layers.
+    """
     def __init__(self, d: int, base: int = 10_000):
         """
         * `d` is the number of features $d$
@@ -36,7 +54,8 @@ class RotaryPositionalEmbeddings(nn.Module):
         # $[m \theta_0, m \theta_1, ..., m \theta_{\frac{d}{2}}, m \theta 0, m \theta 1, ..., m \theta_{\frac{d}{2}}]$
         idx_theta2 = torch.cat([idx_theta, idx_theta], dim=1)
 
-        # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., -x^{(\frac{d}{2})}]$
+        # Calculate
+        # $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., -x^{(\frac{d}{2})}]$
         neg_half_x = torch.cat([-x[:, :, :, d_2:], x[:, :, :, :d_2]], dim=-1)
 
         # Calculate
@@ -56,18 +75,31 @@ class RotaryPositionalEmbeddings(nn.Module):
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, d_model, n_heads, d_k, is_causal: bool):
+    """
+    ## Self-Attention Layer
+    """
+    def __init__(self, d_model: int, n_heads: int, d_k: int, is_causal: bool):
+        """
+        * `d_model` is the number of features in transformer embeddings
+        * `n_heads` is the number of attention heads
+        * `d_k` is the number of features per head
+        * `is_causal` indicates whether this is causal attention (masked)
+        """
         super().__init__()
 
         self.is_causal = is_causal
         self.n_heads = n_heads
         self.d_k = d_k
+
+        # To scale attentions before softmax by $\frac{1}{\sqrt{d_k}}$
         self.scale = 1 / math.sqrt(self.d_k)
 
+        # Linear layers for query, key and value heads.
         self.query = nn.Linear(d_model, n_heads * d_k)
         self.key = nn.Linear(d_model, n_heads * d_k)
         self.value = nn.Linear(d_model, n_heads * d_k)
 
+        # Pre-norm layer. The paper uses RMSNorm instead.
         self.norm = nn.LayerNorm(d_model)
 
         self.softmax = nn.Softmax(dim=-1)
