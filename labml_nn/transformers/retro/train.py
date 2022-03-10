@@ -121,21 +121,10 @@ def train():
 
     sampler = Sampler(device, model, tds, chunk_len)
 
-    prompt = '''First Citizen:
-We are accounted poor citizens, the patricians good.
-What authority surfeits on would relieve us: if they
-would yield us but the superfluity, while it were
-wholesome, we might guess they relieved us humanely;
-but they think we are too dear: the leanness that
-afflicts us, the object of our misery, is as an
-inventory to particularise their abundance; our
-sufferance is a gain to them Let us revenge this with
-our pikes, ere we become rakes: for the gods know I
-speak this in hunger for bread, not in '''
+    prompt = '''First Citizen:'''
 
     experiment.add_pytorch_models(model=model)
 
-    # experiment.load('4fc65aa89c6111ecba19e333fa7f6b02')
     with experiment.start():
         logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
                     (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])

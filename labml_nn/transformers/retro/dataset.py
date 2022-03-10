@@ -1,49 +1,13 @@
 import json
 from pathlib import Path
-from typing import List, Optional
 
-import faiss
 import numpy as np
 import torch
 from torch.utils.data import Dataset as PyTorchDataset
 
 from labml import lab, monit
 from labml_helpers.datasets.text import TextFileDataset, TextDataset
-from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
-
-
-class RetroIndex:
-    def __init__(self, n_probe: int = 8,
-                 n_extra: int = 4, n_neighbors: int = 2,
-                 exclude_neighbor_span: int = 8, chunk_len: int = 16):
-        self.n_neighbors = n_neighbors
-        self.chunk_len = chunk_len
-        self.exclude_neighbor_span = exclude_neighbor_span
-        self.n_extra = n_extra
-
-        self.bert = BERTChunkEmbeddings(torch.device('cuda:0'))
-        with monit.section('Load index'):
-            self.index = faiss.read_index(str(lab.get_data_path() / 'retro.index'))
-        self.index.nprobe = n_probe
-
-    def filter_neighbors(self, offset: int, neighbor_offsets: List[int]):
-        # return neighbor_offsets
-        return [n for n in neighbor_offsets
-                if n < offset - (self.chunk_len + self.exclude_neighbor_span)
-                or n > offset + (self.chunk_len + self.exclude_neighbor_span)]
-
-    def __call__(self, chunks: List[str], offsets: Optional[List[int]]):
-        emb = self.bert(chunks).cpu()
-
-        distance, neighbor_offsets = self.index.search(emb.numpy(), self.n_neighbors + self.n_extra)
-
-        if offsets is not None:
-            neighbor_offsets = [self.filter_neighbors(off, n_off)[:self.n_neighbors] for off, n_off in
-                                zip(offsets, neighbor_offsets)]
-        else:
-            neighbor_offsets = [n_off[:self.n_neighbors] for n_off in neighbor_offsets]
-
-        return neighbor_offsets
+from labml_nn.transformers.retro.database import RetroIndex
 
 
 def build_database(chunk_len: int = 16, chunks_per_sample: int = 32, offset_noise: int = 8):
