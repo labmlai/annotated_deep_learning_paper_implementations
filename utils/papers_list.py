@@ -72,6 +72,8 @@ def main():
     for f in HOME.iterdir():
         papers += collect(f)
 
+    papers.sort(key=lambda p: p['arxiv_id'])
+
     by_id = {}
     for p in papers:
         if p['arxiv_id'] not in by_id:
