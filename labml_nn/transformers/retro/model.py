@@ -15,16 +15,22 @@ import math
 from typing import Set
 
 import torch
-from labml.logger import inspect
 from torch import nn
+
+from labml.logger import inspect
 
 
 class RotaryPositionalEmbeddings(nn.Module):
     """
     ## [RoPE embeddings](../rope/index.html)
 
-    We use rotary position embeddings in self attention layers.
+    *We use rotary position embeddings in self attention layers.
+    We assume the positional information gets embedded in embeddings
+    and therefore not use them in causal attention.
+    [Non-causal self-attention needs explicit positional information
+     because it cannot infer it](https://papers.labml.ai/paper/3999902edc8511eba3db37f65e372566).*
     """
+
     def __init__(self, d: int, base: int = 10_000):
         """
         * `d` is the number of features $d$
@@ -77,7 +83,10 @@ class RotaryPositionalEmbeddings(nn.Module):
 class SelfAttention(nn.Module):
     """
     ## Self-Attention Layer
+
+    This applies causal and non-causal [multi-headed self attention](../mha.html).
     """
+
     def __init__(self, d_model: int, n_heads: int, d_k: int, is_causal: bool):
         """
         * `d_model` is the number of features in transformer embeddings
@@ -102,151 +111,270 @@ class SelfAttention(nn.Module):
         # Pre-norm layer. The paper uses RMSNorm instead.
         self.norm = nn.LayerNorm(d_model)
 
+        # Softmax for attention probabilities
         self.softmax = nn.Softmax(dim=-1)
+
+        # Rotary positional embeddings
         self.rotary_pe = RotaryPositionalEmbeddings(self.d_k)
 
+        # Final linear layer
         self.output = nn.Linear(n_heads * d_k, d_model)
 
     def mask_attention(self, attn: torch.Tensor):
+        """
+        ### Mask the attention layer for causal attention
+
+        * `attn` is the attention matrix of shape `[batch_size, n_heads, seq_len, seq_len]`
+        """
+
+        # No masking for non-causal attention
         if not self.is_causal:
             return attn
 
+        # Create a triangular mask
         mask = torch.tril(attn.new_ones(attn.shape[-2:]))
+        # Filter by the mask
         return attn.masked_fill(mask == 0, float('-inf'))
 
     def forward(self, h: torch.Tensor):
         """
-        h [batch, seq, d_model]
+        * `h` is the transformer embeddings of shape `[batch_size, seq_len, d_model]`
         """
 
+        # Residual connection
         h_res = h
+
+        # Pre-normalization
         h = self.norm(h)
 
+        # Get query, key, and values and split them in to heads.
+        # These will have shapes `[batch_size, seq_len, n_heads, d_k]`
         mh_shape = (*h.shape[:-1], self.n_heads, self.d_k)
         q = self.query(h).view(mh_shape)
         k = self.key(h).view(mh_shape)
         v = self.value(h).view(mh_shape)
 
+        # Apply rotary positional embeddings
         q = self.rotary_pe(q)
         k = self.rotary_pe(k)
 
+        # Calculate attentions
         attn = torch.einsum('bihd,bjhd->bhij', q, k)
+        # Scale it by $\frac{1}{\sqrt{d_k}}$
         attn = attn * self.scale
 
+        # Apply masks if it's causal attention
         attn = self.mask_attention(attn)
 
+        # Calculate attention probabilities
         attn = self.softmax(attn)
 
+        # Get values
         h = torch.einsum("bhij,bjhd->bihd", attn, v)
 
+        # Change from shape `[batch_size, seq_len, n_heads, d_k]`
+        # to `[batch_size, seq_len, n_heads * d_k]`
         h = h.reshape(*h.shape[:-2], -1)
 
+        # Apply final linear layer.
+        # The result will have shape `[batch_size, seq_len, d_model]`
         h = self.output(h)
 
+        # Add the residual connection
         return h + h_res
 
 
 class CrossAttention(nn.Module):
-    def __init__(self, d_model, n_heads, d_k):
+    """
+    ## Cross-Attention Layer
+
+    This is similar to self-attention layer defined above, except that
+    it gets keys and values from different set of embeddings than the queries.
+
+    This is used in the encoder to encode the retrieved chunks based on the
+    input chunks.
+
+    *We do not use any explicit positional embeddings here.
+    We assume that the model can represent positional information in the embeddings implicitly.*
+    """
+    def __init__(self, d_model: int, n_heads: int, d_k: int):
+        """
+        * `d_model` is the number of features in transformer embeddings
+        * `n_heads` is the number of attention heads
+        * `d_k` is the number of features per head
+        """
         super().__init__()
 
         self.n_heads = n_heads
         self.d_k = d_k
+
+        # To scale attentions before softmax by $\frac{1}{\sqrt{d_k}}$
         self.scale = 1 / math.sqrt(self.d_k)
 
+        # Linear layers for query, key and value heads.
         self.query = nn.Linear(d_model, n_heads * d_k)
         self.key = nn.Linear(d_model, n_heads * d_k)
         self.value = nn.Linear(d_model, n_heads * d_k)
 
+        # Pre-norm layer for the query embeddings. The paper uses RMSNorm instead.
         self.norm = nn.LayerNorm(d_model)
 
+        # Softmax for attention probabilities
         self.softmax = nn.Softmax(dim=-1)
 
+        # Final linear layer
         self.output = nn.Linear(n_heads * d_k, d_model)
 
     def forward(self, e: torch.Tensor, h: torch.Tensor):
         """
-        e [batch_size, chunks, neighbors, seq, d_model]
-        h [batch_size, chunks, seq, d_model]
+        * `e` are the retrieved nearest neighbor chunk embeddings with shape
+          `[batch_size, chunks, neighbors, neighbor_len, d_model]`
+        * `h` are the input chunks from which the nearest neighbors were retrieved with shape
+          `[batch_size, chunks, chunk_len, d_model]`. This is already normalized.
         """
 
+        # Residual connection
         e_res = e
+
+        # Normalize retrieved chunks
         e = self.norm(e)
 
+        # Get query from the retrieved chunks
         q = self.query(e).view(*e.shape[:-1], self.n_heads, self.d_k)
+        # Get keys and values from the input chunks
         k = self.key(h).view(*h.shape[:-1], self.n_heads, self.d_k)
         v = self.value(h).view(*h.shape[:-1], self.n_heads, self.d_k)
 
+        # Calculate attention scores for all chunks.
+        # Each retrieved neighbor will pay attention to the original chunk that retrieved it.
+        # This will have shape `[batch_size, chunks, neighbors, n_heads, neighbor_len, chunk_len]`
         attn = torch.einsum('bcnihd,bcjhd->bcnhij', q, k)
+        # Scale attention scores
         attn = attn * self.scale
 
+        # Calculate softmax across the last dimension
         attn = self.softmax(attn)
 
+        # Gather values
         e = torch.einsum("bcnhij,bcjhd->bcnihd", attn, v)
 
+        # Change from shape `[batch_size, chunks, neighbors, neighbor_len, n_heads, d_k]`
+        # to `[batch_size, chunks, neighbors, neighbor_len, n_heads * d_k]`
         e = e.reshape(*e.shape[:-2], -1)
 
+        # Apply final linear layer.
+        # The result will have shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`
         e = self.output(e)
 
+        # Add residual connection
         return e + e_res
 
 
 class ChunkedCrossAttention(nn.Module):
-    def __init__(self, d_model, n_heads, d_k, chunk_len):
+    """
+    ## Chunked Cross-Attention Layer
+
+    This is similar to cross-attention layer defined above.
+
+    This is used in the decoder to pay attention to the retrieved neighbor chunks.
+
+    *We do not use any explicit positional embeddings here.
+    We assume that the model can represent positional information in the embeddings implicitly.*
+    """
+    def __init__(self, d_model: int, n_heads: int, d_k: int, chunk_len: int):
+        """
+        * `d_model` is the number of features in transformer embeddings
+        * `n_heads` is the number of attention heads
+        * `d_k` is the number of features per head
+        * `chunk_len` is the length of a chunk
+        """
+
         super().__init__()
 
         self.chunk_len = chunk_len
         self.n_heads = n_heads
         self.d_k = d_k
+
+        # To scale attentions before softmax by $\frac{1}{\sqrt{d_k}}$
         self.scale = 1 / math.sqrt(self.d_k)
 
+        # Linear layers for query, key and value heads.
         self.query = nn.Linear(d_model, n_heads * d_k)
         self.key = nn.Linear(d_model, n_heads * d_k)
         self.value = nn.Linear(d_model, n_heads * d_k)
 
+        # Pre-norm layer for the query embeddings. The paper uses RMSNorm instead.
         self.norm = nn.LayerNorm(d_model)
 
+        # Softmax for attention probabilities
         self.softmax = nn.Softmax(dim=-1)
 
+        # Final linear layer
         self.output = nn.Linear(n_heads * d_k, d_model)
 
     def forward(self, h: torch.Tensor, e: torch.Tensor):
         """
-        h [batch_size, seq, d_model]
-        e [batch_size, chunks, neighbors, seq, d_model]
+        `h` are the input embeddings of shape `[batch_size, seq_len, d_model]`
+        `e` are the retrieved nearest neighbors of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`
         """
 
+        # Get shape
         batch_size, chunks, neighbors, neighbor_len, d_model = e.shape
 
+        # No attention if there are no chunks (for short inputs when sampling)
         if chunks == 0:
             return h
 
+        # Residual connection
         h_res = h
 
+        # Remove the first `chunk_len - 1` embeddings.
+        # The input pays attention neighbors retrieved and encoded using the past tokens only;
+        # so that there is no information leakage.
+        # That is the retrieved neighbors from the first chunks will have information from the first chunk.
+        # So by shifting the sequence to the left by `chunk_len - 1` we make sure that information only flows
+        # to the right.
         h = h[:, self.chunk_len - 1:]
+        # Pre-norm
         h = self.norm(h)
+        # Append empty embeddings to the end to be able to split the input into chunks
         if h.shape[1] < chunks * self.chunk_len:
             h = torch.cat((h, h.new_zeros(batch_size, chunks * self.chunk_len - h.shape[1], d_model)), dim=1)
+        # Reshape the input into chunks.
         h = h.reshape(batch_size, chunks, self.chunk_len, d_model)
 
+        # Get query from the input
         q = self.query(h).view(*h.shape[:-1], self.n_heads, self.d_k)
+        # Get keys and values from the retrieved neighbors
         k = self.key(e).view(*e.shape[:-1], self.n_heads, self.d_k)
         v = self.value(e).view(*e.shape[:-1], self.n_heads, self.d_k)
 
+        # Calculate attention scores for input chunks.
+        # Each chunk will pay attention to neighbors retrieved by previous chunk.
+        # This will have shape `[batch_size, chunks, heads, chunk_len, neighbors, neighbor_len]`
         attn = torch.einsum('bcihd,bcnjhd->bchinj', q, k)
+        # Scale attention scores
         attn = attn * self.scale
 
+        # Apply softmax over the last two dimensions `neighbors, neighbor_len`
         attn = self.softmax(attn.view(*attn.shape[:-2], -1)).view(attn.shape)
 
+        # Gather values
         h = torch.einsum("bchinj,bcnjhd->bcihd", attn, v)
 
+        # Change from shape `[batch_size, chunks, chunk_len, n_heads, d_k]`
+        # to `[batch_size, chunks * chunk_len, n_heads * d_k]`
         h = h.reshape(batch_size, chunks * self.chunk_len, -1)
 
+        # Apply final linear layer.
+        # The result will have shape `[batch_size, chunks * chunk_len, d_model]`
         h = self.output(h)
 
+        # Append `chunk_len - 1` zero embedding to the left; i.e. right shift it back
         h = torch.cat((h.new_zeros(batch_size, self.chunk_len - 1, d_model), h), dim=1)
 
-        return h[:, :h_res.shape[1], :] + h_res
+        # Truncate and add the residual connection
+        return h[:, :h_res.shape[1]] + h_res
 
 
 class FeedForward(nn.Module):
