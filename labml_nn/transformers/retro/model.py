@@ -378,64 +378,126 @@ class ChunkedCrossAttention(nn.Module):
 
 
 class FeedForward(nn.Module):
+    """
+    ### Position-wise Feed Forwarward Layer
+
+    This consists of two linear layers and an activation in the middle.
+    """
     def __init__(self, d_model: int, d_ff: int):
+        """
+        * `d_model` is the number of features in transformer embeddings
+        * `d_ff` is the number features in in the hidden layer
+        """
+
         super().__init__()
 
+        # The two linear layers
         self.lin1 = nn.Linear(d_model, d_ff)
         self.lin2 = nn.Linear(d_ff, d_model)
 
-        self.norm = nn.LayerNorm(d_model)
+        # ReLU Activation
         self.act = nn.ReLU()
 
-    def forward(self, x: torch.Tensor):
-        x_res = x
-        x = self.norm(x)
-        x = self.lin1(x)
-        x = self.act(x)
-        x = self.lin2(x)
+        # Pre-norm layer
+        self.norm = nn.LayerNorm(d_model)
 
-        return x + x_res
+    def forward(self, h: torch.Tensor):
+        """
+        `h` are the embeddings of shape `[batch_size, seq_len, d_model]`
+        """
+
+        # Residual
+        h_res = h
+        # Pre-norm
+        h = self.norm(h)
+        # First linear layer
+        h = self.lin1(h)
+        # Activation
+        h = self.act(h)
+        # Second linear layer
+        h = self.lin2(h)
+
+        # Add the residual connection
+        return h + h_res
 
 
-class Encoder(nn.Module):
+class NearestNeighborEncoder(nn.Module):
+    """
+    ## Nearest Neighbor Encoder $\text{E\small{NCODER}}(\text{R\small{ET}}(C_u)_{1 \le u \le l}, H)$
+
+    This module encodes the retrieved nearest neighbors
+    """
     def __init__(self, chunk_len: int, n_layers: int, ca_layers: Set[int],
                  d_model: int, n_heads: int, d_k: int, d_ff: int):
+        """
+        * `chunk_len` is the length of a chunk
+        * `n_layer` is the number layers in the encoder $L_{\text{enc}}$
+        * `ca_layers` are the layers with cross attention $P_{\text{enc}}$
+        * `d_model` is the number of featuers in embeddings
+        * `n_heads` is the number of heads in attention layers
+        * `d_k` is the size of attention heads
+        * `d_ff` is the size of the feed forward networks hidden layers
+        """
+
         super().__init__()
         self.ca_layers = ca_layers
         self.chunk_len = chunk_len
+        # Cross-attention layers
         self.ca = nn.ModuleList([CrossAttention(d_model, n_heads, d_k) for _ in range(len(ca_layers))])
+        # Attention layers
         self.attn = nn.ModuleList([SelfAttention(d_model, n_heads, d_k, is_causal=False) for _ in range(n_layers)])
+        # Feed forward layers
         self.ffw = nn.ModuleList([FeedForward(d_model, d_ff) for _ in range(n_layers)])
 
+        # Pre-normalization layer for $H$
         self.norm_h = nn.LayerNorm(d_model)
 
     def forward(self, e: torch.Tensor, h: torch.Tensor):
         """
-        e [batch_size, chunks, neighbors, seq, d_model]
-        h [batch_size, seq, d_model]
+        * `e` are the retrieved nearest neighbors of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`,
+         $\text{E\small{MB}}\big(\text{R\small{ET}}(C_u)_{1 \le u \le l}\big)$
+        * `h` is are the input embeddings of shape `[batch_size, seq_len, d_model]`, $H$
+
+        *The chunks $u \in [1, l]$ and neighbors $j \in [1, k]$ are processed in parallel.*
         """
 
+        # Get shape
         batch_size, chunks, neighbors, neighbor_len, d_model = e.shape
+
+        # $(H_u)_{u \in [1, l]} \leftarrow \text{S\small{PLIT}}(H)$
         h_split = h[:, :self.chunk_len * chunks, :].reshape(batch_size, chunks, self.chunk_len, d_model)
+
+        # Pre-norm
         h_split = self.norm_h(h_split)
 
+        # Keep the index of the cross attention layer
         p_ca = 0
+        # For all layers $p' \in [1, L_{\text{enc}}]$
         for p in range(len(self.attn)):
+            # Self attention $E^j_u \leftarrow \text{A\small{TTN}}_{\text{enc}}(E^j_u)$
             e = self.attn[p](e.view(-1, neighbor_len, d_model)).view(e.shape)
 
+            # Cross attention if $p' \in P_{\text{enc}}$
             if p in self.ca_layers:
+                # $E^j_u \leftarrow \text{C\small{A}}_{\text{enc}}(E^j_u, H_u)$
                 e = self.ca[p_ca](e, h_split)
+                # Incremnt the cross attention index
                 p_ca += 1
 
+            # Feed forward layer $E^j_u \leftarrow \text{F\small{FW}}_{\text{enc}}(E^j_u)$
             e = self.ffw[p](e)
 
+        # return $E$
         return e
 
 
 class RetroModel(nn.Module):
+    """
+    ## Retro Model
+    """
     def __init__(self, n_vocab: int, d_model: int, n_layers: int, ca_layers: Set[int], chunk_len: int,
                  n_heads: int, d_k: int, d_ff: int,
-                 encoder: Encoder):
+                 encoder: NearestNeighborEncoder):
         super().__init__()
 
         self.ca_layers = ca_layers
@@ -487,7 +549,7 @@ def _test():
     device = torch.device('cuda:0')
 
     m = RetroModel(5, d_model, 6, {2, 5}, chunk_len, n_heads, d_k, d_ff,
-                   encoder=Encoder(chunk_len, 2, {1}, d_model, n_heads, d_k, d_ff))
+                   encoder=NearestNeighborEncoder(chunk_len, 2, {1}, d_model, n_heads, d_k, d_ff))
 
     m.to(device)
     x = [1, 2, 4, 4, 0, 1, 2, 3, 4, 3]

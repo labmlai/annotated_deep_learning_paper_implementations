@@ -8,7 +8,7 @@ from labml_helpers.datasets.text import TextFileDataset
 from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
 from labml_nn.transformers.retro.dataset import Dataset, RetroIndex
-from labml_nn.transformers.retro.model import RetroModel, Encoder
+from labml_nn.transformers.retro.model import RetroModel, NearestNeighborEncoder
 
 
 class Sampler:
@@ -111,7 +111,7 @@ def train():
                        # set(),
                        {3, 5},
                        chunk_len, n_heads, d_k, d_ff,
-                       encoder=Encoder(chunk_len, 6, {3}, d_model, n_heads, d_k, d_ff))
+                       encoder=NearestNeighborEncoder(chunk_len, 6, {3}, d_model, n_heads, d_k, d_ff))
 
     model = model.to(device)
 
