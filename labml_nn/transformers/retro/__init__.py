@@ -32,4 +32,6 @@ Components:
 * [Model](model.html)
 * [Dataset](dataset.html): Pre-calculate the nearest neighbors
 * [Training code](train.html)
+
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/3113dd3ea1e711ec85ee295d18534021)
 """
