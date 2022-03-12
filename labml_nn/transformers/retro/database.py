@@ -7,7 +7,7 @@ summary: >
 
 # Database for nearest neighbor retrieval
 
-This is the build the database and retrieve nearest neighbors for
+This is the build the database and retrieves nearest neighbors for
  [RETRO model](index.html).
 
 We use [FAISS library](https://faiss.ai/) for the database whilst the paper had used the SCaNN library.
@@ -119,7 +119,7 @@ class RetroIndex:
 
     def filter_neighbors(self, offset: int, neighbor_offsets: List[int]):
         """
-        #### Filter neighbors overlapping with the query.
+        #### Filter neighbors that overlap with the query
         
         The positions of the neighbors are given by `neighbor_offsets` and the position
         of the query chunk is `offset`.
