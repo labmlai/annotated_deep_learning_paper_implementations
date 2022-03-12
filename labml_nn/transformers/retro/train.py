@@ -112,7 +112,7 @@ class Trainer:
     """
 
     def __init__(self, device: torch.device, model: retro.RetroModel,
-                 dataloader: DataLoader, optimizer: torch.optim.Adam):
+                 dataloader: DataLoader, optimizer: torch.optim.Optimizer):
         """
         * `device` is the device of the model
         * `model` is the [Retro mode](retro.html)
@@ -156,6 +156,8 @@ def train():
     """
     ## Create and train a small model
     """
+
+    # Create an experiment
     experiment.create(name='retro_small')
 
     # GPU device
@@ -184,34 +186,40 @@ def train():
 
     # Create the nearest neighbor encoder
     nearest_neighbor_encoder = NearestNeighborEncoder(chunk_len, 6, {3}, d_model, n_heads, d_k, d_ff)
+    # Create the model
     model = RetroModel(tds.n_tokens, d_model, 6,
                        {3, 5},
                        chunk_len, n_heads, d_k, d_ff,
                        encoder=nearest_neighbor_encoder)
-
+    # Move the model to the device
     model = model.to(device)
-
+    # Create the optimizer
     optimizer = Noam(model.parameters(), lr=1., d_model=d_model, warmup=2_000)
-
+    # Create the `Trainer`
     trainer = Trainer(device, model, train_dl, optimizer)
-
+    # Create the `Sampler`
     sampler = Sampler(device, model, tds, chunk_len)
-
+    #
     prompt = '''First Citizen:'''
 
+    # Set models for saving and loading
     experiment.add_pytorch_models(model=model)
 
+    # Start the experiment
     with experiment.start():
-        logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
-                    (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
-
+        # Train for `32` epochs
         for epoch in monit.loop(32):
+            # Train
             trainer()
+            # Print a new line
             tracker.new_line()
-            logger.log([(prompt[-10:].replace('\n', '\\n\n'), Text.subtle),
+            # Sample from the `prompt`
+            logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
                         (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
+            # Save models
             experiment.save_checkpoint()
 
 
+#
 if __name__ == '__main__':
     train()
