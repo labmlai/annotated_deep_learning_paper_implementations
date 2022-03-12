@@ -3,24 +3,24 @@
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content=""/>
+    <meta name="description" content="Create a dataset for RETRO model training"/>
 
     <meta name="twitter:card" content="summary"/>
     <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
-    <meta name="twitter:title" content="dataset.py"/>
-    <meta name="twitter:description" content=""/>
+    <meta name="twitter:title" content="Training dataset for RETRO"/>
+    <meta name="twitter:description" content="Create a dataset for RETRO model training"/>
     <meta name="twitter:site" content="@labmlai"/>
     <meta name="twitter:creator" content="@labmlai"/>
 
     <meta property="og:url" content="https://nn.labml.ai/transformers/retro/dataset.html"/>
-    <meta property="og:title" content="dataset.py"/>
+    <meta property="og:title" content="Training dataset for RETRO"/>
     <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
     <meta property="og:site_name" content="LabML Neural Networks"/>
     <meta property="og:type" content="object"/>
-    <meta property="og:title" content="dataset.py"/>
-    <meta property="og:description" content=""/>
+    <meta property="og:title" content="Training dataset for RETRO"/>
+    <meta property="og:description" content="Create a dataset for RETRO model training"/>
 
-    <title>dataset.py</title>
+    <title>Training dataset for RETRO</title>
     <link rel="shortcut icon" href="/icon.png"/>
     <link rel="stylesheet" href="../../pylit.css?v=1">
     <link rel="canonical" href="https://nn.labml.ai/transformers/retro/dataset.html"/>
@@ -65,62 +65,43 @@
         </div>
     </div>
     <div class='section' id='section-0'>
-        <div class='docs'>
+        <div class='docs doc-strings'>
             <div class='section-link'>
                 <a href='#section-0'>#</a>
             </div>
-            
+            <h1>RETRO training dataset</h1>
+<p>We pre-retrieve nearest neighbors from the <a href="database.html">key-value database</a>  and create the dataset to train train the <a href="index.html">RETRO</a>  <a href="model.html">model</a>.</p>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="lineno">2</span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="lineno">3</span>
-<span class="lineno">4</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="lineno">5</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">6</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span> <span class="k">as</span> <span class="n">PyTorchDataset</span>
-<span class="lineno">7</span>
-<span class="lineno">8</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">lab</span><span class="p">,</span> <span class="n">monit</span>
-<span class="lineno">9</span><span class="kn">from</span> <span class="nn">labml_helpers.datasets.text</span> <span class="kn">import</span> <span class="n">TextFileDataset</span><span class="p">,</span> <span class="n">TextDataset</span>
-<span class="lineno">10</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.retro.database</span> <span class="kn">import</span> <span class="n">RetroIndex</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">15</span><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="lineno">17</span>
+<span class="lineno">18</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">19</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span> <span class="k">as</span> <span class="n">PyTorchDataset</span>
+<span class="lineno">21</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">lab</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml_helpers.datasets.text</span> <span class="kn">import</span> <span class="n">TextFileDataset</span><span class="p">,</span> <span class="n">TextDataset</span>
+<span class="lineno">24</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.retro.database</span> <span class="kn">import</span> <span class="n">RetroIndex</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-1'>
-        <div class='docs'>
+        <div class='docs doc-strings'>
             <div class='section-link'>
                 <a href='#section-1'>#</a>
             </div>
-            
+            <h2>Build the dataset</h2>
+<ul><li><code class="highlight"><span></span><span class="n">chunk_len</span></code>
+ is the chunk length </li>
+<li><code class="highlight"><span></span><span class="n">chunks_per_sample</span></code>
+ is the number of chunks per training sample </li>
+<li><code class="highlight"><span></span><span class="n">skip_range</span></code>
+ is the maximum number of characters to skip between two samples.  We skip a few characters between samples to make sure the samples  aren&#x27;t aligned perfectly with the chunks in the <a href="database.html">database</a></li></ul>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">13</span><span class="k">def</span> <span class="nf">build_dataset</span><span class="p">(</span><span class="n">chunk_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="n">chunks_per_sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">offset_noise</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>
-<span class="lineno">14</span>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">TextFileDataset</span><span class="p">(</span>
-<span class="lineno">15</span>        <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;tiny_shakespeare.txt&#39;</span><span class="p">,</span>
-<span class="lineno">16</span>        <span class="nb">list</span><span class="p">,</span>
-<span class="lineno">17</span>        <span class="n">url</span><span class="o">=</span><span class="s1">&#39;https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt&#39;</span><span class="p">)</span>
-<span class="lineno">18</span>
-<span class="lineno">19</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">train</span>
-<span class="lineno">20</span>
-<span class="lineno">21</span>    <span class="n">index</span> <span class="o">=</span> <span class="n">RetroIndex</span><span class="p">()</span>
-<span class="lineno">22</span>    <span class="n">sample_offsets</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="lineno">23</span>    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="lineno">24</span>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
-<span class="lineno">25</span>        <span class="n">skip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">offset_noise</span><span class="p">)</span>
-<span class="lineno">26</span>        <span class="n">i</span> <span class="o">+=</span> <span class="n">skip</span>
-<span class="lineno">27</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
-<span class="lineno">28</span>            <span class="k">break</span>
-<span class="lineno">29</span>
-<span class="lineno">30</span>        <span class="n">sample_offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-<span class="lineno">31</span>
-<span class="lineno">32</span>        <span class="n">i</span> <span class="o">+=</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span>
-<span class="lineno">33</span>
-<span class="lineno">34</span>    <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="lineno">35</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Gather Neighbors&#39;</span><span class="p">,</span> <span class="n">sample_offsets</span><span class="p">):</span>
-<span class="lineno">36</span>        <span class="n">sample</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-<span class="lineno">37</span>        <span class="n">src</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-<span class="lineno">38</span>        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">src</span><span class="p">[</span><span class="n">j</span><span class="p">:</span><span class="n">j</span> <span class="o">+</span> <span class="n">chunk_len</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">chunk_len</span><span class="p">)]</span>
-<span class="lineno">39</span>        <span class="n">chunk_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">chunk_len</span><span class="p">)]</span>
-<span class="lineno">40</span>
-<span class="lineno">41</span>        <span class="n">neighbor_offsets</span> <span class="o">=</span> <span class="n">index</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">chunk_offsets</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">27</span><span class="k">def</span> <span class="nf">build_dataset</span><span class="p">(</span><span class="n">chunk_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="n">chunks_per_sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">skip_range</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -128,16 +109,14 @@
             <div class='section-link'>
                 <a href='#section-2'>#</a>
             </div>
-            <p>for n_off, offset in zip(neighbor_offsets, chunk_offsets):  n_off<a href="-1">-1</a> = offset </p>
+            <p>Load the text file </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">46</span>        <span class="n">neighbors</span> <span class="o">=</span> <span class="p">[[</span><span class="n">text</span><span class="p">[</span><span class="n">j</span><span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="n">chunk_len</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">n_off</span><span class="p">]</span> <span class="k">for</span> <span class="n">n_off</span> <span class="ow">in</span> <span class="n">neighbor_offsets</span><span class="p">]</span>
-<span class="lineno">47</span>
-<span class="lineno">48</span>        <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sample</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">neighbors</span><span class="p">))</span>
-<span class="lineno">49</span>
-<span class="lineno">50</span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;retro_train_dataset.json&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<span class="lineno">51</span>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">39</span>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">TextFileDataset</span><span class="p">(</span>
+<span class="lineno">40</span>        <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;tiny_shakespeare.txt&#39;</span><span class="p">,</span>
+<span class="lineno">41</span>        <span class="nb">list</span><span class="p">,</span>
+<span class="lineno">42</span>        <span class="n">url</span><span class="o">=</span><span class="s1">&#39;https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt&#39;</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -145,10 +124,11 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            
+            <p>Training portion of it </p>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">54</span><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">PyTorchDataset</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">45</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">train</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -156,13 +136,11 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            
+            <p>Load the index for retrieving neighbors </p>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">55</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">tds</span><span class="p">:</span> <span class="n">TextDataset</span> <span class="o">=</span> <span class="nb">list</span><span class="p">):</span>
-<span class="lineno">56</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tds</span> <span class="o">=</span> <span class="n">tds</span>
-<span class="lineno">57</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<span class="lineno">58</span>            <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">48</span>    <span class="n">index</span> <span class="o">=</span> <span class="n">RetroIndex</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -170,11 +148,11 @@
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            
+            <p>The input sample offsets </p>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">60</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="lineno">61</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">51</span>    <span class="n">sample_offsets</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
@@ -182,19 +160,324 @@
             <div class='section-link'>
                 <a href='#section-6'>#</a>
             </div>
+            <p>Cursor for the text </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">54</span>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Skip a few characters to make sure it&#x27;s not aligned with the neighbors </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">56</span>        <span class="n">skip</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">skip_range</span><span class="p">)</span>
+<span class="lineno">57</span>        <span class="n">i</span> <span class="o">+=</span> <span class="n">skip</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Stop if we&#x27;ve reached the end of the text </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">60</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+<span class="lineno">61</span>            <span class="k">break</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Collect the offset </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>        <span class="n">sample_offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Increment the cursor </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">67</span>        <span class="n">i</span> <span class="o">+=</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>For samples </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Iterate through sample offsets </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Gather Neighbors&#39;</span><span class="p">,</span> <span class="n">sample_offsets</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Get the sample including an extra character (for prediction) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">sample</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">chunks_per_sample</span> <span class="o">*</span> <span class="n">chunk_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>The input </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">76</span>        <span class="n">src</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Break it into chunks </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">78</span>        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">src</span><span class="p">[</span><span class="n">j</span><span class="p">:</span><span class="n">j</span> <span class="o">+</span> <span class="n">chunk_len</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">chunk_len</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>The chunk offsets </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">chunk_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">chunk_len</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Retrieve nearest neighbors </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">83</span>        <span class="n">neighbor_offsets</span> <span class="o">=</span> <span class="n">index</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">chunk_offsets</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Get neighbor texts. The neighbor length is twice the <code class="highlight"><span></span><span class="n">chunk_len</span></code>
+ </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">86</span>        <span class="n">neighbors</span> <span class="o">=</span> <span class="p">[[</span><span class="n">text</span><span class="p">[</span><span class="n">j</span><span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="n">chunk_len</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">n_off</span><span class="p">]</span> <span class="k">for</span> <span class="n">n_off</span> <span class="ow">in</span> <span class="n">neighbor_offsets</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Add to list of samples </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">89</span>        <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sample</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sample</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">neighbors</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>Save the samples in JSON. We don&#x27;t need to use complex dataset storage mechanisms or pre-tokenize since our dataset is small. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">94</span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;retro_train_dataset.json&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="lineno">95</span>        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <h2>Dataset</h2>
+<p>This is the PyTorch dataset that loads the dataset created by <code class="highlight"><span></span><span class="n">build_dataset</span></code>
+.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">98</span><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">PyTorchDataset</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <ul><li><code class="highlight"><span></span><span class="n">file_path</span></code>
+ is the path of the saved JSON file </li>
+<li><code class="highlight"><span></span><span class="n">tds</span></code>
+ is the <code class="highlight"><span></span><span class="n">TextDataset</span></code>
+</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">105</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">tds</span><span class="p">:</span> <span class="n">TextDataset</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">63</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
-<span class="lineno">64</span>        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-<span class="lineno">65</span>        <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="lineno">66</span>        <span class="n">tgt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="lineno">67</span>        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">])</span> <span class="k">for</span> <span class="n">chunks</span> <span class="ow">in</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-<span class="lineno">68</span>        <span class="k">return</span> <span class="n">src</span><span class="p">,</span> <span class="n">tgt</span><span class="p">,</span> <span class="n">neighbors</span>
-<span class="lineno">69</span>
-<span class="lineno">70</span>
-<span class="lineno">71</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">72</span>    <span class="n">build_dataset</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">111</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tds</span> <span class="o">=</span> <span class="n">tds</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>Load the samples </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">113</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="lineno">114</span>            <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p> Number of samples</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">120</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p> Get a sample</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">122</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>Get the sample </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>Tokenize </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">129</span>        <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="lineno">130</span>        <span class="n">tgt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="lineno">131</span>        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">tds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">])</span> <span class="k">for</span> <span class="n">chunks</span> <span class="ow">in</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="k">return</span> <span class="n">src</span><span class="p">,</span> <span class="n">tgt</span><span class="p">,</span> <span class="n">neighbors</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">137</span>    <span class="n">build_dataset</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='footer'>
