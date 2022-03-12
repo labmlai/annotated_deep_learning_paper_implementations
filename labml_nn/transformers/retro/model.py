@@ -24,7 +24,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     """
     ## [RoPE embeddings](../rope/index.html)
 
-    *We use rotary position embeddings in self attention layers.
+    *We use rotary position embeddings in self-attention layers.
     We assume the positional information gets embedded in embeddings
     and therefore not use them in causal attention.
     [Non-causal self-attention needs explicit positional information
@@ -84,7 +84,7 @@ class SelfAttention(nn.Module):
     """
     ## Self-Attention Layer $\text{A\small{TTN}$
 
-    This applies causal and non-causal [multi-headed self attention](../mha.html).
+    This applies causal and non-causal [multi-headed self-attention](../mha.html).
     """
 
     def __init__(self, d_model: int, n_heads: int, d_k: int, is_causal: bool):
@@ -188,8 +188,8 @@ class CrossAttention(nn.Module):
     """
     ## Cross-Attention Layer $\text{C\small{A}}$
 
-    This is similar to self-attention layer defined above, except that
-    it gets keys and values from different set of embeddings than the queries.
+    This is similar to the self-attention layer defined above, except that
+    it gets keys and values from a different set of embeddings than the queries.
 
     This is used in the encoder to encode the retrieved chunks based on the
     input chunks.
@@ -275,7 +275,7 @@ class ChunkedCrossAttention(nn.Module):
     """
     ## Chunked Cross-Attention Layer $\text{C\small{CA}}$
 
-    This is similar to cross-attention layer defined above.
+    This is similar to the cross-attention layer defined above.
 
     This is used in the decoder to pay attention to the retrieved neighbor chunks.
 
@@ -331,7 +331,7 @@ class ChunkedCrossAttention(nn.Module):
         h_res = h
 
         # Remove the first `chunk_len - 1` embeddings.
-        # The input pays attention neighbors retrieved and encoded using the past tokens only;
+        # The input pays attention to neighbors retrieved and encoded using the past tokens only;
         # so that there is no information leakage.
         # That is the retrieved neighbors from the first chunks will have information from the first chunk.
         # So by shifting the sequence to the left by `chunk_len - 1` we make sure that information only flows
@@ -352,7 +352,7 @@ class ChunkedCrossAttention(nn.Module):
         v = self.value(e).view(*e.shape[:-1], self.n_heads, self.d_k)
 
         # Calculate attention scores for input chunks.
-        # Each chunk will pay attention to neighbors retrieved by previous chunk.
+        # Each chunk will pay attention to neighbors retrieved by the previous chunk.
         # This will have shape `[batch_size, chunks, heads, chunk_len, neighbors, neighbor_len]`
         attn = torch.einsum('bcihd,bcnjhd->bchinj', q, k)
         # Scale attention scores
@@ -389,7 +389,7 @@ class FeedForward(nn.Module):
     def __init__(self, d_model: int, d_ff: int):
         """
         * `d_model` is the number of features in transformer embeddings
-        * `d_ff` is the number features in in the hidden layer
+        * `d_ff` is the number features in the hidden layer
         """
 
         super().__init__()
@@ -435,12 +435,12 @@ class NearestNeighborEncoder(nn.Module):
                  d_model: int, n_heads: int, d_k: int, d_ff: int):
         """
         * `chunk_len` is the length of a chunk
-        * `n_layer` is the number layers in the encoder $L_{\text{enc}}$
+        * `n_layer` is the number of layers in the encoder $L_{\text{enc}}$
         * `ca_layers` are the layers with cross attention $P_{\text{enc}}$
-        * `d_model` is the number of featuers in embeddings
+        * `d_model` is the number of features in embeddings
         * `n_heads` is the number of heads in attention layers
         * `d_k` is the size of attention heads
-        * `d_ff` is the size of the feed forward networks hidden layers
+        * `d_ff` is the size of the feed-forward networks hidden layers
         """
 
         super().__init__()
@@ -460,7 +460,7 @@ class NearestNeighborEncoder(nn.Module):
         """
         * `e` are token embeddings of the retrieved nearest neighbors,
          $\text{E\small{MB}}\big(\text{R\small{ET}}(C_u)_{1 \le u \le l}\big)$
-         of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`,
+         of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`
 
         * `h` is are the input token embeddings, $H$
          of shape `[batch_size, seq_len, d_model]`
@@ -511,12 +511,12 @@ class RetroModel(nn.Module):
         """
         * `v_vocab` is the number of tokens in the vocabulary
         * `d_model` is the number of features in embeddings
-        * `n_layers` is the number layers in the decoder $L$
+        * `n_layers` is the number of layers in the decoder $L$
         * `ca_layers` are the layers with cross attention $P$
         * `chunk_len` is the length of a chunk
         * `n_heads` is the number of heads in attention layers
         * `d_k` is the size of attention heads
-        * `d_ff` is the size of the feed forward networks hidden layers
+        * `d_ff` is the size of the feed-forward networks hidden layers
         * `encoder` is the nearest neighbor encoder
         """
         super().__init__()
