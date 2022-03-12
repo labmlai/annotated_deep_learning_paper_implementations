@@ -46,15 +46,15 @@ class BERTChunkEmbeddings:
     @staticmethod
     def _trim_chunk(chunk: str):
         """
-        In this implementation we do not make chunks with a fixed number of tokens.
-        One of the reasons is that the our model uses character level tokens and BERT
-        uses it's own sub-word tokenizer.
+        In this implementation, we do not make chunks with a fixed number of tokens.
+        One of the reasons is that this implementation uses character-level tokens and BERT
+        uses its sub-word tokenizer.
 
         So this method will truncate the text to make sure there are no partial tokens.
 
         For instance, a chunk could be like `s a popular programming la`, with partial
         words (partial sub-word tokens) on the ends.
-        We strip them off to get a better BERT embeddings.
+        We strip them off to get better BERT embeddings.
         As mentioned earlier this is not necessary if we broke chunks after tokenizing.
         """
         # Strip whitespace
@@ -99,7 +99,7 @@ class BERTChunkEmbeddings:
             # Get the token embeddings
             state = output['last_hidden_state']
             # Calculate the average token embeddings.
-            # Note that attention mask is `0` if the token is empty padded.
+            # Note that the attention mask is `0` if the token is empty padded.
             # We get empty tokens because the chunks are of different lengths.
             emb = (state * attention_mask[:, :, None]).sum(dim=1) / attention_mask[:, :, None].sum(dim=1)
 
