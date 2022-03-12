@@ -23,6 +23,7 @@ implementations.
 * [Transformer XL](transformers/xl/index.html)
     * [Relative multi-headed attention](transformers/xl/relative_mha.html)
 * [Rotary Positional Embeddings](transformers/rope/index.html)
+* [RETRO](transformers/retro/index.html)
 * [Compressive Transformer](transformers/compressive/index.html)
 * [GPT Architecture](transformers/gpt/index.html)
 * [GLU Variants](transformers/glu_variants/simple.html)

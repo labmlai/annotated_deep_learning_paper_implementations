@@ -25,6 +25,9 @@ This implements Transformer XL model using
 ## [Rotary Positional Embeddings](rope/index.html)
 This implements Rotary Positional Embeddings (RoPE)
 
+## [RETRO](retro/index.html)
+This implements the Retrieval-Enhanced Transformer (RETRO).
+
 ## [Compressive Transformer](compressive/index.html)
 
 This is an implementation of compressive transformer
