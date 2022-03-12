@@ -553,6 +553,7 @@ class RetroModel(nn.Module):
 
         # Embeddings of the retrieved neighbors
         # $E^j_u = \text{E\small{MB}}_{\text{enc}}\big(\text{R\small{ET}}(C_u)^j\big)$.
+        #
         # We use same embeddings for both input and neighbors
         ret_emb = self.emb(ret)
 
@@ -567,6 +568,7 @@ class RetroModel(nn.Module):
             # when $p = \min(P)$
             if self.ca_layers and p == min(self.ca_layers):
                 # $E = \text{E\small{NCODER}}(\text{R\small{ET}}(C_u)_{1 \le u \le l}, H)$
+                #
                 # We passed the embeddings of $\text{R\small{ET}}(C_u)_{1 \le u \le l}$ to encoder.
                 e = self.encoder(ret_emb, h)
                 # Normalize encoder embeddings
