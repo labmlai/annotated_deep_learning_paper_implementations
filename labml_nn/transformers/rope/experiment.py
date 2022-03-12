@@ -48,8 +48,6 @@ def main():
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        'device.cuda_device': 1,
-
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
         'transformer.tgt_embed': 'no_pos',
@@ -70,22 +68,26 @@ def main():
         'text': 'tiny_shakespeare',
 
         # Use a context size of $256$
-        'seq_len': 256,
-        # Train for $128$ epochs
-        'epochs': 128,
-        # Batch size $32$
-        'batch_size': 32,
+        'seq_len': 512,
+        # Train for 32 epochs
+        'epochs': 32,
+        # Batch size $4$
+        'batch_size': 4,
         # Switch between training and validation for $10$ times
         # per epoch
         'inner_iterations': 10,
 
         # Model size
         'd_model': 128,
-        'transformer.ffn.d_ff': 256,
+        'transformer.ffn.d_ff': 512,
+        'transformer.n_heads': 16,
+        'transformer.dropout': 0.0,
 
         # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
         'optimizer.learning_rate': 1.,
+
+        'dataloader_shuffle_with_replacement': True
     })
 
     # Set models for saving and loading

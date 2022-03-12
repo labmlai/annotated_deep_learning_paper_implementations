@@ -12,7 +12,7 @@ from typing import Callable
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 
 from labml import lab, monit, logger, tracker
 from labml.configs import option
@@ -87,6 +87,9 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     train_loader: DataLoader = 'shuffled_train_loader'
     # Validation data loader
     valid_loader: DataLoader = 'shuffled_valid_loader'
+
+    # Data loaders shuffle with replacement
+    dataloader_shuffle_with_replacement: bool = False
 
     def init(self):
         """
@@ -295,12 +298,15 @@ def shuffled_train_loader(c: NLPAutoRegressionConfigs):
     """
     ### Shuffled training data loader
     """
-    return DataLoader(SequentialUnBatchedDataset(text=c.text.train,
-                                                 dataset=c.text,
-                                                 seq_len=c.seq_len),
+    dataset = SequentialUnBatchedDataset(text=c.text.train,
+                                         dataset=c.text,
+                                         seq_len=c.seq_len)
+    sampler = RandomSampler(dataset, replacement=c.dataloader_shuffle_with_replacement)
+
+    return DataLoader(dataset,
                       batch_size=c.batch_size,
                       collate_fn=transpose_batch,
-                      shuffle=True)
+                      sampler=sampler)
 
 
 @option(NLPAutoRegressionConfigs.valid_loader)
@@ -308,9 +314,12 @@ def shuffled_valid_loader(c: NLPAutoRegressionConfigs):
     """
     ### Shuffled validation data loader
     """
-    return DataLoader(SequentialUnBatchedDataset(text=c.text.valid,
-                                                 dataset=c.text,
-                                                 seq_len=c.seq_len),
+    dataset = SequentialUnBatchedDataset(text=c.text.valid,
+                                         dataset=c.text,
+                                         seq_len=c.seq_len)
+    sampler = RandomSampler(dataset, replacement=c.dataloader_shuffle_with_replacement)
+
+    return DataLoader(dataset,
                       batch_size=c.batch_size,
                       collate_fn=transpose_batch,
-                      shuffle=True)
+                      sampler=sampler)
