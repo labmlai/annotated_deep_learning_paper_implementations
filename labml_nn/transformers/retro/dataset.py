@@ -8,7 +8,7 @@ summary: >
 # RETRO training dataset
 
 We pre-retrieve nearest neighbors from the [key-value database](database.html)
- and create the dataset to train train the [RETRO](index.html)
+ and create the dataset to train the [RETRO](index.html)
  [model](model.html).
 """
 
