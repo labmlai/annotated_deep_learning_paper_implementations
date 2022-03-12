@@ -82,7 +82,7 @@ class RotaryPositionalEmbeddings(nn.Module):
 
 class SelfAttention(nn.Module):
     """
-    ## Self-Attention Layer
+    ## Self-Attention Layer $\text{A\small{TTN}$
 
     This applies causal and non-causal [multi-headed self attention](../mha.html).
     """
@@ -186,7 +186,7 @@ class SelfAttention(nn.Module):
 
 class CrossAttention(nn.Module):
     """
-    ## Cross-Attention Layer
+    ## Cross-Attention Layer $\text{C\small{A}}$
 
     This is similar to self-attention layer defined above, except that
     it gets keys and values from different set of embeddings than the queries.
@@ -197,6 +197,7 @@ class CrossAttention(nn.Module):
     *We do not use any explicit positional embeddings here.
     We assume that the model can represent positional information in the embeddings implicitly.*
     """
+
     def __init__(self, d_model: int, n_heads: int, d_k: int):
         """
         * `d_model` is the number of features in transformer embeddings
@@ -272,7 +273,7 @@ class CrossAttention(nn.Module):
 
 class ChunkedCrossAttention(nn.Module):
     """
-    ## Chunked Cross-Attention Layer
+    ## Chunked Cross-Attention Layer $\text{C\small{CA}}$
 
     This is similar to cross-attention layer defined above.
 
@@ -281,6 +282,7 @@ class ChunkedCrossAttention(nn.Module):
     *We do not use any explicit positional embeddings here.
     We assume that the model can represent positional information in the embeddings implicitly.*
     """
+
     def __init__(self, d_model: int, n_heads: int, d_k: int, chunk_len: int):
         """
         * `d_model` is the number of features in transformer embeddings
@@ -379,10 +381,11 @@ class ChunkedCrossAttention(nn.Module):
 
 class FeedForward(nn.Module):
     """
-    ### Position-wise Feed Forwarward Layer
+    ### Position-wise Feed Forward Layer $\text{F\small{FW}}$
 
     This consists of two linear layers and an activation in the middle.
     """
+
     def __init__(self, d_model: int, d_ff: int):
         """
         * `d_model` is the number of features in transformer embeddings
@@ -427,6 +430,7 @@ class NearestNeighborEncoder(nn.Module):
 
     This module encodes the retrieved nearest neighbors
     """
+
     def __init__(self, chunk_len: int, n_layers: int, ca_layers: Set[int],
                  d_model: int, n_heads: int, d_k: int, d_ff: int):
         """
@@ -444,7 +448,7 @@ class NearestNeighborEncoder(nn.Module):
         self.chunk_len = chunk_len
         # Cross-attention layers
         self.ca = nn.ModuleList([CrossAttention(d_model, n_heads, d_k) for _ in range(len(ca_layers))])
-        # Attention layers
+        # Bi-directional self attention layers
         self.attn = nn.ModuleList([SelfAttention(d_model, n_heads, d_k, is_causal=False) for _ in range(n_layers)])
         # Feed forward layers
         self.ffw = nn.ModuleList([FeedForward(d_model, d_ff) for _ in range(n_layers)])
@@ -454,9 +458,12 @@ class NearestNeighborEncoder(nn.Module):
 
     def forward(self, e: torch.Tensor, h: torch.Tensor):
         """
-        * `e` are the retrieved nearest neighbors of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`,
+        * `e` are token embeddings of the retrieved nearest neighbors,
          $\text{E\small{MB}}\big(\text{R\small{ET}}(C_u)_{1 \le u \le l}\big)$
-        * `h` is are the input embeddings of shape `[batch_size, seq_len, d_model]`, $H$
+         of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`,
+
+        * `h` is are the input token embeddings, $H$
+         of shape `[batch_size, seq_len, d_model]`
 
         *The chunks $u \in [1, l]$ and neighbors $j \in [1, k]$ are processed in parallel.*
         """
@@ -474,7 +481,8 @@ class NearestNeighborEncoder(nn.Module):
         p_ca = 0
         # For all layers $p' \in [1, L_{\text{enc}}]$
         for p in range(len(self.attn)):
-            # Self attention $E^j_u \leftarrow \text{A\small{TTN}}_{\text{enc}}(E^j_u)$
+            # Bi-directional self attention
+            # $E^j_u \leftarrow \text{A\small{TTN}}_{\text{enc}}(E^j_u)$
             e = self.attn[p](e.view(-1, neighbor_len, d_model)).view(e.shape)
 
             # Cross attention if $p' \in P_{\text{enc}}$
@@ -494,52 +502,94 @@ class NearestNeighborEncoder(nn.Module):
 class RetroModel(nn.Module):
     """
     ## Retro Model
+
+    This is the Retro decoder
     """
+
     def __init__(self, n_vocab: int, d_model: int, n_layers: int, ca_layers: Set[int], chunk_len: int,
-                 n_heads: int, d_k: int, d_ff: int,
-                 encoder: NearestNeighborEncoder):
+                 n_heads: int, d_k: int, d_ff: int, encoder: NearestNeighborEncoder):
+        """
+        * `v_vocab` is the number of tokens in the vocabulary
+        * `d_model` is the number of features in embeddings
+        * `n_layers` is the number layers in the decoder $L$
+        * `ca_layers` are the layers with cross attention $P$
+        * `chunk_len` is the length of a chunk
+        * `n_heads` is the number of heads in attention layers
+        * `d_k` is the size of attention heads
+        * `d_ff` is the size of the feed forward networks hidden layers
+        * `encoder` is the nearest neighbor encoder
+        """
         super().__init__()
 
         self.ca_layers = ca_layers
-        self.emb = nn.Embedding(n_vocab, d_model)
-        self.linear = nn.Linear(d_model, d_model)
         self.encoder = encoder
+
+        # Token embedding layer
+        self.emb = nn.Embedding(n_vocab, d_model)
+        # Chunked cross attention layers $\text{C\small{CA}}$
         self.cca = nn.ModuleList(
             [ChunkedCrossAttention(d_model, n_heads, d_k, chunk_len) for _ in range(len(ca_layers))])
+        # Attention layers $\text{A\small{TTN}}$
         self.attn = nn.ModuleList([SelfAttention(d_model, n_heads, d_k, is_causal=True) for _ in range(n_layers)])
+        # Feed forward layers $\text{F\small{FW}}$
         self.ffw = nn.ModuleList([FeedForward(d_model, d_ff) for _ in range(n_layers)])
+        # Readout layer $\text{R\small{EAD}}$
         self.read = nn.Linear(d_model, n_vocab)
 
+        # Pre-normalization layer for nearest neighbor embeddings from
+        # $\text{E\small{NCODER}}(\text{R\small{ET}}(C_u)_{1 \le u \le l}, H)$
         self.norm_e = nn.LayerNorm(d_model)
 
     def forward(self, x: torch.Tensor, ret: torch.Tensor):
         """
-        x [batch_size, seq]
-        e [batch_size, chunks, neighbors, seq]
+        * `x` is the input sequence, $X$ of shape `[batch_size, seq_len]`
+        * `ret` are the retrieved neighbors
+         $\text{R\small{ET}}(C_u)_{1 \le u \le l}$
+         of shape `[batch_size, chunks, neighbors, neighbor_len]`
         """
 
+        # Get input embeddings $H \leftarrow \text{E\small{MB}}(X)$
         h = self.emb(x)
 
+        # Embeddings of the retrieved neighbors
+        # $E^j_u = \text{E\small{MB}}_{\text{enc}}\big(\text{R\small{ET}}(C_u)^j\big)$.
+        # We use same embeddings for both input and neighbors
         ret_emb = self.emb(ret)
 
+        # Keep index of the chunked cross attention layer
         p_ca = 0
+        # For all layers $p \in [1, L]$
         for p in range(len(self.attn)):
+            # Causal self attention $H \leftarrow \text{A\small{TTN}}(H)$
             h = self.attn[p](h)
 
+            # Get encoder embeddings before the first $\text{C\small{CA}}$ layer,
+            # when $p = \min(P)$
             if self.ca_layers and p == min(self.ca_layers):
+                # $E = \text{E\small{NCODER}}(\text{R\small{ET}}(C_u)_{1 \le u \le l}, H)$
+                # We passed the embeddings of $\text{R\small{ET}}(C_u)_{1 \le u \le l}$ to encoder.
                 e = self.encoder(ret_emb, h)
+                # Normalize encoder embeddings
                 e = self.norm_e(e)
 
+            # Chunked-cross attention if $p \in P$
             if p in self.ca_layers:
+                # $H \leftarror \text{C\small{CA}}(H, E)$
                 h = self.cca[p_ca](h, e)
+                # Increment chunked cross-attention index
                 p_ca += 1
 
+            # $H \leftarrow \text{F\small{FW}}(H)$
             h = self.ffw[p](h)
 
+        # $O \leftarrow \text{R\small{EAD}}(H)$
         return self.read(h)
 
 
 def _test():
+    """
+    ### Test the model with fake data
+    """
     chunk_len = 4
     d_model = 8
     d_ff = 32
@@ -562,5 +612,6 @@ def _test():
     inspect(res)
 
 
+#
 if __name__ == '__main__':
     _test()
