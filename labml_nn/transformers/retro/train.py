@@ -200,7 +200,7 @@ def train():
     # Create the `Sampler`
     sampler = Sampler(device, model, tds, chunk_len)
     #
-    prompt = '''First Citizen:'''
+    prompt = '''Second Citizen:\nOne word, good citizens.\n\nFirst Citizen:'''
 
     # Set models for saving and loading
     experiment.add_pytorch_models(model=model)
