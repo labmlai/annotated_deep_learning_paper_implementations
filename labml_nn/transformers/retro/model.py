@@ -84,7 +84,7 @@ class RotaryPositionalEmbeddings(nn.Module):
 
 class SelfAttention(nn.Module):
     """
-    ## Self-Attention Layer $\text{A\small{TTN}$
+    ## Self-Attention Layer $\text{A\small{TTN}}$
 
     This applies causal and non-causal [multi-headed self-attention](../mha.html).
     """
@@ -578,7 +578,7 @@ class RetroModel(nn.Module):
 
             # Chunked-cross attention if $p \in P$
             if p in self.ca_layers:
-                # $H \leftarror \text{C\small{CA}}(H, E)$
+                # $H \leftarrow \text{C\small{CA}}(H, E)$
                 h = self.cca[p_ca](h, e)
                 # Increment chunked cross-attention index
                 p_ca += 1

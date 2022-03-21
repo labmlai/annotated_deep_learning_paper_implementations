@@ -126,7 +126,7 @@ Re-parameterizing with a model to predict noise
   \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)
 \end{align}
 
-where $\epsilon_theta$ is a learned function that predicts $\epsilon$ given $(x_t, t)$.
+where $\epsilon_\theta$ is a learned function that predicts $\epsilon$ given $(x_t, t)$.
 
 This gives,
 
