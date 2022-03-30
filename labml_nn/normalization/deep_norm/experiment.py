@@ -3,8 +3,11 @@ import copy
 import torch
 import torch.nn as nn
 
+from labml import experiment
+from labml.configs import option
 from labml_helpers.module import Module
-from labml_nn.normalization.deep_norm import DeepNorm, deep_norm_init
+from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
+from labml_nn.normalization.deep_norm import DeepNorm
 from labml_nn.transformers import MultiHeadAttention
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.utils import subsequent_mask
@@ -26,22 +29,30 @@ class TransformerLayer(nn.Module):
         """
         super().__init__()
         self.size = d_model
-        self.self_attn = DeepNorm(self_attn, deep_norm_alpha, [d_model])
-        self.feed_forward = DeepNorm(feed_forward, deep_norm_alpha, [d_model])
+        self.self_attn = self_attn
+        self.feed_forward = feed_forward
+        self.self_attn_norm = DeepNorm(deep_norm_alpha, [d_model])
+        self.feed_forward_norm = DeepNorm(deep_norm_alpha, [d_model])
 
-        deep_norm_init(feed_forward.layer1.weight, deep_norm_beta)
-        deep_norm_init(feed_forward.layer2.weight, deep_norm_beta)
+        with torch.no_grad():
+            feed_forward.layer1.weight *= deep_norm_beta
+            feed_forward.layer2.weight *= deep_norm_beta
 
-        deep_norm_init(self_attn.value.linear.weight, deep_norm_beta)
-        deep_norm_init(self_attn.output.weight, deep_norm_beta)
+            self_attn.value.linear.weight *= deep_norm_beta
+            self_attn.output.weight *= deep_norm_beta
 
-    def forward(self, *,
-                x: torch.Tensor,
-                mask: torch.Tensor):
+        # The mask will be initialized on the first call
+        self.mask = None
+
+    def forward(self, x: torch.Tensor):
+        if self.mask is None or self.mask.size(0) != len(x):
+            # Subsequent mask, will mask out tokens from seeing future tokens
+            self.mask = subsequent_mask(len(x)).to(x.device)
+
         # Run through self attention, i.e. keys and values are from self
-        x = self.self_attn(query=x, key=x, value=x, mask=mask)
+        x = self.self_attn_norm(x, self.self_attn(query=x, key=x, value=x, mask=self.mask))
         # Pass through the feed-forward network
-        x = self.feed_forward(x)
+        x = self.feed_forward_norm(x, self.feed_forward(x))
 
         return x
 
@@ -64,34 +75,106 @@ class AutoregressiveTransformer(Module):
         self.emb = nn.Embedding(n_tokens, d_model)
         self.readout = nn.Linear(d_model, n_tokens)
 
-        # The mask will be initialized on the first call
-        self.mask = None
-
     def forward(self, x: torch.Tensor):
-        # Create subsequent mask if mask is not initialized
-        # or if the size of the mask is different
-        if self.mask is None or self.mask.size(0) != len(x):
-            # Subsequent mask, will mask out tokens from seeing future tokens
-            self.mask = subsequent_mask(len(x)).to(x.device)
         # Get the token embeddings with positional encodings
         x = self.emb(x)
         # Transformer encoder
-        x = self.encoder(x, self.mask)
+        x = self.encoder(x)
         # Get logits
         x = self.readout(x)
 
         # Return results
-        return x
+        return x, None
 
 
-def _test():
-    AutoregressiveTransformer(65, 32, 3,
-                              TransformerLayer(d_model=32,
-                                               deep_norm_alpha=0.3,
-                                               deep_norm_beta=0.3,
-                                               feed_forward=FeedForward(d_model=32, d_ff=32 * 4),
-                                               self_attn=MultiHeadAttention(4, 32)))
+class Configs(NLPAutoRegressionConfigs):
+    """
+    ## Configurations
+
+    This inherits from
+    [`NLPAutoRegressionConfigs`](../../experiments/nlp_autoregression.html#NLPAutoRegressionConfigs)
+    """
+
+    # GPT model
+    model: AutoregressiveTransformer
+
+    n_layers: int = 64
+
+    deep_norm_alpha: float
+    deep_norm_beta: float
+
+    n_heads: int = 4
+    d_model: int = 64
+    d_k: int = 16
 
 
+@option(Configs.deep_norm_alpha)
+def _deep_norm_alpha(c: Configs):
+    return (2. * c.n_layers) ** 0.5
+
+
+@option(Configs.deep_norm_beta)
+def _deep_norm_beta(c: Configs):
+    return (8. * c.n_layers) ** -0.5
+
+
+@option(Configs.model)
+def _model(c: Configs):
+    m = AutoregressiveTransformer(c.n_tokens, c.d_model, c.n_layers,
+                                  TransformerLayer(d_model=c.d_model,
+                                                   deep_norm_alpha=c.deep_norm_alpha,
+                                                   deep_norm_beta=c.deep_norm_beta,
+                                                   feed_forward=FeedForward(d_model=c.d_model, d_ff=c.d_model * 4),
+                                                   self_attn=MultiHeadAttention(c.n_heads, c.d_model,
+                                                                                dropout_prob=0.0)))
+
+    return m.to(c.device)
+
+
+def main():
+    # Create experiment
+    experiment.create(name="deep_norm", writers={'screen', 'web_api', 'comet'})
+    # Create configs
+    conf = Configs()
+    # Override configurations
+    experiment.configs(conf, {
+
+        # Use character level tokenizer
+        'tokenizer': 'character',
+        # Prompt separator is blank
+        'prompt_separator': '',
+        # Starting prompt for sampling
+        'prompt': 'It is ',
+        # Use Tiny Shakespeare dataset
+        'text': 'tiny_shakespeare',
+
+        # Use a context size of $256$
+        'seq_len': 256,
+        # Train for 32 epochs
+        'epochs': 32,
+        # Batch size $32$
+        'batch_size': 16,
+        # Switch between training and validation for $10$ times
+        # per epoch
+        'inner_iterations': 10,
+
+        # Use [Noam optimizer](../../optimizers/noam.html)
+        'optimizer.optimizer': 'Adam',
+        'optimizer.learning_rate': 3e-4,
+
+        # 'optimizer.optimizer': 'Noam',
+        # 'optimizer.learning_rate': 1.,
+    })
+
+    # Set models for saving and loading
+    experiment.add_pytorch_models({'model': conf.model})
+
+    # Start the experiment
+    with experiment.start():
+        # Run training
+        conf.run()
+
+
+#
 if __name__ == '__main__':
-    _test()
+    main()
