@@ -141,7 +141,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         idx_theta = torch.einsum('n,d->nd', seq_idx, self.theta)
 
         # Concatenate so that for row $m$ we have
-        # $[m \theta_0, m \theta_1, ..., m \theta_{\frac{d}{2}}, m \theta 0, m \theta 1, ..., m \theta_{\frac{d}{2}}]$
+        # $[m \theta_0, m \theta_1, ..., m \theta_{\frac{d}{2}}, m \theta_0, m \theta_1, ..., m \theta_{\frac{d}{2}}]$
         idx_theta2 = torch.cat([idx_theta, idx_theta], dim=1)
 
         # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., -x^{(\frac{d}{2})}]$
