@@ -14,7 +14,7 @@ the DeepNorm from the paper
 The paper proposes a method to stabilize extremely deep transformers through a new normalizing function
 to replace LayerNorm and a weight initialization scheme.
 This combines the performance of Post-LayerNorm and the stability of Pre-LayerNorm.
-Transformers with DeepNorms are supposed to be stable even without learning rate warm-up.
+Transformers with DeepNorms are supposed to be stable even without a learning rate warm-up.
 
 The paper first shows that the changes to layer outputs (for the same input)
  change gradually during stable training;
@@ -26,12 +26,12 @@ They use the idea of keeping the changes to layer outputs small to derive the ne
 
 ## Weight Initializations
 
-Usually the weights are initialized with Xavier or Kaiming initializations.
+Usually, the weights are initialized with Xavier or Kaiming initializations.
 This paper scales (sets the gain) the weights by a constant $\beta$ depending on the size of the
  transformer.
 
 DeepNorm suggests scaling the weights of the two linear transforms in the
-[Feed Forward Network](../../transformers/feed_forward.html),
+[Feed-Forward Network](../../transformers/feed_forward.html),
 the value projection transform, and the output projection transform of the
 attention layer.
 Weights of these transforms are scaled by (has a gain equal to) $\beta$.
