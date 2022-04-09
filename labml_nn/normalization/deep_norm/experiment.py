@@ -91,7 +91,7 @@ def _deep_norm_alpha(c: Configs):
     """
     #### Calculate $\alpha$
 
-    #\alpha = (2M)^{\frac{1}{4}}$
+    $\alpha = (2M)^{\frac{1}{4}}$
     """
     return (2. * c.n_layers) ** (1. / 4.)
 
@@ -99,9 +99,9 @@ def _deep_norm_alpha(c: Configs):
 @option(Configs.deep_norm_beta)
 def _deep_norm_beta(c: Configs):
     """
-    #### Calculate $\beta
+    #### Calculate $\beta$
 
-    #\beta = (8M)^{-\frac{1}{4}}$
+    $\beta = (8M)^{-\frac{1}{4}}$
     """
     return (8. * c.n_layers) ** -(1. / 4.)
 
