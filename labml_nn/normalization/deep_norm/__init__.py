@@ -61,7 +61,11 @@ This function is used to replace Post-LayerNorm.
 \end{array}
 \end{align}
 
+Where $N$ is the number of layers in the encoder and $M$ is the number of layers in the decoder.
+
 Refer to [the paper](https://papers.labml.ai/paper/2203.00555) for derivation.
+
+[Here is an experiment implementation](experiment.html) that uses DeepNorm.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/group_norm/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/081d950aa4e011eb8f9f0242ac1c0002)
@@ -79,19 +83,43 @@ from labml_nn.transformers.utils import subsequent_mask
 
 
 class DeepNorm(nn.Module):
+    """
+    ## DeepNorm Normalization
+
+    $$x_{l + 1} = \mathop{LN}\Big( \alpha x_l + \mathop{G}_l \big(x_l, \theta_l \big)\Big)$$
+    """
+
     def __init__(self, alpha: float, normalized_shape: Union[int, List[int], Size], *,
                  eps: float = 1e-5,
                  elementwise_affine: bool = True):
+        """
+        :param alpha: is $\alpha$
+        :param normalized_shape: is the shape for LayerNorm $\mathop{LN}$
+        :param eps: is $\epsilon$ for LayerNorm
+        :param elementwise_affine: is a flag indicating whether to do an elementwise transformation in LayerNorm
+        """
         super().__init__()
 
         self.alpha = alpha
+        # Initialize $\mathop{LN}$
         self.layer_norm = LayerNorm(normalized_shape, eps=eps, elementwise_affine=elementwise_affine)
 
-    def forward(self, x: torch.Tensor, fx: torch.Tensor):
-        return x + self.alpha * fx
+    def forward(self, x: torch.Tensor, gx: torch.Tensor):
+        """
+        :param x: is the output from the previous layer $x_l$
+        :param gx: is the output of the current sub-layer $\mathop{G}_l (x_l, \theta_l)$
+        """
+        # $$x_{l + 1} = \mathop{LN}\Big( \alpha x_l + \mathop{G}_l \big(x_l, \theta_l \big)\Big)$$
+        return x + self.alpha * gx
 
 
 class DeepNormTransformerLayer(nn.Module):
+    """
+    ## Transformer Decoder Layer with DeepNorm
+
+    This implements a transformer decoder layer with DeepNorm.
+    Encoder layers will have a similar form.
+    """
     def __init__(self, *,
                  d_model: int,
                  self_attn: MultiHeadAttention,
@@ -100,29 +128,39 @@ class DeepNormTransformerLayer(nn.Module):
                  deep_norm_beta: float,
                  ):
         """
-        * `d_model` is the token embedding size
-        * `self_attn` is the self attention module
-        * `feed_forward` is the feed forward module
-        * `dropout_prob` is the probability of dropping out after self attention and FFN
+        :param d_model: is the token embedding size
+        :param self_attn: is the self attention module
+        :param feed_forward: is the feed forward module
+        :param deep_norm_alpha: is $\alpha$ coefficient in DeepNorm
+        :param deep_norm_beta: is $\beta$ constant for scaling weights initialization
         """
         super().__init__()
-        self.size = d_model
+
         self.self_attn = self_attn
         self.feed_forward = feed_forward
+        # DeepNorms after attention and feed forward network
         self.self_attn_norm = DeepNorm(deep_norm_alpha, [d_model])
         self.feed_forward_norm = DeepNorm(deep_norm_alpha, [d_model])
 
+        # Scale weights after initialization
         with torch.no_grad():
+            # Feed forward network linear transformations
             feed_forward.layer1.weight *= deep_norm_beta
             feed_forward.layer2.weight *= deep_norm_beta
 
+            # Attention value projection
             self_attn.value.linear.weight *= deep_norm_beta
+            # Attention output project
             self_attn.output.weight *= deep_norm_beta
 
         # The mask will be initialized on the first call
         self.mask = None
 
     def forward(self, x: torch.Tensor):
+        """
+        :param x: are the embeddings of shape `[seq_len, batch_size, d_model]`
+        """
+        # Create causal mask
         if self.mask is None or self.mask.size(0) != len(x):
             # Subsequent mask, will mask out tokens from seeing future tokens
             self.mask = subsequent_mask(len(x)).to(x.device)
@@ -132,4 +170,5 @@ class DeepNormTransformerLayer(nn.Module):
         # Pass through the feed-forward network
         x = self.feed_forward_norm(x, self.feed_forward(x))
 
+        #
         return x
