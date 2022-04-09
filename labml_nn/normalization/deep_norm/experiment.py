@@ -7,54 +7,12 @@ from labml import experiment
 from labml.configs import option
 from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
-from labml_nn.normalization.deep_norm import DeepNorm
+from labml_nn.normalization.deep_norm import DeepNorm, DeepNormTransformerLayer
 from labml_nn.transformers import MultiHeadAttention
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class TransformerLayer(nn.Module):
-    def __init__(self, *,
-                 d_model: int,
-                 self_attn: MultiHeadAttention,
-                 feed_forward: FeedForward,
-                 deep_norm_alpha: float,
-                 deep_norm_beta: float,
-                 ):
-        """
-        * `d_model` is the token embedding size
-        * `self_attn` is the self attention module
-        * `feed_forward` is the feed forward module
-        * `dropout_prob` is the probability of dropping out after self attention and FFN
-        """
-        super().__init__()
-        self.size = d_model
-        self.self_attn = self_attn
-        self.feed_forward = feed_forward
-        self.self_attn_norm = DeepNorm(deep_norm_alpha, [d_model])
-        self.feed_forward_norm = DeepNorm(deep_norm_alpha, [d_model])
-
-        with torch.no_grad():
-            feed_forward.layer1.weight *= deep_norm_beta
-            feed_forward.layer2.weight *= deep_norm_beta
-
-            self_attn.value.linear.weight *= deep_norm_beta
-            self_attn.output.weight *= deep_norm_beta
-
-        # The mask will be initialized on the first call
-        self.mask = None
-
-    def forward(self, x: torch.Tensor):
-        if self.mask is None or self.mask.size(0) != len(x):
-            # Subsequent mask, will mask out tokens from seeing future tokens
-            self.mask = subsequent_mask(len(x)).to(x.device)
-
-        # Run through self attention, i.e. keys and values are from self
-        x = self.self_attn_norm(x, self.self_attn(query=x, key=x, value=x, mask=self.mask))
-        # Pass through the feed-forward network
-        x = self.feed_forward_norm(x, self.feed_forward(x))
-
-        return x
 
 
 class AutoregressiveTransformer(Module):
@@ -62,7 +20,7 @@ class AutoregressiveTransformer(Module):
     ## Auto-Regressive model
     """
 
-    def __init__(self, n_tokens: int, d_model: int, n_layers: int, layer: TransformerLayer):
+    def __init__(self, n_tokens: int, d_model: int, n_layers: int, layer: DeepNormTransformerLayer):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token
@@ -121,11 +79,11 @@ def _deep_norm_beta(c: Configs):
 @option(Configs.model)
 def _model(c: Configs):
     m = AutoregressiveTransformer(c.n_tokens, c.d_model, c.n_layers,
-                                  TransformerLayer(d_model=c.d_model,
-                                                   deep_norm_alpha=c.deep_norm_alpha,
-                                                   deep_norm_beta=c.deep_norm_beta,
-                                                   feed_forward=FeedForward(d_model=c.d_model, d_ff=c.d_model * 4),
-                                                   self_attn=MultiHeadAttention(c.n_heads, c.d_model,
+                                  DeepNormTransformerLayer(d_model=c.d_model,
+                                                           deep_norm_alpha=c.deep_norm_alpha,
+                                                           deep_norm_beta=c.deep_norm_beta,
+                                                           feed_forward=FeedForward(d_model=c.d_model, d_ff=c.d_model * 4),
+                                                           self_attn=MultiHeadAttention(c.n_heads, c.d_model,
                                                                                 dropout_prob=0.0)))
 
     return m.to(c.device)
