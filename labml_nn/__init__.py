@@ -8,7 +8,7 @@ and the [website](index.html)
 renders these as side-by-side formatted notes.
 We believe these would help you understand these algorithms better.
 
-![Screenshot](https://nn.labml.ai/dqn-light.png)
+![Screenshot](dqn-light.png)
 
 We are actively maintaining this repo and adding new
 implementations.
@@ -93,13 +93,14 @@ Solving games with incomplete information such as poker with CFR.
 * [Rectified Adam Optimizer](optimizers/radam.html)
 * [AdaBelief Optimizer](optimizers/ada_belief.html)
 
-#### ✨ [Normalization Layers](https://nn.labml.ai/normalization/index.html)
-* [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)
-* [Layer Normalization](https://nn.labml.ai/normalization/layer_norm/index.html)
-* [Instance Normalization](https://nn.labml.ai/normalization/instance_norm/index.html)
-* [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
-* [Weight Standardization](https://nn.labml.ai/normalization/weight_standardization/index.html)
-* [Batch-Channel Normalization](https://nn.labml.ai/normalization/batch_channel_norm/index.html)
+#### ✨ [Normalization Layers](normalization/index.html)
+* [Batch Normalization](normalization/batch_norm/index.html)
+* [Layer Normalization](normalization/layer_norm/index.html)
+* [Instance Normalization](normalization/instance_norm/index.html)
+* [Group Normalization](normalization/group_norm/index.html)
+* [Weight Standardization](normalization/weight_standardization/index.html)
+* [Batch-Channel Normalization](normalization/batch_channel_norm/index.html)
+* [DeepNorm](normalization/deep_norm/index.html)
 
 #### ✨ [Distillation](distillation/index.html)
 
@@ -126,7 +127,7 @@ If you use this for academic research, please cite it using the following BibTeX
  author = {Varuna Jayasiri, Nipun Wijerathne},
  title = {labml.ai Annotated Paper Implementations},
  year = {2020},
- url = {https://nn.labml.ai/},
+ url = {},
 }
 ```
 """

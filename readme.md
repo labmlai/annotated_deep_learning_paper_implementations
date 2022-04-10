@@ -103,6 +103,7 @@ Solving games with incomplete information such as poker with CFR.
 * [Group Normalization](https://nn.labml.ai/normalization/group_norm/index.html)
 * [Weight Standardization](https://nn.labml.ai/normalization/weight_standardization/index.html)
 * [Batch-Channel Normalization](https://nn.labml.ai/normalization/batch_channel_norm/index.html)
+* [DeepNorm](https://nn.labml.ai/normalization/deep_norm/index.html)
 
 #### ✨ [Distillation](https://nn.labml.ai/distillation/index.html)
 
