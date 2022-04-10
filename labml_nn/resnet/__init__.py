@@ -166,29 +166,29 @@ class BottleneckResidualBlock(Module):
 
     ![Bottlenext Block](bottleneck_block.svg)
 
-    The first convolution layer maps from `in_channels` to `bottleneck_channels` with a $1x1$
+    The first convolution layer maps from `in_channels` to `bottleneck_channels` with a $1 \times 1$
     convolution,
     where the `bottleneck_channels` is lower than `in_channels`.
 
-    The second $3x3$ convolution layer maps from `bottleneck_channels` to `bottleneck_channels`.
+    The second $3 \times 3$ convolution layer maps from `bottleneck_channels` to `bottleneck_channels`.
     This can have a stride length greater than $1$ when we want to compress the
     feature map size.
 
-    The third, final $1x1$ convolution layer maps to `out_channels`.
+    The third, final $1 \times 1$ convolution layer maps to `out_channels`.
     `out_channels` is higher than `in_channels` if the stride length is greater than $1$;
     otherwise, $out_channels$ is equal to `in_channels`.
 
-    `bottleneck_channels` is less than `in_channels` and the $3x3$ convolution is performed
-    on this shrunk space (hence the bottleneck). The two $1x1$ convolution decreases and increases
+    `bottleneck_channels` is less than `in_channels` and the $3 \times 3$ convolution is performed
+    on this shrunk space (hence the bottleneck). The two $1 \times 1$ convolution decreases and increases
     the number of channels.
     """
 
     def __init__(self, in_channels: int, bottleneck_channels: int, out_channels: int, stride: int):
         """
         * `in_channels` is the number of channels in $x$
-        * `bottleneck_channels` is the number of channels for the $3x3$ convlution
+        * `bottleneck_channels` is the number of channels for the $3 \times 3$ convlution
         * `out_channels` is the number of output channels
-        * `stride` is the stride length in the $3x3$ convolution operation.
+        * `stride` is the stride length in the $3 \times 3$ convolution operation.
         """
         super().__init__()
 
