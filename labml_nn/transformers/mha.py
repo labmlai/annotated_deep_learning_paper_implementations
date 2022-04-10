@@ -15,6 +15,10 @@ The implementation is inspired from [Annotated Transformer](https://nlp.seas.har
 
 Here is the [training code](basic/autoregressive_experiment.html) that uses a basic transformer
 with MHA for NLP auto-regression.
+
+[Here is an experiment implementation](basic/autoregressive_experiment.html) that trains a simple transformer.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
 """
 
 import math
