@@ -110,7 +110,6 @@ def main():
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-
         # Use character level tokenizer
         'tokenizer': 'character',
         # Prompt separator is blank
