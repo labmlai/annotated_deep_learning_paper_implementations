@@ -69,7 +69,6 @@ Refer to [the paper](https://papers.labml.ai/paper/2203.00555) for derivation.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/ec8e4dacb7f311ec8d1cd37d50b05c3d)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=deep_norm&file=model)](https://www.comet.ml/labml/deep-norm/373146c2f9bf469da93ef1061d3f7156?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
 """
 
 from typing import Union, List
