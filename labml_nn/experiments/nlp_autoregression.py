@@ -91,6 +91,16 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     # Data loaders shuffle with replacement
     dataloader_shuffle_with_replacement: bool = False
 
+    # Whether to log model parameters and gradients (once per epoch).
+    # These are summarized stats per layer, but it could still lead
+    # to many indicators for very deep networks.
+    is_log_model_params_grads: bool = False
+
+    # Whether to log model activations (once per epoch).
+    # These are summarized stats per layer, but it could still lead
+    # to many indicators for very deep networks.
+    is_log_model_activations: bool = False
+
     def init(self):
         """
         ### Initialization
@@ -126,7 +136,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
             tracker.add_global_step(data.shape[0] * data.shape[1])
 
         # Whether to capture model outputs
-        with self.mode.update(is_log_activations=batch_idx.is_last):
+        with self.mode.update(is_log_activations=batch_idx.is_last and self.is_log_model_activations):
             # Get model outputs.
             # It's returning a tuple for states when using RNNs.
             # This is not implemented yet. 😜
@@ -151,7 +161,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
             # Take optimizer step
             self.optimizer.step()
             # Log the model parameters and gradients on last batch of every epoch
-            if batch_idx.is_last:
+            if batch_idx.is_last and self.is_log_model_params_grads:
                 tracker.add('model', self.model)
             # Clear the gradients
             self.optimizer.zero_grad()
