@@ -6,6 +6,7 @@ from labml.logger import Text
 
 from labml_nn.sampling import Sampler
 from labml_nn.sampling.greedy import GreedySampler
+from labml_nn.sampling.nucleus import NucleusSampler
 from labml_nn.sampling.temperature import TemperatureSampler
 from labml_nn.sampling.top_k import TopKSampler
 from labml_nn.sampling.utils import get_model_dataset
@@ -50,10 +51,13 @@ def main():
     # with monit.section('temperature=10.'):
     #     sample(model, ds, TemperatureSampler(10.), 4, 32, 128, 'It is')
 
-    with monit.section('top_k=5'):
-        sample(model, ds, TopKSampler(2, TemperatureSampler(1.)), 4, 32, 128, 'It is')
+    # with monit.section('top_k=5'):
+    #     sample(model, ds, TopKSampler(2, TemperatureSampler(1.)), 4, 32, 128, 'It is')
 
-
+    with monit.section('nucles p=.95'):
+        sample(model, ds, NucleusSampler(0.95, TemperatureSampler(1.)), 4, 32, 128, 'It is')
+    with monit.section('nucles p=.95'):
+        sample(model, ds, NucleusSampler(0.1, TemperatureSampler(1.)), 4, 32, 128, 'It is')
 
 
 if __name__ == '__main__':

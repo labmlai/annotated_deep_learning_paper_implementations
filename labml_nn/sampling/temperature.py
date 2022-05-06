@@ -6,7 +6,7 @@ from labml_nn.sampling import Sampler
 
 
 class TemperatureSampler(Sampler):
-    def __init__(self, temperature: float):
+    def __init__(self, temperature: float=1.0):
         self.temperature = temperature
 
     def __call__(self, logits: torch.Tensor):
