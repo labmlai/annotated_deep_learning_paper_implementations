@@ -7,6 +7,7 @@ from labml.logger import Text
 from labml_nn.sampling import Sampler
 from labml_nn.sampling.greedy import GreedySampler
 from labml_nn.sampling.temperature import TemperatureSampler
+from labml_nn.sampling.top_k import TopKSampler
 from labml_nn.sampling.utils import get_model_dataset
 
 
@@ -39,13 +40,20 @@ def main():
     model, ds = get_model_dataset('074d4004cc6b11ecad7a0242ac1c0002')
     model.eval()
 
-    # main(GreedySampler(), 16, 16, 128, 'It is')
-    with monit.section('temperature=1.'):
-        sample(model, ds, TemperatureSampler(1.), 4, 32, 128, 'It is')
-    with monit.section('temperature=.1'):
-        sample(model, ds, TemperatureSampler(.1), 4, 32, 128, 'It is')
-    with monit.section('temperature=10.'):
-        sample(model, ds, TemperatureSampler(10.), 4, 32, 128, 'It is')
+    with monit.section('greedy'):
+        sample(model, ds, GreedySampler(), 4, 32, 128, 'It is')
+    #
+    # with monit.section('temperature=1.'):
+    #     sample(model, ds, TemperatureSampler(1.), 4, 32, 128, 'It is')
+    # with monit.section('temperature=.1'):
+    #     sample(model, ds, TemperatureSampler(.1), 4, 32, 128, 'It is')
+    # with monit.section('temperature=10.'):
+    #     sample(model, ds, TemperatureSampler(10.), 4, 32, 128, 'It is')
+
+    with monit.section('top_k=5'):
+        sample(model, ds, TopKSampler(2, TemperatureSampler(1.)), 4, 32, 128, 'It is')
+
+
 
 
 if __name__ == '__main__':
