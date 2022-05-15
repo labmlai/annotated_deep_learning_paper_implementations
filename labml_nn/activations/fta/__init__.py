@@ -5,7 +5,7 @@ from torch import nn
 class FTA(nn.Module):
     def __init__(self, lower_limit: float, upper_limit: float, delta: float, eta: float):
         super().__init__()
-        self.c = torch.arange(lower_limit, upper_limit, delta)
+        self.c = nn.Parameter(torch.arange(lower_limit, upper_limit, delta), requires_grad=False)
         self.expansion_factor = len(self.c)
         self.delta = delta
         self.eta = eta

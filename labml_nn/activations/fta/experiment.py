@@ -9,10 +9,10 @@ from labml_helpers.module import Module
 from labml_nn.activations.fta import FTA
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import MultiHeadAttention, TransformerLayer
-from labml_nn.transformers.feed_forward import FeedForward
+from labml_nn.transformers.utils import subsequent_mask
 
 
-class FeedForwardFTA(FeedForward):
+class FeedForwardFTA(nn.Module):
     """
     ## FFN module
     """
@@ -60,21 +60,29 @@ class AutoregressiveTransformer(Module):
         """
         super().__init__()
         # Transformer with `n_layers` layers
-        self.transformer = nn.Sequential(*[copy.deepcopy(layer) for _ in range(n_layers)])
+        self.transformer_layers = nn.ModuleList([copy.deepcopy(layer) for _ in range(n_layers)])
 
         # Token embedding layer
         self.emb = nn.Embedding(n_tokens, d_model)
         # Readout layer
         self.readout = nn.Linear(d_model, n_tokens)
 
+        # The mask will be initialized on the first call
+        self.mask = None
+
     def forward(self, x: torch.Tensor):
         """
         :param x: are the input tokens of shape `[seq_len, batch_size]`
         """
+        if self.mask is None or self.mask.size(0) != len(x):
+            # Subsequent mask, will mask out tokens from seeing future tokens
+            self.mask = subsequent_mask(len(x)).to(x.device)
+
         # Get the token embeddings
         x = self.emb(x)
         # Transformer encoder
-        x = self.transformer(x)
+        for layer in self.transformer_layers:
+            x = layer(x=x, mask=self.mask)
         # Get logits
         x = self.readout(x)
 
@@ -140,7 +148,7 @@ def main():
     #### Create and run the experiment
     """
     # Create experiment
-    experiment.create(name="deep_norm", writers={'screen', 'web_api', 'comet'})
+    experiment.create(name="fta", writers={'screen',  'comet', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
