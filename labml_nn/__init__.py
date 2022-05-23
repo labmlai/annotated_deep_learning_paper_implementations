@@ -112,6 +112,10 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Evidential Deep Learning to Quantify Classification Uncertainty](uncertainty/evidence/index.html)
 
+#### ✨ [Activations](activations/index.html)
+
+* [Fuzzy Tiling Activations](activations/fta/index.html)
+
 ## Highlighted Research Paper PDFs
 
 * [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)
