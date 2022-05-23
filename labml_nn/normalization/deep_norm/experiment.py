@@ -5,7 +5,7 @@ summary: >
  Training a DeepNorm transformer on Tiny Shakespeare.
 ---
 
-# DeepNorm Experiment
+# [DeepNorm](index.html) Experiment
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb)
 [![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/ec8e4dacb7f311ec8d1cd37d50b05c3d)

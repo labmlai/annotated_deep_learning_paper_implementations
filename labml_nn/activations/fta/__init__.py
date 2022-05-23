@@ -53,6 +53,8 @@ FTA uses this to create soft boundaries between bins.
 
 $$\phi_\eta(z) = 1 - I_{\eta,+} \big( \max(\mathbf{c} - z, 0) + \max(z - \delta - \mathbf{c}, 0) \big)$$
 
+[Here's a simple experiment](experiment.html) that uses FTA in a transformer.
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/activations/fta/experiment.ipynb)
 [![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/fta/69be11f83693407f82a86dcbb232bcfe?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&viewId=rlJOpXDGtL8zbkcX66R77P5me&xAxis=step)
 """
@@ -65,6 +67,7 @@ class FTA(nn.Module):
     """
     ### Fuzzy Tiling Activations (FTA)
     """
+
     def __init__(self, lower_limit: float, upper_limit: float, delta: float, eta: float):
         """
         :param lower_limit: is the lower limit $l$
@@ -83,7 +86,7 @@ class FTA(nn.Module):
         # $\eta$
         self.eta = eta
 
-    def fuzzy_i_plus(self, x):
+    def fuzzy_i_plus(self, x: torch.Tensor):
         """
         #### Fuzzy indicator function
 
@@ -91,25 +94,38 @@ class FTA(nn.Module):
         """
         return (x <= self.eta) * x + (x > self.eta)
 
-    def forward(self, x: torch.Tensor):
-        x = x.view(*x.shape, 1)
+    def forward(self, z: torch.Tensor):
+        # Add another dimension of size $1$.
+        # We will expand this into bins.
+        z = z.view(*z.shape, 1)
 
-        x = 1. - self.fuzzy_i_plus(torch.clip(self.c - x, min=0.) + torch.clip(x - self.delta - self.c, min=0.))
+        # $$\phi_\eta(z) = 1 - I_{\eta,+} \big( \max(\mathbf{c} - z, 0) + \max(z - \delta - \mathbf{c}, 0) \big)$$
+        z = 1. - self.fuzzy_i_plus(torch.clip(self.c - z, min=0.) + torch.clip(z - self.delta - self.c, min=0.))
 
-        return x.view(*x.shape[:-2], -1)
+        # Reshape back to original number of dimensions.
+        # The last dimension size gets expanded by the number of bins, $\frac{u - l}{\delta}$.
+        return z.view(*z.shape[:-2], -1)
 
 
 def _test():
+    """
+    #### Code to test the FTA module
+    """
     from labml.logger import inspect
 
+    # Initialize
     a = FTA(-10, 10, 2., 0.5)
+    # Print $\mathbf{c}$
     inspect(a.c)
-
-    features = torch.tensor([1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9., 10., 11.])
-    inspect(features)
-
-    inspect(a(features))
+    # Print number of bins $\frac{u - l}{\delta}$
     inspect(a.expansion_factor)
+
+    # Input $z$
+    z = torch.tensor([1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9., 10., 11.])
+    # Print $z$
+    inspect(z)
+    # Print $\phi_\eta(z)$
+    inspect(a(z))
 
 
 if __name__ == '__main__':

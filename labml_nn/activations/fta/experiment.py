@@ -1,3 +1,23 @@
+"""
+---
+title: Fuzzy Tiling Activation Experiment
+summary: >
+ Training a transformer with FTA in FFN on Tiny Shakespeare.
+---
+
+# [Fuzzy Tiling Activation](index.html) Experiment
+
+Here we train a transformer that uses [Fuzzy Tiling Activation](index.html) in the
+[Feed-Forward Network](../../transformers/feed_forward.html).
+We use it for a language model and train it on Tiny Shakespeare dataset
+for demonstration.
+However, this is probably not the idea task for FTA, and we
+believe FTA is more suitable for modeling data with continuous variables.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/activations/fta/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/fta/69be11f83693407f82a86dcbb232bcfe?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&viewId=rlJOpXDGtL8zbkcX66R77P5me&xAxis=step)
+"""
+
 import copy
 
 import torch
@@ -14,7 +34,7 @@ from labml_nn.transformers.utils import subsequent_mask
 
 class FeedForwardFTA(nn.Module):
     """
-    ## FFN module
+    ## FFN module with [FTA](index.html) activation
     """
 
     def __init__(self, d_model: int, d_ff: int,
@@ -23,12 +43,13 @@ class FeedForwardFTA(nn.Module):
         """
         * `d_model` is the number of features in a token embedding
         * `d_ff` is the number of features in the hidden layer of the FFN
+        * `activation` is FTA activation module
         * `dropout` is dropout probability for the hidden layer
         """
         super().__init__()
         # Layer one parameterized by weight $W_1$ and bias $b_1$
         self.layer1 = nn.Linear(d_model, d_ff)
-        # Layer one parameterized by weight $W_1$ and bias $b_1$
+        # Layer two parameterized by weight $W_1$ and bias $b_1$
         self.layer2 = nn.Linear(d_ff * activation.expansion_factor, d_model)
         # Hidden layer dropout
         self.dropout = nn.Dropout(dropout)
@@ -48,7 +69,8 @@ class AutoregressiveTransformer(Module):
     """
     ## Auto-Regressive model
 
-    This is a autoregressive transformer model that uses DeepNorm.
+    This is an autoregressive transformer model that uses Feed-Forward Networks with
+     (Fuzzy Tiling Activations)(index.html).
     """
 
     def __init__(self, n_tokens: int, d_model: int, n_layers: int, layer: TransformerLayer):
@@ -56,7 +78,7 @@ class AutoregressiveTransformer(Module):
         :param n_tokens: is the number of tokens in the vocabulary
         :param d_model: is the embedding size
         :param n_layers: is the number of transformer layers
-        :param layer: is the layer. We use `n_layers` copies of this for the tranformer.
+        :param layer: is the layer. We use `n_layers` copies of this for the transformer.
         """
         super().__init__()
         # Transformer with `n_layers` layers
@@ -74,6 +96,7 @@ class AutoregressiveTransformer(Module):
         """
         :param x: are the input tokens of shape `[seq_len, batch_size]`
         """
+        # Create auto-regressive mask
         if self.mask is None or self.mask.size(0) != len(x):
             # Subsequent mask, will mask out tokens from seeing future tokens
             self.mask = subsequent_mask(len(x)).to(x.device)
@@ -129,7 +152,12 @@ def _model(c: Configs):
     """
     #### Initialize the model
     """
+
+    # Create FTA activation module
     fta = FTA(c.fta_lower_limit, c.fta_upper_limit, c.fta_delta, c.fta_eta)
+    # Create the transformer.
+    # We re-use [`TransformerLayer`](../../transformers/models.html#TransformerLayer) and
+    # [`MultiHeadAttention`](../../transformers/mha.html) implementations.
     m = AutoregressiveTransformer(c.n_tokens, c.d_model, c.n_layers,
                                   TransformerLayer(d_model=c.d_model,
                                                    feed_forward=FeedForwardFTA(d_model=c.d_model,
@@ -140,6 +168,7 @@ def _model(c: Configs):
                                                                                 dropout_prob=0.0),
                                                    dropout_prob=0.0))
 
+    # Move to the device
     return m.to(c.device)
 
 
