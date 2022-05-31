@@ -12,33 +12,23 @@ This is an annotated PyTorch experiment to train a transformer model with Rotary
 """
 
 from labml import experiment
-from labml.configs import option, calculate
+from labml.configs import calculate
 from labml_nn.transformers import TransformerConfigs
-from labml_nn.transformers.basic.autoregressive_experiment import AutoregressiveTransformer, Configs
+from labml_nn.transformers.rope.experiment import Configs
 
 
 # ### Rotary PE attention
-def _rotary_pe_mha(c: TransformerConfigs):
-    from labml_nn.transformers.rope import RotaryPEMultiHeadAttention
-    return RotaryPEMultiHeadAttention(c.n_heads, c.d_model)
+
+
+def _rotary_value_pe_mha(c: TransformerConfigs):
+    from labml_nn.transformers.rope.value_pe import RotaryValuePEMultiHeadAttention
+    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model)
 
 
 # Configuration options
-calculate(TransformerConfigs.encoder_attn, 'rotary', _rotary_pe_mha)
-calculate(TransformerConfigs.decoder_attn, 'rotary', _rotary_pe_mha)
-calculate(TransformerConfigs.decoder_mem_attn, 'rotary', _rotary_pe_mha)
-
-
-@option(Configs.model, 'rotary_pe_transformer')
-def _model(c: Configs):
-    """
-    Create an autoregressive model and initialize weights
-    """
-    m = AutoregressiveTransformer(c.transformer.encoder,
-                                  c.transformer.src_embed,
-                                  c.transformer.generator).to(c.device)
-
-    return m
+calculate(TransformerConfigs.encoder_attn, 'rotary_value', _rotary_value_pe_mha)
+calculate(TransformerConfigs.decoder_attn, 'rotary_value', _rotary_value_pe_mha)
+calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_mha)
 
 
 def main():
@@ -53,7 +43,8 @@ def main():
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPE
-        'transformer.encoder_attn': 'rotary',
+        'transformer.encoder_attn': 'rotary_value',
+        # 'transformer.encoder_attn': 'rotary_value',
 
         #
         'model': 'rotary_pe_transformer',
