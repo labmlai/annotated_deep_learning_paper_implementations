@@ -20,7 +20,7 @@ from labml_nn.transformers.basic.autoregressive_experiment import Autoregressive
 # ### Rotary PE attention
 def _rotary_pe_mha(c: TransformerConfigs):
     from labml_nn.transformers.rope import RotaryPEMultiHeadAttention
-    return RotaryPEMultiHeadAttention(c.n_heads, c.d_model, 0.5)
+    return RotaryPEMultiHeadAttention(c.n_heads, c.d_model, 1.)
 
 
 # Configuration options

@@ -9,7 +9,9 @@ from typing import List
 import torch
 from torch.utils.data import DataLoader, Dataset
 
+from labml import monit, logger
 from labml.configs import option
+from labml.logger import Text
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs, transpose_batch
 
 
@@ -81,6 +83,36 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
     valid_sequences_per_epoch: int = 128
     train_loader: DataLoader = 'arithmetic_train_loader'
     valid_loader: DataLoader = 'arithmetic_valid_loader'
+
+    n_tokens = len(ArithmeticDataset(1, 1, 1).itos)
+
+    def sample(self):
+        """
+        ### Sampling function to generate samples periodically while training
+        """
+
+        # Starting prompt
+        prompt = self.prompt
+        # Collect output for printing
+        log = [(prompt, Text.subtle)]
+        # Dataset for decoding
+        dataset = ArithmeticDataset(self.seq_len, self.max_digits, 1)
+        # Sample 25 tokens
+        for i in monit.iterate('Sample', self.seq_len - len(prompt)):
+            # Tokenize the prompt
+            data = torch.tensor(dataset.encode(prompt))[:, None]
+            data = data.to(self.device)
+            # Get the model output
+            output, *_ = self.model(data)
+            # Get the model prediction (greedy)
+            output = output.argmax(dim=-1).squeeze()
+            # Add the prediction to prompt
+            prompt += self.prompt_separator + dataset.itos[output[-1]]
+            # Add the prediction for logging
+            log += [(self.prompt_separator + dataset.itos[output[-1]], Text.value)]
+
+        # Print the sampled output
+        logger.log(log)
 
 
 @option(ArithmeticAutoregression.train_loader)

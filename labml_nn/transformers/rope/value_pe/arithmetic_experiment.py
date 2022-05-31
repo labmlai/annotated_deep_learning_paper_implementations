@@ -13,13 +13,14 @@ This is an annotated PyTorch experiment to train a transformer model with Rotary
 
 from labml import experiment
 from labml.configs import calculate
+from labml_nn.experiments.arithmetic_dataset import ArithmeticAutoregression
 from labml_nn.transformers import TransformerConfigs
 from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
 
 # ### Rotary PE attention
 
-class Configs(RoPEConfigs):  # , ArithmeticAutoregression):
+class Configs(RoPEConfigs, ArithmeticAutoregression):  # , ArithmeticAutoregression):
     pass
 
 
@@ -36,7 +37,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="rotary_pe_transformer", comment="rotary_value 1.0, 0.5", writers={'screen', 'labml'})
+    experiment.create(name="rope_arithmetic", comment="rotary_value 1.0, 0.5", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -46,20 +47,16 @@ def main():
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPE
-        'transformer.encoder_attn': 'rotary_value',
-        # 'transformer.encoder_attn': 'rotary',
+        # 'transformer.encoder_attn': 'rotary_value',
+        'transformer.encoder_attn': 'rotary',
 
         #
         'model': 'rotary_pe_transformer',
 
-        # Use character level tokenizer
-        'tokenizer': 'character',
         # Prompt separator is blank
         'prompt_separator': '',
         # Starting prompt for sampling
-        'prompt': 'It is ',
-        # Use Tiny Shakespeare dataset
-        'text': 'tiny_shakespeare',
+        'prompt': '?x=2345+998;',
 
         # Use a context size of $256$
         'seq_len': 128,
