@@ -41,7 +41,7 @@ class ArithmeticDataset(Dataset):
             rx, ry = x % 10, y % 10
             total = rx + ry + carry
             explanation.append(f"{rx}e{e}+{ry}e{e}+{carry}e{e}=={total}e{e}")
-            x, y, c = x // 10, y // 10, total // 10
+            x, y, carry = x // 10, y // 10, total // 10
             e += 1
 
         return ' '.join(explanation)
@@ -51,11 +51,13 @@ class ArithmeticDataset(Dataset):
         x = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
         y = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
 
-        explanation = self.get_add_explanation(x, y)
-        return f"x={x}+{y}; {explanation} x=={x + y}\n"
+        if random.randrange(0, 5) < 1:
+            return f"x={x}+{y}; x=={x + y}\n"
+        else:
+            explanation = self.get_add_explanation(x, y)
+            return f"x={x}+{y}; {explanation} x=={x + y}\n"
 
     def get_packed_math_input(self):
-        s = ""
         s_enc = []
         while len(s_enc) <= self.seq_len:
             s_part = self.make_add_problem()
@@ -79,8 +81,8 @@ class ArithmeticDataset(Dataset):
 
 class ArithmeticAutoregression(NLPAutoRegressionConfigs):
     max_digits: int = 4
-    train_sequences_per_epoch: int = 1024
-    valid_sequences_per_epoch: int = 128
+    train_sequences_per_epoch: int = 2 ** 14
+    valid_sequences_per_epoch: int = 2 ** 4
     train_loader: DataLoader = 'arithmetic_train_loader'
     valid_loader: DataLoader = 'arithmetic_valid_loader'
 
@@ -106,6 +108,10 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
             output, *_ = self.model(data)
             # Get the model prediction (greedy)
             output = output.argmax(dim=-1).squeeze()
+
+            if dataset.itos[output[-1]] == '\n':
+                break
+
             # Add the prediction to prompt
             prompt += self.prompt_separator + dataset.itos[output[-1]]
             # Add the prediction for logging
@@ -119,14 +125,16 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
 def arithmetic_train_loader(c: ArithmeticAutoregression):
     return DataLoader(ArithmeticDataset(c.seq_len, c.max_digits, c.train_sequences_per_epoch),
                       batch_size=c.batch_size,
-                      collate_fn=transpose_batch)
+                      collate_fn=transpose_batch,
+                      num_workers=4)
 
 
 @option(ArithmeticAutoregression.valid_loader)
 def arithmetic_valid_loader(c: ArithmeticAutoregression):
     return DataLoader(ArithmeticDataset(c.seq_len, c.max_digits, c.valid_sequences_per_epoch),
                       batch_size=c.batch_size,
-                      collate_fn=transpose_batch)
+                      collate_fn=transpose_batch,
+                      num_workers=4)
 
 
 def _test():

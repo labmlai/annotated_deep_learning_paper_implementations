@@ -37,18 +37,20 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="rope_arithmetic", comment="rotary_value 1.0, 0.5", writers={'screen', 'labml'})
+    experiment.create(name="rope_arithmetic", comment="rotary_value 1.0", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
+        'max_digits': 9,
+
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPE
-        # 'transformer.encoder_attn': 'rotary_value',
-        'transformer.encoder_attn': 'rotary',
+        'transformer.encoder_attn': 'rotary_value',
+        # 'transformer.encoder_attn': 'rotary',
 
         #
         'model': 'rotary_pe_transformer',
@@ -56,29 +58,27 @@ def main():
         # Prompt separator is blank
         'prompt_separator': '',
         # Starting prompt for sampling
-        'prompt': '?x=2345+998;',
+        'prompt': '?x=123456789+1091919;',
 
         # Use a context size of $256$
-        'seq_len': 128,
+        'seq_len': 512,
         # Train for 32 epochs
         'epochs': 32,
         # Batch size $4$
-        'batch_size': 4,
+        'batch_size': 16,
         # Switch between training and validation for $10$ times
         # per epoch
         'inner_iterations': 10,
 
         # Model size
-        'd_model': 256,
-        'transformer.ffn.d_ff': 1024,
-        'transformer.n_heads': 8,
+        'd_model': 128,
+        'transformer.ffn.d_ff': 512,
+        'transformer.n_heads': 4,
         'transformer.dropout': 0.0,
 
         # Use [Noam optimizer](../../optimizers/noam.html)
         'optimizer.optimizer': 'Noam',
         'optimizer.learning_rate': 1.,
-
-        'dataloader_shuffle_with_replacement': True
     })
 
     # Set models for saving and loading
