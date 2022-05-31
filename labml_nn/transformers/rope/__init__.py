@@ -163,8 +163,10 @@ class RotaryPositionalEmbeddings(nn.Module):
         """
         self._build_cache(x)
 
+        x_rope, x_pass = x[..., :self.d], x[..., self.d:]
+
         # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
-        neg_half_x = self._neg_half(x)
+        neg_half_x = self._neg_half(x_rope)
 
         # Calculate
         #
@@ -176,10 +178,10 @@ class RotaryPositionalEmbeddings(nn.Module):
         # \end{align}
         #
         # for $i \in {1, 2, ..., \frac{d}{2}}$
-        rx = (x * self.cos_cached[:x.shape[0]]) + (neg_half_x * self.sin_cached[:x.shape[0]])
+        x_rope = (x_rope * self.cos_cached[:x.shape[0]]) + (neg_half_x * self.sin_cached[:x.shape[0]])
 
         #
-        return rx
+        return torch.cat((x_rope, x_pass), dim=-1)
 
 
 class RotaryPEMultiHeadAttention(MultiHeadAttention):
@@ -189,15 +191,16 @@ class RotaryPEMultiHeadAttention(MultiHeadAttention):
     We override [multi-head attention from original transformer](../mha.html).
     """
 
-    def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
+    def __init__(self, heads: int, d_model: int, rope_percentage: float = 0.5, dropout_prob: float = 0.1):
         # The linear transformations do not need a bias since we
         # explicitly include it when calculating scores.
         # However having a bias for `value` might make sense.
         super().__init__(heads, d_model, dropout_prob, bias=False)
 
         # Rotary positional embedding layers
-        self.query_rotary_pe = RotaryPositionalEmbeddings(self.d_k)
-        self.key_rotary_pe = RotaryPositionalEmbeddings(self.d_k)
+        d_rope = int(self.d_k * rope_percentage)
+        self.query_rotary_pe = RotaryPositionalEmbeddings(d_rope)
+        self.key_rotary_pe = RotaryPositionalEmbeddings(d_rope)
 
     def get_scores(self, query: torch.Tensor, key: torch.Tensor):
         """

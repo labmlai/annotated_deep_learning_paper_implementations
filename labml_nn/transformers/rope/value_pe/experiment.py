@@ -13,16 +13,19 @@ This is an annotated PyTorch experiment to train a transformer model with Rotary
 
 from labml import experiment
 from labml.configs import calculate
+from labml_nn.experiments.arithmetic_dataset import ArithmeticAutoregression
 from labml_nn.transformers import TransformerConfigs
-from labml_nn.transformers.rope.experiment import Configs
+from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
 
 # ### Rotary PE attention
 
+class Configs(RoPEConfigs): # , ArithmeticAutoregression):
+    pass
 
 def _rotary_value_pe_mha(c: TransformerConfigs):
     from labml_nn.transformers.rope.value_pe import RotaryValuePEMultiHeadAttention
-    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model)
+    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 0.5)
 
 
 # Configuration options
@@ -33,7 +36,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="rotary_pe_transformer", writers={'screen'})
+    experiment.create(name="rotary_pe_transformer", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -43,8 +46,8 @@ def main():
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPE
-        'transformer.encoder_attn': 'rotary_value',
         # 'transformer.encoder_attn': 'rotary_value',
+        'transformer.encoder_attn': 'rotary',
 
         #
         'model': 'rotary_pe_transformer',
