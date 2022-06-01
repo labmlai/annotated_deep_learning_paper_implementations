@@ -26,7 +26,7 @@ class Configs(RoPEConfigs, ArithmeticAutoregression):  # , ArithmeticAutoregress
 
 def _rotary_value_pe_mha(c: TransformerConfigs):
     from labml_nn.transformers.rope.value_pe import RotaryValuePEMultiHeadAttention
-    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 1., 0.5)
+    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 1., 1.)
 
 
 # Configuration options
@@ -42,7 +42,7 @@ def main():
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        'max_digits': 9,
+        'max_digits': 6,
 
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
@@ -63,12 +63,9 @@ def main():
         # Use a context size of $256$
         'seq_len': 512,
         # Train for 32 epochs
-        'epochs': 32,
+        'epochs': 64,
         # Batch size $4$
         'batch_size': 16,
-        # Switch between training and validation for $10$ times
-        # per epoch
-        'inner_iterations': 10,
 
         # Model size
         'd_model': 128,
