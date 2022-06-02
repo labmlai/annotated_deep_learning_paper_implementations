@@ -37,7 +37,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="rope_arithmetic", comment="rotary 1.0", writers={'screen', 'labml'})
+    experiment.create(name="roper_addition", comment="rotary", writers={'screen', 'labml', 'comet'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -63,7 +63,7 @@ def main():
         # Use a context size of $256$
         'seq_len': 512,
         # Train for 32 epochs
-        'epochs': 64,
+        'epochs': 50,
         # Batch size $4$
         'batch_size': 16,
 

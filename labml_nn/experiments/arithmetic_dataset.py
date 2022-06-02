@@ -7,6 +7,7 @@ import string
 from typing import List
 
 import torch
+from labml.logger import Text
 from torch.utils.data import DataLoader, Dataset
 
 from labml import monit, logger, tracker
@@ -116,6 +117,9 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
 
         # Sample 25 tokens
         for i in monit.iterate('Sample', self.seq_len - 1):
+            if finished.sum() == len(finished):
+                continue
+
             # Tokenize the prompt
             # Get the model output
             output, *_ = self.model(data)
@@ -124,7 +128,7 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
 
             finished = finished | (output == new_line)
             if finished.sum() == len(finished):
-                break
+                continue
 
             for j, p in enumerate(prompt):
                 if len(p) > i + 1:
@@ -136,7 +140,10 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
                 results[j] += dataset.itos[c]
 
         results = [r.split('\n')[0] for r in results]
-        logger.log(results[0])
+
+        res_sample = results[0].split(';')
+        logger.log([(res_sample[0], Text.key), (';', Text.subtle), (';'.join(res_sample[1:]), Text.none)])
+
         results = [r.split('x==')[-1] for r in results]
 
         correct = 0
