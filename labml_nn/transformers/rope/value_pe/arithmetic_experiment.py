@@ -37,7 +37,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_addition", comment="rotary", writers={'screen', 'labml', 'comet'})
+    experiment.create(name="roper_addition", comment="rotary value", writers={'screen', 'labml', 'comet'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -49,8 +49,8 @@ def main():
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPE
-        # 'transformer.encoder_attn': 'rotary_value',
-        'transformer.encoder_attn': 'rotary',
+        'transformer.encoder_attn': 'rotary_value',
+        # 'transformer.encoder_attn': 'rotary',
 
         #
         'model': 'rotary_pe_transformer',
