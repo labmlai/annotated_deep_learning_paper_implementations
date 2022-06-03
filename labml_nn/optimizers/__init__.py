@@ -32,7 +32,7 @@ Here are some concepts on PyTorch optimizers:
 
 ### Parameter groups
 PyTorch optimizers group parameters into sets called groups.
-Each group can have it's own hyper-parameters like learning rates.
+Each group can have its own hyper-parameters like learning rates.
 
 In most common cases there will be only one group.
 This is when you initialize your optimizer with,
@@ -47,7 +47,7 @@ You can define multiple parameter groups when initializing the optimizer:
 Optimizer([{'params': model1.parameters()}, {'params': model2.parameters(), 'lr': 2}])
 ```
 
-Here we pass a list of groups. Each group is a dictionary with it's parameters under the key 'params'.
+Here we pass a list of groups. Each group is a dictionary with its parameters under the key 'params'.
 You specify any hyper-parameters as well. If the hyper parameters are not defined they will default
 to the optimizer level defaults.
 
