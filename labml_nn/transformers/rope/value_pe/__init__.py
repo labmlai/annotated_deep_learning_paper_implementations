@@ -1,25 +1,116 @@
 """
 ---
-title: Rotary Positional Embeddings (RoPE)
+title: Rotary Positional Embeddings with Relative Distance (RoPER)
 summary: >
-  Annotated implementation of RoPE from paper
-  RoFormer: Enhanced Transformer with Rotary Position Embedding
+  This is an implementation of RoPER which adds relative distance information to embeddings on
+  top of RoPE introduced in RoFormer: Enhanced Transformer with Rotary Position Embedding
 ---
 
-# Rotary Positional Embeddings (RoPE)
+*RoPER is work by [Georges Harik (@gharik)](https://twitter.com/gharik),
+and this implementation is based on his original code.*
 
-This is an implementation of
-[Rotary Positional Embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864)
-in [PyTorch](https://pytorch.org).
+# Rotary Positional Embeddings with Relative Distance (RoPER)
 
-Rotary Positional Embeddings (RoPE) encode position information of tokens
-with a rotation matrix that naturally incorporates explicit relative position
-dependency.
+[Rotary Positional Embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864) includes
+relative positions in attention score calculation.
+However, the embeddings themselves do not get any positional information
+, [except what it can get implicitly from causal attention](https://papers.labml.ai/paper/2c364684b15b11ecac827bce58715ee7).
 
-Here's [the training code](experiment.html) for training a transformer model with RoPE
- on Tiny Shakespeare dataset.
+RoPER adds relative positional information explicitly to value embeddings.
+Specifically, it adds the relative positions of the tokens it paid attention to.
+We use same rotary positional embeddings to rotate the values in attention,
+Then, after taking the weighted sum,
+ we rotate the final in the opposite direction.
+Which is equivalent to rotating each of the values (before attention) relative to the current position.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1cf508e693be11ecacc98de8b38a61fe)
+Here's [the training code](experiment.html) for training a transformer model with RoPER
+ on an arithmetic addition where we can see significant improvement over RoPE.
+
+### Relative distances in embeddings
+
+For any head, let $a_{n,i}$ be the attention from position $n$ to position $i$,
+and $v_i$ be the value embeddings at position $i$. Let's denote individual features
+as $v^{(1)}_i, v^{(2)}_i, \dots$.
+
+Normally, we would take the weight sum of value embeddings
+
+$$o^{(j)}_n = \sum_i a_{n,i} v^{(j)}_i$$
+
+This doesn't explicitly add any distance information about the positions $i$ to final
+result $o^{(j)}_n$.
+
+RoPER pairs features like RoPE and transform them.
+For a pair $v^{(1)}_m$ and $v^{(2)}_m$ it transforms them by
+ $RoPE\big(v^{(1)}_m, v^{(2)}_m, m\big)$.
+Let us donate the transformed features with $\hat{v}^{(1)}_m, \hat{v}^{(2)}_m$.
+Then it rotates the weighted sum $\hat{o}^{(j)}_n$ in the the reverse direction with
+ $RoPE\big(\hat{o}^{(1)}_n, \hat{o}^{(2)}_n, -n\big)$.
+*Note the *$-n$.
+
+Note that,
+
+\begin{align}
+RoPE\big(x^{(1)}_m, x^{(2)}_m, m\big) &=
+\begin{pmatrix}
+\cos m \theta & - \sin m \theta \\
+\sin m \theta & \cos m \theta
+\end{pmatrix}
+\begin{pmatrix}
+x^{(1)}_m \\
+x^{(2)}_m \\
+\end{pmatrix} \\
+&=
+\begin{pmatrix}
+x^{(1)}_m \cos m\theta - x^{(2)}_m \sin m \theta \\
+x^{(2)}_m \cos m\theta + x^{(1)}_m \sin m \theta \\
+\end{pmatrix} \\
+\end{align}
+
+Final output after with the transformations is,
+
+\begin{align}
+RoPE\big(\hat{o}^{(1)}_n, \hat{o}^{(2)}_n, -n\big) &= \\
+\begin{pmatrix}
+\hat{o}^{(1)}_n \cos n\theta + \hat{o}^{(2)}_n \sin n \theta \\
+\hat{o}^{(2)}_n \cos n\theta - \hat{o}^{(1)}_n \sin n \theta \\
+\end{pmatrix} \\
+\end{align}
+
+*Note that *$\sin (-n \theta) = -\sin n \theta$.
+
+Let's expand the first term $\hat{o}^{(1)}_n \cos n\theta + \hat{o}^{(2)}_n \sin n \theta$,
+
+\begin{align}
+\hat{o}^{(1)}_n \cos n\theta + \hat{o}^{(2)}_n \sin n \theta &= \\
+\sum_i a_{n,i} \hat{v}^{(1)}_i \cos n\theta + \sum_i a_{n,i} \hat{v}^{(2)}_i \sin n \theta &= \\
+
+\sum_i a_{n,i} \Big( v^{(1)}_i \cos i\theta - v^{(2)}_i \sin i \theta \Big) \cos n\theta &+ \\
+\sum_i a_{n,i} \Big( v^{(2)}_i \cos i\theta + v^{(1)}_i \sin i \theta \Big) \sin m \theta &= \\
+
+\sum_i a_{n,i} v^{(1)}_i \Big( \cos i\theta \cos n\theta + \sin i \theta \sin n \theta \Big) &+ \\
+\sum_i a_{n,i} v^{(2)}_i \Big( \cos i\theta \sin n\theta - \sin i \theta \cos n \theta \Big) &= \\
+
+\sum_i a_{n,i} v^{(1)}_i \cos (i - n) \theta - \sum_i a_{n,i} v^{(2)}_i \sin (i - n) \theta &= \\
+
+\sum_i a_{n,i} v^{(1)}_i \cos (i - n) \theta - \sum_i a_{n,i} v^{(2)}_i \sin (i - n) \theta
+\end{align}
+
+Simiarly we can show the second term is equal to,
+
+$$\sum_i a_{n,i} v^{(1)}_i \cos (i - n) \theta + \sum_i a_{n,i} v^{(2)}_i \sin (i - n) \theta$$
+
+Which gives,
+
+\begin{align}
+RoPE\big(\hat{o}^{(1)}_n, \hat{o}^{(2)}_n, -n\big) &= \\
+\begin{pmatrix}
+\sum_i a_{n,i} v^{(1)}_i \cos (i - n) \theta - \sum_i a_{n,i} v^{(2)}_i \sin (i - n) \theta \\
+\sum_i a_{n,i} v^{(1)}_i \cos (i - n) \theta + \sum_i a_{n,i} v^{(2)}_i \sin (i - n) \theta \\
+\end{pmatrix} &= \\
+\sum_i a_{n,i} RoPE \big (v^{(1)}_i, v^{(1)}_i, (i - n) \theta \big)
+\end{align}
+
+That is, the weighted average of values rotated relative to current position.
 """
 
 from typing import Optional
@@ -32,22 +123,19 @@ from labml_nn.transformers.rope import RotaryPositionalEmbeddings
 
 class ReverseRotaryPositionalEmbeddings(RotaryPositionalEmbeddings):
     """
-    ## RoPE module
-    """
+    ## RoPE module that rotates in the opposite direction
 
-    def __init__(self, d: int, base: int = 10_000):
-        """
-        * `d` is the number of features $d$
-        * `base` is the constant used for calculating $\Theta$
-        """
-        super().__init__(d, base)
+    This inherits from [RoPE rotation implementation](../index.html) and changes the direction.
+    """
 
     def forward(self, x: torch.Tensor):
         """
         * `x` is the Tensor at the head of a key or a query with shape `[seq_len, batch_size, n_heads, d]`
         """
+        # Cache $\cos$ and $\sin$ values
         self._build_cache(x)
 
+        # Split the features, we can choose to apply rotary embeddings only to a partial set of features.
         x_rope, x_pass = x[..., :self.d], x[..., self.d:]
 
         # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$

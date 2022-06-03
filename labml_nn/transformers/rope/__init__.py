@@ -122,15 +122,21 @@ class RotaryPositionalEmbeddings(nn.Module):
         * `base` is the constant used for calculating $\Theta$
         """
         super().__init__()
+
         self.base = base
         self.d = d
         self.cos_cached = None
         self.sin_cached = None
 
     def _build_cache(self, x: torch.Tensor):
+        """
+        Cache $\cos$ and $\sin$ values
+        """
+        # Return if cache is already built
         if self.cos_cached is not None and x.shape[0] <= self.cos_cached.shape[0]:
             return
 
+        # Get sequence length
         seq_len = x.shape[0]
 
         # $\Theta = {\theta_i = 10000^{\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
@@ -161,8 +167,10 @@ class RotaryPositionalEmbeddings(nn.Module):
         """
         * `x` is the Tensor at the head of a key or a query with shape `[seq_len, batch_size, n_heads, d]`
         """
+        # Cache $\cos$ and $\sin$ values
         self._build_cache(x)
 
+        # Split the features, we can choose to apply rotary embeddings only to a partial set of features.
         x_rope, x_pass = x[..., :self.d], x[..., self.d:]
 
         # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
