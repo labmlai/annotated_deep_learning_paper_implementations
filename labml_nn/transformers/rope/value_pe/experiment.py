@@ -25,7 +25,7 @@ class Configs(RoPEConfigs):  # , ArithmeticAutoregression):
 
 def _rotary_value_pe_mha(c: TransformerConfigs):
     from labml_nn.transformers.rope.value_pe import RotaryValuePEMultiHeadAttention
-    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 1., 0.5)
+    return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 1., 1.)
 
 
 # Configuration options
@@ -36,7 +36,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="rotary_pe_transformer", comment="rotary_value 1.0, 0.5", writers={'screen', 'labml'})
+    experiment.create(name="rotary_shakespeare", comment="rotary value", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -62,24 +62,24 @@ def main():
         'text': 'tiny_shakespeare',
 
         # Use a context size of $256$
-        'seq_len': 128,
+        'seq_len': 512,
         # Train for 32 epochs
-        'epochs': 32,
+        'epochs': 24,
         # Batch size $4$
-        'batch_size': 4,
+        'batch_size': 16,
         # Switch between training and validation for $10$ times
         # per epoch
-        'inner_iterations': 10,
+        'inner_iterations': 4,
 
         # Model size
-        'd_model': 256,
-        'transformer.ffn.d_ff': 1024,
-        'transformer.n_heads': 8,
+        'd_model': 128,
+        'transformer.ffn.d_ff': 512,
+        'transformer.n_heads': 4,
         'transformer.dropout': 0.0,
 
-        # Use [Noam optimizer](../../optimizers/noam.html)
-        'optimizer.optimizer': 'Noam',
-        'optimizer.learning_rate': 1.,
+        # Use [Adam optimizer](../../optimizers/noam.html)
+        'optimizer.optimizer': 'Adam',
+        'optimizer.learning_rate': 2.5e-4,
 
         'dataloader_shuffle_with_replacement': True
     })

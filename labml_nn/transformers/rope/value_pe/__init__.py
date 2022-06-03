@@ -119,8 +119,7 @@ from typing import Optional
 
 import torch
 
-from labml_nn.transformers.mha import MultiHeadAttention
-from labml_nn.transformers.rope import RotaryPositionalEmbeddings
+from labml_nn.transformers.rope import RotaryPositionalEmbeddings, RotaryPEMultiHeadAttention
 
 
 class ReverseRotaryPositionalEmbeddings(RotaryPositionalEmbeddings):
@@ -164,7 +163,7 @@ class ReverseRotaryPositionalEmbeddings(RotaryPositionalEmbeddings):
         return torch.cat((x_rope, x_pass), dim=-1)
 
 
-class RotaryValuePEMultiHeadAttention(MultiHeadAttention):
+class RotaryValuePEMultiHeadAttention(RotaryPEMultiHeadAttention):
     """
     ## Multi-head attention with rotary positional embeddings
 
@@ -174,24 +173,13 @@ class RotaryValuePEMultiHeadAttention(MultiHeadAttention):
     def __init__(self, heads: int, d_model: int,
                  rope_percentage: float = 0.5, rope_value_percentage: float = 0.5,
                  dropout_prob: float = 0.0):
-        super().__init__(heads, d_model, dropout_prob)
+        super().__init__(heads, d_model, rope_percentage, dropout_prob)
 
         # Rotary positional embedding layers
-        d_rope = int(self.d_k * rope_percentage)
         d_rope_value = int(self.d_k * rope_value_percentage)
 
-        self.query_rotary_pe = RotaryPositionalEmbeddings(d_rope)
-        self.key_rotary_pe = RotaryPositionalEmbeddings(d_rope)
         self.value_rotary_pe = RotaryPositionalEmbeddings(d_rope_value)
         self.value_reverse_rotary_pe = ReverseRotaryPositionalEmbeddings(d_rope_value)
-
-    def get_scores(self, query: torch.Tensor, key: torch.Tensor):
-        """
-        ### Calculate scores between queries and keys
-        """
-
-        # Calculate dot-product with RoPE
-        return torch.einsum('ibhd,jbhd->ijbh', self.query_rotary_pe(query), self.key_rotary_pe(key))
 
     def forward(self, *,
                 query: torch.Tensor,

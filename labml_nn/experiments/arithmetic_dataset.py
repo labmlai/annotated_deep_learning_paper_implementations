@@ -146,7 +146,7 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
     # Training data loader
     train_loader: DataLoader = 'arithmetic_train_loader'
     # Number of problems in evaluation
-    n_tests: int = 32
+    n_tests: int = 64
     # No need of a validation dataset
     validator = None
     # Number of times to run evaluations per epoch
@@ -154,6 +154,7 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
     # Number of tokens in the vocabulary
     n_tokens = len(ArithmeticDataset(1, 1, 1).itos)
 
+    @torch.no_grad()
     def sample(self):
         """
         ### Evaluation

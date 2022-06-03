@@ -42,12 +42,12 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_addition", comment="rotary value 8", writers={'screen', 'labml', 'comet'})
+    experiment.create(name="roper_addition", comment="rotary value 7", writers={'screen', 'labml', 'comet'})
     # Create configs
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        'max_digits': 8,
+        'max_digits': 7,
 
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
@@ -74,9 +74,9 @@ def main():
         'transformer.n_heads': 4,
         'transformer.dropout': 0.0,
 
-        # Use [Noam optimizer](../../optimizers/noam.html)
-        'optimizer.optimizer': 'Noam',
-        'optimizer.learning_rate': 1.,
+        # Use [Adam optimizer](../../optimizers/noam.html)
+        'optimizer.optimizer': 'Adam',
+        'optimizer.learning_rate': 2.5e-4,
     })
 
     # Set models for saving and loading
