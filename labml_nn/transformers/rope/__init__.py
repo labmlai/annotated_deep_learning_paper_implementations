@@ -201,9 +201,6 @@ class RotaryPEMultiHeadAttention(MultiHeadAttention):
     """
 
     def __init__(self, heads: int, d_model: int, rope_percentage: float = 0.5, dropout_prob: float = 0.0):
-        # The linear transformations do not need a bias since we
-        # explicitly include it when calculating scores.
-        # However having a bias for `value` might make sense.
         super().__init__(heads, d_model, dropout_prob, bias=False)
 
         # Rotary positional embedding layers
