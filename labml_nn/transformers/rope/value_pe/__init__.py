@@ -138,7 +138,8 @@ class ReverseRotaryPositionalEmbeddings(RotaryPositionalEmbeddings):
         # Split the features, we can choose to apply rotary embeddings only to a partial set of features.
         x_rope, x_pass = x[..., :self.d], x[..., self.d:]
 
-        # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
+        # Calculate
+        # $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
         neg_half_x = self._neg_half(x_rope)
 
         # Calculate

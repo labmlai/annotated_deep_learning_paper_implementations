@@ -154,7 +154,7 @@ class RotaryPositionalEmbeddings(nn.Module):
 
         # Cache them
         self.cos_cached = idx_theta2.cos()[:, None, None, :]
-        self.sin_cached = idx_theta2.cos()[:, None, None, :]
+        self.sin_cached = idx_theta2.sin()[:, None, None, :]
 
     def _neg_half(self, x: torch.Tensor):
         # $\frac{d}{2}$
@@ -173,7 +173,8 @@ class RotaryPositionalEmbeddings(nn.Module):
         # Split the features, we can choose to apply rotary embeddings only to a partial set of features.
         x_rope, x_pass = x[..., :self.d], x[..., self.d:]
 
-        # Calculate $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
+        # Calculate
+        # $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., x^{(\frac{d}{2})}]$
         neg_half_x = self._neg_half(x_rope)
 
         # Calculate
