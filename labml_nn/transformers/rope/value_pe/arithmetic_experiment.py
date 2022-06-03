@@ -37,12 +37,12 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_addition", comment="rotary value", writers={'screen', 'labml', 'comet'})
+    experiment.create(name="roper_addition", comment="rotary value 8", writers={'screen', 'labml', 'comet'})
     # Create configs
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
-        'max_digits': 6,
+        'max_digits': 8,
 
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
@@ -55,15 +55,10 @@ def main():
         #
         'model': 'rotary_pe_transformer',
 
-        # Prompt separator is blank
-        'prompt_separator': '',
-        # Starting prompt for sampling
-        'prompt': '?x=123456789+1091919;',
-
         # Use a context size of $256$
         'seq_len': 512,
         # Train for 32 epochs
-        'epochs': 50,
+        'epochs': 20,
         # Batch size $4$
         'batch_size': 16,
 

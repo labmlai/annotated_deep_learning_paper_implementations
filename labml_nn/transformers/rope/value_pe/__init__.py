@@ -171,7 +171,7 @@ class RotaryValuePEMultiHeadAttention(MultiHeadAttention):
 
     def __init__(self, heads: int, d_model: int,
                  rope_percentage: float = 0.5, rope_value_percentage: float = 0.5,
-                 dropout_prob: float = 0.1):
+                 dropout_prob: float = 0.0):
         # The linear transformations do not need a bias since we
         # explicitly include it when calculating scores.
         # However having a bias for `value` might make sense.
