@@ -1,14 +1,11 @@
 """
 ---
-title: Rotary Positional Embeddings (RoPE) Experiment
-summary: This experiment trains a transformer model with Rotary Positional Embeddings (RoPE) on tiny Shakespeare dataset.
+title: Rotary Positional Embeddings with Relative distance (RoPER) Experiment
+summary: This experiment trains a transformer model with Rotary Positional Embeddings with
+ Relative Distance (RoPER) on the arithmetic addition task.
 ---
 
-# Rotary Positional Embeddings (RoPE) Experiment
-
-This is an annotated PyTorch experiment to train a transformer model with Rotary Positional Embeddings (RoPE).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1cf508e693be11ecacc98de8b38a61fe)
+# Rotary Positional Embeddings with Relative distance ([RoPER](index.html)) Experiment
 """
 
 from labml import experiment
@@ -18,13 +15,21 @@ from labml_nn.transformers import TransformerConfigs
 from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
 
-# ### Rotary PE attention
+class Configs(RoPEConfigs, ArithmeticAutoregression):
+    """
+    We inherit [RoPE experiment](../experiment.html) and use it for
+    [arithmetic addition task](../../experiments/arithmetic_dataset.html).
 
-class Configs(RoPEConfigs, ArithmeticAutoregression):  # , ArithmeticAutoregression):
+    We add the option to change attention to use Rotary Positional Embeddings with Relative distance (RoPER)
+    below.
+    """
     pass
 
 
 def _rotary_value_pe_mha(c: TransformerConfigs):
+    """
+    Use Rotary Positional Embeddings with Relative distance ([RoPER](index.html)) in attention.
+    """
     from labml_nn.transformers.rope.value_pe import RotaryValuePEMultiHeadAttention
     return RotaryValuePEMultiHeadAttention(c.n_heads, c.d_model, 1., 1.)
 
@@ -48,8 +53,9 @@ def main():
         'transformer.src_embed': 'no_pos',
         'transformer.tgt_embed': 'no_pos',
 
-        # Encoder with RoPE
+        # Encoder with RoPER attention
         'transformer.encoder_attn': 'rotary_value',
+        # Encoder with RoPE attention
         # 'transformer.encoder_attn': 'rotary',
 
         #

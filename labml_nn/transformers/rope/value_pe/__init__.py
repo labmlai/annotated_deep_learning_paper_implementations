@@ -1,6 +1,6 @@
 """
 ---
-title: Rotary Positional Embeddings with Relative Distance (RoPER)
+title: Rotary Positional Embeddings with Relative distance (RoPER)
 summary: >
   This is an implementation of RoPER which adds relative distance information to embeddings on
   top of RoPE introduced in RoFormer: Enhanced Transformer with Rotary Position Embedding
@@ -9,7 +9,7 @@ summary: >
 *RoPER is work by [Georges Harik (@gharik)](https://twitter.com/gharik),
 and this implementation is based on his original code.*
 
-# Rotary Positional Embeddings with Relative Distance (RoPER)
+# Rotary Positional Embeddings with Relative distance (RoPER)
 
 [Rotary Positional Embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864) includes
 relative positions in attention score calculation.
@@ -111,6 +111,8 @@ RoPE\big(\hat{o}^{(1)}_n, \hat{o}^{(2)}_n, -n\big) &= \\
 \end{align}
 
 That is, the weighted average of values rotated relative to current position.
+
+[Here's an experiment](arithmetic_experiment.html) that uses RoPER on an arthmetic addition task.
 """
 
 from typing import Optional

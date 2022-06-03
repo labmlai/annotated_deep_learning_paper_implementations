@@ -1,5 +1,11 @@
 """
-This is based on code by [@gharik](https://twitter.com/gharik).
+---
+title: Arithmetic Dataset
+summary: >
+  This creates arithmetic problems.
+---
+
+*This is based on code by [Georges Harik (@gharik)](https://twitter.com/gharik).*
 """
 
 import random
@@ -16,15 +22,34 @@ from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs, tr
 
 
 class ArithmeticDataset(Dataset):
+    """
+    ## Arithmetic Dataset
+
+    This creates arithmetic addition problems and solutions with workings.
+    We've only implemented addition so far.
+
+    It's based on a character level tokenization.
+    """
     def __init__(self, seq_len: int, max_digits: int, n_sequences: int):
+        """
+        :param seq_len: is the sequence length of generated math problems.
+            We fill as many problems as possible upto this length
+        :max_digits: is the maximum number of digits in the operand integers
+        :n_sequences: is the number of sequences per epoch
+        """
         self.n_sequences = n_sequences
         self.max_digits = max_digits
         self.seq_len = seq_len
+        # Token id to string
         self.itos = list(string.digits + 'xe =\n?+;')
+        # Character to token id
         self.stoi = {c: i for i, c in enumerate(self.itos)}
 
     @staticmethod
-    def make_int(n_digits):
+    def make_int(n_digits: int):
+        """
+        Generates an integer with `n_digit` number of digits
+        """
         res = 0
         for i in range(n_digits):
             d = random.randrange(1, 11) if i == 0 else random.randrange(0, 11)
@@ -33,7 +58,13 @@ class ArithmeticDataset(Dataset):
         return res
 
     @staticmethod
-    def get_add_explanation(x, y):
+    def get_add_explanation(x: int, y: int):
+        """
+        Generates the workings for `x + y`.
+        For example for `11+29` it generates
+        `1e0+9e0+0e0=10e0 1e0+2e0+1e0=4e0`.
+        """
+
         carry = 0
         e = 0
         explanation = []
@@ -48,14 +79,14 @@ class ArithmeticDataset(Dataset):
 
     # Make a problem with a pre_explanation or not
     def make_add_problem(self):
+        """
+        Creates an arithmetic addition problem with workings and answer.
+        """
         x = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
         y = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
 
-        if random.randrange(0, 5) < 1:
-            return f"x={x}+{y}; x=={x + y}\n"
-        else:
-            explanation = self.get_add_explanation(x, y)
-            return f"x={x}+{y}; {explanation} x=={x + y}\n"
+        explanation = self.get_add_explanation(x, y)
+        return f"x={x}+{y}; {explanation} x=={x + y}\n"
 
     def get_qa(self):
         x = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
