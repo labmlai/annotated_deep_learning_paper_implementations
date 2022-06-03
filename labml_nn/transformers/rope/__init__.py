@@ -201,7 +201,7 @@ class RotaryPEMultiHeadAttention(MultiHeadAttention):
     """
 
     def __init__(self, heads: int, d_model: int, rope_percentage: float = 0.5, dropout_prob: float = 0.0):
-        super().__init__(heads, d_model, dropout_prob, bias=False)
+        super().__init__(heads, d_model, dropout_prob)
 
         # Rotary positional embedding layers
         d_rope = int(self.d_k * rope_percentage)
