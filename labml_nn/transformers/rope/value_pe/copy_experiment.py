@@ -42,7 +42,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_addition", comment="rotary value 7", writers={'screen'})
+    experiment.create(name="roper_copy", comment="rotary value 01", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
@@ -70,6 +70,7 @@ def main():
         'd_model': 128,
         'transformer.ffn.d_ff': 512,
         'transformer.n_heads': 4,
+        'transformer.n_layers': 3,
         'transformer.dropout': 0.0,
 
         # Use [Adam optimizer](../../optimizers/noam.html)

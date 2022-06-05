@@ -1,5 +1,4 @@
 import random
-import string
 from typing import List
 
 import torch
@@ -23,7 +22,7 @@ class CopyPermDataset(Dataset):
         self.n_sequences = n_sequences
         self.seq_len = seq_len
         self.code_len = (self.seq_len + 2) // 2
-        self.letters = string.ascii_lowercase
+        self.letters = '01'  # 'acgt'  # string.ascii_lowercase
         # Token id to string
         self.itos = list(self.letters + '>')
         # Character to token id

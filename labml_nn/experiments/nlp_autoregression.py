@@ -19,7 +19,7 @@ from labml.configs import option
 from labml.logger import Text
 from labml_helpers.datasets.text import TextDataset, SequentialDataLoader, SequentialUnBatchedDataset, TextFileDataset
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.metrics.accuracy import Accuracy
+from labml_helpers.metrics.accuracy import Accuracy, AccuracyMovingAvg
 from labml_helpers.module import Module
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
@@ -77,7 +77,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     # Loss function
     loss_func = CrossEntropyLoss()
     # Accuracy function
-    accuracy = Accuracy()
+    accuracy = AccuracyMovingAvg()
     # Model embedding size
     d_model: int = 512
     # Gradient clipping
