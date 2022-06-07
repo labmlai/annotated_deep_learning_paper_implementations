@@ -19,7 +19,7 @@ from labml.configs import option
 from labml.logger import Text
 from labml_helpers.datasets.text import TextDataset, SequentialDataLoader, SequentialUnBatchedDataset, TextFileDataset
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.metrics.accuracy import Accuracy, AccuracyMovingAvg
+from labml_helpers.metrics.accuracy import AccuracyMovingAvg
 from labml_helpers.module import Module
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
@@ -30,9 +30,9 @@ class CrossEntropyLoss(Module):
     ### Cross entropy loss
     """
 
-    def __init__(self):
+    def __init__(self, ignore_index: int = -100):
         super().__init__()
-        self.loss = nn.CrossEntropyLoss()
+        self.loss = nn.CrossEntropyLoss(ignore_index=ignore_index)
 
     def forward(self, outputs, targets):
         return self.loss(outputs.view(-1, outputs.shape[-1]), targets.view(-1))
@@ -75,7 +75,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     is_save_models = True
 
     # Loss function
-    loss_func = CrossEntropyLoss()
+    loss_func = CrossEntropyLoss(ignore_index=-1)
     # Accuracy function
     accuracy = AccuracyMovingAvg()
     # Model embedding size
@@ -297,10 +297,7 @@ def transpose_batch(batch):
 
     transposed_data = list(zip(*batch))
     # Stack the batch along the second dimension `dim=1`
-    src = torch.stack(transposed_data[0], dim=1)
-    tgt = torch.stack(transposed_data[1], dim=1)
-
-    return src, tgt
+    return tuple(torch.stack(d, dim=1) for d in transposed_data)
 
 
 @option(NLPAutoRegressionConfigs.train_loader)
