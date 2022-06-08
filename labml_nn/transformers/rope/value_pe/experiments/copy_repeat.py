@@ -10,7 +10,6 @@ summary: This experiment trains a transformer model with Rotary Positional Embed
 
 from labml import experiment
 from labml.configs import calculate
-from labml_nn.experiments.copy_perm import CopyAutoregression
 from labml_nn.experiments.copy_perm.continous import CopyRepeatAutoregression
 from labml_nn.transformers import TransformerConfigs
 from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
@@ -43,19 +42,21 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_copy", comment="rotary rl 01", writers={'screen', 'labml'})
+    experiment.create(name="roper_copy_repeat", comment="rotary acgt", writers={'screen', 'sqlite'})
     # Create configs
     conf = Configs()
     # Override configurations
     experiment.configs(conf, {
+        'substr_len': 16,
+
         # No fixed positional embeddings
         'transformer.src_embed': 'no_pos',
         'transformer.tgt_embed': 'no_pos',
 
         # Encoder with RoPER attention
-        # 'transformer.encoder_attn': 'rotary_value',
+        'transformer.encoder_attn': 'rotary_value',
         # Encoder with RoPE attention
-        'transformer.encoder_attn': 'relative',
+        # 'transformer.encoder_attn': 'rotary',
 
         #
         'model': 'rotary_pe_transformer',
@@ -63,7 +64,7 @@ def main():
         # Use a context size of $256$
         'seq_len': 512,
         # Train for 32 epochs
-        'epochs': 20,
+        'epochs': 16,
         # Batch size $4$
         'batch_size': 16,
 

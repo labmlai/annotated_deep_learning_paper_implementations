@@ -98,7 +98,7 @@ class CopyRepeatAutoregression(NLPAutoRegressionConfigs):
     n_tokens = len(CopyPermRepeatDataset(1, 1, 1, 1).itos)
 
     substr_len: int = 16
-    rnd_len: int = 16
+    rnd_len: int = 12
 
     @torch.no_grad()
     def sample(self):
