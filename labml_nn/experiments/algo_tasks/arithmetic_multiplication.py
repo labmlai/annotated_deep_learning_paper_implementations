@@ -13,15 +13,15 @@ import string
 from typing import List
 
 import torch
-from labml.logger import Text
 from torch.utils.data import DataLoader, Dataset
 
 from labml import monit, logger, tracker
 from labml.configs import option
+from labml.logger import Text
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs, transpose_batch
 
 
-class ArithmeticAdditionDataset(Dataset):
+class ArithmeticMultiplicationDataset(Dataset):
     """
     ## Arithmetic Dataset
 
@@ -31,50 +31,45 @@ class ArithmeticAdditionDataset(Dataset):
     It's based on a character level tokenization.
     """
 
-    def __init__(self, seq_len: int, max_digits: int, n_sequences: int):
+    def __init__(self, seq_len: int, max_digits: int, base: int, n_sequences: int):
         """
         :param seq_len: is the sequence length of generated math problems.
             We fill as many problems as possible upto this length
         :max_digits: is the maximum number of digits in the operand integers
         :n_sequences: is the number of sequences per epoch
         """
+        self.base = base
         self.n_sequences = n_sequences
         self.max_digits = max_digits
         self.seq_len = seq_len
         # Token id to string
-        self.itos = list(string.digits + 'xe =\n?+;')
+        self.itos = list(string.digits + 'x =\n?*;')
         # Character to token id
         self.stoi = {c: i for i, c in enumerate(self.itos)}
 
-    @staticmethod
-    def make_int(n_digits: int):
+    def make_int(self, n_digits: int):
         """
         Generates an integer with `n_digit` number of digits
         """
         res = 0
         for i in range(n_digits):
-            d = random.randrange(1, 11) if i == 0 else random.randrange(0, 11)
-            res = res * 10 + d
+            d = random.randrange(1, self.base + 1) if i == 0 else random.randrange(0, self.base + 1)
+            res = res * self.base + d
 
         return res
 
-    @staticmethod
-    def get_add_explanation(x: int, y: int):
+    def get_add_explanation(self, x: int, y: int):
         """
         Generates the workings for `x + y`.
         For example for `11+29` it generates
         `1e0+9e0+0e0=10e0 1e0+2e0+1e0=4e0`.
         """
 
-        carry = 0
-        e = 0
         explanation = []
-        while x > 0 or y > 0 or carry > 0:
-            rx, ry = x % 10, y % 10
-            total = rx + ry + carry
-            explanation.append(f"{rx}e{e}+{ry}e{e}+{carry}e{e}=={total}e{e}")
-            x, y, carry = x // 10, y // 10, total // 10
-            e += 1
+        while x > 0:
+            rx = x % self.base
+            explanation.append(f"{self.to_string(y * rx)}")
+            x = x // self.base
 
         return ' '.join(explanation)
 
@@ -87,7 +82,17 @@ class ArithmeticAdditionDataset(Dataset):
         y = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
 
         explanation = self.get_add_explanation(x, y)
-        return f"x={x}+{y}; {explanation} x=={x + y}\n"
+        return f"x={self.to_string(x)}*{self.to_string(y)}; {explanation} x=={self.to_string(x * y)}\n"
+
+    def to_string(self, x: int):
+        if x == 0:
+            return '0'
+        a = []
+        while x > 0:
+            a += [f'{x % self.base}']
+            x = x // self.base
+
+        return ''.join(reversed(a))
 
     def get_qa(self):
         """
@@ -96,18 +101,22 @@ class ArithmeticAdditionDataset(Dataset):
         x = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
         y = self.make_int(n_digits=random.randrange(1, self.max_digits + 1))
 
-        return f'?x={x}+{y};', f'{x + y}'
+        return f'?x={self.to_string(x)}*{self.to_string(y)};', f'{self.to_string(x * y)}'
 
     def get_packed_math_input(self):
         """
         Generate multiple problems and pack them into a sequence.
         """
         s_enc = []
+        mask = []
         while len(s_enc) <= self.seq_len:
             s_part = self.make_add_problem()
             s_part_enc = self.encode('?' + s_part)
+            prob, sol = s_part.split(';')
+            mask += [False] * (len(prob) + 2)
+            mask += [True] * len(sol)
             s_enc = s_enc + s_part_enc
-        return s_enc
+        return s_enc, mask
 
     def encode(self, s: str):
         """
@@ -125,8 +134,11 @@ class ArithmeticAdditionDataset(Dataset):
         """
         Get a input and target pair for auto-regressive modelling
         """
-        s = torch.tensor(self.get_packed_math_input())
-        return s[:self.seq_len], s[1:self.seq_len + 1]
+        s, mask = self.get_packed_math_input()
+        s = torch.tensor(s)
+        mask = torch.tensor(mask)
+        target = s * mask + -1 * (~mask)
+        return s[:self.seq_len], target[1:self.seq_len + 1]
 
     def __len__(self):
         """
@@ -135,7 +147,7 @@ class ArithmeticAdditionDataset(Dataset):
         return self.n_sequences
 
 
-class ArithmeticAdditionAutoregression(NLPAutoRegressionConfigs):
+class ArithmeticMultiplicationAutoregression(NLPAutoRegressionConfigs):
     """
     ## Arithmetic Task Experiment Configurations
     """
@@ -152,7 +164,8 @@ class ArithmeticAdditionAutoregression(NLPAutoRegressionConfigs):
     # Number of times to run evaluations per epoch
     inner_iterations = 4
     # Number of tokens in the vocabulary
-    n_tokens = len(ArithmeticAdditionDataset(1, 1, 1).itos)
+    base: int = 10
+    n_tokens = len(ArithmeticMultiplicationDataset(1, 1, 1, 1).itos)
 
     @torch.no_grad()
     def sample(self):
@@ -167,7 +180,7 @@ class ArithmeticAdditionAutoregression(NLPAutoRegressionConfigs):
             return
 
         # Create a dataset to generate problems
-        dataset = ArithmeticAdditionDataset(self.seq_len, self.max_digits, 1)
+        dataset = ArithmeticMultiplicationDataset(self.seq_len, self.max_digits, self.base, 1)
         # Get a set of problems and answers
         qa = [dataset.get_qa() for _ in range(self.n_tests)]
         # Collect the problems only
@@ -235,12 +248,12 @@ class ArithmeticAdditionAutoregression(NLPAutoRegressionConfigs):
         tracker.save('score', correct / len(results))
 
 
-@option(ArithmeticAdditionAutoregression.train_loader)
-def arithmetic_train_loader(c: ArithmeticAdditionAutoregression):
+@option(ArithmeticMultiplicationAutoregression.train_loader)
+def arithmetic_train_loader(c: ArithmeticMultiplicationAutoregression):
     """
     Training data loader
     """
-    return DataLoader(ArithmeticAdditionDataset(c.seq_len, c.max_digits, c.train_sequences_per_epoch),
+    return DataLoader(ArithmeticMultiplicationDataset(c.seq_len, c.max_digits, c.base, c.train_sequences_per_epoch),
                       batch_size=c.batch_size,
                       collate_fn=transpose_batch,
                       num_workers=4)
@@ -250,9 +263,9 @@ def _test():
     """
     Code to test generated problems
     """
-    dataset = ArithmeticAdditionDataset(256, 8, 10)
+    dataset = ArithmeticMultiplicationDataset(256, 4, 4, 10)
 
-    print(dataset.decode(dataset.get_packed_math_input()))
+    print(dataset.decode(dataset.get_packed_math_input()[0]))
 
 
 #
