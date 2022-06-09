@@ -19,7 +19,7 @@ from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
 # ### Rotary PE attention
 
-class Configs(RoPEConfigs):  # , ArithmeticAutoregression):
+class Configs(RoPEConfigs):
     pass
 
 

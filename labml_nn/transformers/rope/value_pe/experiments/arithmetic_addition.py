@@ -10,12 +10,12 @@ summary: This experiment trains a transformer model with Rotary Positional Embed
 
 from labml import experiment
 from labml.configs import calculate
-from labml_nn.experiments.arithmetic_dataset import ArithmeticAutoregression
+from labml_nn.experiments.arithmetic_addition_dataset import ArithmeticAdditionAutoregression
 from labml_nn.transformers import TransformerConfigs
 from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
 
-class Configs(RoPEConfigs, ArithmeticAutoregression):
+class Configs(RoPEConfigs, ArithmeticAdditionAutoregression):
     """
     We inherit [RoPE experiment](../experiment.html) and use it for
     [arithmetic addition task](../../experiments/arithmetic_dataset.html).
