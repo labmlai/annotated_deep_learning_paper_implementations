@@ -10,7 +10,7 @@ summary: This experiment trains a transformer model with Rotary Positional Embed
 
 from labml import experiment
 from labml.configs import calculate
-from labml_nn.experiments.copy_perm.repeat import CopyRepeatAutoregression
+from labml_nn.experiments.algo_tasks.copy_repeat import CopyRepeatAutoregression
 from labml_nn.transformers import TransformerConfigs
 from labml_nn.transformers.rope.experiment import Configs as RoPEConfigs
 
