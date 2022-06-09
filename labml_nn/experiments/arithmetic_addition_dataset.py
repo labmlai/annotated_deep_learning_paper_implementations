@@ -21,7 +21,7 @@ from labml.configs import option
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs, transpose_batch
 
 
-class ArithmeticDataset(Dataset):
+class ArithmeticAdditionDataset(Dataset):
     """
     ## Arithmetic Dataset
 
@@ -135,7 +135,7 @@ class ArithmeticDataset(Dataset):
         return self.n_sequences
 
 
-class ArithmeticAutoregression(NLPAutoRegressionConfigs):
+class ArithmeticAdditionAutoregression(NLPAutoRegressionConfigs):
     """
     ## Arithmetic Task Experiment Configurations
     """
@@ -152,7 +152,7 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
     # Number of times to run evaluations per epoch
     inner_iterations = 4
     # Number of tokens in the vocabulary
-    n_tokens = len(ArithmeticDataset(1, 1, 1).itos)
+    n_tokens = len(ArithmeticAdditionDataset(1, 1, 1).itos)
 
     @torch.no_grad()
     def sample(self):
@@ -167,7 +167,7 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
             return
 
         # Create a dataset to generate problems
-        dataset = ArithmeticDataset(self.seq_len, self.max_digits, 1)
+        dataset = ArithmeticAdditionDataset(self.seq_len, self.max_digits, 1)
         # Get a set of problems and answers
         qa = [dataset.get_qa() for _ in range(self.n_tests)]
         # Collect the problems only
@@ -235,12 +235,12 @@ class ArithmeticAutoregression(NLPAutoRegressionConfigs):
         tracker.save('score', correct / len(results))
 
 
-@option(ArithmeticAutoregression.train_loader)
-def arithmetic_train_loader(c: ArithmeticAutoregression):
+@option(ArithmeticAdditionAutoregression.train_loader)
+def arithmetic_train_loader(c: ArithmeticAdditionAutoregression):
     """
     Training data loader
     """
-    return DataLoader(ArithmeticDataset(c.seq_len, c.max_digits, c.train_sequences_per_epoch),
+    return DataLoader(ArithmeticAdditionDataset(c.seq_len, c.max_digits, c.train_sequences_per_epoch),
                       batch_size=c.batch_size,
                       collate_fn=transpose_batch,
                       num_workers=4)
@@ -250,7 +250,7 @@ def _test():
     """
     Code to test generated problems
     """
-    dataset = ArithmeticDataset(256, 8, 10)
+    dataset = ArithmeticAdditionDataset(256, 8, 10)
 
     print(dataset.decode(dataset.get_packed_math_input()))
 
