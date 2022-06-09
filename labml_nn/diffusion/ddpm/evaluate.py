@@ -40,7 +40,7 @@ class Sampler:
 
         # $T$
         self.n_steps = diffusion.n_steps
-        # $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$
+        # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
         self.eps_model = diffusion.eps_model
         # $\beta_t$
         self.beta = diffusion.beta
@@ -92,12 +92,12 @@ class Sampler:
 
     def sample_animation(self, n_frames: int = 1000, create_video: bool = True):
         """
-        #### Sample an image step-by-step using $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+        #### Sample an image step-by-step using $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
-        We sample an image step-by-step using $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$ and at each step
+        We sample an image step-by-step using $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$ and at each step
         show the estimate
         $$x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
-         \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
+         \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
         """
 
         # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
@@ -113,7 +113,7 @@ class Sampler:
             t_ = self.n_steps - t_inv - 1
             # $t$ in a tensor
             t = xt.new_full((1,), t_, dtype=torch.long)
-            # $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$
+            # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
             eps_theta = self.eps_model(xt, t)
             if t_ % interval == 0:
                 # Get $\hat{x}_0$ and add to frames
@@ -121,7 +121,7 @@ class Sampler:
                 frames.append(x0[0])
                 if not create_video:
                     self.show_image(x0[0], f"{t_}")
-            # Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+            # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
             xt = self.p_sample(xt, t, eps_theta)
 
         # Make video
@@ -138,7 +138,7 @@ class Sampler:
          $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
 
         Then get
-         $$\bar{x}_0 \sim \textcolor{cyan}{p_\theta}(x_0|\bar{x}_t)$$
+         $$\bar{x}_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|\bar{x}_t)$$
 
         * `x1` is $x_0$
         * `x2` is $x'_0$
@@ -153,7 +153,7 @@ class Sampler:
         # $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
         xt = (1 - lambda_) * self.diffusion.q_sample(x1, t) + lambda_ * self.diffusion.q_sample(x2, t)
 
-        # $$\bar{x}_0 \sim \textcolor{cyan}{p_\theta}(x_0|\bar{x}_t)$$
+        # $$\bar{x}_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|\bar{x}_t)$$
         return self._sample_x0(xt, t_)
 
     def interpolate_animate(self, x1: torch.Tensor, x2: torch.Tensor, n_frames: int = 100, t_: int = 100,
@@ -188,7 +188,7 @@ class Sampler:
             lambda_ = i / n_frames
             # $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
             xt = (1 - lambda_) * x1t + lambda_ * x2t
-            # $$\bar{x}_0 \sim \textcolor{cyan}{p_\theta}(x_0|\bar{x}_t)$$
+            # $$\bar{x}_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|\bar{x}_t)$$
             x0 = self._sample_x0(xt, t_)
             # Add to frames
             frames.append(x0[0])
@@ -202,7 +202,7 @@ class Sampler:
 
     def _sample_x0(self, xt: torch.Tensor, n_steps: int):
         """
-        #### Sample an image using $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+        #### Sample an image using $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
         * `xt` is $x_t$
         * `n_steps` is $t$
@@ -213,7 +213,7 @@ class Sampler:
         # Iterate until $t$ steps
         for t_ in monit.iterate('Denoise', n_steps):
             t = n_steps - t_ - 1
-            # Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+            # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
             xt = self.diffusion.p_sample(xt, xt.new_full((n_samples,), t, dtype=torch.long))
 
         # Return $x_0$
@@ -226,7 +226,7 @@ class Sampler:
         # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
         xt = torch.randn([n_samples, self.image_channels, self.image_size, self.image_size], device=self.device)
 
-        # $$x_0 \sim \textcolor{cyan}{p_\theta}(x_0|x_t)$$
+        # $$x_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|x_t)$$
         x0 = self._sample_x0(xt, self.n_steps)
 
         # Show images
@@ -235,14 +235,14 @@ class Sampler:
 
     def p_sample(self, xt: torch.Tensor, t: torch.Tensor, eps_theta: torch.Tensor):
         """
-        #### Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+        #### Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
         \begin{align}
-        \textcolor{cyan}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
-        \textcolor{cyan}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big) \\
-        \textcolor{cyan}{\mu_\theta}(x_t, t)
+        \textcolor{lightgreen}{p_\theta}(x_{t-1} | x_t) &= \mathcal{N}\big(x_{t-1};
+        \textcolor{lightgreen}{\mu_\theta}(x_t, t), \sigma_t^2 \mathbf{I} \big) \\
+        \textcolor{lightgreen}{\mu_\theta}(x_t, t)
           &= \frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-            \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)
+            \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)
         \end{align}
         """
         # [gather](utils.html) $\bar\alpha_t$
@@ -252,7 +252,7 @@ class Sampler:
         # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
         eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
         # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
+        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
         mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
         # $\sigma^2$
         var = gather(self.sigma2, t)
@@ -267,13 +267,13 @@ class Sampler:
         #### Estimate $x_0$
 
         $$x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
-         \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
+         \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
         """
         # [gather](utils.html) $\bar\alpha_t$
         alpha_bar = gather(self.alpha_bar, t)
 
         # $$x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
-        #  \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{cyan}{\epsilon_\theta}(x_t, t) \Big)$$
+        #  \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
         return (xt - (1 - alpha_bar) ** 0.5 * eps) / (alpha_bar ** 0.5)
 
 
