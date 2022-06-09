@@ -14,6 +14,9 @@ Save the images inside [`data/celebA` folder](#dataset_path).
 
 The paper had used a exponential moving average of the model with a decay of $0.9999$. We have skipped this for
 simplicity.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/diffuse/1260757bcd6148e084ad3a46c38ac5c4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
 """
 from typing import List
 
@@ -224,13 +227,16 @@ def mnist_dataset(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name='diffuse')
+    experiment.create(name='diffuse', writers={'screen', 'comet'})
 
     # Create configurations
     configs = Configs()
 
     # Set configurations. You can override the defaults by passing the values in the dictionary.
     experiment.configs(configs, {
+        'dataset': 'CelebA',  # 'MNIST'
+        'image_channels': 3,  # 1,
+        'epochs': 100,  # 5,
     })
 
     # Initialize

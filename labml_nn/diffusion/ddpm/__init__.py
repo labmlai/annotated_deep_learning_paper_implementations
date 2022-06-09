@@ -157,7 +157,8 @@ Here is the [UNet model](unet.html) that gives $\textcolor{cyan}{\epsilon_\theta
 [training code](experiment.html).
 [This file](evaluate.html) can generate samples and interpolations from a trained model.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/a44333ea251411ec8007d1a1762ed686)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/diffuse/1260757bcd6148e084ad3a46c38ac5c4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
 """
 from typing import Tuple, Optional
 
