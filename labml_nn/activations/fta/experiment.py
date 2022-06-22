@@ -7,6 +7,9 @@ summary: >
 
 # [Fuzzy Tiling Activation](index.html) Experiment
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/activations/fta/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/fta/69be11f83693407f82a86dcbb232bcfe?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&viewId=rlJOpXDGtL8zbkcX66R77P5me&xAxis=step)
+
 Here we train a transformer that uses [Fuzzy Tiling Activation](index.html) in the
 [Feed-Forward Network](../../transformers/feed_forward.html).
 We use it for a language model and train it on Tiny Shakespeare dataset
@@ -14,9 +17,6 @@ for demonstration.
 
 However, this is probably not the ideal task for FTA, and we
 believe FTA is more suitable for modeling data with continuous variables.
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/activations/fta/experiment.ipynb)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/fta/69be11f83693407f82a86dcbb232bcfe?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&viewId=rlJOpXDGtL8zbkcX66R77P5me&xAxis=step)
 """
 
 import copy

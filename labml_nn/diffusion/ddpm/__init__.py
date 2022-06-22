@@ -8,6 +8,9 @@ summary: >
 
 # Denoising Diffusion Probabilistic Models (DDPM)
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/diffuse/view/FknjSiKWotr8fgZerpC1sV1cy/panels)
+
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
 [Denoising Diffusion Probabilistic Models](https://papers.labml.ai/paper/2006.11239).
 
@@ -156,9 +159,6 @@ training.
 Here is the [UNet model](unet.html) that gives $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$ and
 [training code](experiment.html).
 [This file](evaluate.html) can generate samples and interpolations from a trained model.
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.ml/labml/diffuse/1260757bcd6148e084ad3a46c38ac5c4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
 """
 from typing import Tuple, Optional
 
