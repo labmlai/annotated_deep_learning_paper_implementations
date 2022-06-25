@@ -108,6 +108,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
         # Set tracker configurations
         tracker.set_scalar("accuracy.*", True)
         tracker.set_scalar("loss.*", True)
+        tracker.set_text("sampled", False)
         # Add a hook to log module outputs
         hook_model_outputs(self.mode, self.model, 'model')
         # Add accuracy as a state module.
@@ -192,6 +193,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
             # Add the prediction for logging
             log += [(self.prompt_separator + self.text.itos[output[-1]], Text.value)]
 
+        tracker.add({'sampled': prompt})
         # Print the sampled output
         logger.log(log)
 
