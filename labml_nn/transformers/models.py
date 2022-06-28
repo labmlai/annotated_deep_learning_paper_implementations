@@ -7,6 +7,9 @@ summary: >
 ---
 
 # Transformer Encoder and Decoder Models
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](comet.ml/labml/transformer/ea8c108c2d94434ca3c2bc2b21015082)
 """
 import math
 
