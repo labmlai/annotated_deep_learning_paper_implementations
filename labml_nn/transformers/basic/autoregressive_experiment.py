@@ -15,20 +15,20 @@ on an NLP auto-regression task (with Tiny Shakespeare dataset).
 """
 
 import torch
+from torch import nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import TransformerConfigs, Encoder
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class AutoregressiveTransformer(Module):
+class AutoregressiveTransformer(nn.Module):
     """
     ## Auto-Regressive model
     """
-    def __init__(self, encoder: Encoder, src_embed: Module, generator: Module):
+    def __init__(self, encoder: Encoder, src_embed: nn.Module, generator: nn.Module):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token

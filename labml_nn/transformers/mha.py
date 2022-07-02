@@ -26,13 +26,12 @@ import math
 from typing import Optional, List
 
 import torch
-from torch import nn as nn
+from torch import nn
 
 from labml import tracker
-from labml_helpers.module import Module
 
 
-class PrepareForMultiHeadAttention(Module):
+class PrepareForMultiHeadAttention(nn.Module):
     """
     <a id="PrepareMHA"></a>
 
@@ -68,7 +67,7 @@ class PrepareForMultiHeadAttention(Module):
         return x
 
 
-class MultiHeadAttention(Module):
+class MultiHeadAttention(nn.Module):
     r"""
     <a id="MHA"></a>
 
