@@ -122,6 +122,7 @@ Solving games with incomplete information such as poker with CFR.
 
 ## Highlighted Research Paper PDFs
 
+* [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2205.14135.pdf)
 * [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)
 * [Training Compute-Optimal Large Language Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2203.15556.pdf)
 * [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1910.02054.pdf)
