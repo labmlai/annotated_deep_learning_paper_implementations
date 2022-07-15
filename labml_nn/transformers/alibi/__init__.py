@@ -86,6 +86,9 @@ def get_alibi_biases(n_heads: int, mask: torch.Tensor):
     slopes = get_slopes(n_heads).to(mask.device)
     # Calculate distances $[0, 1, \dots, N]$
     distance = mask.cumsum(dim=-1)
+    # This too works since it's a causal mask
+    # `distance = torch.arange(mask.shape[1], dtype=torch.long, device=mask.device)[None, :]`
+
     # Multiply them pair-wise to get the bias matrix
     return distance[:, :, None] * slopes[None, None, :]
 
