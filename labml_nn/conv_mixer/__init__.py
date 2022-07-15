@@ -9,7 +9,7 @@ summary: >
 #  Patches Are All You Need? (ConvMixer)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Patches Are All You Need?](https://papers.labml.ai/paper/TVHS5Y4dNvM).
+[Patches Are All You Need?](https://papers.labml.ai/paper/2201.09792).
 
 ![ConvMixer diagram from the paper](conv_mixer.png)
 

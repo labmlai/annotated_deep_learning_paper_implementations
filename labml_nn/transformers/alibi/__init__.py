@@ -8,7 +8,7 @@ summary: >
 # Attention with Linear Biases (ALiBi)
 
 This is an implementation of Attention with Linear Biases (ALiBi) from the paper
-[Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation](https://papers.labml.ai/paper/dae907db093711ec9e9dcba33be64600).
+[Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation](https://papers.labml.ai/paper/2108.12409).
 
 This replaces positional encodings with biases added to attention scores (attention logits, before the softmax).
 This is a relative scheme tested on autoregressive tasks, and the bias is higher for closeby tokens
