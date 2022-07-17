@@ -30,7 +30,7 @@ Note that the above equality halts because $\text{softmax}$ is invariant to tran
 
 Here is [the training code](experiment.html) for a ALiBi model.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/e87bec2a074911ec82cdd1759f10c925)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1454f9ba044a11ed8364e5e321a405ac)
 """
 import math
 from typing import Optional
@@ -50,7 +50,7 @@ def get_slopes(n_heads: int):
 
     The slope for first head is
 
-    $$2^{-2^{-(\log_2 n) - 3}}$$
+    $$\frac{1}{2^{\frac{8}{n}}} = 2^{-\frac{8}{n}}$$
 
     The slopes for the rest of the heads are in a geometric series with a ratio same as above.
 
@@ -58,17 +58,28 @@ def get_slopes(n_heads: int):
     $$\frac{1}{2^1}, \frac{1}{2^2}, \dots, \frac{1}{2^8}$$
     """
 
+    # Get the closest power of 2 to `n_heads`.
+    # If `n_heads` is not a power of 2, then we first calculate slopes to the closest (smaller) power of 2,
+    # and then add the remaining slopes.
     n = 2 ** math.floor(math.log2(n_heads))
-    base = 2.0 ** (-8.0 / n)
-    slopes = torch.pow(base, torch.arange(1, 1 + n))
+    # $2^{-\frac{8}{n}}$
+    m_0 = 2.0 ** (-8.0 / n)
+    # $2^{-1\frac{8}{n}}, 2^{-2 \frac{8}{n}}, 2^{-3 \frac{8}{n}}, \dots$
+    m = torch.pow(m_0, torch.arange(1, 1 + n))
 
+    # If `n_heads` is not a power of 2, then we add the remaining slopes.
+    # We calculate the remaining slopes for $n * 2$ (avoiding slopes added previously).
+    # And pick the slopes upto `n_heads`.
     if n < n_heads:
-        base = 2.0 ** (-4.0 / n)
-        remaining_slopes = torch.pow(base, torch.arange(1, 1 + 2 * (n_heads - n), 2))
+        # $2^{-\frac{8}{2n}}$
+        m_hat_0 = 2.0 ** (-4.0 / n)
+        # $2^{-1\frac{8}{2n}}, 2^{-3 \frac{8}{2n}}, 2^{-5 \frac{8}{2n}}, \dots$
+        # Note that we take steps by $2$ to avoid slopes added previously.
+        m_hat = torch.pow(m_hat_0, torch.arange(1, 1 + 2 * (n_heads - n), 2))
+        # Concatenate the slopes with the remaining slopes.
+        m = torch.cat([m, m_hat])
 
-        slopes = torch.cat([slopes, remaining_slopes])
-
-    return slopes
+    return m
 
 
 @torch.no_grad()
@@ -77,28 +88,30 @@ def get_alibi_biases(n_heads: int, mask: torch.Tensor):
     ## Calculate the attention biases matrix
 
     * `n_heads` is the number of heads in the attention layer
-    * `mask` is the the attention mask of shape `[seq_len_q, seq_len_k]`
+    * `mask` is the attention mask of shape `[seq_len_q, seq_len_k]`
 
-    This returns a matrix of shape `[n_heads, seq_len_q, seq_len_k]` with attention biases.
+    This returns a matrix of shape `[seq_len_q, seq_len_k, n_heads, ]` with ALiBi attention biases.
     """
 
     # Get slopes $m$ for each head
-    slopes = get_slopes(n_heads).to(mask.device)
-    # Calculate distances $[0, 1, \dots, N]$
-    distance = mask.cumsum(dim=-1)
-    # This too works since it's a causal mask
-    # `distance = torch.arange(mask.shape[1], dtype=torch.long, device=mask.device)[None, :]`
+    m = get_slopes(n_heads).to(mask.device)
 
-    # Multiply them pair-wise to get the bias matrix
-    return distance[:, :, None] * slopes[None, None, :]
+    # Calculate distances $[0, 1, \dots, N]$
+    # Here we calculate the distances using the mask.
+    #
+    # Since it's causal mask we can just use $[0, 1, \dots, N]$ too.
+    # `distance = torch.arange(mask.shape[1], dtype=torch.long, device=mask.device)[None, :]`
+    distance = mask.cumsum(dim=-1)
+
+    # Multiply them pair-wise to get the AliBi bias matrix
+    return distance[:, :, None] * m[None, None, :]
 
 
 class AlibiMultiHeadAttention(MultiHeadAttention):
     """
     ## Attention with Linear Biases (ALiBi)
 
-    We override [Multi-Head Attention](mha.html) module so we only need to
-    write the `get_scores` method.
+    We override [Multi-Head Attention](../mha.html).
     """
 
     def __init__(self, heads: int, d_model: int, dropout_prob: float = 0.1):
@@ -122,14 +135,15 @@ class AlibiMultiHeadAttention(MultiHeadAttention):
         query at position `i` has access to key-value at position `j`.
         """
 
+        # ALiBi only works with causal masks.
         assert mask is not None
         assert mask.shape[0] == mask.shape[1] and mask.shape[2] == 1
 
-        # `query`, `key` and `value`  have shape `[seq_len, batch_size, d_model]`
+        # `query`, `key` and `value` have shape `[seq_len, batch_size, d_model]`
         seq_len, batch_size, _ = query.shape
 
-        if mask is not None:
-            mask = self.prepare_mask(mask, query.shape, key.shape)
+        # Add head dimension to mask and check its shape.
+        mask = self.prepare_mask(mask, query.shape, key.shape)
 
         # Prepare `query`, `key` and `value` for attention computation.
         # These will then have shape `[seq_len, batch_size, heads, d_k]`.
@@ -144,16 +158,18 @@ class AlibiMultiHeadAttention(MultiHeadAttention):
         # Scale scores $\frac{Q K^\top}{\sqrt{d_k}}$
         scores *= self.scale
 
+        # Create AliBi biases if it's not cached
         if self.alibi_biases is None or self.alibi_biases.shape[1] < seq_len:
-            # mask has shape [seq_len, seq_len, 1, 1]
+            # `mask` has shape [seq_len, seq_len, 1, 1]
             self.alibi_biases = get_alibi_biases(scores.shape[-1], mask[:, :, 0, 0])
 
-        # mask has shape [ seq_len, seq_len, heads] and scores has shape `[seq_len, seq_len, batch_size, heads]`
+        # Add AliBi biases to attention scores.
+        # ALiBi biases has shape `[seq_len, seq_len, n_heads]`
+        # and `scores` has shape `[seq_len, seq_len, batch_size, n_heads]`
         scores += self.alibi_biases[:seq_len, :seq_len, None, :]
 
         # Apply mask
-        if mask is not None:
-            scores = scores.masked_fill(mask == 0, float('-inf'))
+        scores = scores.masked_fill(mask == 0, float('-inf'))
 
         # $softmax$ attention along the key sequence dimension
         # $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$
