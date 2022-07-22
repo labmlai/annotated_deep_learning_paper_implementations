@@ -6,23 +6,18 @@ summary: U-Net model
 
 # U-Net model
 """
-
-import math
-from typing import Optional, Tuple, Union, List
-
 import torch
+import torchvision.transforms.functional
 from torch import nn
-
-from labml_helpers.module import Module
 
 
 class DoubleConvolution(nn.Module):
     def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
 
-        self.first = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=0)
+        self.first = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.act = nn.ReLU()
-        self.second = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=0)
+        self.second = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x: torch.Tensor):
         x = self.first(x)
@@ -63,14 +58,14 @@ class Down(nn.Module):
 
 class CopyAndCrop(nn.Module):
     def forward(self, x: torch.Tensor, pass_through: torch.Tensor):
-        d = pass_through.shape[2] - x.shape[2]
-
-        assert d == pass_through.shape[3] - x.shape[3]
-        assert d % 2 == 0
-
-        crop = d // 2
-
-        pass_through = pass_through[:, :, crop:-crop, crop:-crop]
+        pass_through = torchvision.transforms.functional.center_crop(pass_through, [x.shape[2], x.shape[3]])
+        # dh = pass_through.shape[2] - x.shape[2]
+        # dw = pass_through.shape[3] - x.shape[3]
+        #
+        # pass_through = pass_through[:, :,
+        #                dh // 2:dh // 2 + x.shape[2],
+        #                dw // 2:dw // 2 + x.shape[3]
+        #                ]
 
         x = torch.cat([x, pass_through], dim=1)
 

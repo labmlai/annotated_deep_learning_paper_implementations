@@ -1,3 +1,4 @@
+from torch import nn
 from pathlib import Path
 
 import torch.utils.data
@@ -14,12 +15,19 @@ class CarvanaDataset(torch.utils.data.Dataset):
 
         self.ids = list(self.images.keys())
 
+        self.transforms = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(572),
+            torchvision.transforms.ToTensor(),
+        ])
+
     def __getitem__(self, idx):
         id_ = self.ids[idx]
         image = Image.open(self.images[id_])
-        image = torchvision.transforms.functional.to_tensor(image)
+        image = self.transforms(image)
         mask = Image.open(self.masks[id_])
-        mask = torchvision.transforms.functional.to_tensor(mask)
+        mask = self.transforms(mask)
+
+        mask = mask / mask.max()
 
         return image, mask
 

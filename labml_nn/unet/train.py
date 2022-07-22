@@ -1,14 +1,11 @@
-from typing import List
-
 import numpy as np
 import torch
 import torch.utils.data
-import torchvision
-from PIL import Image
+import torchvision.transforms.functional
 from torch import nn
 
 from labml import lab, tracker, experiment, monit
-from labml.configs import BaseConfigs, option
+from labml.configs import BaseConfigs
 from labml_helpers.device import DeviceConfigs
 from labml_nn.unet.carvana import CarvanaDataset
 from labml_nn.unet.model import UNet
@@ -31,7 +28,7 @@ class Configs(BaseConfigs):
     mask_channels: int = 1
 
     # Batch size
-    batch_size: int = 64
+    batch_size: int = 1
     # Learning rate
     learning_rate: float = 2.5e-4
 
@@ -63,15 +60,17 @@ class Configs(BaseConfigs):
         tracker.set_image("sample", True)
 
     @torch.no_grad()
-    def sample(self):
+    def sample(self, idx=-1):
         """
         ### Sample images
         """
 
-        x = self.ds[np.random.randint(len(self.ds))]
+        x, _ = self.dataset[np.random.randint(len(self.dataset))]
 
-        mask = self.sigmoid(self.model(x[None, :]))[0]
+        x = x.to(self.device)
 
+        mask = self.sigmoid(self.model(x[None, :]))
+        x = torchvision.transforms.functional.center_crop(x, [mask.shape[2], mask.shape[3]])
         # Log samples
         tracker.save('sample', x * mask)
 
@@ -81,7 +80,7 @@ class Configs(BaseConfigs):
         """
 
         # Iterate through the dataset
-        for image, mask in monit.iterate('Train', self.data_loader):
+        for _, (image, mask) in monit.mix(('Train', self.data_loader), (self.sample, list(range(50)))):
             # Increment global step
             tracker.add_global_step()
             # Move data to device
@@ -89,8 +88,10 @@ class Configs(BaseConfigs):
 
             # Make the gradients zero
             self.optimizer.zero_grad()
+            pred = self.model(image)
+            mask = torchvision.transforms.functional.center_crop(mask, [pred.shape[2], pred.shape[3]])
             # Calculate loss
-            loss = self.loss_func(self.sigmoid(self.model(image)), mask)
+            loss = self.loss_func(self.sigmoid(pred), mask)
             # Compute gradients
             loss.backward()
             # Take an optimization step
@@ -105,8 +106,6 @@ class Configs(BaseConfigs):
         for _ in monit.loop(self.epochs):
             # Train the model
             self.train()
-            # Sample some images
-            self.sample()
             # New line in the console
             tracker.new_line()
             # Save the model
