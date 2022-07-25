@@ -53,6 +53,8 @@ implementations.
 
 #### ✨ [Capsule Networks](capsule_networks/index.html)
 
+#### ✨ [U-Net](unet/index.html)
+
 #### ✨ [Generative Adversarial Networks](gan/index.html)
 * [Original GAN](gan/original/index.html)
 * [GAN with deep convolutional network](gan/dcgan/index.html)

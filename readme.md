@@ -56,6 +56,8 @@ implementations almost weekly.
 
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
+#### ✨ [U-Net](https://nn.labml.ai/unet/index.html)
+
 #### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
 * [Original GAN](https://nn.labml.ai/gan/original/index.html)
 * [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan/index.html)
