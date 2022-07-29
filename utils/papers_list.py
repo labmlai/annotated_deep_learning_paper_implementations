@@ -21,6 +21,7 @@ IGNORE = {
     'transformers/basic/autoregressive_experiment.html',
     'transformers/xl/relative_mha.html',
     'capsule_networks/mnist.html',
+    'transformers/rope/value_pe/index.html',
 }
 
 IGNORE_PAPERS = {

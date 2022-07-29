@@ -8,6 +8,9 @@ summary: >
 
 # [Denoising Diffusion Probabilistic Models (DDPM)](index.html) training
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.com/labml/diffuse/view/FknjSiKWotr8fgZerpC1sV1cy/panels?utm_source=referral&utm_medium=partner&utm_campaign=labml)
+
 This trains a DDPM based model on CelebA HQ dataset. You can find the download instruction in this
 [discussion on fast.ai](https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3).
 Save the images inside [`data/celebA` folder](#dataset_path).
@@ -38,7 +41,7 @@ class Configs(BaseConfigs):
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 
-    # U-Net model for $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$
+    # U-Net model for $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
     eps_model: UNet
     # [DDPM algorithm](index.html)
     diffusion: DenoiseDiffusion
@@ -76,7 +79,7 @@ class Configs(BaseConfigs):
     optimizer: torch.optim.Adam
 
     def init(self):
-        # Create $\textcolor{cyan}{\epsilon_\theta}(x_t, t)$ model
+        # Create $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$ model
         self.eps_model = UNet(
             image_channels=self.image_channels,
             n_channels=self.n_channels,
@@ -112,7 +115,7 @@ class Configs(BaseConfigs):
             for t_ in monit.iterate('Sample', self.n_steps):
                 # $t$
                 t = self.n_steps - t_ - 1
-                # Sample from $\textcolor{cyan}{p_\theta}(x_{t-1}|x_t)$
+                # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
                 x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
 
             # Log samples
@@ -224,13 +227,16 @@ def mnist_dataset(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name='diffuse')
+    experiment.create(name='diffuse', writers={'screen', 'comet'})
 
     # Create configurations
     configs = Configs()
 
     # Set configurations. You can override the defaults by passing the values in the dictionary.
     experiment.configs(configs, {
+        'dataset': 'CelebA',  # 'MNIST'
+        'image_channels': 3,  # 1,
+        'epochs': 100,  # 5,
     })
 
     # Initialize

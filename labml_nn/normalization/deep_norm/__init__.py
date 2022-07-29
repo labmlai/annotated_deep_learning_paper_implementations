@@ -7,6 +7,9 @@ summary: >
 
 # DeepNorm
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=deep_norm&file=model)](https://www.comet.ml/labml/deep-norm/61d817f80ff143c8825fba4aacd431d4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
+
 This is a [PyTorch](https://pytorch.org) implementation of
 the DeepNorm from the paper
 [DeepNet: Scaling Transformers to 1,000 Layers](https://papers.labml.ai/paper/2203.00555).
@@ -66,9 +69,6 @@ Where $N$ is the number of layers in the encoder and $M$ is the number of layers
 Refer to [the paper](https://papers.labml.ai/paper/2203.00555) for derivation.
 
 [Here is an experiment implementation](experiment.html) that uses DeepNorm.
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/ec8e4dacb7f311ec8d1cd37d50b05c3d)
 """
 
 from typing import Union, List

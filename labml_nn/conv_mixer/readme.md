@@ -1,7 +1,7 @@
 #  [Patches Are All You Need?](https://nn.labml.ai/conv_mixer/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Patches Are All You Need?](https://papers.labml.ai/paper/TVHS5Y4dNvM).
+[Patches Are All You Need?](https://papers.labml.ai/paper/2201.09792).
 
 ConvMixer is Similar to [MLP-Mixer](https://nn.labml.ai/transformers/mlp_mixer/index.html).
 MLP-Mixer separates mixing of spatial and channel dimensions, by applying an MLP across spatial dimension

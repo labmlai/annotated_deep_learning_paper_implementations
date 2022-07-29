@@ -7,27 +7,28 @@ summary: >
 
 # Transformer Auto-Regression Experiment
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://comet.ml/labml/transformer/ea8c108c2d94434ca3c2bc2b21015082)
+
 This trains a simple transformer introduced in [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
 on an NLP auto-regression task (with Tiny Shakespeare dataset).
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
 """
 
 import torch
+from torch import nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import TransformerConfigs, Encoder
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class AutoregressiveTransformer(Module):
+class AutoregressiveTransformer(nn.Module):
     """
     ## Auto-Regressive model
     """
-    def __init__(self, encoder: Encoder, src_embed: Module, generator: Module):
+    def __init__(self, encoder: Encoder, src_embed: nn.Module, generator: nn.Module):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token

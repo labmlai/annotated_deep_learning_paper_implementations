@@ -26,10 +26,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from labml_helpers.module import Module
 
-
-class PositionalEncoding(Module):
+class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout_prob: float, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(dropout_prob)

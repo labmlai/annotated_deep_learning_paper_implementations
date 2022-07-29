@@ -8,6 +8,9 @@ summary: >
 
 # Multi-Headed Attention (MHA)
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://comet.ml/labml/transformer/ea8c108c2d94434ca3c2bc2b21015082)
+
 This is a tutorial/implementation of multi-headed attention
 from paper [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
 in [PyTorch](https://pytorch.org/).
@@ -17,21 +20,18 @@ Here is the [training code](basic/autoregressive_experiment.html) that uses a ba
 with MHA for NLP auto-regression.
 
 [Here is an experiment implementation](basic/autoregressive_experiment.html) that trains a simple transformer.
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
 """
 
 import math
 from typing import Optional, List
 
 import torch
-from torch import nn as nn
+from torch import nn
 
 from labml import tracker
-from labml_helpers.module import Module
 
 
-class PrepareForMultiHeadAttention(Module):
+class PrepareForMultiHeadAttention(nn.Module):
     """
     <a id="PrepareMHA"></a>
 
@@ -67,7 +67,7 @@ class PrepareForMultiHeadAttention(Module):
         return x
 
 
-class MultiHeadAttention(Module):
+class MultiHeadAttention(nn.Module):
     r"""
     <a id="MHA"></a>
 

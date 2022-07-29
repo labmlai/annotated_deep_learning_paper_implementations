@@ -22,7 +22,8 @@ implementations.
 * [Transformer building blocks](transformers/models.html)
 * [Transformer XL](transformers/xl/index.html)
     * [Relative multi-headed attention](transformers/xl/relative_mha.html)
-* [Rotary Positional Embeddings](transformers/rope/index.html)
+* [Rotary Positional Embeddings (RoPE)](transformers/rope/index.html)
+* [Attention with Linear Biases (ALiBi)](transformers/alibi/index.html)
 * [RETRO](transformers/retro/index.html)
 * [Compressive Transformer](transformers/compressive/index.html)
 * [GPT Architecture](transformers/gpt/index.html)
@@ -51,6 +52,8 @@ implementations.
 #### ✨ [ConvMixer](conv_mixer/index.html)
 
 #### ✨ [Capsule Networks](capsule_networks/index.html)
+
+#### ✨ [U-Net](unet/index.html)
 
 #### ✨ [Generative Adversarial Networks](gan/index.html)
 * [Original GAN](gan/original/index.html)
@@ -111,6 +114,10 @@ Solving games with incomplete information such as poker with CFR.
 #### ✨ [Uncertainty](uncertainty/index.html)
 
 * [Evidential Deep Learning to Quantify Classification Uncertainty](uncertainty/evidence/index.html)
+
+#### ✨ [Activations](activations/index.html)
+
+* [Fuzzy Tiling Activations](activations/fta/index.html)
 
 ## Highlighted Research Paper PDFs
 

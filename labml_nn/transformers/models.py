@@ -7,12 +7,14 @@ summary: >
 ---
 
 # Transformer Encoder and Decoder Models
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
+[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://comet.ml/labml/transformer/ea8c108c2d94434ca3c2bc2b21015082)
 """
 import math
 
 import torch
 import torch.nn as nn
-from labml_helpers.module import Module
 
 from labml_nn.utils import clone_module_list
 from .feed_forward import FeedForward
@@ -20,7 +22,7 @@ from .mha import MultiHeadAttention
 from .positional_encoding import get_positional_encoding
 
 
-class EmbeddingsWithPositionalEncoding(Module):
+class EmbeddingsWithPositionalEncoding(nn.Module):
     """
     <a id="EmbeddingsWithPositionalEncoding"></a>
 
@@ -38,7 +40,7 @@ class EmbeddingsWithPositionalEncoding(Module):
         return self.linear(x) * math.sqrt(self.d_model) + pe
 
 
-class EmbeddingsWithLearnedPositionalEncoding(Module):
+class EmbeddingsWithLearnedPositionalEncoding(nn.Module):
     """
     <a id="EmbeddingsWithLearnedPositionalEncoding"></a>
 
@@ -56,7 +58,7 @@ class EmbeddingsWithLearnedPositionalEncoding(Module):
         return self.linear(x) * math.sqrt(self.d_model) + pe
 
 
-class TransformerLayer(Module):
+class TransformerLayer(nn.Module):
     """
     <a id="TransformerLayer"></a>
 
@@ -136,7 +138,7 @@ class TransformerLayer(Module):
         return x
 
 
-class Encoder(Module):
+class Encoder(nn.Module):
     """
     <a id="Encoder"></a>
 
@@ -158,7 +160,7 @@ class Encoder(Module):
         return self.norm(x)
 
 
-class Decoder(Module):
+class Decoder(nn.Module):
     """
     <a id="Decoder"></a>
 
@@ -180,7 +182,7 @@ class Decoder(Module):
         return self.norm(x)
 
 
-class Generator(Module):
+class Generator(nn.Module):
     """
     <a id="Generator"></a>
 
@@ -198,14 +200,14 @@ class Generator(Module):
         return self.projection(x)
 
 
-class EncoderDecoder(Module):
+class EncoderDecoder(nn.Module):
     """
     <a id="EncoderDecoder"></a>
 
     ## Combined Encoder-Decoder
     """
 
-    def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: Module, tgt_embed: Module, generator: Module):
+    def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: nn.Module, tgt_embed: nn.Module, generator: nn.Module):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder

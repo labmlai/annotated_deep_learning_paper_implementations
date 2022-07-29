@@ -1,4 +1,5 @@
 [![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai)
+[![Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/labmlai)
 
 # [labml.ai Deep Learning Paper Implementations](https://nn.labml.ai/index.html)
 
@@ -25,6 +26,7 @@ implementations almost weekly.
 * [Transformer XL](https://nn.labml.ai/transformers/xl/index.html)
     * [Relative multi-headed attention](https://nn.labml.ai/transformers/xl/relative_mha.html)
 * [Rotary Positional Embeddings](https://nn.labml.ai/transformers/rope/index.html)
+* [Attention with Linear Biases (ALiBi)](https://nn.labml.ai/transformers/alibi/index.html)
 * [RETRO](https://nn.labml.ai/transformers/retro/index.html)
 * [Compressive Transformer](https://nn.labml.ai/transformers/compressive/index.html)
 * [GPT Architecture](https://nn.labml.ai/transformers/gpt/index.html)
@@ -53,6 +55,8 @@ implementations almost weekly.
 #### ✨ [ConvMixer](https://nn.labml.ai/conv_mixer/index.html)
 
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
+
+#### ✨ [U-Net](https://nn.labml.ai/unet/index.html)
 
 #### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
 * [Original GAN](https://nn.labml.ai/gan/original/index.html)
@@ -115,8 +119,14 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Evidential Deep Learning to Quantify Classification Uncertainty](https://nn.labml.ai/uncertainty/evidence/index.html)
 
+#### ✨ [Activations](https://nn.labml.ai/activations/index.html)
+
+* [Fuzzy Tiling Activations](https://nn.labml.ai/activations/fta/index.html)
+
+
 ## Highlighted Research Paper PDFs
 
+* [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2205.14135.pdf)
 * [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)
 * [Training Compute-Optimal Large Language Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2203.15556.pdf)
 * [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1910.02054.pdf)

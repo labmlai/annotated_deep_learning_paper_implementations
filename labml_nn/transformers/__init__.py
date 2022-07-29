@@ -25,6 +25,9 @@ This implements Transformer XL model using
 ## [Rotary Positional Embeddings](rope/index.html)
 This implements Rotary Positional Embeddings (RoPE)
 
+## [Attention with Linear Biases](alibi/index.html)
+This implements Attention with Linear Biases (ALiBi).
+
 ## [RETRO](retro/index.html)
 This implements the Retrieval-Enhanced Transformer (RETRO).
 
@@ -32,7 +35,7 @@ This implements the Retrieval-Enhanced Transformer (RETRO).
 
 This is an implementation of compressive transformer
 that extends upon [Transformer XL](xl/index.html) by compressing
-oldest memories to give a longer attention span.
+the oldest memories to give a longer attention span.
 
 ## [GPT Architecture](gpt/index.html)
 
