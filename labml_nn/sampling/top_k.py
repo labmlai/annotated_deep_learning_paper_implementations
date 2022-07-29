@@ -1,7 +1,7 @@
 """
 ---
 title: Top-k Sampling
-summary: A set of PyTorch implementations/tutorials of top-k sampling from language models.
+summary: A PyTorch implementation of top-k sampling from language models.
 ---
 
 # Top-k Sampling

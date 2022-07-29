@@ -11,6 +11,8 @@ summary: >
 * [Temperature Sampling](temperature.html)
 * [Top-k Sampling](top_k.html)
 * [Nucleus Sampling](nucleus.html)
+
+Here's an [experiment](experiment.html) that uses these sampling techniques.
 """
 
 import torch

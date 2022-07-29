@@ -1,7 +1,7 @@
 """
 ---
 title: Greedy Sampling
-summary: A set of PyTorch implementations/tutorials of greedy sampling from language models.
+summary: A PyTorch implementation of greedy sampling from language models.
 ---
 
 # Greedy Sampling
