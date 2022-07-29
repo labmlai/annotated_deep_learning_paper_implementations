@@ -1,15 +1,33 @@
+from typing import Tuple
+
 import torch
 
-from labml import monit, logger
-
+from labml import experiment, monit
+from labml import logger
 from labml.logger import Text
-
+from labml_helpers.datasets.text import TextDataset
 from labml_nn.sampling import Sampler
 from labml_nn.sampling.greedy import GreedySampler
 from labml_nn.sampling.nucleus import NucleusSampler
 from labml_nn.sampling.temperature import TemperatureSampler
 from labml_nn.sampling.top_k import TopKSampler
-from labml_nn.sampling.utils import get_model_dataset
+from labml_nn.transformers.basic.autoregressive_experiment import Configs, AutoregressiveTransformer
+
+
+def get_model_dataset(run_uuid: str) -> Tuple[AutoregressiveTransformer, TextDataset]:
+    experiment.evaluate()
+
+    conf = Configs()
+
+    experiment.configs(conf, experiment.load_configs(run_uuid))
+
+    experiment.load(run_uuid)
+
+    experiment.add_pytorch_models({'model': conf.model})
+
+    experiment.start()
+
+    return conf.model, conf.text
 
 
 def sample(model, ds, sampler: Sampler, n_samples: int, n_tokens: int, seq_len: int, prompt: str):
@@ -43,16 +61,16 @@ def main():
 
     with monit.section('greedy'):
         sample(model, ds, GreedySampler(), 4, 32, 128, 'It is')
-    #
-    # with monit.section('temperature=1.'):
-    #     sample(model, ds, TemperatureSampler(1.), 4, 32, 128, 'It is')
-    # with monit.section('temperature=.1'):
-    #     sample(model, ds, TemperatureSampler(.1), 4, 32, 128, 'It is')
-    # with monit.section('temperature=10.'):
-    #     sample(model, ds, TemperatureSampler(10.), 4, 32, 128, 'It is')
 
-    # with monit.section('top_k=5'):
-    #     sample(model, ds, TopKSampler(2, TemperatureSampler(1.)), 4, 32, 128, 'It is')
+    with monit.section('temperature=1.'):
+        sample(model, ds, TemperatureSampler(1.), 4, 32, 128, 'It is')
+    with monit.section('temperature=.1'):
+        sample(model, ds, TemperatureSampler(.1), 4, 32, 128, 'It is')
+    with monit.section('temperature=10.'):
+        sample(model, ds, TemperatureSampler(10.), 4, 32, 128, 'It is')
+
+    with monit.section('top_k=5'):
+        sample(model, ds, TopKSampler(2, TemperatureSampler(1.)), 4, 32, 128, 'It is')
 
     with monit.section('nucles p=.95'):
         sample(model, ds, NucleusSampler(0.95, TemperatureSampler(1.)), 4, 32, 128, 'It is')
