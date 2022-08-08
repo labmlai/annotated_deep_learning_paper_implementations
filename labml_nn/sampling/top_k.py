@@ -8,6 +8,8 @@ summary: A PyTorch implementation of top-k sampling from language models.
 
 Here we first pick the top-k tokens from the distribution of logits, and then
 sample from them.
+
+Here's an [experiment](experiment.html) that uses these sampling techniques.
 """
 
 import torch

@@ -12,6 +12,8 @@ $u_{1:|V|}$ are the logits of the distribution and T is the temperature:
 $$P(x_i=V_l | x_{1:i-1}) = \frac{\exp(\frac{u_l}{T})}{\sum_j \exp(\frac{u_j}{T})}$$
 
 $T = 1$ is normal random sampling.
+
+Here's an [experiment](experiment.html) that uses these sampling techniques.
 """
 
 import torch

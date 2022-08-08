@@ -22,6 +22,8 @@ $$\sum_{x_i \in V^{(p)}} P(x_i | x_{1:i-1}) \ge p$$
 That is, we pick the highest probable tokens until the sum of their probabilities is less that $p$.
 
 Then we sample from the selected tokens.
+
+Here's an [experiment](experiment.html) that uses these sampling techniques.
 """
 
 import torch

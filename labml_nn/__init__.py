@@ -119,6 +119,12 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Fuzzy Tiling Activations](activations/fta/index.html)
 
+#### ✨ [Sampling Techniques](sampling/index.html)
+* [Greedy Sampling](sampling/greedy.html)
+* [Temperature Sampling](sampling/temperature.html)
+* [Top-k Sampling](sampling/top_k.html)
+* [Nucleus Sampling](sampling/nucleus.html)
+
 ## Highlighted Research Paper PDFs
 
 * [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)
