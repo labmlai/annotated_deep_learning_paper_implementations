@@ -7,7 +7,7 @@ summary: >
 
 #  Train a [Vision Transformer (ViT)](index.html) on CIFAR 10
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8b531d9ce3dc11eb84fc87df6756eb8f)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/afdd5332188b11edbdf543360515b595)
 """
 
 from labml import experiment
@@ -76,7 +76,7 @@ def main():
         'transformer.d_model': 512,
 
         # Training epochs and batch size
-        'epochs': 1000,
+        'epochs': 32,
         'train_batch_size': 64,
 
         # Augment CIFAR 10 images for training
