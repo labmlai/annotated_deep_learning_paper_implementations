@@ -62,7 +62,7 @@ def main(rank, world_size, init_method: str = 'tcp://localhost:23456'):
 
         'learning_rate': 3e-4,
         'max_seq_len': 128,
-        'batch_size': 16,
+        'batch_size': 1,
     })
 
     with experiment.start():
