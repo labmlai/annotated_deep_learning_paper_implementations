@@ -2,58 +2,25 @@ import datetime
 
 import torch
 import torch.distributed
-import typing
 
 from labml import experiment, monit, tracker
 from labml.configs import option
 from labml.logger import inspect
-from labml_nn.neox.model import NeoXModule
-from labml_nn.neox.utils.trainer import TrainerConf
+from labml_nn.neox.samples.finetune import PipelineParallelTrainerConf
 
 
-class Configs(TrainerConf):
+class Configs(PipelineParallelTrainerConf):
     rank: int
     world_size: int
 
 
-@option(Configs.layers, 'NeoXLayers')
-def neox_layers(c: Configs):
-    from labml_nn.neox.model import LayerGenerator
-    return list(LayerGenerator(is_clone_layers=c.is_clone_layers,
-                               filter_layers=c.filter_layers,
-                               dtype=c.dtype,
-                               ).load())
-
-
-@option(Configs.fine_tuner, 'FineTubeBiases')
-def fine_tune_biases(c: Configs):
-    # Mark biases as requires grad
-    from labml_nn.neox.utils.finetune import FineTuneBiases
-    fine_tuner = FineTuneBiases(typing.cast(typing.List[NeoXModule], c.layers))
-    fine_tuner.set_trainable_params()
-
-    return fine_tuner
-
-
-@option(Configs.optimizer, 'FSDP')
+@option(Configs.optimizer, 'fsdp')
 def _optimizer(c: Configs):
     from labml_nn.optimizers.adam_fp16 import AdamFP16
     return AdamFP16(c.model.get_trainable_chunk(), lr=c.learning_rate)
 
 
-@option(Configs.train_loader)
-def tiny_shakespeare(c: Configs):
-    from labml_nn.neox.utils.text_dataset import get_training_data
-    from torch.utils.data import DataLoader, RandomSampler
-
-    dataset = get_training_data(c.max_seq_len)
-
-    return DataLoader(dataset,
-                      batch_size=c.batch_size,
-                      sampler=RandomSampler(dataset, replacement=True))
-
-
-@option(Configs.model, 'FSDP')
+@option(Configs.model, 'fsdp')
 def _model(c: Configs):
     from labml_nn.scaling.zero3 import Zero3Layer, Zero3Sequential
 
@@ -86,6 +53,9 @@ def main(rank, world_size, init_method: str = 'tcp://localhost:23456'):
 
     # Load configurations
     experiment.configs(conf, {
+        'model': 'fsdp',
+        'optimizer': 'fsdp',
+
         'device': device,
         'rank': rank,
         'world_size': world_size,
