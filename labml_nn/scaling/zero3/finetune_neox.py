@@ -10,11 +10,8 @@ from labml_nn.neox.utils.trainer import TrainerConf
 
 
 class Configs(TrainerConf):
-    learning_rate: float = 3e-4
     rank: int
     world_size: int
-    dtype: torch.dtype = torch.float16
-    device: torch.device
 
 
 @option(Configs.optimizer, 'fsdp')
@@ -58,9 +55,11 @@ def main(rank, world_size, init_method: str = 'tcp://localhost:23456'):
     experiment.configs(conf, {
         'model': 'fsdp',
         'optimizer': 'fsdp',
+
         'device': device,
         'rank': rank,
         'world_size': world_size,
+
         'learning_rate': 3e-4,
         'max_seq_len': 128,
         'batch_size': 16,
