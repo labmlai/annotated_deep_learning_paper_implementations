@@ -49,7 +49,7 @@ def main(rank, world_size, init_method: str = 'tcp://localhost:23456'):
     device = torch.device(f'cuda:{rank}')
     torch.cuda.set_device(device)
 
-    experiment.create(name='fsdp_neox', writers={'screen'})
+    experiment.create(name='fsdp_neox', writers={'screen', 'labml'})
     experiment.distributed(rank, world_size)
     # Create configurations
     conf = Configs()
