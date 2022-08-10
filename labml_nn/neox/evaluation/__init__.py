@@ -11,8 +11,6 @@ This is the code to test the model on
 [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness).
 
 * [Evaluating half precision model on a single GPU](half_precision.html)
-* [Evaluating pipeline parallel model](pipeline_parallel.html)
-* [Test this adapter with a dummy model](dummy.html)
 """
 import math
 from typing import List
