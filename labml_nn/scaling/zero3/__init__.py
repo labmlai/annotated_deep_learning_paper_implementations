@@ -1,13 +1,9 @@
-import datetime
 import functools
 from typing import List, Optional
 
 import torch
 import torch.distributed as dist
 from torch import nn
-
-from labml import monit, tracker
-from labml.logger import inspect
 
 
 class Zero3Layer(nn.Module):
@@ -106,7 +102,7 @@ class Zero3Layer(nn.Module):
             self._cleanup_params()
 
             # Add a backward hook
-            self._backward_hook_ref = self.register_full_backward_hook(self._backward_hook)
+            self._backward_hook_ref = self.register_full_backward_hook(self._backward_hook)  # type: ignore
 
     def _merge_and_pad_params(self, params: List[nn.Parameter]) -> torch.Tensor:
         """
@@ -147,7 +143,7 @@ class Zero3Layer(nn.Module):
             buffers = list(buffer.split(sum(self.chunk_size)))
 
             chunk = torch.cat(self.chunk, dim=0)
-            dist.all_gather(buffers, chunk)  # TODO: Check if grads are in data
+            dist.all_gather(buffers, chunk)
 
             # Split by type
             params = buffer.view(-1, sum(self.chunk_size)).split(self.chunk_size, dim=1)
@@ -166,7 +162,7 @@ class Zero3Layer(nn.Module):
 
                 offset = 0
                 for p in ps:
-                    shape = p._orig_shape # type: ignore
+                    shape = p._orig_shape  # type: ignore[attr-defined]
                     p.data.storage().resize_(shape.numel())
                     p.data[:] = cont[offset: offset + shape.numel()].reshape(shape)
                     p.data.record_stream(torch.cuda.current_stream())
@@ -264,7 +260,7 @@ class Zero3Layer(nn.Module):
             # Collect gradients
             offset = 0
             for p in self.param_refs[self.TRAINING_PARAMS_IDX]:
-                shape = p._orig_shape
+                shape = p._orig_shape  # type: ignore[attr-defined]
                 buffer[offset: offset + shape.numel()] = p.grad.view(-1)
                 offset += shape.numel()
                 p.grad = None
@@ -310,52 +306,3 @@ class Zero3Sequential(nn.Module):
             x = m(x)
 
         return x
-
-
-def _zero3_test(rank, world_size, init_method: str = 'tcp://localhost:23456'):
-    with monit.section('Distributed'):
-        torch.distributed.init_process_group('nccl',
-                                             timeout=datetime.timedelta(seconds=30),
-                                             init_method=init_method,
-                                             rank=rank,
-                                             world_size=world_size)
-
-    device, dtype = torch.device(f'cuda:{rank}'), torch.float
-    m = nn.Linear(10, 10).to(device, dtype)
-    m.bias.requires_grad = False
-    zero1 = Zero3Layer(m, rank, world_size, device, dtype)
-    m = nn.Linear(10, 10).to(device, dtype)
-    zero2 = Zero3Layer(m, rank, world_size, device, dtype)
-
-    model = Zero3Sequential([zero1, zero2])
-
-    sgd = torch.optim.SGD(model.get_trainable_chunk(), lr=0.001)
-    loss_func = nn.MSELoss()
-
-    for epoch in monit.loop(10_000):
-        sgd.zero_grad()
-
-        with torch.no_grad():
-            data = torch.rand(10, 10).to(device)
-            target = data * 2
-
-        output = model(data)
-
-        loss = loss_func(output, target)
-        tracker.save(loss=loss)
-
-        loss.backward()
-        sgd.step()
-
-
-if __name__ == '__main__':
-    inspect([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
-    inspect(
-        n_gpus=torch.cuda.device_count(),
-        mpi=torch.distributed.is_mpi_available(),
-        nccl=torch.distributed.is_nccl_available(),
-    )
-
-    n_gpu = torch.cuda.device_count()
-
-    torch.multiprocessing.spawn(_zero3_test, args=(n_gpu,), nprocs=n_gpu, join=True)
