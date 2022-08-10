@@ -24,6 +24,9 @@ def _optimizer(c: Configs):
 def _model(c: Configs):
     from labml_nn.scaling.zero3 import Zero3Layer, Zero3Sequential
 
+    # To make sure the fine tuner sets the trainable parameters
+    _ = c.fine_tuner
+
     modules = []
     for m in monit.iterate('Zero3', c.layers):
         modules.append(Zero3Layer(m.to(c.device),
