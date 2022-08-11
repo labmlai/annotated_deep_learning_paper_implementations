@@ -125,6 +125,11 @@ Solving games with incomplete information such as poker with CFR.
 * [Top-k Sampling](sampling/top_k.html)
 * [Nucleus Sampling](sampling/nucleus.html)
 
+#### ✨ [Eleuther GPT-NeoX](neox/index.html)
+
+#### ✨ [Scalable Training/Inference](scaling/index.html)
+* [Zero3 memory optimizations](scaling/zero3/index.html)
+
 ## Highlighted Research Paper PDFs
 
 * [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)

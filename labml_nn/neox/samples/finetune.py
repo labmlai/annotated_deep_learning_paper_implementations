@@ -1,3 +1,15 @@
+"""
+---
+title: Fine Tune GPT-NeoX
+summary: >
+    Fine tune GPT-NeoX biases with Fairscale pipeline parallel module
+---
+
+# Fine Tune GPT-NeoX
+
+This shows how to fine tune GPT-NeoX with pipeline parallelism.
+"""
+
 import fairscale
 import torch
 import torch.nn as nn
@@ -18,6 +30,9 @@ from labml_nn.neox.utils.trainer import PipelineParallelTrainerConf
 
 @option(PipelineParallelTrainerConf.layers, 'PipelineBiases')
 def neox_layers(c: PipelineParallelTrainerConf):
+    """
+    ### Load GPT-NeoX layers
+    """
     return list(LayerGenerator(is_clone_layers=c.is_clone_layers,
                                filter_layers=c.filter_layers,
                                dtype=c.dtype,
@@ -26,42 +41,51 @@ def neox_layers(c: PipelineParallelTrainerConf):
 
 @option(PipelineParallelTrainerConf.fine_tuner, 'PipelineBiases')
 def fine_tune_biases(c: PipelineParallelTrainerConf):
-    # Mark biases as requires grad
+    """
+    ### Create fine tuner for biases
+    """
+
     fine_tuner = FineTuneBiases(typing.cast(typing.List[NeoXModule], c.layers))
+    # Mark biases as trainable
     fine_tuner.set_trainable_params()
 
+    #
     return fine_tuner
 
 
 @option(PipelineParallelTrainerConf.model, 'PipelineBiases')
 def pipe_model(c: PipelineParallelTrainerConf):
-    inspect({
-        'layers[-1].device': list(c.layers[-1].parameters())[0].device,
-    })
+    """
+    ### Create pipeline parallel model
+    """
 
     if c.is_checkpointing:
         raise NotImplementedError()
     else:
         layers = c.layers
 
+    # Create the Pipe module
     with monit.section('Pipe'):
+        # Get the layer distribution across GPUs
         balance = balance_layers_simple(len(layers), c.n_gpus)
         inspect(balance=balance)
+        # Devices for each GPU
         devices = [torch.device(f'cuda:{i}') for i in range(c.n_gpus)]
+        # Create Fairscale Pipe module
         pipe_model = fairscale.nn.Pipe(nn.Sequential(*layers),
                                        balance=balance,
                                        devices=devices,
                                        chunks=c.chunks)
 
-    inspect({
-        'layers[-1].device': list(layers[-1].parameters())[0].device,
-    })
-
+    #
     return pipe_model
 
 
 @option(PipelineParallelTrainerConf.train_loader)
 def tiny_shakespeare(c: PipelineParallelTrainerConf):
+    """
+    #### Tiny Shakespeare dataset
+    """
     dataset = get_training_data(c.max_seq_len)
 
     return DataLoader(dataset,
@@ -70,9 +94,11 @@ def tiny_shakespeare(c: PipelineParallelTrainerConf):
 
 
 def main():
+    # Create experiment
     experiment.create(name='pipe_neox_biases',
                       writers={'screen', 'web_api'})
 
+    # Initialize configs
     conf = PipelineParallelTrainerConf()
     experiment.configs(conf, {
         'learning_rate': 3e-4,
@@ -82,14 +108,18 @@ def main():
         'chunks': 8,
     })
 
+    # Start the experiment
     with experiment.start():
+        # Initialize the model. Do this before the loop for cleaner logs.
         _ = conf.model
 
+        # Train
         for epoch in monit.loop(conf.epochs):
-            torch.save(conf.fine_tuner.state_dict(), str(lab.get_data_path() / 'fine_tune.pt'))
             conf.train_epoch()
             tracker.new_line()
+            torch.save(conf.fine_tuner.state_dict(), str(lab.get_data_path() / 'fine_tune.pt'))
 
 
+#
 if __name__ == '__main__':
     main()

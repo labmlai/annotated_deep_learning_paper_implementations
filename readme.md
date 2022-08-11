@@ -129,6 +129,10 @@ Solving games with incomplete information such as poker with CFR.
 * [Top-k Sampling](https://nn.labml.ai/sampling/top_k.html)
 * [Nucleus Sampling](https://nn.labml.ai/sampling/nucleus.html)
 
+#### ✨ [Eleuther GPT-NeoX](https://nn.labml.ai/neox/index.html)
+
+#### ✨ [Scalable Training/Inference](https://nn.labml.ai/scaling/index.html)
+* [Zero3 memory optimizations](https://nn.labml.ai/scaling/zero3/index.html)
 
 ## Highlighted Research Paper PDFs
 

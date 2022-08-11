@@ -80,7 +80,7 @@ def main(rank: int, world_size: int, init_method: str = 'tcp://localhost:23456')
     torch.cuda.set_device(device)
 
     # Create the experiment
-    experiment.create(name='fsdp_neox', writers={'screen', 'labml'})
+    experiment.create(name='zero3_neox', writers={'screen', 'labml'})
     experiment.distributed(rank, world_size)
 
     # Create configurations
@@ -102,7 +102,7 @@ def main(rank: int, world_size: int, init_method: str = 'tcp://localhost:23456')
 
     # Start the experiment
     with experiment.start():
-        # Initialize the model. Do this first to have cleaner logs.
+        # Initialize the model. Do this before the loop for cleaner logs.
         _ = conf.model
 
         # Train the model

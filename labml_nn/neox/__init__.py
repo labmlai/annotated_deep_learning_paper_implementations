@@ -7,7 +7,8 @@ summary: >
 
 # GPT-NeoX
 
-This is a simple implementation of GPT-NeoX for inference and fine-tuning.
+This is a simple implementation of [Eleuther GPT-NeoX](https://papers.labml.ai/paper/2204.06745) for inference and fine-tuning.
+
 
 * [Model definition](model.html)
 * [Tokenizer](tokenizer.html)
@@ -22,4 +23,7 @@ This is a simple implementation of GPT-NeoX for inference and fine-tuning.
 ### [Evaluation](evaluation/__init__.py)
 
 * [Evaluating half precision model on a single GPU](evaluation/half_precision.html)
+
+**Official [Eleuther](https://www.eleuther.ai)
+GPT-NoeX is source code is available at [eleutherai/gpt-neox](https://github.com/eleutherai/gpt-neox).**
 """
