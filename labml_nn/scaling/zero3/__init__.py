@@ -26,7 +26,7 @@ Out implementation supports training only a subset of parameters.
 
 This implementation is inspired by [Fairscale FSDP](https://fairscale.readthedocs.io/en/stable/api/nn/fsdp.html).
 
-Here's a script to fine-tune [GPT NeoX](../../neox/index.html) using Zero-DP memory optimization.
+[Here's a script to fine-tune](finetune_neox.html) GPT NeoX using Zero-DP memory optimization.
 """
 
 import functools
