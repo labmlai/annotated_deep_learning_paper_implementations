@@ -15,6 +15,7 @@ REGEX = re.compile(r"""
 """, re.VERBOSE)
 
 IGNORE = {
+    'neox/model.html',
     'transformers/index.html',
     'transformers/configs.html',
     'optimizers/noam.html',
