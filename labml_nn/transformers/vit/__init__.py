@@ -39,7 +39,7 @@ Here's [an experiment](experiment.html) that trains ViT on CIFAR-10.
 This doesn't do very well because it's trained on a small dataset.
 It's a simple experiment that anyone can run and play with ViTs.
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/8b531d9ce3dc11eb84fc87df6756eb8f)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/afdd5332188b11edbdf543360515b595)
 """
 
 import torch
@@ -114,7 +114,7 @@ class LearnedPositionalEmbeddings(Module):
         * `x` is the patch embeddings of shape `[patches, batch_size, d_model]`
         """
         # Get the positional embeddings for the given patches
-        pe = self.positional_encodings[x.shape[0]]
+        pe = self.positional_encodings[:x.shape[0]]
         # Add to patch embeddings and return
         return x + pe
 
