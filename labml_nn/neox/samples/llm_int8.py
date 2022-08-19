@@ -44,7 +44,7 @@ def generate():
     device = torch.device('cuda:0')
 
     # Load layers
-    layers = list(LayerGenerator(is_clone_layers=True,
+    layers = list(LayerGenerator(is_clone_layers=False,
                                  # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
                                  device=device,

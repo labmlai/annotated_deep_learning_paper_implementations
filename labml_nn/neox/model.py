@@ -512,6 +512,7 @@ class LayerGenerator:
         """
         return layer.to(self.device, self.dtype)
 
+    @torch.no_grad()
     def _post_load_prepare(self, layer: NeoXModule):
         # If we are using int8 quantization, we need to convert the layer to int8
         if not self.is_llm_int8:
