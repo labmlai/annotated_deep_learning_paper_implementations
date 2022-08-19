@@ -48,7 +48,7 @@ def generate():
                                  # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
                                  device=device,
-                                 is_llm_int8=True,
+                                 # is_llm_int8=True,
                                  ).load())
 
     model = nn.Sequential(*layers)
