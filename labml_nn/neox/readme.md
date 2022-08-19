@@ -19,8 +19,8 @@ This is a simple implementation of [Eleuther GPT-NeoX](https://papers.labml.ai/p
 
 ### Evaluation Results
 
-| Task       | Metric          | NeoX Impl (2 GPU) | This repo (1 GPU) |
-|------------|-----------------|-------------------|-------------------|
+| Task       | Metric          | NeoX Impl (2 GPU) | This repo (1 GPU) | LLM.Int8  |
+|------------|-----------------|-------------------|-------------------|-----------|
 | anli_r1    | acc             | 0.3270            | 0.3360            |
 |            | acc_stderr      | 0.0148            | 0.0149            | 
 | anli_r2    | acc             | 0.3410            | 0.3350            |

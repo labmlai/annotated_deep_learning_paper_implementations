@@ -526,8 +526,7 @@ class LayerGenerator:
         from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
 
         #
-        with monit.section('Covert to int8'):
-            # layer = layer.to(torch.device('cpu'))
+        with monit.section('Convert to int8'):
             layer.attention.output = make_llm_int8_linear(layer.attention.output,
                                                           device=self.device,
                                                           threshold=self.llm_int8_threshold)
@@ -540,7 +539,6 @@ class LayerGenerator:
             layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
                                                         device=self.device,
                                                         threshold=self.llm_int8_threshold)
-            # layer = layer.to(self.device)
         #
         return layer
 
