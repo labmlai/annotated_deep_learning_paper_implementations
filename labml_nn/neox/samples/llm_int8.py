@@ -31,6 +31,30 @@ def infer(model: nn.Module, ids: List[int], device: torch.device):
     return x[0].max(dim=-1)[1].tolist()
 
 
+def replace_8bit_linear(model, device, threshold=6.0, modules_to_not_convert="linear"):
+    import bitsandbytes as bnb
+
+    for name, module in model.named_children():
+        if len(list(module.children())) > 0:
+            replace_8bit_linear(module, device, threshold, modules_to_not_convert)
+
+        if isinstance(module, nn.Linear) and name != modules_to_not_convert:
+            module8bit = bnb.nn.Linear8bitLt(
+                module.in_features,
+                module.out_features,
+                module.bias is not None,
+                has_fp16_weights=False,
+                threshold=threshold,
+            )
+
+            module8bit._parameters['weight'] = bnb.nn.Int8Params(module.weight.data,
+                                                                 requires_grad=False,
+                                                                 has_fp16_weights=False).to(device)
+            model._modules[name] = module8bit
+
+    return model
+
+
 def generate():
     """
     ## Generate text
@@ -53,7 +77,7 @@ def generate():
                                  ).load())
 
     model = nn.Sequential(*layers)
-    from int8.neox_sample import replace_8bit_linear
+
     with monit.section('Int8'):
         replace_8bit_linear(model, device)
     with monit.section('Device'):
