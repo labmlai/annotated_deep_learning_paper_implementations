@@ -39,6 +39,7 @@ def replace_8bit_linear(model, device, threshold=6.0, modules_to_not_convert="li
             replace_8bit_linear(module, device, threshold, modules_to_not_convert)
 
         if isinstance(module, nn.Linear) and name != modules_to_not_convert:
+            print(name)
             module8bit = bnb.nn.Linear8bitLt(
                 module.in_features,
                 module.out_features,
