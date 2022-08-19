@@ -9,6 +9,8 @@ from labml_nn.neox.utils import get_tokens, print_tokens
 from labml_nn.neox.utils.cache import get_cache
 
 # Prompt to complete
+from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
+
 PROMPT = 'Einstein was born in the German Empire, but moved to Switzerland in 1895, forsaking his German'
 
 
@@ -40,20 +42,23 @@ def replace_8bit_linear(model, device, threshold=6.0, modules_to_not_convert="li
 
         if isinstance(module, nn.Linear) and name != modules_to_not_convert:
             print(name)
-            module8bit = bnb.nn.Linear8bitLt(
-                module.in_features,
-                module.out_features,
-                module.bias is not None,
-                has_fp16_weights=False,
-                threshold=threshold,
-            )
 
-            module8bit._parameters['weight'] = bnb.nn.Int8Params(module.weight.data,
-                                                                 requires_grad=False,
-                                                                 has_fp16_weights=False).to(device)
-            if module.bias is not None:
-                module8bit._parameters['bias'] = nn.Parameter(module.bias.data.to(device),
-                                                              requires_grad=False)
+            # module8bit = bnb.nn.Linear8bitLt(
+            #     module.in_features,
+            #     module.out_features,
+            #     module.bias is not None,
+            #     has_fp16_weights=False,
+            #     threshold=threshold,
+            # )
+            #
+            # module8bit._parameters['weight'] = bnb.nn.Int8Params(module.weight.data,
+            #                                                      requires_grad=False,
+            #                                                      has_fp16_weights=False).to(device)
+            # if module.bias is not None:
+            #     module8bit._parameters['bias'] = nn.Parameter(module.bias.data.to(device),
+            #                                                   requires_grad=False)
+
+            module8bit = make_llm_int8_linear(module, device, threshold)
             model._modules[name] = module8bit
 
     return model
@@ -75,17 +80,17 @@ def generate():
     layers = list(LayerGenerator(is_clone_layers=True,
                                  # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
-                                 device=device,
-                                 # device=torch.device('cpu'),
-                                 is_llm_int8=True,
+                                 # device=device,
+                                 device=torch.device('cpu'),
+                                 # is_llm_int8=True,
                                  ).load())
 
     model = nn.Sequential(*layers)
 
-    # with monit.section('Int8'):
-    #     replace_8bit_linear(model, device)
-    # with monit.section('Device'):
-    #     model.to(device)
+    with monit.section('Int8'):
+        replace_8bit_linear(model, device)
+    with monit.section('Device'):
+        model.to(device)
 
     _ = input('Press any key to continue...')
 
