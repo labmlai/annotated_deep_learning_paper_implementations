@@ -559,10 +559,10 @@ class LayerGenerator:
             return self._prepare_layer(creator())
 
         if self.pre_created_layers[name] is None:
-            self.pre_created_layers[name] = creator()
+            self.pre_created_layers[name] = self._prepare_layer(creator())
 
         layer = copy.deepcopy(self.pre_created_layers[name])
-        return self._prepare_layer(layer)
+        return layer
 
     def _create_transformer_layer(self):
         return self._create_and_cache_layer(
