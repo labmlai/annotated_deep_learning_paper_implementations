@@ -611,6 +611,9 @@ class LayerGenerator:
                 layer = self._prepare_layer(self._create_readout_layer())
             yield layer, ('layer_48-model_00-model_states.pt', 'layer_48-model_01-model_states.pt')
 
+        for k in self.pre_created_layers.keys():
+            self.pre_created_layers[k] = None
+
     @property
     def total_layers(self):
         """
