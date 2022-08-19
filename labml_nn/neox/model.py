@@ -526,7 +526,7 @@ class LayerGenerator:
 
         #
         with monit.section('Covert to int8'):
-            layer = layer.to(torch.device('cpu'))
+            # layer = layer.to(torch.device('cpu'))
             layer.attention._modules['output'] = make_llm_int8_linear(layer.attention.output,
                                                                       device=self.device,
                                                                       threshold=self.llm_int8_threshold)
@@ -539,7 +539,7 @@ class LayerGenerator:
             layer.ffn._modules['dense_h4_h'] = make_llm_int8_linear(layer.ffn.dense_h4_h,
                                                                     device=self.device,
                                                                     threshold=self.llm_int8_threshold)
-            layer = layer.to(self.device)
+            # layer = layer.to(self.device)
         #
         return layer
 
