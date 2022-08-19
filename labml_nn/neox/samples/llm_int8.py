@@ -65,7 +65,6 @@ def generate():
     torch.cuda.empty_cache()
 
     print(torch.cuda.memory_summary())
-    _ = input('Press any key to continue...')
 
     # Get token ids
     ids = get_tokens(PROMPT)
@@ -90,8 +89,6 @@ def generate():
         ids += [next_token]
         # Print
         print_tokens(ids, [ids])
-
-    _ = input('Press enter to exit')
 
 
 #
