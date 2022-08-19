@@ -510,9 +510,7 @@ class LayerGenerator:
         :param layer: is the layer to prepare
         :return: the prepared layer
         """
-        layer = layer.to(self.device, self.dtype)
-
-        return layer
+        return layer.to(self.device, self.dtype)
 
     def _post_load_prepare(self, layer: NeoXModule):
         # If we are using int8 quantization, we need to convert the layer to int8
@@ -523,6 +521,9 @@ class LayerGenerator:
         if not isinstance(layer, TransformerLayer):
             return layer
 
+
+        return layer
+        
         # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
         from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
 
@@ -631,5 +632,7 @@ class LayerGenerator:
                 if files is not None:
                     layer.load_state(*checkpoint.load_checkpoint_files(files))
 
+                layer = self._post_load_prepare(layer)
+
                 monit.progress(min(0.99, (i + 1) / self.total_layers))
-                yield self._post_load_prepare(layer)
+                yield layer
