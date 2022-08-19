@@ -47,11 +47,17 @@ def generate():
     layers = list(LayerGenerator(is_clone_layers=True,
                                  # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
-                                 device=device,
-                                 is_llm_int8=True,
+                                 # device=device,
+                                 device=torch.device('cpu'),
+                                 # is_llm_int8=True,
                                  ).load())
 
     model = nn.Sequential(*layers)
+    from int8.neox_sample import replace_8bit_linear
+    with monit.section('Int8'):
+        replace_8bit_linear(model, device)
+    with monit.section('Device'):
+        model.to(device)
 
     _ = input('Press any key to continue...')
 
