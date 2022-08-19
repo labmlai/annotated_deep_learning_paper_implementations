@@ -459,7 +459,10 @@ class LayerGenerator:
                  filter_layers: Optional[Set] = None,
                  is_clone_layers: bool = True,
                  dtype: torch.dtype = torch.float,
-                 device: torch.device = torch.device('cpu')):
+                 device: torch.device = torch.device('cpu'),
+                 is_llm_int8: bool = False,
+                 llm_int8_threshold: float = 6.0,
+                 ):
         """
         ### Generator to create layers
 
@@ -477,7 +480,8 @@ class LayerGenerator:
         :param is_clone_layers: specifies whether to clone the transformer layers (a bit faster)
         :param dtype: is the data type of the model
         :param device: is the device of the model
-        :return: the layers as a generator
+        :param is_llm_int8: specifies whether to use int8 quantization
+        :param llm_int8_threshold: is the threshold $\alpha$ used to separate outlier features
         """
         if filter_layers is None:
             filter_layers = set(range(n_layers + 3))
@@ -490,16 +494,59 @@ class LayerGenerator:
         self.is_clone_layers = is_clone_layers
         self.dtype = dtype
         self.device = device
+        self.is_llm_int8 = is_llm_int8
+        self.llm_int8_threshold = llm_int8_threshold
 
         self.pre_created_layers = dict(
             transformer_layer=None,
         )
 
     def _prepare_layer(self, layer: NeoXModule):
+        """
+        #### Prepares the layer for usage
+
+        We move the layer to the device and convert it to the correct data type
+
+        :param layer: is the layer to prepare
+        :return: the prepared layer
+        """
         layer = layer.to(self.device, self.dtype)
+
+        # If we are using int8 quantization, we need to convert the layer to int8
+        if self.is_llm_int8:
+            # Only convert the linear layers in the transformer layers
+            if isinstance(layer, TransformerLayer):
+                # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
+                from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
+
+                #
+                layer.attention.output = make_llm_int8_linear(layer.attention.output,
+                                                              device=self.device,
+                                                              threshold=self.llm_int8_threshold)
+                layer.attention.qkv_lin = make_llm_int8_linear(layer.attention.qkv_lin,
+                                                               device=self.device,
+                                                               threshold=self.llm_int8_threshold)
+                layer.ffn.dense_h_h4 = make_llm_int8_linear(layer.ffn.dense_h_h4,
+                                                            device=self.device,
+                                                            threshold=self.llm_int8_threshold)
+                layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
+                                                            device=self.device,
+                                                            threshold=self.llm_int8_threshold)
+        #
         return layer
 
     def _create_and_cache_layer(self, name: str, creator: Callable[[], NeoXModule]):
+        """
+        #### Creates and caches a layer
+
+        Copying cached layers is faster than initializing new layers because it takes time to
+        initialize parameters.
+
+        :param name: is the name of the layer
+        :param creator: is the function to create the layer
+        :return: the created layer or a copy of the cached layer
+        """
+
         if self.pre_created_layers[name] is None or not self.is_clone_layers:
             layer = creator()
         else:
@@ -529,6 +576,9 @@ class LayerGenerator:
 
     @torch.no_grad()
     def get_layers(self) -> Generator[Tuple[NeoXModule, Tuple[str, str]], None, None]:
+        """
+        ### Generator to get layers
+        """
         # Embedding layer
         if 0 in self.filter_layers:
             with monit.section('Embedding layer'):
@@ -558,15 +608,20 @@ class LayerGenerator:
 
     @property
     def total_layers(self):
+        """
+        ### Returns the total number of layers
+        """
         return self.n_layers + 3
 
     @torch.no_grad()
     def load(self) -> Generator[NeoXModule, None, None]:
-        with torch.no_grad():
-            with monit.section("Layers"):
-                for i, (layer, files) in enumerate(self.get_layers()):
-                    if files is not None:
-                        layer.load_state(*checkpoint.load_checkpoint_files(files))
+        """
+        ### Generator to load layers
+        """
+        with monit.section("Layers"):
+            for i, (layer, files) in enumerate(self.get_layers()):
+                if files is not None:
+                    layer.load_state(*checkpoint.load_checkpoint_files(files))
 
-                    monit.progress(min(0.99, (i + 1) / self.total_layers))
-                    yield layer
+                monit.progress(min(0.99, (i + 1) / self.total_layers))
+                yield layer
