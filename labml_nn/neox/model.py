@@ -521,9 +521,6 @@ class LayerGenerator:
         if not isinstance(layer, TransformerLayer):
             return layer
 
-
-        return layer
-        
         # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
         from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
 
