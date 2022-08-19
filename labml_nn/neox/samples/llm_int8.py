@@ -80,15 +80,15 @@ def generate():
     layers = list(LayerGenerator(is_clone_layers=True,
                                  # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
-                                 # device=device,
-                                 device=torch.device('cpu'),
-                                 # is_llm_int8=True,
+                                 device=device,
+                                 # device=torch.device('cpu'),
+                                 is_llm_int8=True,
                                  ).load())
 
     model = nn.Sequential(*layers)
 
-    with monit.section('Int8'):
-        replace_8bit_linear(model, device)
+    # with monit.section('Int8'):
+    #     replace_8bit_linear(model, device)
     with monit.section('Device'):
         model.to(device)
 
