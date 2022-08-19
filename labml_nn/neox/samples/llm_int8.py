@@ -66,15 +66,17 @@ def generate():
                                  dtype=torch.float16,
                                  device=device,
                                  # device=torch.device('cpu'),
-                                 # is_llm_int8=True,
+                                 is_llm_int8=True,
                                  ).load())
 
     model = nn.Sequential(*layers)
 
-    with monit.section('Int8'):
-        replace_8bit_linear(model, device)
-    with monit.section('Device'):
-        model.to(device)
+    # with monit.section('Int8'):
+    #     replace_8bit_linear(model, device)
+    # with monit.section('Device'):
+    #     model.to(device)
+
+    torch.cuda.empty_cache()
 
     _ = input('Press any key to continue...')
 

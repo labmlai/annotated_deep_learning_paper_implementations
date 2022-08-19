@@ -30,7 +30,7 @@ def make_llm_int8_linear(linear_module: nn.Linear, device: torch.device, thresho
     # Set the bias.
     # We don't have to convert this to Int8 since it doesn't use a lot of memory.
     if linear_module.bias is not None:
-        int8_lin._parameters['bias'] = nn.Parameter(linear_module.bias.data.to(device),
+        int8_lin._parameters['bias'] = nn.Parameter(linear_module.bias.data,
                                                     requires_grad=False)
 
     return int8_lin
