@@ -50,6 +50,9 @@ def replace_8bit_linear(model, device, threshold=6.0, modules_to_not_convert="li
             module8bit._parameters['weight'] = bnb.nn.Int8Params(module.weight.data,
                                                                  requires_grad=False,
                                                                  has_fp16_weights=False).to(device)
+            if module.bias is not None:
+                module8bit._parameters['bias'] = nn.Parameter(module.bias.data.to(device),
+                                                              requires_grad=False)
             model._modules[name] = module8bit
 
     return model
