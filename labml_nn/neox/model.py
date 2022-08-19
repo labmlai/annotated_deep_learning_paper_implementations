@@ -513,9 +513,20 @@ class LayerGenerator:
         return layer.to(self.device, self.dtype)
 
     @torch.no_grad()
-    def _post_load_prepare(self, layer: NeoXModule):
+    def post_load_prepare(self, layer: NeoXModule, *,
+                          is_llm_int8: bool = None,
+                          device: torch.device = None,
+                          llm_int8_threshold: float = None,
+                          ):
         # If we are using int8 quantization, we need to convert the layer to int8
-        if not self.is_llm_int8:
+        if is_llm_int8 is None:
+            is_llm_int8 = self.is_llm_int8
+        if device is None:
+            device = self.device
+        if llm_int8_threshold is None:
+            llm_int8_threshold = self.llm_int8_threshold
+
+        if not is_llm_int8:
             return layer
 
         # Only convert the linear layers in the transformer layers
@@ -528,17 +539,17 @@ class LayerGenerator:
         #
         with monit.section('Convert to int8'):
             layer.attention.output = make_llm_int8_linear(layer.attention.output,
-                                                          device=self.device,
-                                                          threshold=self.llm_int8_threshold)
+                                                          device=device,
+                                                          threshold=llm_int8_threshold)
             layer.attention.qkv_lin = make_llm_int8_linear(layer.attention.qkv_lin,
-                                                           device=self.device,
-                                                           threshold=self.llm_int8_threshold)
+                                                           device=device,
+                                                           threshold=llm_int8_threshold)
             layer.ffn.dense_h_h4 = make_llm_int8_linear(layer.ffn.dense_h_h4,
-                                                        device=self.device,
-                                                        threshold=self.llm_int8_threshold)
+                                                        device=device,
+                                                        threshold=llm_int8_threshold)
             layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
-                                                        device=self.device,
-                                                        threshold=self.llm_int8_threshold)
+                                                        device=device,
+                                                        threshold=llm_int8_threshold)
         #
         return layer
 
@@ -630,7 +641,7 @@ class LayerGenerator:
                 if files is not None:
                     layer.load_state(*checkpoint.load_checkpoint_files(files))
 
-                layer = self._post_load_prepare(layer)
+                layer = self.post_load_prepare(layer)
 
                 monit.progress(min(0.99, (i + 1) / self.total_layers))
                 yield layer

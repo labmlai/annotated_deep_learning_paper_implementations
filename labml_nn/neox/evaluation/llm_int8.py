@@ -7,12 +7,21 @@ from labml_nn.neox.model import LayerGenerator
 
 if __name__ == '__main__':
     device = torch.device('cuda:0')
-    layers = list(LayerGenerator(is_clone_layers=True,
-                                 filter_layers=None,
-                                 is_llm_int8=True,
-                                 dtype=torch.float16,
-                                 device=device
-                                 ).load())
+    layer_generator = LayerGenerator(is_clone_layers=False,
+                                     dtype=torch.float16,
+                                     device=torch.device('cpu'),
+                                     )
+    # Load layers
+    layers = list(layer_generator.load())
+
+    # This reduces CUDA memory fragmentation
+    for layer in layers:
+        layer_generator.post_load_prepare(layer,
+                                          device=device,
+                                          is_llm_int8=True,
+                                          llm_int8_threshold=6.0,
+                                          )
+        layer.to(device)
 
     with monit.section('Sequential'):
         model = nn.Sequential(*layers)
