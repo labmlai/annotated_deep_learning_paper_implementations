@@ -73,7 +73,7 @@ def generate():
 
     # Load layers
     layers = list(LayerGenerator(is_clone_layers=True,
-                                 filter_layers={0, 1, 2, 45, 46},
+                                 # filter_layers={0, 1, 2, 45, 46},
                                  dtype=torch.float16,
                                  device=device,
                                  # device=torch.device('cpu'),
