@@ -17,4 +17,4 @@ if __name__ == '__main__':
     with monit.section('Sequential'):
         model = nn.Sequential(*layers)
 
-    print(run_eval_harness(model, 'half_precision', ['lambada'], device))
+    print(run_eval_harness(model, 'half_precision', [], device))
