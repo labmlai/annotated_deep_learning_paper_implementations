@@ -4,9 +4,9 @@ import torch
 from torch import nn
 
 from labml import monit
-from neox.model import LayerGenerator
-from neox.utils import get_tokens, print_tokens
-from neox.utils.cache import get_cache
+from labml_nn.neox.model import LayerGenerator
+from labml_nn.neox.utils import get_tokens, print_tokens
+from labml_nn.neox.utils.cache import get_cache
 
 # Prompt to complete
 PROMPT = 'Einstein was born in the German Empire, but moved to Switzerland in 1895, forsaking his German'
