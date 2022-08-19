@@ -15,7 +15,7 @@ if __name__ == '__main__':
     layers = list(layer_generator.load())
 
     # This reduces CUDA memory fragmentation
-    for layer in layers:
+    for layer in monit.iterate('Convert to int8', layers, is_children_silent=True):
         layer_generator.post_load_prepare(layer,
                                           device=device,
                                           is_llm_int8=True,
