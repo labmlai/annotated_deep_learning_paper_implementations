@@ -9,7 +9,6 @@ from labml_nn.neox.utils import get_tokens, print_tokens
 from labml_nn.neox.utils.cache import get_cache
 
 # Prompt to complete
-
 PROMPT = 'Einstein was born in the German Empire, but moved to Switzerland in 1895, forsaking his German'
 
 
@@ -30,22 +29,6 @@ def infer(model: nn.Module, ids: List[int], device: torch.device):
 
     # Return predicted token
     return x[0].max(dim=-1)[1].tolist()
-
-
-def replace_8bit_linear(model, device, threshold=6.0, modules_to_not_convert="linear"):
-    for name, module in model.named_children():
-        if len(list(module.children())) > 0:
-            replace_8bit_linear(module, device, threshold, modules_to_not_convert)
-
-        if isinstance(module, nn.Linear) and name != modules_to_not_convert:
-            print(name)
-
-            from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
-
-            module8bit = make_llm_int8_linear(module, device, threshold)
-            model._modules[name] = module8bit
-
-    return model
 
 
 def generate():
@@ -70,11 +53,6 @@ def generate():
                                  ).load())
 
     model = nn.Sequential(*layers)
-
-    # with monit.section('Int8'):
-    #     replace_8bit_linear(model, device)
-    # with monit.section('Device'):
-    #     model.to(device)
 
     torch.cuda.empty_cache()
 
