@@ -555,17 +555,14 @@ class LayerGenerator:
         :return: the created layer or a copy of the cached layer
         """
 
-        if self.pre_created_layers[name] is None or not self.is_clone_layers:
-            layer = creator()
-        else:
-            layer = copy.deepcopy(self.pre_created_layers[name])
-
-        layer: NeoXModule = self._prepare_layer(layer)
+        if not self.is_clone_layers:
+            return self._prepare_layer(creator())
 
         if self.pre_created_layers[name] is None:
-            self.pre_created_layers[name] = layer
+            self.pre_created_layers[name] = creator()
 
-        return layer
+        layer = copy.deepcopy(self.pre_created_layers[name])
+        return self._prepare_layer(layer)
 
     def _create_transformer_layer(self):
         return self._create_and_cache_layer(
