@@ -7,7 +7,7 @@ from labml_nn.neox.model import LayerGenerator
 
 if __name__ == '__main__':
     device = torch.device('cuda:0')
-    layer_generator = LayerGenerator(is_clone_layers=False,
+    layer_generator = LayerGenerator(is_clone_layers=True,
                                      dtype=torch.float16,
                                      device=torch.device('cpu'),
                                      )

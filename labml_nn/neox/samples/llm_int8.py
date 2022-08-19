@@ -43,7 +43,7 @@ def generate():
     # Device
     device = torch.device('cuda:0')
 
-    layer_generator = LayerGenerator(is_clone_layers=False,
+    layer_generator = LayerGenerator(is_clone_layers=True,
                                      dtype=torch.float16,
                                      device=torch.device('cpu'),
                                      # is_llm_int8=True,
