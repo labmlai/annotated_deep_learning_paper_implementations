@@ -510,29 +510,46 @@ class LayerGenerator:
         :param layer: is the layer to prepare
         :return: the prepared layer
         """
-        layer = layer.to(self.device, self.dtype)
+        return layer.to(self.device, self.dtype)
 
+    @torch.no_grad()
+    def post_load_prepare(self, layer: NeoXModule, *,
+                          is_llm_int8: bool = None,
+                          device: torch.device = None,
+                          llm_int8_threshold: float = None,
+                          ):
         # If we are using int8 quantization, we need to convert the layer to int8
-        if self.is_llm_int8:
-            # Only convert the linear layers in the transformer layers
-            if isinstance(layer, TransformerLayer):
-                # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
-                from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
+        if is_llm_int8 is None:
+            is_llm_int8 = self.is_llm_int8
+        if device is None:
+            device = self.device
+        if llm_int8_threshold is None:
+            llm_int8_threshold = self.llm_int8_threshold
 
-                #
-                with monit.section('Covert to int8'):
-                    layer.attention._modules['output'] = make_llm_int8_linear(layer.attention.output,
-                                                                              device=self.device,
-                                                                              threshold=self.llm_int8_threshold)
-                    layer.attention._modules['qkv_lin'] = make_llm_int8_linear(layer.attention.qkv_lin,
-                                                                               device=self.device,
-                                                                               threshold=self.llm_int8_threshold)
-                    layer.ffn._modules['dense_h_h4'] = make_llm_int8_linear(layer.ffn.dense_h_h4,
-                                                                            device=self.device,
-                                                                            threshold=self.llm_int8_threshold)
-                    layer.ffn._modules['dense_h4_h'] = make_llm_int8_linear(layer.ffn.dense_h4_h,
-                                                                            device=self.device,
-                                                                            threshold=self.llm_int8_threshold)
+        if not is_llm_int8:
+            return layer
+
+        # Only convert the linear layers in the transformer layers
+        if not isinstance(layer, TransformerLayer):
+            return layer
+
+        # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
+        from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
+
+        #
+        with monit.section('Convert to int8'):
+            layer.attention.output = make_llm_int8_linear(layer.attention.output,
+                                                          device=device,
+                                                          threshold=llm_int8_threshold)
+            layer.attention.qkv_lin = make_llm_int8_linear(layer.attention.qkv_lin,
+                                                           device=device,
+                                                           threshold=llm_int8_threshold)
+            layer.ffn.dense_h_h4 = make_llm_int8_linear(layer.ffn.dense_h_h4,
+                                                        device=device,
+                                                        threshold=llm_int8_threshold)
+            layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
+                                                        device=device,
+                                                        threshold=llm_int8_threshold)
         #
         return layer
 
@@ -548,16 +565,13 @@ class LayerGenerator:
         :return: the created layer or a copy of the cached layer
         """
 
-        if self.pre_created_layers[name] is None or not self.is_clone_layers:
-            layer = creator()
-        else:
-            layer = copy.deepcopy(self.pre_created_layers[name])
-
-        layer: NeoXModule = layer.to(self.device, self.dtype)
+        if not self.is_clone_layers:
+            return self._prepare_layer(creator())
 
         if self.pre_created_layers[name] is None:
-            self.pre_created_layers[name] = layer
+            self.pre_created_layers[name] = self._prepare_layer(creator())
 
+        layer = copy.deepcopy(self.pre_created_layers[name])
         return layer
 
     def _create_transformer_layer(self):
@@ -591,7 +605,7 @@ class LayerGenerator:
             # Transformer layer
             if i + 1 in self.filter_layers:
                 with monit.section(f'Transformer Layer {i}'):
-                    yield self._prepare_layer(self._create_transformer_layer()), \
+                    yield self._create_transformer_layer(), \
                           (f'layer_{i + 2 :02d}-model_00-model_states.pt',
                            f'layer_{i + 2 :02d}-model_01-model_states.pt')
 
@@ -606,6 +620,9 @@ class LayerGenerator:
             with monit.section('Readout layer'):
                 layer = self._prepare_layer(self._create_readout_layer())
             yield layer, ('layer_48-model_00-model_states.pt', 'layer_48-model_01-model_states.pt')
+
+        for k in self.pre_created_layers.keys():
+            self.pre_created_layers[k] = None
 
     @property
     def total_layers(self):
@@ -623,6 +640,8 @@ class LayerGenerator:
             for i, (layer, files) in enumerate(self.get_layers()):
                 if files is not None:
                     layer.load_state(*checkpoint.load_checkpoint_files(files))
+
+                layer = self.post_load_prepare(layer)
 
                 monit.progress(min(0.99, (i + 1) / self.total_layers))
                 yield layer

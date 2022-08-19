@@ -43,16 +43,28 @@ def generate():
     # Device
     device = torch.device('cuda:0')
 
+    layer_generator = LayerGenerator(is_clone_layers=True,
+                                     dtype=torch.float16,
+                                     device=torch.device('cpu'),
+                                     # is_llm_int8=True,
+                                     )
     # Load layers
-    layers = list(LayerGenerator(is_clone_layers=True,
-                                 dtype=torch.float16,
-                                 device=device,
-                                 is_llm_int8=True,
-                                 ).load())
+    layers = list(layer_generator.load())
+
+    # This reduces CUDA memory fragmentation
+    for layer in monit.iterate('Convert to int8', layers, is_children_silent=True):
+        layer_generator.post_load_prepare(layer,
+                                          device=device,
+                                          is_llm_int8=True,
+                                          llm_int8_threshold=6.0,
+                                          )
+        layer.to(device)
 
     model = nn.Sequential(*layers)
 
-    _ = input('Press any key to continue...')
+    torch.cuda.empty_cache()
+
+    print(torch.cuda.memory_summary())
 
     # Get token ids
     ids = get_tokens(PROMPT)
@@ -77,8 +89,6 @@ def generate():
         ids += [next_token]
         # Print
         print_tokens(ids, [ids])
-
-    _ = input('Press enter to exit')
 
 
 #
