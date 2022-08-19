@@ -520,18 +520,19 @@ class LayerGenerator:
                 from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
 
                 #
-                layer.attention.output = make_llm_int8_linear(layer.attention.output,
-                                                              device=self.device,
-                                                              threshold=self.llm_int8_threshold)
-                layer.attention.qkv_lin = make_llm_int8_linear(layer.attention.qkv_lin,
-                                                               device=self.device,
-                                                               threshold=self.llm_int8_threshold)
-                layer.ffn.dense_h_h4 = make_llm_int8_linear(layer.ffn.dense_h_h4,
-                                                            device=self.device,
-                                                            threshold=self.llm_int8_threshold)
-                layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
-                                                            device=self.device,
-                                                            threshold=self.llm_int8_threshold)
+                with monit.section('Covert to int8'):
+                    layer.attention.output = make_llm_int8_linear(layer.attention.output,
+                                                                  device=self.device,
+                                                                  threshold=self.llm_int8_threshold)
+                    layer.attention.qkv_lin = make_llm_int8_linear(layer.attention.qkv_lin,
+                                                                   device=self.device,
+                                                                   threshold=self.llm_int8_threshold)
+                    layer.ffn.dense_h_h4 = make_llm_int8_linear(layer.ffn.dense_h_h4,
+                                                                device=self.device,
+                                                                threshold=self.llm_int8_threshold)
+                    layer.ffn.dense_h4_h = make_llm_int8_linear(layer.ffn.dense_h4_h,
+                                                                device=self.device,
+                                                                threshold=self.llm_int8_threshold)
         #
         return layer
 
