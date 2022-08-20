@@ -64,6 +64,9 @@ def pipe_model(c: PipelineParallelTrainerConf):
     else:
         layers = c.layers
 
+    # Make sure the finetuner is initialized
+    _ = c.fine_tuner
+
     # Create the Pipe module
     with monit.section('Pipe'):
         # Get the layer distribution across GPUs
