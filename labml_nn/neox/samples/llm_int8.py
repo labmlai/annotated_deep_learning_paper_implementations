@@ -1,3 +1,17 @@
+"""
+---
+title: Generate Text with GPT-NeoX using LLM.int8() quantization
+summary: >
+     Generate Text with GPT-NeoX using LLM.int8() quantization
+---
+
+#  Generate Text with GPT-NeoX using LLM.int8() quantization
+
+This shows how to generate text from GPT-NeoX using [LLM.int8() quantization](../utils/llm_int8.html).
+
+This needs a GPU with more than 45GB memory.
+"""
+
 from typing import List
 
 import torch
@@ -5,30 +19,9 @@ from torch import nn
 
 from labml import monit
 from labml_nn.neox.model import LayerGenerator
+from labml_nn.neox.samples.generate import PROMPT, infer
 from labml_nn.neox.utils import get_tokens, print_tokens
 from labml_nn.neox.utils.cache import get_cache
-
-# Prompt to complete
-PROMPT = 'Einstein was born in the German Empire, but moved to Switzerland in 1895, forsaking his German'
-
-
-def infer(model: nn.Module, ids: List[int], device: torch.device):
-    """
-    ### Predict the next token
-
-    :param layers: is the list of layers
-    :param ids: are the input token ids
-    :param device: is the device of the model
-    """
-
-    with torch.no_grad():
-        # Get the tokens
-        x = torch.tensor(ids)[None, :].to(device)
-        # Eval model
-        x = model(x)
-
-    # Return predicted token
-    return x[0].max(dim=-1)[1].tolist()
 
 
 def generate():
@@ -43,12 +36,14 @@ def generate():
     # Device
     device = torch.device('cuda:0')
 
+    # Load layers in float16 into CPU. We convert the layers to int8 later, because doing that
+    # on the fly after loading layers to GPU causes CUDA memory fragmentation
+    # (about 3GB memory can get lost due to fragmentation).
     layer_generator = LayerGenerator(is_clone_layers=True,
                                      dtype=torch.float16,
                                      device=torch.device('cpu'),
                                      # is_llm_int8=True,
                                      )
-    # Load layers
     layers = list(layer_generator.load())
 
     # This reduces CUDA memory fragmentation
@@ -60,10 +55,11 @@ def generate():
                                           )
         layer.to(device)
 
+    # Create `nn.Sequential` model
     model = nn.Sequential(*layers)
 
+    # Clear cache and print memory summary for debugging
     torch.cuda.empty_cache()
-
     print(torch.cuda.memory_summary())
 
     # Get token ids

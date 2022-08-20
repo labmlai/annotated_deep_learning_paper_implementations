@@ -518,7 +518,22 @@ class LayerGenerator:
                           device: torch.device = None,
                           llm_int8_threshold: float = None,
                           ):
-        # If we are using int8 quantization, we need to convert the layer to int8
+        """
+        <a id="post_load_prepare"></a>
+        ### Layer transformations after loading the checkpoint
+
+        This function implements layer transformations after loading the checkpoint.
+
+        Currently, it only applies the int8 quantization.
+
+        :param layer: is the layer to prepare
+        :param is_llm_int8: specifies whether to use int8 quantization
+        :param device: is the device of the model
+        :param llm_int8_threshold: is the threshold $\alpha$ used to separate outlier features
+        :return: the prepared layer
+        """
+
+        # Get default values if not specified
         if is_llm_int8 is None:
             is_llm_int8 = self.is_llm_int8
         if device is None:
@@ -526,6 +541,7 @@ class LayerGenerator:
         if llm_int8_threshold is None:
             llm_int8_threshold = self.llm_int8_threshold
 
+        # Skip if not using int8 quantization
         if not is_llm_int8:
             return layer
 
@@ -536,7 +552,7 @@ class LayerGenerator:
         # Use `make_llm_int8_linear` defined in [utilities](./utils/llm_int8.html).
         from labml_nn.neox.utils.llm_int8 import make_llm_int8_linear
 
-        #
+        # Convert the linear layers
         with monit.section('Convert to int8'):
             layer.attention.output = make_llm_int8_linear(layer.attention.output,
                                                           device=device,
