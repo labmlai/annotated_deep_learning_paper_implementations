@@ -130,6 +130,9 @@ Solving games with incomplete information such as poker with CFR.
 * [Nucleus Sampling](https://nn.labml.ai/sampling/nucleus.html)
 
 #### ✨ [Eleuther GPT-NeoX](https://nn.labml.ai/neox/index.html)
+* [Generate on a 48GB GPU](https://nn.labml.ai/neox/samples/generate.html)
+* [Finetune on two 48GB GPUs](https://nn.labml.ai/neox/samples/finetune.html)
+* [LLM.int8()](https://nn.labml.ai/neox/utils/llm_int8.html)
 
 #### ✨ [Scalable Training/Inference](https://nn.labml.ai/scaling/index.html)
 * [Zero3 memory optimizations](https://nn.labml.ai/scaling/zero3/index.html)

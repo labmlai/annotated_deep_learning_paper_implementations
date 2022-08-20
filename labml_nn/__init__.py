@@ -126,6 +126,9 @@ Solving games with incomplete information such as poker with CFR.
 * [Nucleus Sampling](sampling/nucleus.html)
 
 #### ✨ [Eleuther GPT-NeoX](neox/index.html)
+* [Generate on a 48GB GPU](neox/samples/generate.html)
+* [Finetune on two 48GB GPUs](neox/samples/finetune.html)
+* [LLM.int8()](neox/utils/llm_int8.html)
 
 #### ✨ [Scalable Training/Inference](scaling/index.html)
 * [Zero3 memory optimizations](scaling/zero3/index.html)
