@@ -9,10 +9,8 @@ summary: >
 
 This shows how to generate text from GPT-NeoX using [LLM.int8() quantization](../utils/llm_int8.html).
 
-This needs a GPU with more than 45GB memory.
+This needs a GPU with 24GB memory.
 """
-
-from typing import List
 
 import torch
 from torch import nn
@@ -42,7 +40,7 @@ def generate():
     layer_generator = LayerGenerator(is_clone_layers=True,
                                      dtype=torch.float16,
                                      device=torch.device('cpu'),
-                                     # is_llm_int8=True,
+                                     is_llm_int8=False,
                                      )
     layers = list(layer_generator.load())
 
@@ -65,7 +63,8 @@ def generate():
     # Get token ids
     ids = get_tokens(PROMPT)
 
-    # Run the model
+    # Run the model.
+    # We use the [`infer`](generate.html) function defined in [`generate.py`](generate.html)
     cache.set('state_ids', (None, 1))
     with monit.section('Infer'):
         next_token = infer(model, ids, device)[-1]

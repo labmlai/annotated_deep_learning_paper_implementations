@@ -520,6 +520,7 @@ class LayerGenerator:
                           ):
         """
         <a id="post_load_prepare"></a>
+
         ### Layer transformations after loading the checkpoint
 
         This function implements layer transformations after loading the checkpoint.
