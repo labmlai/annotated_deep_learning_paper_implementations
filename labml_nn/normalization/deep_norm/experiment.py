@@ -74,7 +74,7 @@ class Configs(NLPAutoRegressionConfigs):
     model: AutoregressiveTransformer
 
     # Number of layers
-    n_layers: int = 64
+    n_layers: int = 32
 
     # $\alpha$ and $\beta$ for DeepNorm
     deep_norm_alpha: float
@@ -153,9 +153,13 @@ def main():
         # Switch between training and validation for $10$ times per epoch
         'inner_iterations': 10,
 
+        # Number of layers
+        'n_layers': 50,
+
+
         # Adam optimizer with no warmup
         'optimizer.optimizer': 'Adam',
-        'optimizer.learning_rate': 3e-4,
+        'optimizer.learning_rate': 1.25e-4,
     })
 
     # Set model(s) for saving and loading
