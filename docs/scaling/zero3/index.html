@@ -77,9 +77,9 @@
             </div>
             <h1>Zero-DP Memory Optimization</h1>
 <p>This is an implementation of Zero-DP introduced in the paper <a href="https://papers.labml.ai/paper/1910.02054">ZeRO: Memory Optimization Towards Training A Trillion Parameter Models</a>,</p>
-<p>It keeps shards of the optimizer state, gradients and parameters into multiple devices/nodes. It reduces the memory consumption to <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.4608599999999998em;vertical-align:-0.4508599999999999em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.01em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.10903em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.485em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">2</span><span class="mbin mtight" style="">+</span><span class="mord mtight" style="">2</span></span><span class="mbin mtight">+</span><span class="mord mtight coloredeq eqi" style=""><span class="mord mathnormal mtight" style="margin-right:0.07153em">K</span></span><span class="mclose mtight">)</span><span class="mord mtight coloredeq eqf" style=""><span class="mord mtight" style="">Ψ</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4508599999999999em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span> of the original model, where <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span></span></span></span> is the number of parameters, <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span> is the number of shards,  and <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.07153em">K</span></span></span></span></span> is number of optimizer bytes per parameter. <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin" style="">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord" style="">2</span></span></span></span></span> are the parameter and gradient memory assuming 16-bit precision; i.e. 2 bytes per parameter and gradient. <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.07153em">K</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">12</span></span></span></span> for Adam optimizer because it maintains a copy of parameters, and two moments per parameter in fp32.</p>
-<p>The communication volume of Zero-DP is <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">3</span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span><span class="mclose">)</span></span></span></span>. For comparison data-parallel training has a communication volume of <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">2</span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span><span class="mclose">)</span></span></span></span>.</p>
-<p>Although this is named <code class="highlight"><span></span><span class="n">Zero3</span></code>
+<p>It keeps shards of the optimizer state, gradients and parameters into multiple devices/nodes. It reduces the memory consumption to <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.4608599999999998em;vertical-align:-0.4508599999999999em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.01em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.10903em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.485em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">2</span><span class="mbin mtight" style="">+</span><span class="mord mtight" style="">2</span></span><span class="mbin mtight">+</span><span class="mord mtight coloredeq eqi" style=""><span class="mord mathnormal mtight" style="margin-right:0.07153em">K</span></span><span class="mclose mtight">)</span><span class="mord mtight coloredeq eqf" style=""><span class="mord mtight" style="">Ψ</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4508599999999999em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span> of the original model, where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span></span></span></span></span> is the number of parameters, <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> is the number of shards,  and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.07153em">K</span></span></span></span></span></span> is number of optimizer bytes per parameter. <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin" style="">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord" style="">2</span></span></span></span></span></span> are the parameter and gradient memory assuming 16-bit precision; i.e. 2 bytes per parameter and gradient. <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.07153em">K</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">12</span></span></span></span></span> for Adam optimizer because it maintains a copy of parameters, and two moments per parameter in fp32.</p>
+<p>The communication volume of Zero-DP is <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">3</span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span><span class="mclose">)</span></span></span></span></span>. For comparison data-parallel training has a communication volume of <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">2</span><span class="mord coloredeq eqf" style=""><span class="mord" style="">Ψ</span></span><span class="mclose">)</span></span></span></span></span>.</p>
+<p>Although this is named <code  class="highlight"><span></span><span class="n">Zero3</span></code>
 , we have only implemented the Zero-DP part of it and not the  Zero-R memory optimizations which target residual memory consumption. Out implementation supports training only a subset of parameters.</p>
 <p>This implementation is inspired by <a href="https://fairscale.readthedocs.io/en/stable/api/nn/fsdp.html">Fairscale FSDP</a>.</p>
 <p><a href="finetune_neox.html">Here&#x27;s a script to fine-tune</a> GPT NeoX using Zero-DP memory optimization.</p>
@@ -112,9 +112,9 @@
             <div class='section-link'>
                 <a href='#section-2'>#</a>
             </div>
-            <p>Each shard keeps parameters in <code class="highlight"><span></span><span class="n">chunk</span></code>
- list. The <code class="highlight"><span></span><span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
- is for trainable parameters and <code class="highlight"><span></span><span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
+            <p>Each shard keeps parameters in <code  class="highlight"><span></span><span class="n">chunk</span></code>
+ list. The <code  class="highlight"><span></span><span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
+ is for trainable parameters and <code  class="highlight"><span></span><span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
  is for fixed parameters. </p>
 
         </div>
@@ -127,7 +127,7 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            <p>This is the sizes of the chunks in <code class="highlight"><span></span><span class="n">chunk</span></code>
+            <p>This is the sizes of the chunks in <code  class="highlight"><span></span><span class="n">chunk</span></code>
  list. </p>
 
         </div>
@@ -284,15 +284,15 @@
             <div class='section-link'>
                 <a href='#section-16'>#</a>
             </div>
-            <ul><li><code class="highlight"><span></span><span class="n">module</span></code>
+            <ul><li><code  class="highlight"><span></span><span class="n">module</span></code>
   The module to be wrapped. </li>
-<li><code class="highlight"><span></span><span class="n">rank</span></code>
+<li><code  class="highlight"><span></span><span class="n">rank</span></code>
   The rank of the current node. </li>
-<li><code class="highlight"><span></span><span class="n">world_size</span></code>
+<li><code  class="highlight"><span></span><span class="n">world_size</span></code>
   The number of nodes/devices the data is sharded across. </li>
-<li><code class="highlight"><span></span><span class="n">device</span></code>
+<li><code  class="highlight"><span></span><span class="n">device</span></code>
   The device of the layer. </li>
-<li><code class="highlight"><span></span><span class="n">dtype</span></code>
+<li><code  class="highlight"><span></span><span class="n">dtype</span></code>
   The data type of the layer.</li></ul>
 
         </div>
@@ -391,7 +391,7 @@
             <div class='section-link'>
                 <a href='#section-23'>#</a>
             </div>
-            <p>The <code class="highlight"><span></span><span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span></code>
+            <p>The <code  class="highlight"><span></span><span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span></code>
  node will calculate the size each device/node should store, and distribute the parameters accordingly. </p>
 
         </div>
@@ -404,8 +404,8 @@
             <div class='section-link'>
                 <a href='#section-24'>#</a>
             </div>
-            <p>Merge and pad trainable (<code class="highlight"><span></span><span class="n">merged_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
-) and fixed (<code class="highlight"><span></span><span class="n">merged_params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
+            <p>Merge and pad trainable (<code  class="highlight"><span></span><span class="n">merged_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
+) and fixed (<code  class="highlight"><span></span><span class="n">merged_params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
 ) parameters </p>
 
         </div>
@@ -468,8 +468,8 @@
             <div class='section-link'>
                 <a href='#section-29'>#</a>
             </div>
-            <p>Create parameters for trainable (<code class="highlight"><span></span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
-) and fixed (<code class="highlight"><span></span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
+            <p>Create parameters for trainable (<code  class="highlight"><span></span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
+) and fixed (<code  class="highlight"><span></span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></code>
 ) parameters to be stored in current device/node </p>
 
         </div>
@@ -575,7 +575,7 @@
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <h4>Merge all the parameters and pad it so that it&#x27;s divisible by <code class="highlight"><span></span><span class="n">world_size</span></code>
+            <h4>Merge all the parameters and pad it so that it&#x27;s divisible by <code  class="highlight"><span></span><span class="n">world_size</span></code>
 .</h4>
 
         </div>
@@ -600,7 +600,7 @@
             <div class='section-link'>
                 <a href='#section-39'>#</a>
             </div>
-            <p>If it is not divisible by <code class="highlight"><span></span><span class="n">world_size</span></code>
+            <p>If it is not divisible by <code  class="highlight"><span></span><span class="n">world_size</span></code>
 , pad it </p>
 
         </div>
@@ -775,8 +775,8 @@
             <div class='section-link'>
                 <a href='#section-53'>#</a>
             </div>
-            <p>Resize the storage to <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span>. This will release the memory used by the parameter.</p>
-<p><strong>Setting <code class="highlight"><span></span><span class="n">p</span><span class="o">.</span><span class="n">data</span></code>
+            <p>Resize the storage to <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span></span>. This will release the memory used by the parameter.</p>
+<p><strong>Setting <code  class="highlight"><span></span><span class="n">p</span><span class="o">.</span><span class="n">data</span></code>
  will not release the memory, since the autograd graph keeps a reference to it.</strong> </p>
 
         </div>
@@ -853,7 +853,7 @@
             <div class='section-link'>
                 <a href='#section-59'>#</a>
             </div>
-            <p>Use <code class="highlight"><span></span><span class="n">fetch_stream</span></code>
+            <p>Use <code  class="highlight"><span></span><span class="n">fetch_stream</span></code>
  to fetch the parameters from all the shards </p>
 
         </div>
@@ -1016,7 +1016,7 @@
             <div class='section-link'>
                 <a href='#section-72'>#</a>
             </div>
-            <p>Change the storage size of the parameter. This was set to <span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span> when we cleaned up the parameters. </p>
+            <p>Change the storage size of the parameter. This was set to <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span></span> when we cleaned up the parameters. </p>
 
         </div>
         <div class='code'>
@@ -1226,7 +1226,7 @@
             <div class='section-link'>
                 <a href='#section-89'>#</a>
             </div>
-            <p>Use <code class="highlight"><span></span><span class="n">expand_as</span></code>
+            <p>Use <code  class="highlight"><span></span><span class="n">expand_as</span></code>
  to create an autograd step which we can intercept </p>
 
         </div>
@@ -1239,7 +1239,7 @@
             <div class='section-link'>
                 <a href='#section-90'>#</a>
             </div>
-            <p>Get a handle to add the backward hook. <a href="https://amsword.medium.com/understanding-pytorchs-autograd-with-grad-fn-and-next-functions-b2c4836daa00">This blog discusses about <code class="highlight"><span></span><span class="n">grad_acc</span></code>
+            <p>Get a handle to add the backward hook. <a href="https://amsword.medium.com/understanding-pytorchs-autograd-with-grad-fn-and-next-functions-b2c4836daa00">This blog discusses about <code  class="highlight"><span></span><span class="n">grad_acc</span></code>
 </a>. </p>
 
         </div>
@@ -1602,7 +1602,7 @@
             <div class='section-link'>
                 <a href='#section-119'>#</a>
             </div>
-            <h2>Sequential module for <code class="highlight"><span></span><span class="n">Zero3Layer</span></code>
+            <h2>Sequential module for <code  class="highlight"><span></span><span class="n">Zero3Layer</span></code>
  layers</h2>
 
         </div>
@@ -1615,8 +1615,8 @@
             <div class='section-link'>
                 <a href='#section-120'>#</a>
             </div>
-            <ul><li><code class="highlight"><span></span><span class="n">modules</span></code>
-  List of <code class="highlight"><span></span><span class="n">Zero3Layer</span></code>
+            <ul><li><code  class="highlight"><span></span><span class="n">modules</span></code>
+  List of <code  class="highlight"><span></span><span class="n">Zero3Layer</span></code>
  layers</li></ul>
 
         </div>
@@ -1664,7 +1664,7 @@
             <div class='section-link'>
                 <a href='#section-124'>#</a>
             </div>
-            <p>Set the streams and preceding and proceeding layers for each <code class="highlight"><span></span><span class="n">Zero3Layer</span></code>
+            <p>Set the streams and preceding and proceeding layers for each <code  class="highlight"><span></span><span class="n">Zero3Layer</span></code>
  layer </p>
 
         </div>
