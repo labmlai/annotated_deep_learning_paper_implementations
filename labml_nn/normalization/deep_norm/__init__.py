@@ -110,7 +110,7 @@ class DeepNorm(nn.Module):
         :param gx: is the output of the current sub-layer $\mathop{G}_l (x_l, \theta_l)$
         """
         # $$x_{l + 1} = \mathop{LN}\Big( \alpha x_l + \mathop{G}_l \big(x_l, \theta_l \big)\Big)$$
-        return x + self.alpha * gx
+        return self.layer_norm(x + self.alpha * gx)
 
 
 class DeepNormTransformerLayer(nn.Module):

@@ -83,6 +83,14 @@ class LayerNorm(Module):
         """
         super().__init__()
 
+        # Convert `normalized_shape` to `torch.Size`
+        if isinstance(normalized_shape, int):
+            normalized_shape = torch.Size([normalized_shape])
+        elif isinstance(normalized_shape, list):
+            normalized_shape = torch.Size(normalized_shape)
+        assert isinstance(normalized_shape, torch.Size)
+
+        #
         self.normalized_shape = normalized_shape
         self.eps = eps
         self.elementwise_affine = elementwise_affine
