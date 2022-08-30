@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="开关变压器"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/switch/readme.html"/>
+    <meta property="og:title" content="开关变压器"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="开关变压器"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="开关变压器"/>
+    <meta property="og:description" content=""/>
+
+    <title>开关变压器</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/switch/readme.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">switch</a>
+            </p>
+            <p>
+                <a href="https://github.com/sponsors/labmlai" target="_blank">
+                    <img alt="Sponsor"
+                         src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86"
+                         style="max-width:100%;"/></a>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/switch/readme.md" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="https://nn.labml.ai/transformers/switch/index.html">开关变压器</a></h1>
+<p>这是一篇论文《<a href="https://papers.labml.ai/paper/2101.03961">开关变压器：以简单高效的稀疏度缩放到万亿参数模型》的</a>微型 <a href="https://pytorch.org">PyTor</a> ch 实现。我们的实现只有几百万个参数，不对并行分布式训练进行建模。它进行单个 GPU 训练，但我们实现了白皮书中描述的切换概念。</p>
+<p>切换转换器通过根据令牌在参数之间切换，为每个令牌使用不同的参数。因此，仅为每个令牌选择一小部分参数。因此，你可以有更多的参数，但计算成本更低。</p>
+<p>切换发生在每个变压器模块的位置前馈网络 (FFN) 上。位置前馈网络由两个依次完全连接的层组成。在开关变压器中，我们有多个FFN（多个专家），我们根据路由器选择使用哪一个。输出是一组选择 FFN 的概率，我们选择概率最高的那个，然后只对其进行评估。因此，从本质上讲，计算成本与拥有单个 FFN 相同。在我们的实现中，当你有许多或大型 FFN 时，这并不能很好地并行，因为它们都发生在单个 GPU 上。在分布式设置中，每个 FFN（每个非常大）都位于不同的设备上。</p>
+<p>本文介绍了另一个损失术语来平衡专家（FFN）之间的负载，并讨论了在路由不平衡时丢弃令牌。</p>
+<p><a href="experiment.html">以下是在 Tiny Shakespeare 数据集中训练开关变压器的训练代码</a>和笔记本。</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/switch/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a><a href="https://app.labml.ai/run/353770ce177c11ecaa5fb74452424f46"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+
+        </div>
+        <div class='code'>
+            
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

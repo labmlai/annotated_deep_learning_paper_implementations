@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="这是 Kuhn Poker 上的 CFR 带注释的实现/教程"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="库恩扑克上的 CFR"/>
+    <meta name="twitter:description" content="这是 Kuhn Poker 上的 CFR 带注释的实现/教程"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <meta property="og:title" content="库恩扑克上的 CFR"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="库恩扑克上的 CFR"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="库恩扑克上的 CFR"/>
+    <meta property="og:description" content="这是 Kuhn Poker 上的 CFR 带注释的实现/教程"/>
+
+    <title>库恩扑克上的 CFR</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">cfr</a>
+                <a class="parent" href="index.html">kuhn</a>
+            </p>
+            <p>
+                <a href="https://github.com/sponsors/labmlai" target="_blank">
+                    <img alt="Sponsor"
+                         src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86"
+                         style="max-width:100%;"/></a>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/cfr/kuhn/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>库恩扑克上的<a href="../index.html">反事实遗憾最小化（CFR）</a></h1>
+<p>这适用于库恩扑克的<a href="../index.html">反事实后悔最小化（CFR）</a>。</p>
+<p><a href="https://en.wikipedia.org/wiki/Kuhn_poker">库恩扑克</a>是一款双人三张牌博彩游戏。玩家将从Ace、King和Queen中各获得一张牌（没有花色）。包中只有三张牌，因此遗漏了一张牌。Ace 击败 King and Queen，King 击败 Queen —— 就像普通牌排名一样。</p>
+<p>两位玩家都下注<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>筹码（盲目下注<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>筹码）。看完牌后，第一个玩家可以传球或下注<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>筹码。如果第一位玩家通过，则持有较高牌的玩家将赢得底池。如果第一位玩家下注，则第二局可以下注（即看涨）<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>筹码或传球（即弃牌）。如果第二位玩家下注，而持有较高牌的玩家赢得底池。如果第二位玩家通过（即弃牌），则第一位玩家获得底池。这个游戏是反复玩的，一个好的策略将针对长期效用（或奖金）进行优化。</p>
+<p>以下是一些示例游戏：</p>
+<ul><li><code  class="highlight"><span></span><span class="n">KAp</span></code>
+-玩家 1 获得 K。玩家 2 获得 A 玩家 1 传球。玩家2没有下注机会，而玩家2赢得<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span>筹码底池。</li>
+<li><code  class="highlight"><span></span><span class="n">QKbp</span></code>
+-玩家 1 获得 Q。玩家 2 获得 K 玩家 1 下注一个筹码。玩家 2 传球（折叠）。玩家 1 获得底池<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">4</span></span></span></span></span>是因为玩家 2 折叠了。</li>
+<li><code  class="highlight"><span></span><span class="n">QAbb</span></code>
+-玩家 1 获得 Q 玩家 2 获得 A 玩家 1 下注一个筹码。玩家 2 也下注（召唤）。玩家 2 赢<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">4</span></span></span></span></span>了.</li></ul>
+<p>他我们<a href="../index.html"><code  class="highlight"><span></span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span></code>
+</a>用库恩扑克的<code  class="highlight"><span></span><span class="n">InfoSet</span></code>
+细节扩展了中定义的<code  class="highlight"><span></span><span class="n">History</span></code>
+班级和班级。</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/cfr/kuhn/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a><a href="https://app.labml.ai/run/7c35d3fad29711eba588acde48001122"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">38</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="lineno">39</span>
+<span class="lineno">40</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">41</span>
+<span class="lineno">42</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
+<span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.cfr</span> <span class="kn">import</span> <span class="n">History</span> <span class="k">as</span> <span class="n">_History</span><span class="p">,</span> <span class="n">InfoSet</span> <span class="k">as</span> <span class="n">_InfoSet</span><span class="p">,</span> <span class="n">Action</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">CFRConfigs</span>
+<span class="lineno">45</span><span class="kn">from</span> <span class="nn">labml_nn.cfr.infoset_saver</span> <span class="kn">import</span> <span class="n">InfoSetSaver</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>库恩扑克的动作是 pass (<code  class="highlight"><span></span><span class="n">p</span></code>
+) 或 bet (<code  class="highlight"><span></span><span class="n">b</span></code>
+)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">48</span><span class="n">ACTIONS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>游戏中的三张牌分别是 Ace、King 和 Queen</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span><span class="n">CHANCES</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>有两个玩家</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span><span class="n">PLAYERS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Player</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <h2><a href="../index.html#InfoSet">信息集</a></h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">55</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">(</span><span class="n">_InfoSet</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>不支持保存/加载</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">60</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">61</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">63</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>返回操作列表。终端状态由<code  class="highlight"><span></span><span class="n">History</span></code>
+类处理。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">69</span>        <span class="k">return</span> <span class="n">ACTIONS</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>人类可读的字符串表示——它给出了下注概率</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">71</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="lineno">76</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+<span class="lineno">77</span>        <span class="n">bet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)]</span> <span class="o">/</span> <span class="n">total</span>
+<span class="lineno">78</span>        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bet</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s1"> .1f</span><span class="si">}</span><span class="s1">%&#39;</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <h2><a href="../index.html#History">历史</a></h2>
+<p>这定义了游戏何时结束，计算效用和抽样机会事件（发牌）。</p>
+<p>历史记录存储在字符串中：</p>
+<ul><li>前两个角色是发给玩家 1 和玩家 2 的牌</li>
+<li>第三个角色是第一个玩家的动作</li>
+<li>第四个角色是第二个玩家的动作</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span><span class="k">class</span> <span class="nc">History</span><span class="p">(</span><span class="n">_History</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>历史</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span>    <span class="n">history</span><span class="p">:</span> <span class="nb">str</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>使用给定的历史字符串进行初始化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">97</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">history</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>历史记录是否终止（游戏结束）。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">103</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>玩家尚未采取行动</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">108</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+<span class="lineno">109</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>最后一个玩过的玩家通过（游戏结束）</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">111</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">112</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>两位玩家都叫（下注）（游戏结束）</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">115</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>任何其他组合</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">117</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">118</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>计算玩家的终端实用程序<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>，<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">120</span>    <span class="k">def</span> <span class="nf">_terminal_utility_p1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">+</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>如果玩家 1 有更好的牌<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">−</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>或者其他</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">125</span>        <span class="n">winner</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>第二个玩家通过了</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">128</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bp&#39;</span><span class="p">:</span>
+<span class="lineno">129</span>            <span class="k">return</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>两位玩家都被召唤，持有更好牌的玩家将赢得<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span>筹码</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">131</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">132</span>            <span class="k">return</span> <span class="n">winner</span> <span class="o">*</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>第一个玩家通过，持有更好牌的玩家将赢得<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>筹码</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">135</span>            <span class="k">return</span> <span class="n">winner</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>历史不是终结的</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">137</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">138</span>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>获取玩家的终端实用程序<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathnormal">i</span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>如果<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathnormal">i</span></span></span></span></span>是玩家 1</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">145</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">PLAYERS</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+<span class="lineno">146</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>否则，<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight coloredeq eqf" style=""><span class="mord mtight" style="">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">148</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">149</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>前两个事件是卡牌交易；即机会事件</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">155</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>在历史记录中添加操作并返回新的历史记录</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">157</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">161</span>        <span class="k">return</span> <span class="n">History</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>当前玩家</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">163</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">167</span>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>采样一个机会动作</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">169</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">173</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>随机挑选一张牌</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">175</span>            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">CHANCES</span><span class="p">))</span>
+<span class="lineno">176</span>            <span class="n">chance</span> <span class="o">=</span> <span class="n">CHANCES</span><span class="p">[</span><span class="n">r</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>看看之前有没有发过牌</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">178</span>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+<span class="lineno">179</span>                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">chance</span><span class="p">:</span>
+<span class="lineno">180</span>                    <span class="n">chance</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">181</span>                    <span class="k">break</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>如果之前没有发过牌，则归还该牌</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">184</span>            <span class="k">if</span> <span class="n">chance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">185</span>                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">chance</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>人类可读的表示</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">187</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">191</span>        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>当前历史记录的信息集关键字。这是一串仅对当前玩家可见的动作。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">193</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>获取当前玩家</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">199</span>        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">player</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>当前玩家看到她的牌和投注动作</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">201</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">203</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InfoSet</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>创建新的信息集对象</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">205</span>        <span class="k">return</span> <span class="n">InfoSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>用于创建空历史对象的函数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">208</span><span class="k">def</span> <span class="nf">create_new_history</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">210</span>    <span class="k">return</span> <span class="n">History</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>配置扩展了 CFR 配置类</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">213</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">217</span>    <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p>设置库恩扑克<code  class="highlight"><span></span><span class="n">create_new_history</span></code>
+的方法</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">220</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">)</span>
+<span class="lineno">221</span><span class="k">def</span> <span class="nf">_cnh</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">225</span>    <span class="k">return</span> <span class="n">create_new_history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <h3>运行实验</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">228</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>创建一个实验，我们只写跟踪信息<code  class="highlight"><span></span><span class="n">sqlite</span></code>
+来加快速度。由于算法的迭代速度很快，而且我们在每次迭代时都会跟踪数据，因此写入其他目标（如 Tensorboard）可能相对耗时。SQLite 对于我们的分析来说已经足够了。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">237</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;kuhn_poker&#39;</span><span class="p">,</span> <span class="n">writers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;sqlite&#39;</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>初始化配置</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">239</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>装载配置</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">241</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>设置要保存的模型</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">243</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_model_savers</span><span class="p">({</span><span class="s1">&#39;info_sets&#39;</span><span class="p">:</span> <span class="n">InfoSetSaver</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>开始实验</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">245</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>开始迭代</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">247</span>        <span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">251</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">252</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="用于图像识别的深度残差学习（ResNet）的 PyTorch 实现/教程。"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="用于图像识别的深度残差学习 (ResNet)"/>
+    <meta name="twitter:description" content="用于图像识别的深度残差学习（ResNet）的 PyTorch 实现/教程。"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/resnet/index.html"/>
+    <meta property="og:title" content="用于图像识别的深度残差学习 (ResNet)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="用于图像识别的深度残差学习 (ResNet)"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="用于图像识别的深度残差学习 (ResNet)"/>
+    <meta property="og:description" content="用于图像识别的深度残差学习（ResNet）的 PyTorch 实现/教程。"/>
+
+    <title>用于图像识别的深度残差学习 (ResNet)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/resnet/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">resnet</a>
+            </p>
+            <p>
+                <a href="https://github.com/sponsors/labmlai" target="_blank">
+                    <img alt="Sponsor"
+                         src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86"
+                         style="max-width:100%;"/></a>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/resnet/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>用于图像识别的深度残差学习 (ResNet)</h1>
+<p>这是论文《<a href="https://papers.labml.ai/paper/1512.03385">用于图像识别的深度残差学习</a>》的 <a href="https://pytorch.org">PyTorch</a> 实现。</p>
+<p>ResNets 将层训练为残余函数，以克服<em>降级问题</em>。退化问题是，当层数变得非常高时，深度神经网络的准确性会降低。精度随着层数的增加而提高，然后饱和，然后开始降低。</p>
+<p>该论文认为，更深层次的模型的表现应该至少与较浅的模型一样好，因为额外的层只能学会执行身份映射。</p>
+<h2>剩余学习</h2>
+<p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathcal" style="margin-right:0.00965em">H</span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span></span></span></span></span>如果映射需要通过几层学习，则它们会训练残差函数</p>
+<p><span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqg" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathcal" style="margin-right:0.00965em">H</span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></p>
+<p>相反。原来的函数变成<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqg" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span>。</p>
+<p>在这种情况下，学习的身份映射等同<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathcal" style="margin-right:0.00965em">H</span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span></span></span></span></span><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqg" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose" style="">)</span></span></span></span></span></span>于学习成为<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span></span>，后者更容易学习。</p>
+<p>在参数化形式中，这可以写成</p>
+<p><span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqd" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mpunct" style="">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen" style="">{</span><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose" style="">})</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></p>
+<p>当和的特征图大小不同<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span>时<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span>，论文建议使用学习的权重进行线性投影<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span>。</p>
+<p><span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqd" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mpunct" style="">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen" style="">{</span><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose" style="">})</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></span></p>
+P@@ <p>aper 尝试了零填充而不是线性投影，发现线性投影效果更好。此外，当要素地图大小匹配时，他们发现身份映射比线性投影更好。</p>
+<p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span></span></span></span></span>应该有多个层，否则总和<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqd" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mpunct" style="">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen" style="">{</span><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose" style="">})</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span>也不会有非线性，就像线性层一样。</p>
+<p>以下是<a href="experiment.html">在 CIFAR-10 上训练 ResNet 的训练代码</a>。</p>
+<p><a href="https://app.labml.ai/run/fc5ad600e4af11ebbafd23b8665193c1"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">57</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="lineno">58</span>
+<span class="lineno">59</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">60</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">61</span>
+<span class="lineno">62</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>用于快捷连接的线性投影</h2>
+<p>这是上面描述的<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span>投影。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span><span class="k">class</span> <span class="nc">ShortcutProjection</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">in_channels</span></code>
+是其中的频道数量<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></li>
+<li><code  class="highlight"><span></span><span class="n">out_channels</span></code>
+是其中的频道数量<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqd" style=""><span class="mord coloredeq eqj" style=""><span class="mord coloredeq eqr" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span><span class="mopen" style="">(</span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span><span class="mpunct" style="">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mopen" style="">{</span><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose" style="">})</span></span></span></span></span></span></li>
+<li><code  class="highlight"><span></span><span class="n">stride</span></code>
+是的卷积运算中的步长<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqr" style=""><span class="mord mathnormal" style="margin-right:0.13889em">F</span></span></span></span></span></span>。我们在快捷方式连接上做同样的步伐，以匹配要素映射的大小。</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">79</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>线性投影的卷积层<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">82</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>论文建议在每次卷积操作后添加批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">86</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>卷积和批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">88</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p><a id="residual_block"></a></p>
+<h2>剩余方块</h2>
+<p>这实现了本文中描述的残留块。它有两个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积层。</p>
+<p><img alt="Residual Block" src="residual_block.svg"></p>
+<p>第一个卷积图层映射从<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+到<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+，其中高<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+于我们使用步幅缩小要素地图大小<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+时的值大于<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>。</p>
+<p>第二个卷积图层从映射<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+到<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+，步长始终为 1。</p>
+<p>两个卷积层之后都是批量归一化。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">91</span><span class="k">class</span> <span class="nc">ResidualBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">in_channels</span></code>
+是其中的频道数量<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></li>
+<li><code  class="highlight"><span></span><span class="n">out_channels</span></code>
+是输出声道的数量</li>
+<li><code  class="highlight"><span></span><span class="n">stride</span></code>
+是卷积运算中的步长。</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">118</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>第一个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积层，它映射到<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>第一次卷积后的批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">123</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>第一个激活函数 (ReLU)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">125</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>第二个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积层</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">128</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>第二次卷积后的批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>如果步长不<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>是，如果通道数发生变化，则快捷连接应为投影</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>        <span class="k">if</span> <span class="n">stride</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>投影<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">ShortcutProjection</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span>
+<span class="lineno">137</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>身份<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">139</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>第二个激活功能（RelU）（添加快捷方式后）</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">142</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">x</span></code>
+是形状的输入<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span></code>
+</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>获取快捷方式连接</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">149</span>        <span class="n">shortcut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>第一次卷积和激活</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>第二次卷积</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">153</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>添加快捷键后激活功能</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">155</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">act2</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">shortcut</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p><a id="bottleneck_residual_block"></a></p>
+<h2>瓶颈残留块</h2>
+<p>这实现了本文中描述的瓶颈块。它有<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>、和<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积层。</p>
+<p><img alt="Bottlenext Block" src="bottleneck_block.svg"></p>
+<p>第一个卷积图层<code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+使用<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积从映射<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+到，其中小<code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+于<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+。</p>
+<p>第二个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积图层从映射<code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+到<code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+。这可以使步幅长度大于<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>我们想要压缩要素贴图大小的步长。</p>
+<p>第三个也是最后一个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积层映射到<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+。<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+如果步幅长度大于，则大于<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>；否则等<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord mathnormal">o</span><span class="mord mathnormal">u</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal">hann</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">s</span></span></span></span></span>于<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+。</p>
+<p><code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+小于<code  class="highlight"><span></span><span class="n">in_channels</span></code>
+，<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积是在这个缩小的空间上执行的（因此是瓶颈）。两个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积会减少并增加通道的数量。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">158</span><span class="k">class</span> <span class="nc">BottleneckResidualBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">in_channels</span></code>
+是其中的频道数量<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></li>
+<li><code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+是<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积的通道数</li>
+<li><code  class="highlight"><span></span><span class="n">out_channels</span></code>
+是输出声道的数量</li>
+<li><code  class="highlight"><span></span><span class="n">stride</span></code>
+是<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积运算中的步长。</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">186</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">193</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>第一个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积层，它映射到<code  class="highlight"><span></span><span class="n">bottleneck_channels</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">196</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>第一次卷积后的批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>第一个激活函数 (ReLU)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>第二个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span>卷积层</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">203</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>第二次卷积后的批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>第二个激活函数 (ReLU)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">207</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p>第三个<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>卷积层，映射到<code  class="highlight"><span></span><span class="n">out_channels</span></code>
+。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">210</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">bottleneck_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>第二次卷积后的批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">212</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>如果步长不<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqp" style=""><span class="mord" style="">1</span></span></span></span></span></span>是，如果通道数发生变化，则快捷连接应为投影</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">216</span>        <span class="k">if</span> <span class="n">stride</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>投影<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqm" style=""><span class="mord coloredeq eqn" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.13889em">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">218</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">ShortcutProjection</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span>
+<span class="lineno">219</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>身份<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqs" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">221</span>            <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>第二个激活功能（RelU）（添加快捷方式后）</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">act3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">x</span></code>
+是形状的输入<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span></code>
+</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">226</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>获取快捷方式连接</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">231</span>        <span class="n">shortcut</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortcut</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>第一次卷积和激活</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">233</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>第二次卷积和激活</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>第三次卷积</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">237</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn3</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv3</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>添加快捷键后激活功能</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">239</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">act3</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">shortcut</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <h2>ResNet 模型</h2>
+<p>这是 resnet 模型的基础，没有最终的线性层和用于分类的 softmax。</p>
+<p>resnet 由堆叠的<a href="#residual_block">残差块</a>或<a href="#bottleneck_residual_block">瓶颈残差块</a>组成。要素地图的大小在经过几个方块的步长后减半<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></span>。缩小要素图大小时，信道的数量会增加。最后，将要素地图平均合并以获得矢量制图表达。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">242</span><span class="k">class</span> <span class="nc">ResNetBase</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">n_blocks</span></code>
+是每个要素图大小的区块数的列表。</li>
+<li><code  class="highlight"><span></span><span class="n">n_channels</span></code>
+是每个要素映射大小的通道数。</li>
+<li><code  class="highlight"><span></span><span class="n">bottlenecks</span></code>
+是瓶颈的渠道数量。如果是<code  class="highlight"><span></span><span class="kc">None</span></code>
+，则使用<a href="#residual_block">残差块</a>。</li>
+<li><code  class="highlight"><span></span><span class="n">img_channels</span></code>
+是输入中的声道数。</li>
+<li><code  class="highlight"><span></span><span class="n">first_kernel_size</span></code>
+是初始卷积层的内核大小</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">256</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_blocks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">n_channels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="lineno">257</span>                 <span class="n">bottlenecks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="lineno">258</span>                 <span class="n">img_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">first_kernel_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">7</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">267</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>每个要素映射大小的区块数和通道数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">270</span>        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            <p>如果使用<a href="#bottleneck_residual_block">瓶颈残差块</a>，则应为每个要素映射大小提供瓶颈中的通道数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">273</span>        <span class="k">assert</span> <span class="n">bottlenecks</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">bottlenecks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p>初始卷积层从映射<code  class="highlight"><span></span><span class="n">img_channels</span></code>
+到第一个残差块中的通道数 (<code  class="highlight"><span></span><span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></code>
+)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">277</span>        <span class="bp">self</span><span class="o">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">img_channels</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="lineno">278</span>                              <span class="n">kernel_size</span><span class="o">=</span><span class="n">first_kernel_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">first_kernel_size</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            <p>初始卷积后的批量范数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">280</span>        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <p>区块清单</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">283</span>        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>来自上一层（或块）的通道数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">285</span>        <span class="n">prev_channels</span> <span class="o">=</span> <span class="n">n_channels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>循环浏览每个要素地图大小</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">287</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">channels</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>新要素地图大小的第一个方块的步幅长度将为<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></span>除第一个方块外</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">290</span>            <span class="n">stride</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+<span class="lineno">291</span>
+<span class="lineno">292</span>            <span class="k">if</span> <span class="n">bottlenecks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>从映射<code  class="highlight"><span></span><span class="n">prev_channels</span></code>
+到的<a href="#residual_block">残差块</a><code  class="highlight"><span></span><span class="n">channels</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">294</span>                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ResidualBlock</span><span class="p">(</span><span class="n">prev_channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">))</span>
+<span class="lineno">295</span>            <span class="k">else</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>从映射到<code  class="highlight"><span></span><span class="n">prev_channels</span></code>
+的<a href="#bottleneck_residual_block">瓶颈残差块</a><code  class="highlight"><span></span><span class="n">channels</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">298</span>                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BottleneckResidualBlock</span><span class="p">(</span><span class="n">prev_channels</span><span class="p">,</span> <span class="n">bottlenecks</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">channels</span><span class="p">,</span>
+<span class="lineno">299</span>                                                      <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>更改频道数量</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">302</span>            <span class="n">prev_channels</span> <span class="o">=</span> <span class="n">channels</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p>添加其余方块-特征图大小或频道没有变化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">304</span>            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+<span class="lineno">305</span>                <span class="k">if</span> <span class="n">bottlenecks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-61'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-61'>#</a>
+            </div>
+            <p><a href="#residual_block">剩余方块</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">307</span>                    <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ResidualBlock</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="lineno">308</span>                <span class="k">else</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-62'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-62'>#</a>
+            </div>
+            <p><a href="#bottleneck_residual_block">瓶颈残留块</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">310</span>                    <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BottleneckResidualBlock</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">bottlenecks</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">channels</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-63'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-63'>#</a>
+            </div>
+            <p>堆叠方块</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">313</span>        <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">blocks</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-64'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-64'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">x</span></code>
+有形状<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">img_channels</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">]</span></code>
+</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">315</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-65'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-65'>#</a>
+            </div>
+            <p>初始卷积和批量归一化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">321</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-66'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-66'>#</a>
+            </div>
+            <p>残留（或瓶颈）块</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">323</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-67'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-67'>#</a>
+            </div>
+            <p><code  class="highlight"><span></span><span class="n">x</span></code>
+从形状改<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">]</span></code>
+为<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">h</span> <span class="o">*</span> <span class="n">w</span><span class="p">]</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">325</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-68'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-68'>#</a>
+            </div>
+            <p>全球平均汇集</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">327</span>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

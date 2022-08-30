@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="NN.linear ස්ථර 8-bit පූර්ණ සංඛ්යාවක් ස්ථර බවට පරිවර්තනය කරන්න."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="LLM.INT8 () ජීපීටී-නියෝක්ස් මත"/>
+    <meta name="twitter:description" content="NN.linear ස්ථර 8-bit පූර්ණ සංඛ්යාවක් ස්ථර බවට පරිවර්තනය කරන්න."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/neox/utils/llm_int8.html"/>
+    <meta property="og:title" content="LLM.INT8 () ජීපීටී-නියෝක්ස් මත"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="LLM.INT8 () ජීපීටී-නියෝක්ස් මත"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="LLM.INT8 () ජීපීටී-නියෝක්ස් මත"/>
+    <meta property="og:description" content="NN.linear ස්ථර 8-bit පූර්ණ සංඛ්යාවක් ස්ථර බවට පරිවර්තනය කරන්න."/>
+
+    <title>LLM.INT8 () ජීපීටී-නියෝක්ස් මත</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/neox/utils/llm_int8.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">neox</a>
+                <a class="parent" href="index.html">utils</a>
+            </p>
+            <p>
+                <a href="https://github.com/sponsors/labmlai" target="_blank">
+                    <img alt="Sponsor"
+                         src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86"
+                         style="max-width:100%;"/></a>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/neox/utils/llm_int8.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>LLM.int() ජීපීටී-නියෝක්ස් මත</h1>
+<p>ස්තරයක්LLM.INT8 () රේඛීය <code  class="highlight"><span></span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span></code>
+ ස්ථරයට පරිවර්තනය කිරීම සඳහා මෙය උපයෝගීතා ශ්රිතයක් ක්රියාත්මක කරයි. </p>
+<p><a href="https://papers.labml.ai/paper/eb2bcaee1d0011edaa66a71c10a887e7">LLM.INT8 () කඩදාසි</a> විශාල භාෂා ආකෘතිවල කාර්ය සාධනය පිරිහීමකින් තොරව මතක අඩිපාර අඩු කිරීම සඳහා පිටස්තරයන් හැසිරවීමේදී ඔබට int8 quantization භාවිතා කළ හැකි බව පෙන්වයි. ඒවා බර සහ යෙදවුම් පරිමාණය කළ 8-බිට් නිඛිල බවට පරිවර්තනය කරන අතර න්යාස ගුණ කිරීම INT32 ප්රති results ල නිපදවන අතර එය නැවත පාවෙන 16 බවට පරිවර්තනය කර නැවත සකස් කරනු ලැබේ. ඔවුන් පෙන්වා දෙන්නේ විශාල ලැන්ගෝජ් ආකෘතිවලදී, සමහර විශේෂාංග මඟින් ආකෘතියේ නිමැවුමේ ආධිපත්යය දරන ආන්තික අගයන් (outliers) ලබා දිය හැකි බවයි. මෙම විශේෂාංග ආකෘතිය කාර්ය සාධනය හායනය කිරීමට හේතු වන 8-bit පූර්ණ සංඛ්යාමය අවකාශය කලම්ප ගසා ලබා ගන්න. විසඳුමක් ලෙස ඔවුන් මෙම පිටස්තරයන් (නිශ්චිත සීමාවකට වඩා වැඩි) තෝරාගෙන ඒවායේ ගුණනය වෙන වෙනම පාවෙන 16 අවකාශයේ ගණනය කරයි. පිටස්තරයින්ගේ ප්රතිශතය 0.01% ක් පමණ වන බැවින් මෙය මතක භාවිතය වැඩි නොකරන අතර ආකෘතිය කාර්ය සාධනය පිරිහීම වළක්වයි. </p>
+<p>ජීපීටී-නොක්ස්ස්ථර පරිවර්තනය කිරීමේ කේතය <a href="../model.html#post_load_prepare">model.py</a>හි අර්ථ දක්වා ඇත. </p>
+<p>INT8ප්රමාණකරණය සහිත ජීපීටී-නියෝක්ස් හි උදාහරණ භාවිතයන් මෙන්න. </p>
+<ul><li><a href="../samples/llm_int8.html">පෙළ ජනනය කරන්න</a> </li>
+<li><a href="../evaluation/llm_int8.html">ඇගයීම් පරීක්ෂණ ක්රියාත්මක කරන්න</a></li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">33</span><span></span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>ආනයන <a href="https://github.com/timdettmers/bitsandbytes"><code  class="highlight"><span></span><span class="n">bitsandbytes</span></code>
+</a> පැකේජය </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">34</span><span class="k">try</span><span class="p">:</span>
+<span class="lineno">35</span>    <span class="kn">from</span> <span class="nn">bitsandbytes.nn</span> <span class="kn">import</span> <span class="n">Linear8bitLt</span><span class="p">,</span> <span class="n">Int8Params</span>
+<span class="lineno">36</span><span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+<span class="lineno">37</span>    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;Please install `bitsandbytes` with `pip install bitsandbytes -U`&#39;&#39;&#39;</span><span class="p">)</span>
+<span class="lineno">38</span>
+<span class="lineno">39</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">40</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <h2>LLM.INT8() රේඛීය ස්ථරයට ස්ථරයක් පරිවර්තනය කරන්න <code  class="highlight"><span></span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span></code>
+ </h2>
+<ul><li><code  class="highlight"><span></span><span class="n">linear_module</span></code>
+ පරිවර්තනය කිරීමට <code  class="highlight"><span></span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span></code>
+ ස්තරය වේ </li>
+<li><code  class="highlight"><span></span><span class="n">device</span></code>
+ ආකෘතියේ උපාංගය වේ </li>
+<li><code  class="highlight"><span></span><span class="n">threshold</span></code>
+ පිටත හඳුනාගැනීම සඳහා භාවිතා <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span></span> කළ යුතු එළිපත්ත වේ</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">43</span><span class="k">def</span> <span class="nf">make_llm_int8_linear</span><span class="p">(</span><span class="n">linear_module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linear_module</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>හිස්රේඛීය 8BitLT මොඩියුලයක් සාදන්න </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">56</span>    <span class="n">int8_lin</span> <span class="o">=</span> <span class="n">Linear8bitLt</span><span class="p">(</span>
+<span class="lineno">57</span>        <span class="n">linear_module</span><span class="o">.</span><span class="n">in_features</span><span class="p">,</span>
+<span class="lineno">58</span>        <span class="n">linear_module</span><span class="o">.</span><span class="n">out_features</span><span class="p">,</span>
+<span class="lineno">59</span>        <span class="n">linear_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+<span class="lineno">60</span>        <span class="n">has_fp16_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="lineno">61</span>        <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+<span class="lineno">62</span>    <span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>බරගණනය කරන්න </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span>    <span class="n">int8_lin</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Int8Params</span><span class="p">(</span><span class="n">linear_module</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+<span class="lineno">66</span>                                                <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="lineno">67</span>                                                <span class="n">has_fp16_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>පාවෙන16 අවකාශයේ නැඹුරුව සකසන්න </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">if</span> <span class="n">linear_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">71</span>        <span class="n">int8_lin</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="s1">&#39;bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">linear_module</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+<span class="lineno">72</span>                                                    <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>    <span class="k">return</span> <span class="n">int8_lin</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

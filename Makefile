@@ -21,6 +21,22 @@ install:  ## Install from repo
 uninstall: ## Uninstall
 	pip uninstall labml_nn
 
+docs-si: ## Sinhalese Translation
+	rm -rf docs/si
+	mv docs/zh docs_zh
+	cp -r docs docs_si
+	mv docs_si docs/si
+	mv docs_zh docs/zh
+	cd labml_nn; pylit --translate si --translate_cache ../translate_cache --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs/si -w *
+
+docs-zh: ## Chinese Translation
+	rm -rf docs/zh
+	mv docs/si docs_si
+	cp -r docs docs_zh
+	mv docs_si docs/si
+	mv docs_zh docs/zh
+	cd labml_nn; pylit --translate zh --translate_cache ../translate_cache --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs/zh -w *
+
 docs: ## Render annotated HTML
 	find ./docs/ -name "*.html" -type f -delete
 	find ./docs/ -name "*.svg" -type f -delete

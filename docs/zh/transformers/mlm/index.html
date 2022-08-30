@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="这是 PyTorch 中掩码语言模型的带注释的实现/教程。"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="屏蔽语言模型"/>
+    <meta name="twitter:description" content="这是 PyTorch 中掩码语言模型的带注释的实现/教程。"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/mlm/index.html"/>
+    <meta property="og:title" content="屏蔽语言模型"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="屏蔽语言模型"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="屏蔽语言模型"/>
+    <meta property="og:description" content="这是 PyTorch 中掩码语言模型的带注释的实现/教程。"/>
+
+    <title>屏蔽语言模型</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/mlm/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">mlm</a>
+            </p>
+            <p>
+                <a href="https://github.com/sponsors/labmlai" target="_blank">
+                    <img alt="Sponsor"
+                         src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86"
+                         style="max-width:100%;"/></a>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/mlm/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>屏蔽语言模型 (MLM)</h1>
+<p>这是掩码语言模型（MLM）的 <a href="https://pytorch.org">PyTorch</a> 实现，用于预训练《BERT<a href="https://papers.labml.ai/paper/1810.04805">：用于语言理解的深度双向变换器的预训练》一文中介绍的BER</a> T模型。</p>
+<h2>BERT 预训练</h2>
+<p>BERT 模型是一种变压器模型。本文使用传销和下一句预测对模型进行了预训练。我们在这里只实现了传销。</p>
+<h3>下一句话预测</h3>
+<p>在<em>下一个句子预测</em>中，模型会给出两个句子，<code  class="highlight"><span></span><span class="n">A</span></code>
+<code  class="highlight"><span></span><span class="n">B</span></code>
+然后模型做出二进制预测，无论后面的句子<code  class="highlight"><span></span><span class="n">B</span></code>
+是否<code  class="highlight"><span></span><span class="n">A</span></code>
+在实际的文本中。该模型有 50％ 的时间是实际的句子对，50％ 的时间是随机句子对。此分类是在应用 MLM 时完成的。<em>我们还没有在这里实现这一点。</em></p>
+<h2>蒙面 LM</h2>
+<p>这会随机掩盖一定百分比的令牌，并训练模型以预测被掩盖的令牌。他们通过用特殊<strong>令牌替换15％的代<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+币来掩盖</strong>它们。</p>
+<p>损失仅在预测屏蔽令牌时计算。这会在微调和实际使用期间造成问题，因为当时没有<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+令牌。因此，我们可能无法得到任何有意义的表示。</p>
+<p>为了克服这个问题，<strong>10％的被掩盖的令牌被替换为原始令牌</strong>，另外 <strong>10％的蒙面令牌被随机令牌替换</strong>。这将训练模型以提供有关实际令牌的表示，无论该位置的输入令牌是否为 a<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+。用随机令牌替换会使它给出一个包含来自上下文信息的表示；因为它必须使用上下文来修复随机替换的标记。</p>
+<h2>训练</h2>
+<p>MLM 比自回归模型更难训练，因为它们的训练信号较小。也就是说，每个样本中只有一小部分预测是训练的。</p>
+<p>另一个问题是，由于模型是双向的，因此任何令牌都可以看到任何其他令牌。这使得 “信用分配” 变得更加困难。假设你有角色等级模型试图预测<code  class="highlight"><span></span><span class="n">home</span> <span class="o">*</span><span class="n">s</span> <span class="n">where</span> <span class="n">i</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span></code>
+。至少在训练的早期阶段，很难弄清楚为什么要替换<code  class="highlight"><span></span><span class="n">i</span></code>
+，可能是整句话中的任何东西。<code  class="highlight"><span></span><span class="o">*</span></code>
+同时，在自回归环境中，模型只需要<code  class="highlight"><span></span><span class="n">h</span></code>
+用来预测<code  class="highlight"><span></span><span class="n">o</span></code>
+<code  class="highlight"><span></span><span class="n">e</span></code>
+和<code  class="highlight"><span></span><span class="n">hom</span></code>
+预测等等。因此，该模型最初将首先使用较短的上下文进行预测，然后再学习使用较长的上下文。由于 MLM 有这个问题，如果你一开始使用较小的序列长度，然后再使用更长的序列长度，那么训练速度要快得多。</p>
+<p>下面是一个简单<a href="experiment.html">的 MLM 模型的训练代码</a>。</p>
+<p><a href="https://app.labml.ai/run/3a6d22b6c67111ebb03d6764d13a38d1"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">67</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="lineno">68</span>
+<span class="lineno">69</span><span class="kn">import</span> <span class="nn">torch</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Masked LM (传销)</h2>
+<p>该类实现给定批次令牌序列的掩码过程。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span><span class="k">class</span> <span class="nc">MLM</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">padding_token</span></code>
+是填充令牌<code  class="highlight"><span></span><span class="p">[</span><span class="n">PAD</span><span class="p">]</span></code>
+。我们将用它来标记不应用于损失计算的标签。</li>
+<li><code  class="highlight"><span></span><span class="n">mask_token</span></code>
+是掩码令牌<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+。</li>
+<li><code  class="highlight"><span></span><span class="n">no_mask_tokens</span></code>
+是不应该被屏蔽的令牌的列表。如果我们同时使用分类等其他任务来训练 MLM，并且我们有这样的令牌不应该被掩盖，那么<code  class="highlight"><span></span><span class="p">[</span><span class="n">CLS</span><span class="p">]</span></code>
+这很有用。</li>
+<li><code  class="highlight"><span></span><span class="n">n_tokens</span></code>
+代币总数（用于生成随机令牌）</li>
+<li><code  class="highlight"><span></span><span class="n">masking_prob</span></code>
+是掩蔽概率</li>
+<li><code  class="highlight"><span></span><span class="n">randomize_prob</span></code>
+是用随机代币替换的概率</li>
+<li><code  class="highlight"><span></span><span class="n">no_change_prob</span></code>
+是用原始代币替换的概率</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">79</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">80</span>                 <span class="n">padding_token</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mask_token</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">no_mask_tokens</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">n_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">81</span>                 <span class="n">masking_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span> <span class="n">randomize_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">no_change_prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="lineno">82</span>                 <span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span> <span class="o">=</span> <span class="n">n_tokens</span>
+<span class="lineno">96</span>        <span class="bp">self</span><span class="o">.</span><span class="n">no_change_prob</span> <span class="o">=</span> <span class="n">no_change_prob</span>
+<span class="lineno">97</span>        <span class="bp">self</span><span class="o">.</span><span class="n">randomize_prob</span> <span class="o">=</span> <span class="n">randomize_prob</span>
+<span class="lineno">98</span>        <span class="bp">self</span><span class="o">.</span><span class="n">masking_prob</span> <span class="o">=</span> <span class="n">masking_prob</span>
+<span class="lineno">99</span>        <span class="bp">self</span><span class="o">.</span><span class="n">no_mask_tokens</span> <span class="o">=</span> <span class="n">no_mask_tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">padding_token</span><span class="p">,</span> <span class="n">mask_token</span><span class="p">]</span>
+<span class="lineno">100</span>        <span class="bp">self</span><span class="o">.</span><span class="n">padding_token</span> <span class="o">=</span> <span class="n">padding_token</span>
+<span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_token</span> <span class="o">=</span> <span class="n">mask_token</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">x</span></code>
+是一批输入令牌序列。它是一个<code  class="highlight"><span></span><span class="n">long</span></code>
+带形状的张量<code  class="highlight"><span></span><span class="p">[</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">]</span></code>
+。</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">103</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>代币<code  class="highlight"><span></span><span class="n">masking_prob</span></code>
+面具</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">110</span>        <span class="n">full_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">masking_prob</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>揭露面具<code  class="highlight"><span></span><span class="n">no_mask_tokens</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_mask_tokens</span><span class="p">:</span>
+<span class="lineno">113</span>            <span class="n">full_mask</span> <span class="o">&amp;=</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">t</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>将令牌替换为原始令牌的掩码</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>        <span class="n">unchanged</span> <span class="o">=</span> <span class="n">full_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_change_prob</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>将令牌替换为随机令牌的掩码</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">118</span>        <span class="n">random_token_mask</span> <span class="o">=</span> <span class="n">full_mask</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">randomize_prob</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>要替换为随机令牌的令牌索引</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">120</span>        <span class="n">random_token_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">random_token_mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>每个地点的随机代币</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">122</span>        <span class="n">random_tokens</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">random_token_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]),),</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>最后一组将被替换的令牌<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">full_mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">random_token_mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">unchanged</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>克隆标签的输入</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>替换为<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+令牌；请注意，这不包括原始令牌保持不变的令牌和被随机令牌替换的令牌。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">132</span>        <span class="n">x</span><span class="o">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_token</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>分配随机代币</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>        <span class="n">x</span><span class="p">[</span><span class="n">random_token_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">random_tokens</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>将令牌<code  class="highlight"><span></span><span class="p">[</span><span class="n">PAD</span><span class="p">]</span></code>
+分配给标签中的所有其他位置。等于的标签<code  class="highlight"><span></span><span class="p">[</span><span class="n">PAD</span><span class="p">]</span></code>
+将不会用于亏损。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">138</span>        <span class="n">y</span><span class="o">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="o">~</span><span class="n">full_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">padding_token</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>返回屏蔽的输入和标签</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">141</span>        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
