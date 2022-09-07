@@ -9,7 +9,6 @@ summary: >
 # Denoising Diffusion Probabilistic Models (DDPM)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.com/labml/diffuse/view/FknjSiKWotr8fgZerpC1sV1cy/panels?utm_source=referral&utm_medium=partner&utm_campaign=labml)
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
 [Denoising Diffusion Probabilistic Models](https://papers.labml.ai/paper/2006.11239).

@@ -8,7 +8,6 @@ summary: >
 # DeepNorm
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=deep_norm&file=model)](https://www.comet.ml/labml/deep-norm/61d817f80ff143c8825fba4aacd431d4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step)
 
 This is a [PyTorch](https://pytorch.org) implementation of
 the DeepNorm from the paper

@@ -9,7 +9,6 @@ summary: >
 # [Denoising Diffusion Probabilistic Models (DDPM)](index.html) training
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
-[![Open In Comet](https://images.labml.ai/images/comet.svg?experiment=capsule_networks&file=model)](https://www.comet.com/labml/diffuse/view/FknjSiKWotr8fgZerpC1sV1cy/panels?utm_source=referral&utm_medium=partner&utm_campaign=labml)
 
 This trains a DDPM based model on CelebA HQ dataset. You can find the download instruction in this
 [discussion on fast.ai](https://forums.fast.ai/t/download-celeba-hq-dataset/45873/3).
@@ -227,7 +226,7 @@ def mnist_dataset(c: Configs):
 
 def main():
     # Create experiment
-    experiment.create(name='diffuse', writers={'screen', 'comet'})
+    experiment.create(name='diffuse', writers={'screen', 'labml'})
 
     # Create configurations
     configs = Configs()

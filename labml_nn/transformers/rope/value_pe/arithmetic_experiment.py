@@ -42,7 +42,7 @@ calculate(TransformerConfigs.decoder_mem_attn, 'rotary_value', _rotary_value_pe_
 
 def main():
     # Create experiment
-    experiment.create(name="roper_addition", comment="rotary value 7", writers={'screen', 'labml', 'comet'})
+    experiment.create(name="roper_addition", comment="rotary value 7", writers={'screen', 'labml'})
     # Create configs
     conf = Configs()
     # Override configurations
