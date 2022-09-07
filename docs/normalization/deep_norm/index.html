@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -76,7 +76,7 @@
                 <a href='#section-0'>#</a>
             </div>
             <h1>DeepNorm</h1>
-<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a> <a href="https://www.comet.ml/labml/deep-norm/61d817f80ff143c8825fba4aacd431d4?experiment-tab=chart&showOutliers=true&smoothing=0&transformY=smoothing&xAxis=step"><img alt="Open In Comet" src="https://images.labml.ai/images/comet.svg?experiment=deep_norm&file=model"></a></p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/deep_norm/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
 <p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the DeepNorm from the paper <a href="https://papers.labml.ai/paper/2203.00555">DeepNet: Scaling Transformers to 1,000 Layers</a>.</p>
 <p>The paper proposes a method to stabilize extremely deep transformers through a new normalizing function to replace LayerNorm and a weight initialization scheme. This combines the performance of Post-LayerNorm and the stability of Pre-LayerNorm. Transformers with DeepNorms are supposed to be stable even without a learning rate warm-up.</p>
 <p>The paper first shows that the changes to layer outputs (for the same input)  change gradually during stable training; when unstable it changes rapidly during the initial training steps. This happens with initializing weights to small values, and learning rate warm-ups where the training is stable. They use the idea of keeping the changes to layer outputs small to derive the new  normalization and weight initialization mechanism.</p>
@@ -95,15 +95,15 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">74</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
-<span class="lineno">75</span>
-<span class="lineno">76</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">77</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Size</span>
-<span class="lineno">78</span>
-<span class="lineno">79</span><span class="kn">from</span> <span class="nn">labml_nn.normalization.layer_norm</span> <span class="kn">import</span> <span class="n">LayerNorm</span>
-<span class="lineno">80</span><span class="kn">from</span> <span class="nn">labml_nn.transformers</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span>
-<span class="lineno">81</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
-<span class="lineno">82</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">73</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="lineno">74</span>
+<span class="lineno">75</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">76</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Size</span>
+<span class="lineno">77</span>
+<span class="lineno">78</span><span class="kn">from</span> <span class="nn">labml_nn.normalization.layer_norm</span> <span class="kn">import</span> <span class="n">LayerNorm</span>
+<span class="lineno">79</span><span class="kn">from</span> <span class="nn">labml_nn.transformers</span> <span class="kn">import</span> <span class="n">MultiHeadAttention</span>
+<span class="lineno">80</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">81</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-1'>
@@ -116,7 +116,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">85</span><span class="k">class</span> <span class="nc">DeepNorm</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">84</span><span class="k">class</span> <span class="nc">DeepNorm</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -135,9 +135,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">92</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">normalized_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Size</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">93</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
-<span class="lineno">94</span>                 <span class="n">elementwise_affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">91</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">normalized_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Size</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">92</span>                 <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+<span class="lineno">93</span>                 <span class="n">elementwise_affine</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -148,9 +148,9 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">101</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">102</span>
-<span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">101</span>
+<span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -162,7 +162,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span> <span class="o">=</span> <span class="n">LayerNorm</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">elementwise_affine</span><span class="o">=</span><span class="n">elementwise_affine</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">104</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span> <span class="o">=</span> <span class="n">LayerNorm</span><span class="p">(</span><span class="n">normalized_shape</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">elementwise_affine</span><span class="o">=</span><span class="n">elementwise_affine</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -177,7 +177,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">107</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">gx</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">106</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">gx</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
@@ -189,7 +189,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">113</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">gx</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">112</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_norm</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">gx</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-7'>
@@ -202,7 +202,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">116</span><span class="k">class</span> <span class="nc">DeepNormTransformerLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">115</span><span class="k">class</span> <span class="nc">DeepNormTransformerLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-8'>
@@ -223,13 +223,13 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">123</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-<span class="lineno">124</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="lineno">125</span>                 <span class="n">self_attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
-<span class="lineno">126</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
-<span class="lineno">127</span>                 <span class="n">deep_norm_alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<span class="lineno">128</span>                 <span class="n">deep_norm_beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<span class="lineno">129</span>                 <span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">122</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">123</span>                 <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">124</span>                 <span class="n">self_attn</span><span class="p">:</span> <span class="n">MultiHeadAttention</span><span class="p">,</span>
+<span class="lineno">125</span>                 <span class="n">feed_forward</span><span class="p">:</span> <span class="n">FeedForward</span><span class="p">,</span>
+<span class="lineno">126</span>                 <span class="n">deep_norm_alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="lineno">127</span>                 <span class="n">deep_norm_beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="lineno">128</span>                 <span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-9'>
@@ -240,10 +240,10 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">137</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">138</span>
-<span class="lineno">139</span>        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="n">self_attn</span>
-<span class="lineno">140</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">137</span>
+<span class="lineno">138</span>        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="n">self_attn</span>
+<span class="lineno">139</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span> <span class="o">=</span> <span class="n">feed_forward</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -255,8 +255,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">142</span>        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn_norm</span> <span class="o">=</span> <span class="n">DeepNorm</span><span class="p">(</span><span class="n">deep_norm_alpha</span><span class="p">,</span> <span class="p">[</span><span class="n">d_model</span><span class="p">])</span>
-<span class="lineno">143</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward_norm</span> <span class="o">=</span> <span class="n">DeepNorm</span><span class="p">(</span><span class="n">deep_norm_alpha</span><span class="p">,</span> <span class="p">[</span><span class="n">d_model</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">141</span>        <span class="bp">self</span><span class="o">.</span><span class="n">self_attn_norm</span> <span class="o">=</span> <span class="n">DeepNorm</span><span class="p">(</span><span class="n">deep_norm_alpha</span><span class="p">,</span> <span class="p">[</span><span class="n">d_model</span><span class="p">])</span>
+<span class="lineno">142</span>        <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward_norm</span> <span class="o">=</span> <span class="n">DeepNorm</span><span class="p">(</span><span class="n">deep_norm_alpha</span><span class="p">,</span> <span class="p">[</span><span class="n">d_model</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -268,7 +268,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">146</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">145</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -280,8 +280,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">148</span>            <span class="n">feed_forward</span><span class="o">.</span><span class="n">layer1</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span>
-<span class="lineno">149</span>            <span class="n">feed_forward</span><span class="o">.</span><span class="n">layer2</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">147</span>            <span class="n">feed_forward</span><span class="o">.</span><span class="n">layer1</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span>
+<span class="lineno">148</span>            <span class="n">feed_forward</span><span class="o">.</span><span class="n">layer2</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -293,7 +293,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">152</span>            <span class="n">self_attn</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">151</span>            <span class="n">self_attn</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">linear</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-14'>
@@ -305,7 +305,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">154</span>            <span class="n">self_attn</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">153</span>            <span class="n">self_attn</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">weight</span> <span class="o">*=</span> <span class="n">deep_norm_beta</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-15'>
@@ -317,7 +317,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">157</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">156</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-16'>
@@ -331,7 +331,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">159</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">158</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-17'>
@@ -343,7 +343,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">164</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">163</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-18'>
@@ -355,7 +355,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">166</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">165</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-19'>
@@ -367,7 +367,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">169</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn_norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">168</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn_norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">self_attn</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-20'>
@@ -379,7 +379,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">171</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward_norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">170</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward_norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_forward</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
@@ -391,7 +391,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">174</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">173</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
         </div>
     </div>
     <div class='footer'>

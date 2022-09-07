@@ -38,8 +38,12 @@ docs-zh: ## Chinese Translation
 	cd labml_nn; pylit --translate zh --translate_cache ../translate_cache --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs/zh -w *
 
 docs: ## Render annotated HTML
+	mv docs/zh docs_zh
+	mv docs/si docs_si
 	find ./docs/ -name "*.html" -type f -delete
 	find ./docs/ -name "*.svg" -type f -delete
+	mv docs_si docs/si
+	mv docs_zh docs/zh
 	python utils/sitemap.py
 	python utils/diagrams.py
 	cd labml_nn; pylit --remove_empty_sections --title_md -t ../../../pylit/templates/nn -d ../docs -w *
