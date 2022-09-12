@@ -185,7 +185,7 @@ class AttentionBlock(Module):
         # Calculate scaled dot-product $\frac{Q K^\top}{\sqrt{d_k}}$
         attn = torch.einsum('bihd,bjhd->bijh', q, k) * self.scale
         # Softmax along the sequence dimension $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$
-        attn = attn.softmax(dim=1)
+        attn = attn.softmax(dim=2)
         # Multiply by values
         res = torch.einsum('bijh,bjhd->bihd', attn, v)
         # Reshape to `[batch_size, seq, n_heads * d_k]`
