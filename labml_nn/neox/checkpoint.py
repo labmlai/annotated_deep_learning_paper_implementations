@@ -36,6 +36,8 @@ def get_checkpoints_download_path():
         _CHECKPOINTS_DOWNLOAD_PATH = lab.get_data_path() / 'neox' / 'slim_weights'
     inspect(neox_checkpoint_path=_CHECKPOINTS_DOWNLOAD_PATH)
 
+    return _CHECKPOINTS_DOWNLOAD_PATH
+
 
 def get_files_to_download(n_layers: int = 44):
     """
