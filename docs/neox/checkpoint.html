@@ -78,14 +78,15 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">11</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="lineno">12</span>
-<span class="lineno">13</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">14</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">15</span>
-<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">logger</span>
-<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span><span class="p">,</span> <span class="n">inspect</span>
-<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml.utils.download</span> <span class="kn">import</span> <span class="n">download_file</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">11</span><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="lineno">13</span>
+<span class="lineno">14</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">16</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">logger</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span><span class="p">,</span> <span class="n">inspect</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml.utils.download</span> <span class="kn">import</span> <span class="n">download_file</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-1'>
@@ -97,7 +98,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">21</span><span class="n">CHECKPOINTS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://mystic.the-eye.eu/public/AI/models/GPT-NeoX-20B/slim_weights/&#39;</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">22</span><span class="n">CHECKPOINTS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://mystic.the-eye.eu/public/AI/models/GPT-NeoX-20B/slim_weights/&#39;</span>
+<span class="lineno">23</span>
+<span class="lineno">24</span><span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -109,10 +112,18 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">24</span><span class="n">CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;neox_fast&#39;</span> <span class="o">/</span> <span class="s1">&#39;slim_weights&#39;</span>
-<span class="lineno">25</span><span class="k">if</span> <span class="ow">not</span> <span class="n">CHECKPOINTS_DOWNLOAD_PATH</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-<span class="lineno">26</span>    <span class="n">CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;neox&#39;</span> <span class="o">/</span> <span class="s1">&#39;slim_weights&#39;</span>
-<span class="lineno">27</span><span class="n">inspect</span><span class="p">(</span><span class="n">neox_checkpoint_path</span><span class="o">=</span><span class="n">CHECKPOINTS_DOWNLOAD_PATH</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">28</span><span class="k">def</span> <span class="nf">get_checkpoints_download_path</span><span class="p">():</span>
+<span class="lineno">29</span>    <span class="k">global</span> <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span>
+<span class="lineno">30</span>
+<span class="lineno">31</span>    <span class="k">if</span> <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">32</span>        <span class="k">return</span> <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span>
+<span class="lineno">33</span>
+<span class="lineno">34</span>    <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;neox_fast&#39;</span> <span class="o">/</span> <span class="s1">&#39;slim_weights&#39;</span>
+<span class="lineno">35</span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+<span class="lineno">36</span>        <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;neox&#39;</span> <span class="o">/</span> <span class="s1">&#39;slim_weights&#39;</span>
+<span class="lineno">37</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">neox_checkpoint_path</span><span class="o">=</span><span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span><span class="p">)</span>
+<span class="lineno">38</span>
+<span class="lineno">39</span>    <span class="k">return</span> <span class="n">_CHECKPOINTS_DOWNLOAD_PATH</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -125,7 +136,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">30</span><span class="k">def</span> <span class="nf">get_files_to_download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">44</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">42</span><span class="k">def</span> <span class="nf">get_files_to_download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">44</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -136,7 +147,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">36</span>    <span class="n">layers</span> <span class="o">=</span> <span class="p">(</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">48</span>    <span class="n">layers</span> <span class="o">=</span> <span class="p">(</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -148,7 +159,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">38</span>            <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">50</span>            <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
@@ -160,7 +171,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">40</span>            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">n_layers</span><span class="p">))</span> <span class="o">+</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">52</span>            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">n_layers</span><span class="p">))</span> <span class="o">+</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-7'>
@@ -172,10 +183,10 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">42</span>            <span class="p">[</span><span class="mi">47</span><span class="p">,</span> <span class="mi">48</span><span class="p">]</span>
-<span class="lineno">43</span>    <span class="p">)</span>
-<span class="lineno">44</span>
-<span class="lineno">45</span>    <span class="k">return</span> <span class="p">(</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">54</span>            <span class="p">[</span><span class="mi">47</span><span class="p">,</span> <span class="mi">48</span><span class="p">]</span>
+<span class="lineno">55</span>    <span class="p">)</span>
+<span class="lineno">56</span>
+<span class="lineno">57</span>    <span class="k">return</span> <span class="p">(</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-8'>
@@ -187,7 +198,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">47</span>            <span class="p">[</span><span class="s1">&#39;20B_tokenizer.json&#39;</span><span class="p">,</span> <span class="s1">&#39;configs/20B.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;latest&#39;</span><span class="p">]</span> <span class="o">+</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">59</span>            <span class="p">[</span><span class="s1">&#39;20B_tokenizer.json&#39;</span><span class="p">,</span> <span class="s1">&#39;configs/20B.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;latest&#39;</span><span class="p">]</span> <span class="o">+</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-9'>
@@ -199,7 +210,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">49</span>            <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;global_step150000/layer_</span><span class="si">{</span><span class="n">i</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">-model_</span><span class="si">{</span><span class="n">p</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">-model_states.pt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">layers</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> <span class="o">+</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">61</span>            <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;global_step150000/layer_</span><span class="si">{</span><span class="n">i</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">-model_</span><span class="si">{</span><span class="n">p</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">-model_states.pt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">layers</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> <span class="o">+</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -211,8 +222,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">51</span>            <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;global_step150000/mp_rank_</span><span class="si">{</span><span class="n">i</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">_model_states.pt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]</span>
-<span class="lineno">52</span>    <span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">63</span>            <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;global_step150000/mp_rank_</span><span class="si">{</span><span class="n">i</span> <span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">_model_states.pt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]</span>
+<span class="lineno">64</span>    <span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -224,7 +235,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">55</span><span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">44</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">67</span><span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">44</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -236,7 +247,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">61</span>    <span class="n">files</span> <span class="o">=</span> <span class="n">get_files_to_download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">73</span>    <span class="n">files</span> <span class="o">=</span> <span class="n">get_files_to_download</span><span class="p">(</span><span class="n">n_layers</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -248,7 +259,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">64</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s1">&#39;Download All&#39;</span><span class="p">,</span> <span class="n">files</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">76</span>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s1">&#39;Download All&#39;</span><span class="p">,</span> <span class="n">files</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-14'>
@@ -260,7 +271,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">66</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">([</span><span class="s1">&#39;Downloading &#39;</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span> <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">78</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">([</span><span class="s1">&#39;Downloading &#39;</span><span class="p">,</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span> <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-15'>
@@ -272,7 +283,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">68</span>        <span class="n">download_file</span><span class="p">(</span><span class="n">CHECKPOINTS_URL</span> <span class="o">+</span> <span class="n">f</span><span class="p">,</span> <span class="n">CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">/</span> <span class="n">f</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">download_file</span><span class="p">(</span><span class="n">CHECKPOINTS_URL</span> <span class="o">+</span> <span class="n">f</span><span class="p">,</span> <span class="n">get_checkpoints_download_path</span><span class="p">()</span> <span class="o">/</span> <span class="n">f</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-16'>
@@ -287,7 +298,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">71</span><span class="k">def</span> <span class="nf">load_checkpoint_files</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">83</span><span class="k">def</span> <span class="nf">load_checkpoint_files</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-17'>
@@ -298,11 +309,11 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">78</span>    <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">CHECKPOINTS_DOWNLOAD_PATH</span> <span class="o">/</span> <span class="s1">&#39;global_step150000&#39;</span>
-<span class="lineno">79</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Load checkpoint&#39;</span><span class="p">):</span>
-<span class="lineno">80</span>        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint_path</span> <span class="o">/</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
-<span class="lineno">81</span>
-<span class="lineno">82</span>    <span class="k">return</span> <span class="n">data</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">90</span>    <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">get_checkpoints_download_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;global_step150000&#39;</span>
+<span class="lineno">91</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Load checkpoint&#39;</span><span class="p">):</span>
+<span class="lineno">92</span>        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint_path</span> <span class="o">/</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+<span class="lineno">93</span>
+<span class="lineno">94</span>    <span class="k">return</span> <span class="n">data</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-18'>
@@ -322,8 +333,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">85</span><span class="k">def</span> <span class="nf">merge_params_dim_0</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
-<span class="lineno">86</span>                       <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">97</span><span class="k">def</span> <span class="nf">merge_params_dim_0</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="lineno">98</span>                       <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-19'>
@@ -334,9 +345,9 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">95</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-<span class="lineno">96</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">w1</span>
-<span class="lineno">97</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">w2</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">107</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+<span class="lineno">108</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">w1</span>
+<span class="lineno">109</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">w2</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-20'>
@@ -356,8 +367,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">100</span><span class="k">def</span> <span class="nf">merge_params_dim_1</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
-<span class="lineno">101</span>                       <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">112</span><span class="k">def</span> <span class="nf">merge_params_dim_1</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="lineno">113</span>                       <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
@@ -368,9 +379,9 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">110</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-<span class="lineno">111</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">w1</span>
-<span class="lineno">112</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">w2</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">122</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+<span class="lineno">123</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">w1</span>
+<span class="lineno">124</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">w2</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-22'>
@@ -391,8 +402,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">115</span><span class="k">def</span> <span class="nf">merge_params_duplicate</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
-<span class="lineno">116</span>                           <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">127</span><span class="k">def</span> <span class="nf">merge_params_duplicate</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="lineno">128</span>                           <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-23'>
@@ -403,12 +414,12 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">127</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-<span class="lineno">128</span>
-<span class="lineno">129</span>    <span class="n">diff</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">w1</span> <span class="o">-</span> <span class="n">w2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-<span class="lineno">130</span>    <span class="k">assert</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;The partitions do not match: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span>
-<span class="lineno">131</span>
-<span class="lineno">132</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">139</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+<span class="lineno">140</span>
+<span class="lineno">141</span>    <span class="n">diff</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">w1</span> <span class="o">-</span> <span class="n">w2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="lineno">142</span>    <span class="k">assert</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;The partitions do not match: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="lineno">143</span>
+<span class="lineno">144</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-24'>
@@ -428,8 +439,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">135</span><span class="k">def</span> <span class="nf">merge_params_sum</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
-<span class="lineno">136</span>                     <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">147</span><span class="k">def</span> <span class="nf">merge_params_sum</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="lineno">148</span>                     <span class="n">p2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-25'>
@@ -440,9 +451,9 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">145</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-<span class="lineno">146</span>
-<span class="lineno">147</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">157</span>    <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+<span class="lineno">158</span>
+<span class="lineno">159</span>    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">w1</span> <span class="o">+</span> <span class="n">w2</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-26'>
@@ -454,8 +465,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">151</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">152</span>    <span class="n">download</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">163</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">164</span>    <span class="n">download</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='footer'>
