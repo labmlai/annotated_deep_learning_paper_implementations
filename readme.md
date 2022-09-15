@@ -44,6 +44,26 @@ implementations almost weekly.
 * [Primer EZ](https://nn.labml.ai/transformers/primer_ez/index.html)
 * [Hourglass](https://nn.labml.ai/transformers/hour_glass/index.html)
 
+#### ✨ [Eleuther GPT-NeoX](https://nn.labml.ai/neox/index.html)
+* [Generate on a 48GB GPU](https://nn.labml.ai/neox/samples/generate.html)
+* [Finetune on two 48GB GPUs](https://nn.labml.ai/neox/samples/finetune.html)
+* [LLM.int8()](https://nn.labml.ai/neox/utils/llm_int8.html)
+
+#### ✨ [Diffusion models](https://nn.labml.ai/diffusion/index.html)
+
+* [Denoising Diffusion Probabilistic Models (DDPM)](https://nn.labml.ai/diffusion/ddpm/index.html)
+* [Denoising Diffusion Implicit Models (DDIM)](https://nn.labml.ai/diffusion/stable_diffusion/sampler/ddim.html)
+* [Latent Diffusion Models](https://nn.labml.ai/diffusion/stable_diffusion/latent_diffusion.html)
+* [Stable Diffusion](https://nn.labml.ai/diffusion/stable_diffusion/index.html)
+
+#### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
+* [Original GAN](https://nn.labml.ai/gan/original/index.html)
+* [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan/index.html)
+* [Cycle GAN](https://nn.labml.ai/gan/cycle_gan/index.html)
+* [Wasserstein GAN](https://nn.labml.ai/gan/wasserstein/index.html)
+* [Wasserstein GAN with Gradient Penalty](https://nn.labml.ai/gan/wasserstein/gradient_penalty/index.html)
+* [StyleGAN 2](https://nn.labml.ai/gan/stylegan/index.html)
+
 #### ✨ [Recurrent Highway Networks](https://nn.labml.ai/recurrent_highway_networks/index.html)
 
 #### ✨ [LSTM](https://nn.labml.ai/lstm/index.html)
@@ -57,19 +77,6 @@ implementations almost weekly.
 #### ✨ [Capsule Networks](https://nn.labml.ai/capsule_networks/index.html)
 
 #### ✨ [U-Net](https://nn.labml.ai/unet/index.html)
-
-#### ✨ [Generative Adversarial Networks](https://nn.labml.ai/gan/index.html)
-* [Original GAN](https://nn.labml.ai/gan/original/index.html)
-* [GAN with deep convolutional network](https://nn.labml.ai/gan/dcgan/index.html)
-* [Cycle GAN](https://nn.labml.ai/gan/cycle_gan/index.html)
-* [Wasserstein GAN](https://nn.labml.ai/gan/wasserstein/index.html)
-* [Wasserstein GAN with Gradient Penalty](https://nn.labml.ai/gan/wasserstein/gradient_penalty/index.html)
-* [StyleGAN 2](https://nn.labml.ai/gan/stylegan/index.html)
-
-#### ✨ [Diffusion models](https://nn.labml.ai/diffusion/index.html)
-
-* [Denoising Diffusion Probabilistic Models (DDPM)](https://nn.labml.ai/diffusion/ddpm/index.html)
-
 
 #### ✨ [Sketch RNN](https://nn.labml.ai/sketch_rnn/index.html)
 
@@ -123,16 +130,11 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Fuzzy Tiling Activations](https://nn.labml.ai/activations/fta/index.html)
 
-#### ✨ [Sampling Techniques](https://nn.labml.ai/sampling/index.html)
+#### ✨ [Langauge Model Sampling Techniques](https://nn.labml.ai/sampling/index.html)
 * [Greedy Sampling](https://nn.labml.ai/sampling/greedy.html)
 * [Temperature Sampling](https://nn.labml.ai/sampling/temperature.html)
 * [Top-k Sampling](https://nn.labml.ai/sampling/top_k.html)
 * [Nucleus Sampling](https://nn.labml.ai/sampling/nucleus.html)
-
-#### ✨ [Eleuther GPT-NeoX](https://nn.labml.ai/neox/index.html)
-* [Generate on a 48GB GPU](https://nn.labml.ai/neox/samples/generate.html)
-* [Finetune on two 48GB GPUs](https://nn.labml.ai/neox/samples/finetune.html)
-* [LLM.int8()](https://nn.labml.ai/neox/utils/llm_int8.html)
 
 #### ✨ [Scalable Training/Inference](https://nn.labml.ai/scaling/index.html)
 * [Zero3 memory optimizations](https://nn.labml.ai/scaling/zero3/index.html)

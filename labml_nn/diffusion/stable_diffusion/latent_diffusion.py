@@ -12,7 +12,7 @@ Latent diffusion models use an auto-encoder to map between image space and
 latent space. The diffusion model works on the diffusion space, which makes it
 a lot easier to train.
 It is based on paper
-[High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752).
+[High-Resolution Image Synthesis with Latent Diffusion Models](https://papers.labml.ai/paper/2112.10752).
 
 They use a pre-trained auto-encoder and train the diffusion U-Net on the latent
 space of the pre-trained auto-encoder.

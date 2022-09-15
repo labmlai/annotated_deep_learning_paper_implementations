@@ -41,6 +41,26 @@ implementations.
 * [Primer EZ](transformers/primer_ez/index.html)
 * [Hourglass](transformers/hour_glass/index.html)
 
+#### ✨ [Eleuther GPT-NeoX](neox/index.html)
+* [Generate on a 48GB GPU](neox/samples/generate.html)
+* [Finetune on two 48GB GPUs](neox/samples/finetune.html)
+* [LLM.int8()](neox/utils/llm_int8.html)
+
+#### ✨ [Diffusion models](diffusion/index.html)
+
+* [Denoising Diffusion Probabilistic Models (DDPM)](diffusion/ddpm/index.html)
+* [Denoising Diffusion Implicit Models (DDIM)](diffusion/stable_diffusion/sampler/ddim.html)
+* [Latent Diffusion Models](diffusion/stable_diffusion/latent_diffusion.html)
+* [Stable Diffusion](diffusion/stable_diffusion/index.html)
+
+#### ✨ [Generative Adversarial Networks](gan/index.html)
+* [Original GAN](gan/original/index.html)
+* [GAN with deep convolutional network](gan/dcgan/index.html)
+* [Cycle GAN](gan/cycle_gan/index.html)
+* [Wasserstein GAN](gan/wasserstein/index.html)
+* [Wasserstein GAN with Gradient Penalty](gan/wasserstein/gradient_penalty/index.html)
+* [StyleGAN 2](gan/stylegan/index.html)
+
 #### ✨ [Recurrent Highway Networks](recurrent_highway_networks/index.html)
 
 #### ✨ [LSTM](lstm/index.html)
@@ -55,30 +75,12 @@ implementations.
 
 #### ✨ [U-Net](unet/index.html)
 
-#### ✨ [Generative Adversarial Networks](gan/index.html)
-* [Original GAN](gan/original/index.html)
-* [GAN with deep convolutional network](gan/dcgan/index.html)
-* [Cycle GAN](gan/cycle_gan/index.html)
-* [Wasserstein GAN](gan/wasserstein/index.html)
-* [Wasserstein GAN with Gradient Penalty](gan/wasserstein/gradient_penalty/index.html)
-* [StyleGAN 2](gan/stylegan/index.html)
-
-#### ✨ [Diffusion models](diffusion/index.html)
-
-* [Denoising Diffusion Probabilistic Models (DDPM)](diffusion/ddpm/index.html)
-
 #### ✨ [Sketch RNN](sketch_rnn/index.html)
 
 #### ✨ Graph Neural Networks
 
 * [Graph Attention Networks (GAT)](graphs/gat/index.html)
 * [Graph Attention Networks v2 (GATv2)](graphs/gatv2/index.html)
-
-#### ✨ [Counterfactual Regret Minimization (CFR)](cfr/index.html)
-
-Solving games with incomplete information such as poker with CFR.
-
-* [Kuhn Poker](cfr/kuhn/index.html)
 
 #### ✨ [Reinforcement Learning](rl/index.html)
 * [Proximal Policy Optimization](rl/ppo/index.html) with
@@ -87,6 +89,12 @@ Solving games with incomplete information such as poker with CFR.
  with [Dueling Network](rl/dqn/model.html),
  [Prioritized Replay](rl/dqn/replay_buffer.html)
  and Double Q Network.
+
+#### ✨ [Counterfactual Regret Minimization (CFR)](cfr/index.html)
+
+Solving games with incomplete information such as poker with CFR.
+
+* [Kuhn Poker](cfr/kuhn/index.html)
 
 #### ✨ [Optimizers](optimizers/index.html)
 * [Adam](optimizers/adam.html)
@@ -119,16 +127,11 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Fuzzy Tiling Activations](activations/fta/index.html)
 
-#### ✨ [Sampling Techniques](sampling/index.html)
+#### ✨ [Language Model Sampling Techniques](sampling/index.html)
 * [Greedy Sampling](sampling/greedy.html)
 * [Temperature Sampling](sampling/temperature.html)
 * [Top-k Sampling](sampling/top_k.html)
 * [Nucleus Sampling](sampling/nucleus.html)
-
-#### ✨ [Eleuther GPT-NeoX](neox/index.html)
-* [Generate on a 48GB GPU](neox/samples/generate.html)
-* [Finetune on two 48GB GPUs](neox/samples/finetune.html)
-* [LLM.int8()](neox/utils/llm_int8.html)
 
 #### ✨ [Scalable Training/Inference](scaling/index.html)
 * [Zero3 memory optimizations](scaling/zero3/index.html)
