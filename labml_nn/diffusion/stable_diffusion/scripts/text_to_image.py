@@ -121,7 +121,7 @@ def main():
         '--sampler',
         dest='sampler_name',
         choices=['ddim', 'ddpm'],
-        default='plms',
+        default='ddim',
         help=f'Set the sampler.',
     )
 
