@@ -14,6 +14,8 @@ Our implementation does not contain training code.
 
 ### [PromptArt](https://promptart.labml.ai)
 
+![PromptArt](https://labml.ai/images/promptart-feed.webp)
+
 We have deployed a stable diffusion based image generation service
 at [promptart.labml.ai](https://promptart.labml.ai)
 
