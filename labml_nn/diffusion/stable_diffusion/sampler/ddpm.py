@@ -67,7 +67,7 @@ class DDPMSampler(DiffusionSampler):
 
             # $\sqrt{\bar\alpha}$
             self.sqrt_alpha_bar = alpha_bar ** .5
-            # $\sqrt{1 - \bar{alpha}}$
+            # $\sqrt{1 - \bar\alpha}$
             self.sqrt_1m_alpha_bar = alpha_bar ** .5
             # $\frac{1}{\sqrt{\bar\alpha_t}}$
             self.sqrt_recip_alpha_bar = alpha_bar ** -.5
