@@ -9,6 +9,7 @@ summary: >
 
 This code evaluate [GPT-NeoX](../index.html) using, on a suite of tasks.
 """
+import argparse
 
 import torch
 from torch import nn
@@ -18,13 +19,21 @@ from labml_nn.neox.model import LayerGenerator
 
 
 def main():
+    # Argument parser
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--flash", action='store_true', help="whether to use Flash Attention")
+
+    opt = parser.parse_args()
+
     # Device
     device = torch.device('cuda:0')
     # Load layers
     layers = list(LayerGenerator(is_clone_layers=True,
                                  filter_layers=None,
                                  dtype=torch.float16,
-                                 device=device
+                                 device=device,
+                                 is_flash_attention=opt.flash,
                                  ).load())
 
     # Create `nn.Sequential` model
