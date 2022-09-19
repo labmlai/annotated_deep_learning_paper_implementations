@@ -209,7 +209,6 @@ class AttentionLayer(nn.Module):
             try:
                 from flash_attn.flash_attention import FlashAttention
                 self.flash_attention = FlashAttention()
-                logger.log('Using flash attention', Text.warning)
             except ImportError:
                 logger.log('Install flash attention github.com/HazyResearch/flash-attention. '
                            'Falling back to normal attention', Text.warning)
