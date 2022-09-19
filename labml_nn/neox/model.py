@@ -171,7 +171,7 @@ class AttentionLayer(nn.Module):
     """
 
     def __init__(self, n_hidden: int = 6_144, n_heads: int = 64, rope_percentage: float = 0.25,
-                 mask_fill: float = -10_000.0, *, is_flash_attention=True):
+                 mask_fill: float = -10_000.0, *, is_flash_attention: bool = False):
         """
         :param n_hidden: the number of features in embeddings
         :param n_heads: the number of attention heads
