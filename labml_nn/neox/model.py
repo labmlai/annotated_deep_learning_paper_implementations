@@ -21,7 +21,8 @@ import torch
 from torch import nn
 from torch.cuda.amp import autocast
 
-from labml import monit
+from labml import monit, logger
+from labml.logger import Text
 from labml_nn.neox import checkpoint
 from labml_nn.neox.utils.cache import get_cache
 
@@ -170,12 +171,14 @@ class AttentionLayer(nn.Module):
     """
 
     def __init__(self, n_hidden: int = 6_144, n_heads: int = 64, rope_percentage: float = 0.25,
-                 mask_fill: float = -10_000.0):
+                 mask_fill: float = -10_000.0, *, is_flash_attention: bool = False):
         """
         :param n_hidden: the number of features in embeddings
         :param n_heads: the number of attention heads
         :param rope_percentage: percentage of features to add RoPE embeddings
         :param mask_fill: masking fill value for attention matrix
+        :param is_flash_attention: specifies whether to use
+            [FlashAttention](https://github.com/HazyResearch/flash-attention)
         """
         super().__init__()
 
@@ -200,6 +203,18 @@ class AttentionLayer(nn.Module):
 
         # Attention softmax module
         self.softmax = nn.Softmax(dim=-2)
+
+        # [FlashAttention](https://github.com/HazyResearch/flash-attention)
+        if is_flash_attention:
+            try:
+                from flash_attn.flash_attention import FlashAttention
+                self.flash_attention = FlashAttention()
+            except ImportError:
+                logger.log('Install flash attention github.com/HazyResearch/flash-attention. '
+                           'Falling back to normal attention', Text.warning)
+                self.flash_attention = None
+        else:
+            self.flash_attention = None
 
     def _get_mask(self, attn: torch.Tensor):
         """
@@ -266,6 +281,42 @@ class AttentionLayer(nn.Module):
             q = self.rope(q)
             k = self.rope(k)
 
+        # Use flash attention
+        if self.flash_attention is not None and q.shape[1] == k.shape[1] and q.shape[-1] <= 128:
+            output = self.compute_flash_attention(q, k, v)
+        # Otherwise, use normal attention
+        else:
+            output = self.compute_attention(q, k, v)
+
+        # Reshape from `[batch_size, seq_len, n_heads, d_k] to `[batch_size, seq_len, n_hidden]`
+        output = output.reshape(*x.shape)
+
+        # Final linear layer
+        return self.output(output)
+
+    def compute_flash_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
+        # Stack them into shape `[batch_size, seq_len, 3, n_heads, d_k]`
+        qkv = torch.stack((q, k, v), dim=2)
+        d_k = qkv.shape[-1]
+        if d_k <= 32:
+            pad = 32 - d_k
+        elif d_k <= 64:
+            pad = 64 - d_k
+        elif d_k <= 128:
+            pad = 128 - d_k
+        else:
+            raise ValueError(f'Head size {d_k} too large for flash attention')
+
+        if pad > 0:
+            qkv = torch.cat((qkv, qkv.new_zeros(*qkv.shape[:-1], pad)), dim=-1)
+
+        output, _ = self.flash_attention(qkv, causal=True)
+        # The output is of shape `[batch_size, seq_len, n_heads, d_k + padding]`
+        output = output[:, :, :, :d_k]
+
+        return output
+
+    def compute_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
         # Disable auto-casting to fp16 for attention computation
         with autocast(enabled=False):
             if q.dtype == torch.float16:
@@ -289,11 +340,7 @@ class AttentionLayer(nn.Module):
         # Get attention weighted values
         output = torch.einsum('bijh,bjhk->bihk', attn.to(v.dtype), v)
 
-        # Reshape from `[batch_size, seq_len, n_heads, d_k] to `[batch_size, seq_len, n_hidden]`
-        output = output.reshape(*x.shape)
-
-        # Final linear layer
-        return self.output(output)
+        return output
 
 
 class FFNLayer(nn.Module):
@@ -333,10 +380,12 @@ class TransformerLayer(NeoXModule):
     ## Transformer Layer
     """
 
-    def __init__(self, n_hidden: int = 6_144, n_heads: int = 64):
+    def __init__(self, n_hidden: int = 6_144, n_heads: int = 64, *, is_flash_attention: bool = False):
         """
         :param n_hidden: is the embedding size
         :param n_heads: is the number of heads
+        :param is_flash_attention: specifies whether to use
+            [FlashAttention](https://github.com/HazyResearch/flash-attention)
 
         *Out implementation doesn't include dropout*.
         """
@@ -348,7 +397,7 @@ class TransformerLayer(NeoXModule):
         self.pre_ln_ffn = nn.LayerNorm(n_hidden)
 
         # Attention layer
-        self.attention = AttentionLayer(n_hidden, n_heads)
+        self.attention = AttentionLayer(n_hidden, n_heads, is_flash_attention=is_flash_attention)
         # FFN layer
         self.ffn = FFNLayer(n_hidden)
 
@@ -462,6 +511,7 @@ class LayerGenerator:
                  device: torch.device = torch.device('cpu'),
                  is_llm_int8: bool = False,
                  llm_int8_threshold: float = 6.0,
+                 is_flash_attention: bool = False
                  ):
         """
         ### Generator to create layers
@@ -482,6 +532,8 @@ class LayerGenerator:
         :param device: is the device of the model
         :param is_llm_int8: specifies whether to use int8 quantization
         :param llm_int8_threshold: is the threshold $\alpha$ used to separate outlier features
+        :param is_flash_attention: specifies whether to use
+            [FlashAttention](https://github.com/HazyResearch/flash-attention)
         """
         if filter_layers is None:
             filter_layers = set(range(n_layers + 3))
@@ -496,6 +548,7 @@ class LayerGenerator:
         self.device = device
         self.is_llm_int8 = is_llm_int8
         self.llm_int8_threshold = llm_int8_threshold
+        self.is_flash_attention = is_flash_attention
 
         self.pre_created_layers = dict(
             transformer_layer=None,
@@ -594,7 +647,7 @@ class LayerGenerator:
     def _create_transformer_layer(self):
         return self._create_and_cache_layer(
             'transformer_layer',
-            lambda: TransformerLayer(self.n_hidden, self.n_heads)
+            lambda: TransformerLayer(self.n_hidden, self.n_heads, is_flash_attention=self.is_flash_attention)
         )
 
     def _create_embedding_layer(self):
