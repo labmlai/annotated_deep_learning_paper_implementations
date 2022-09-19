@@ -380,10 +380,12 @@ class TransformerLayer(NeoXModule):
     ## Transformer Layer
     """
 
-    def __init__(self, n_hidden: int = 6_144, n_heads: int = 64):
+    def __init__(self, n_hidden: int = 6_144, n_heads: int = 64, *, is_flash_attention: bool = False):
         """
         :param n_hidden: is the embedding size
         :param n_heads: is the number of heads
+        :param is_flash_attention: specifies whether to use
+            [FlashAttention](https://github.com/HazyResearch/flash-attention)
 
         *Out implementation doesn't include dropout*.
         """
@@ -395,7 +397,7 @@ class TransformerLayer(NeoXModule):
         self.pre_ln_ffn = nn.LayerNorm(n_hidden)
 
         # Attention layer
-        self.attention = AttentionLayer(n_hidden, n_heads)
+        self.attention = AttentionLayer(n_hidden, n_heads, is_flash_attention=is_flash_attention)
         # FFN layer
         self.ffn = FFNLayer(n_hidden)
 
@@ -509,6 +511,7 @@ class LayerGenerator:
                  device: torch.device = torch.device('cpu'),
                  is_llm_int8: bool = False,
                  llm_int8_threshold: float = 6.0,
+                 is_flash_attention: bool = False
                  ):
         """
         ### Generator to create layers
@@ -529,6 +532,8 @@ class LayerGenerator:
         :param device: is the device of the model
         :param is_llm_int8: specifies whether to use int8 quantization
         :param llm_int8_threshold: is the threshold $\alpha$ used to separate outlier features
+        :param is_flash_attention: specifies whether to use
+            [FlashAttention](https://github.com/HazyResearch/flash-attention)
         """
         if filter_layers is None:
             filter_layers = set(range(n_layers + 3))
@@ -543,6 +548,7 @@ class LayerGenerator:
         self.device = device
         self.is_llm_int8 = is_llm_int8
         self.llm_int8_threshold = llm_int8_threshold
+        self.is_flash_attention = is_flash_attention
 
         self.pre_created_layers = dict(
             transformer_layer=None,
@@ -641,7 +647,7 @@ class LayerGenerator:
     def _create_transformer_layer(self):
         return self._create_and_cache_layer(
             'transformer_layer',
-            lambda: TransformerLayer(self.n_hidden, self.n_heads)
+            lambda: TransformerLayer(self.n_hidden, self.n_heads, is_flash_attention=self.is_flash_attention)
         )
 
     def _create_embedding_layer(self):
