@@ -191,6 +191,8 @@ class CrossAttention(nn.Module):
 
     def flash_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
         """
+        #### Flash Attention
+
         :param q: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         :param k: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
@@ -234,6 +236,8 @@ class CrossAttention(nn.Module):
 
     def normal_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
         """
+        #### Normal Attention
+        
         :param q: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         :param k: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
