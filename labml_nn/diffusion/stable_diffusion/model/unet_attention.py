@@ -185,6 +185,8 @@ class CrossAttention(nn.Module):
         :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         """
 
+        print('flash')
+        
         # Get batch size and number of elements along sequence axis (width * height)
         batch_size, seq_len, _ = q.shape
 
