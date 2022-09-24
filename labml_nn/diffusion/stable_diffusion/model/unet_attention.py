@@ -151,10 +151,18 @@ class CrossAttention(nn.Module):
         # Final linear layer
         self.to_out = nn.Sequential(nn.Linear(d_attn, d_model))
 
+        # Setup [flash attention](https://github.com/HazyResearch/flash-attention).
+        # Flash attention is only used if it's installed
+        # and `CrossAttention.use_flash_attention` is set to `True`.
         try:
+            # You can install flash attention by cloning their Github repo,
+            # [https://github.com/HazyResearch/flash-attention](https://github.com/HazyResearch/flash-attention)
+            # and then running `python setup.py install`
             from flash_attn.flash_attention import FlashAttention
             self.flash = FlashAttention()
+            # Set the scale for scaled dot-product attention.
             self.flash.softmax_scale = self.scale
+        # Set to `None` if it's not installed
         except ImportError:
             self.flash = None
 
@@ -164,9 +172,8 @@ class CrossAttention(nn.Module):
         :param cond: is the conditional embeddings of shape `[batch_size, n_cond, d_cond]`
         """
 
-        has_cond = cond is not None
-
         # If `cond` is `None` we perform self attention
+        has_cond = cond is not None
         if not has_cond:
             cond = x
 
@@ -175,8 +182,10 @@ class CrossAttention(nn.Module):
         k = self.to_k(cond)
         v = self.to_v(cond)
 
+        # Use flash attention if it's available and the head size is less than or equal to `128`
         if CrossAttention.use_flash_attention and self.flash is not None and not has_cond and self.d_head <= 128:
             return self.flash_attention(q, k, v)
+        # Otherwise, fallback to normal attention
         else:
             return self.normal_attention(q, k, v)
 
@@ -187,9 +196,7 @@ class CrossAttention(nn.Module):
         :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
         """
 
-        print('flash')
-
-        # Get batch size and number of elements along sequence axis (width * height)
+        # Get batch size and number of elements along sequence axis (`width * height`)
         batch_size, seq_len, _ = q.shape
 
         # Stack `q`, `k`, `v` vectors for flash attention, to get a single tensor of

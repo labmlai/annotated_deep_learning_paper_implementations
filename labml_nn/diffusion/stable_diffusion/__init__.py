@@ -27,6 +27,10 @@ It consists of:
 * [AutoEncoder](model/autoencoder.html)
 * [U-Net](model/unet.html) with [attention](model/unet_attention.html)
 
+We have also (optionally) integrated [Flash Attention](https://github.com/HazyResearch/flash-attention)
+into our [U-Net attention](model/unet_attention.html) which lets you speed up
+the performance by close to 50% on an RTX A6000 GPU.
+
 The diffusion is conditioned based on [CLIP embeddings](model/clip_embedder.html).
 
 ### [Sampling Algorithms](sampler/index.html)
