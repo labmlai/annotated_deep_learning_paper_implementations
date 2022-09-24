@@ -115,7 +115,7 @@ def main():
         help="the prompt to render"
     )
 
-    parser.add_argument("--batch_size", type=int, default=4, help="batch size", )
+    parser.add_argument("--batch_size", type=int, default=4, help="batch size")
 
     parser.add_argument(
         '--sampler',
@@ -125,7 +125,9 @@ def main():
         help=f'Set the sampler.',
     )
 
-    parser.add_argument("--steps", type=int, default=50, help="number of sampling steps", )
+    parser.add_argument("--flash", action='store_true', help="whether to use flash attention")
+
+    parser.add_argument("--steps", type=int, default=50, help="number of sampling steps")
 
     parser.add_argument("--scale", type=float, default=7.5,
                         help="unconditional guidance scale: "
@@ -135,6 +137,11 @@ def main():
 
     set_seed(42)
 
+    # Set flash attention
+    from labml_nn.diffusion.stable_diffusion.model.unet_attention import CrossAttention
+    CrossAttention.use_flash_attention = opt.flash
+
+    #
     txt2img = Txt2Img(checkpoint_path=lab.get_data_path() / 'stable-diffusion' / 'sd-v1-4.ckpt',
                       sampler_name=opt.sampler_name,
                       n_steps=opt.steps)

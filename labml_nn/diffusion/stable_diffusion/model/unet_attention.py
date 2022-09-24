@@ -27,6 +27,7 @@ class SpatialTransformer(nn.Module):
     """
     ## Spatial Transformer
     """
+
     def __init__(self, channels: int, n_heads: int, n_layers: int, d_cond: int):
         """
         :param channels: is the number of channels in the feature map
@@ -80,6 +81,7 @@ class BasicTransformerBlock(nn.Module):
     """
     ### Transformer Layer
     """
+
     def __init__(self, d_model: int, n_heads: int, d_head: int, d_cond: int):
         """
         :param d_model: is the input embedding size
@@ -119,6 +121,9 @@ class CrossAttention(nn.Module):
 
     This falls-back to self-attention when conditional embeddings are not specified.
     """
+
+    use_flash_attention: bool = False
+
     def __init__(self, d_model: int, d_cond: int, n_heads: int, d_head: int, is_inplace: bool = True):
         """
         :param d_model: is the input embedding size
@@ -132,6 +137,7 @@ class CrossAttention(nn.Module):
 
         self.is_inplace = is_inplace
         self.n_heads = n_heads
+        self.d_head = d_head
 
         # Attention scaling factor
         self.scale = d_head ** -0.5
@@ -144,6 +150,13 @@ class CrossAttention(nn.Module):
 
         # Final linear layer
         self.to_out = nn.Sequential(nn.Linear(d_attn, d_model))
+
+        try:
+            from flash_attn.flash_attention import FlashAttention
+            self.flash = FlashAttention()
+            self.flash.softmax_scale = self.scale
+        except ImportError:
+            self.flash = None
 
     def forward(self, x: torch.Tensor, cond: Optional[torch.Tensor] = None):
         """
@@ -159,6 +172,61 @@ class CrossAttention(nn.Module):
         q = self.to_q(x)
         k = self.to_k(cond)
         v = self.to_v(cond)
+
+        if CrossAttention.use_flash_attention and self.flash is not None and cond is None and self.d_head <= 128:
+            self.flash_attention(q, k, v)
+        else:
+            self.normal_attention(q, k, v)
+
+    def flash_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
+        """
+        :param q: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        :param k: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        """
+
+        # Get batch size and number of elements along sequence axis (width * height)
+        batch_size, seq_len, _ = q.shape
+
+        # Stack `q`, `k`, `v` vectors for flash attention, to get a single tensor of
+        # shape `[batch_size, seq_len, 3, n_heads * d_head]`
+        qkv = torch.stack((q, k, v), dim=2)
+        # Split the heads
+        qkv = qkv.view(batch_size, seq_len, 3, self.n_heads, self.d_head)
+
+        # Flash attention works for head sizes `32`, `64` and `128`, so we have to pad the heads to
+        # fit this size.
+        if self.d_head <= 32:
+            pad = 32 - self.d_head
+        elif self.d_head <= 64:
+            pad = 64 - self.d_head
+        elif self.d_head <= 128:
+            pad = 128 - self.d_head
+        else:
+            raise ValueError(f'Head size ${self.d_head} too large for Flash Attention')
+
+        # Pad the heads
+        if pad:
+            qkv = torch.cat((qkv, qkv.new_zeros(batch_size, seq_len, 3, self.n_heads, pad)), dim=-1)
+
+        # Compute attention
+        # $$\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_{key}}}\Bigg)V$$
+        # This gives a tensor of shape `[batch_size, seq_len, n_heads, d_padded]`
+        out, _ = self.flash(qkv)
+        # Truncate the extra head size
+        out = out[:, :, :, :self.d_head]
+        # Reshape to `[batch_size, seq_len, n_heads * d_head]`
+        out = out.reshape(batch_size, seq_len, self.n_heads * self.d_head)
+
+        # Map to `[batch_size, height * width, d_model]` with a linear layer
+        return self.to_out(out)
+
+    def normal_attention(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor):
+        """
+        :param q: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        :param k: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        :param v: are the query vectors before splitting heads, of shape `[batch_size, seq, d_attn]`
+        """
 
         # Split them to heads of shape `[batch_size, seq_len, n_heads, d_head]`
         q = q.view(*q.shape[:2], self.n_heads, -1)
@@ -190,6 +258,7 @@ class FeedForward(nn.Module):
     """
     ### Feed-Forward Network
     """
+
     def __init__(self, d_model: int, d_mult: int = 4):
         """
         :param d_model: is the input embedding size
@@ -212,6 +281,7 @@ class GeGLU(nn.Module):
 
     $$\text{GeGLU}(x) = (xW + b) * \text{GELU}(xV + c)$$
     """
+
     def __init__(self, d_in: int, d_out: int):
         super().__init__()
         # Combined linear projections $xW + b$ and $xV + c$
