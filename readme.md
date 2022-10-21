@@ -2,7 +2,7 @@
 [![Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/labmlai)
 
 # [labml.ai Deep Learning Paper Implementations](https://nn.labml.ai/index.html)
-
+## THC 1.0
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 These implementations are documented with explanations,
