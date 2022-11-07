@@ -36,7 +36,7 @@ class CoraDataset:
 
     The papers are the nodes of the graph and the edges are the citations.
 
-    The task is to classify the edges to the 7 classes with feature vectors and
+    The task is to classify the nodes to the 7 classes with feature vectors and
     citation network as input.
     """
     # Labels for each node
