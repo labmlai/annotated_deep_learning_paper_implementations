@@ -62,7 +62,7 @@ class PrepareForMultiHeadAttention(nn.Module):
         # Split last dimension into heads
         x = x.view(*head_shape, self.heads, self.d_k)
 
-        # Output has shape `[seq_len, batch_size, heads, d_k]` or `[batch_size, d_model]`
+        # Output has shape `[seq_len, batch_size, heads, d_k]` or `[batch_size, heads, d_model]`
         return x
 
 
