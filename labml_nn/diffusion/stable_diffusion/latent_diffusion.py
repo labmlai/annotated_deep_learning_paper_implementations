@@ -25,7 +25,6 @@ from typing import List
 
 import torch
 import torch.nn as nn
-import torch.nn.functional
 
 from labml_nn.diffusion.stable_diffusion.model.autoencoder import Autoencoder
 from labml_nn.diffusion.stable_diffusion.model.clip_embedder import CLIPTextEmbedder
