@@ -168,7 +168,7 @@ class DDIMSampler(DiffusionSampler):
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         """
 
-        # Get $\epsilon_\theta(x_{\tau_i}}$
+        # Get $\epsilon_\theta(x_{\tau_i})$
         e_t = self.get_eps(x, t, c,
                            uncond_scale=uncond_scale,
                            uncond_cond=uncond_cond)
@@ -185,7 +185,7 @@ class DDIMSampler(DiffusionSampler):
                                temperature: float,
                                repeat_noise: bool):
         """
-        ### Sample $x_{\tau_{i-1}}$ given $\epsilon_\theta(x_{\tau_i}}$
+        ### Sample $x_{\tau_{i-1}}$ given $\epsilon_\theta(x_{\tau_i})$
         """
 
         # $\alpha_{\tau_i}$
