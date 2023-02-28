@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="在提示下使用稳定的扩散生成图像"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="在提示下使用稳定的扩散生成图像"/>
+    <meta name="twitter:description" content="在提示下使用稳定的扩散生成图像"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/diffusion/stable_diffusion/scripts/text_to_image.html"/>
+    <meta property="og:title" content="在提示下使用稳定的扩散生成图像"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="在提示下使用稳定的扩散生成图像"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="在提示下使用稳定的扩散生成图像"/>
+    <meta property="og:description" content="在提示下使用稳定的扩散生成图像"/>
+
+    <title>在提示下使用稳定的扩散生成图像</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/diffusion/stable_diffusion/scripts/text_to_image.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../../index.html">diffusion</a>
+                <a class="parent" href="../index.html">stable_diffusion</a>
+                <a class="parent" href="index.html">scripts</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/diffusion/stable_diffusion/scripts/text_to_image.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>在提示下使用<a href="../index.html">稳定的扩散</a>生成图像</h1>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">11</span><span></span><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="lineno">12</span><span class="kn">import</span> <span class="nn">os</span>
+<span class="lineno">13</span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="lineno">14</span>
+<span class="lineno">15</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">16</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">lab</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.stable_diffusion.latent_diffusion</span> <span class="kn">import</span> <span class="n">LatentDiffusion</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.stable_diffusion.sampler.ddim</span> <span class="kn">import</span> <span class="n">DDIMSampler</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.stable_diffusion.sampler.ddpm</span> <span class="kn">import</span> <span class="n">DDPMSampler</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_nn.diffusion.stable_diffusion.util</span> <span class="kn">import</span> <span class="n">load_model</span><span class="p">,</span> <span class="n">save_images</span><span class="p">,</span> <span class="n">set_seed</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h3>文本转图像类别</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">24</span><span class="k">class</span> <span class="nc">Txt2Img</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">28</span>    <span class="n">model</span><span class="p">:</span> <span class="n">LatentDiffusion</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">checkpoint_path</span></code>
+是检查点的路径</li>
+<li><code  class="highlight"><span></span><span class="n">sampler_name</span></code>
+是<a href="../sampler/index.html">采样</a>器的名字</li>
+<li><code  class="highlight"><span></span><span class="n">n_steps</span></code>
+是采样步骤的数量</li>
+<li><code  class="highlight"><span></span><span class="n">ddim_eta</span></code>
+是 <a href="../sampler/ddim.html">DDIM 采样</a><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">η</span></span></span></span></span>常数</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">31</span>                 <span class="n">checkpoint_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="lineno">32</span>                 <span class="n">sampler_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="lineno">33</span>                 <span class="n">n_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="lineno">34</span>                 <span class="n">ddim_eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="lineno">35</span>                 <span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>载荷<a href="../latent_diffusion.html">潜在扩散模型</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">43</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>获取设备</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>将模型移至设备</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>初始化<a href="../sampler/index.html">采样器</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>        <span class="k">if</span> <span class="n">sampler_name</span> <span class="o">==</span> <span class="s1">&#39;ddim&#39;</span><span class="p">:</span>
+<span class="lineno">51</span>            <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">DDIMSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+<span class="lineno">52</span>                                       <span class="n">n_steps</span><span class="o">=</span><span class="n">n_steps</span><span class="p">,</span>
+<span class="lineno">53</span>                                       <span class="n">ddim_eta</span><span class="o">=</span><span class="n">ddim_eta</span><span class="p">)</span>
+<span class="lineno">54</span>        <span class="k">elif</span> <span class="n">sampler_name</span> <span class="o">==</span> <span class="s1">&#39;ddpm&#39;</span><span class="p">:</span>
+<span class="lineno">55</span>            <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">DDPMSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">dest_path</span></code>
+是存储生成的图像的路径</li>
+<li><code  class="highlight"><span></span><span class="n">batch_size</span></code>
+是批量生成的图像数量</li>
+<li><code  class="highlight"><span></span><span class="n">prompt</span></code>
+是使用以下命令生成图像的提示</li>
+<li><code  class="highlight"><span></span><span class="n">h</span></code>
+是图像的高度</li>
+<li><code  class="highlight"><span></span><span class="n">w</span></code>
+是图像的宽度</li>
+<li><code  class="highlight"><span></span><span class="n">uncond_scale</span></code>
+是无条件指导量表<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">s</span></span></span></span></span></span>。这用于<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">ϵ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">s</span></span><span class="mord"><span class="mord mathnormal">ϵ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord text mtight"><span class="mord mtight">cond</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">s</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqc" style=""><span class="mord" style="">1</span></span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal">ϵ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord text mtight"><span class="mord mtight">cond</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">57</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">58</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">59</span>                 <span class="n">dest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="lineno">60</span>                 <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="lineno">61</span>                 <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="lineno">62</span>                 <span class="n">h</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+<span class="lineno">63</span>                 <span class="n">uncond_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">7.5</span><span class="p">,</span>
+<span class="lineno">64</span>                 <span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>图像中的通道数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>        <span class="n">c</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>降低图像到潜在空间的分辨率</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">77</span>        <span class="n">f</span> <span class="o">=</span> <span class="mi">8</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>做一批提示</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">prompts</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">*</span> <span class="p">[</span><span class="n">prompt</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>AMP 自动投射</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">83</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">amp</span><span class="o">.</span><span class="n">autocast</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>在无条件缩放中，无法<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqc" style=""><span class="mord" style="">1</span></span></span></span></span></span>获取空提示的嵌入值（无条件）。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">85</span>            <span class="k">if</span> <span class="n">uncond_scale</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+<span class="lineno">86</span>                <span class="n">un_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_text_conditioning</span><span class="p">(</span><span class="n">batch_size</span> <span class="o">*</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">])</span>
+<span class="lineno">87</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">88</span>                <span class="n">un_cond</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>获取提示嵌入信息</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">90</span>            <span class="n">cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_text_conditioning</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p><a href="../sampler/index.html">在潜在空间中取样</a>。<code  class="highlight"><span></span><span class="n">x</span></code>
+会变形<code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">h</span> <span class="o">/</span> <span class="n">f</span><span class="p">,</span> <span class="n">w</span> <span class="o">/</span> <span class="n">f</span><span class="p">]</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">93</span>            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">cond</span><span class="p">,</span>
+<span class="lineno">94</span>                                    <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">h</span> <span class="o">//</span> <span class="n">f</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="n">f</span><span class="p">],</span>
+<span class="lineno">95</span>                                    <span class="n">uncond_scale</span><span class="o">=</span><span class="n">uncond_scale</span><span class="p">,</span>
+<span class="lineno">96</span>                                    <span class="n">uncond_cond</span><span class="o">=</span><span class="n">un_cond</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>从<a href="../model/autoencoder.html">自动编码器解码</a>图像</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">98</span>            <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">autoencoder_decode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>保存图片</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>        <span class="n">save_images</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">dest_path</span><span class="p">,</span> <span class="s1">&#39;txt_&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <h3>CLI</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">108</span>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+<span class="lineno">109</span>
+<span class="lineno">110</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="lineno">111</span>        <span class="s2">&quot;--prompt&quot;</span><span class="p">,</span>
+<span class="lineno">112</span>        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+<span class="lineno">113</span>        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span>
+<span class="lineno">114</span>        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;a painting of a virus monster playing guitar&quot;</span><span class="p">,</span>
+<span class="lineno">115</span>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the prompt to render&quot;</span>
+<span class="lineno">116</span>    <span class="p">)</span>
+<span class="lineno">117</span>
+<span class="lineno">118</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--batch_size&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;batch size&quot;</span><span class="p">)</span>
+<span class="lineno">119</span>
+<span class="lineno">120</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="lineno">121</span>        <span class="s1">&#39;--sampler&#39;</span><span class="p">,</span>
+<span class="lineno">122</span>        <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;sampler_name&#39;</span><span class="p">,</span>
+<span class="lineno">123</span>        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ddim&#39;</span><span class="p">,</span> <span class="s1">&#39;ddpm&#39;</span><span class="p">],</span>
+<span class="lineno">124</span>        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;ddim&#39;</span><span class="p">,</span>
+<span class="lineno">125</span>        <span class="n">help</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Set the sampler.&#39;</span><span class="p">,</span>
+<span class="lineno">126</span>    <span class="p">)</span>
+<span class="lineno">127</span>
+<span class="lineno">128</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--flash&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;whether to use flash attention&quot;</span><span class="p">)</span>
+<span class="lineno">129</span>
+<span class="lineno">130</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--steps&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;number of sampling steps&quot;</span><span class="p">)</span>
+<span class="lineno">131</span>
+<span class="lineno">132</span>    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--scale&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">7.5</span><span class="p">,</span>
+<span class="lineno">133</span>                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;unconditional guidance scale: &quot;</span>
+<span class="lineno">134</span>                             <span class="s2">&quot;eps = eps(x, empty) + scale * (eps(x, cond) - eps(x, empty))&quot;</span><span class="p">)</span>
+<span class="lineno">135</span>
+<span class="lineno">136</span>    <span class="n">opt</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+<span class="lineno">137</span>
+<span class="lineno">138</span>    <span class="n">set_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>设置闪光灯注意力</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">141</span>    <span class="kn">from</span> <span class="nn">labml_nn.diffusion.stable_diffusion.model.unet_attention</span> <span class="kn">import</span> <span class="n">CrossAttention</span>
+<span class="lineno">142</span>    <span class="n">CrossAttention</span><span class="o">.</span><span class="n">use_flash_attention</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">flash</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">145</span>    <span class="n">txt2img</span> <span class="o">=</span> <span class="n">Txt2Img</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="o">=</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;stable-diffusion&#39;</span> <span class="o">/</span> <span class="s1">&#39;sd-v1-4.ckpt&#39;</span><span class="p">,</span>
+<span class="lineno">146</span>                      <span class="n">sampler_name</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">sampler_name</span><span class="p">,</span>
+<span class="lineno">147</span>                      <span class="n">n_steps</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+<span class="lineno">148</span>
+<span class="lineno">149</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Generate&#39;</span><span class="p">):</span>
+<span class="lineno">150</span>        <span class="n">txt2img</span><span class="p">(</span><span class="n">dest_path</span><span class="o">=</span><span class="s1">&#39;outputs&#39;</span><span class="p">,</span>
+<span class="lineno">151</span>                <span class="n">batch_size</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+<span class="lineno">152</span>                <span class="n">prompt</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">prompt</span><span class="p">,</span>
+<span class="lineno">153</span>                <span class="n">uncond_scale</span><span class="o">=</span><span class="n">opt</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">157</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="lineno">158</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
