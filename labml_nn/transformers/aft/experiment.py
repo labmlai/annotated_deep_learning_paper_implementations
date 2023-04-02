@@ -10,8 +10,6 @@ This is an annotated PyTorch experiment to train a [AFT model](index.html).
 
 This is based on
 [general training loop and configurations for auto-regressive NLP task](../../experiments/nlp_autoregression.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6348e504c3a511eba9529daa283fb495)
 """
 import torch
 

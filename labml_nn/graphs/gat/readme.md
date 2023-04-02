@@ -16,5 +16,3 @@ The details of graph attention layers are included alongside the implementation.
 
 Here is [the training code](https://nn.labml.ai/graphs/gat/experiment.html) for training
 a two-layer GAT on Cora dataset.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6c636cadf3511eba2f1e707f612f95d)

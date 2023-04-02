@@ -29,8 +29,6 @@ Note that the above equality halts because $\text{softmax}$ is invariant to tran
  (you can add any constant to all elements without changing the result).
 
 Here is [the training code](experiment.html) for a ALiBi model.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1454f9ba044a11ed8364e5e321a405ac)
 """
 import math
 from typing import Optional

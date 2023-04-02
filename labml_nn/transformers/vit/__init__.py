@@ -38,8 +38,6 @@ learning positional embeddings.
 Here's [an experiment](experiment.html) that trains ViT on CIFAR-10.
 This doesn't do very well because it's trained on a small dataset.
 It's a simple experiment that anyone can run and play with ViTs.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/afdd5332188b11edbdf543360515b595)
 """
 
 import torch

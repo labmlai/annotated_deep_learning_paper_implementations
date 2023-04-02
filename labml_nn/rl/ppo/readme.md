@@ -16,4 +16,3 @@ You can find an experiment that uses it [here](https://nn.labml.ai/rl/ppo/experi
 The experiment uses [Generalized Advantage Estimation](https://nn.labml.ai/rl/ppo/gae.html).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/ppo/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6eff28a0910e11eb9b008db315936e2f)

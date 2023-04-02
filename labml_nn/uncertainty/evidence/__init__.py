@@ -47,8 +47,6 @@ We use a function such as
 The paper proposes a few loss functions to train the model, which we have implemented below.
 
 Here is the [training code `experiment.py`](experiment.html) to train a model on MNIST dataset.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/f82b2bfc01ba11ecbb2aa16a33570106)
 """
 
 import torch

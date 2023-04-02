@@ -23,5 +23,3 @@ To be clear, if the number of channels in each head is d_k the convolution will 
 kernels for each of the d_k channels.
 
 [Here is the experiment code](https://nn.labml.ai/transformers/primer_ez/experiment.html), for Primer EZ.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/30adb7aa1ab211eca7310f80a114e8a4)

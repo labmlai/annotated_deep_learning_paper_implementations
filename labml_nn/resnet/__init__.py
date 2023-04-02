@@ -50,8 +50,6 @@ $\mathcal{F}$ should have more than one layer, otherwise the sum $\mathcal{F}(x,
 also won't have non-linearities and will be like a linear layer.
 
 Here is [the training code](experiment.html) for training a ResNet on CIFAR-10.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/fc5ad600e4af11ebbafd23b8665193c1)
 """
 
 from typing import List, Optional

@@ -54,8 +54,6 @@ other areas. This is different from local transformers where embeddings outside 
  completely not visible.
 
 Here is [the training code](experiment.html) for a AFT Local model.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/6348e504c3a511eba9529daa283fb495)
 """
 
 from typing import Optional

@@ -7,5 +7,3 @@ This paper introduces a Multilayer Perceptron (MLP) based architecture with gati
 which they name **gMLP**. It consists of a stack of $L$ *gMLP* blocks.
 
 Here is [the training code](https://nn.labml.ai/transformers/gmlp/experiment.html) for a gMLP model based autoregressive model.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)

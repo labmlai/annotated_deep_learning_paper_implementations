@@ -40,4 +40,3 @@ Here are [the training code](https://nn.labml.ai/transformers/compressive/experi
 model on the Tiny Shakespeare dataset.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/compressive/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/0d9b5338726c11ebb7c80242ac1c0002)

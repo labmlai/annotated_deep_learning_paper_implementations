@@ -18,8 +18,6 @@ dependency.
 
 Here's [the training code](experiment.html) for training a transformer model with RoPE
  on Tiny Shakespeare dataset.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1cf508e693be11ecacc98de8b38a61fe)
 """
 
 import torch

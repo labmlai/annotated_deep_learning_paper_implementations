@@ -23,8 +23,6 @@ Here we have implemented the simplest up-sampling and down-sampling techniques f
 We will consider adding more complex (and better performing) implementations later.
 
 Here is [the training code](experiment.html) for the hourglass model.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/855b82363e4911ec9ae4a5b9c69d5061)
 """
 
 from typing import List

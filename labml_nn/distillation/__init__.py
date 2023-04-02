@@ -67,8 +67,6 @@ gives an accuracy of 80%.
 
 We then train the small model with distillation from the large model,
 and it gives an accuracy of 82%; a 2% increase in the accuracy.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6182e2adaf011eb927c91a2a1710932)
 """
 
 import torch

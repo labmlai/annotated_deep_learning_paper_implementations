@@ -43,7 +43,6 @@ a VGG network that uses weight standardization to classify CIFAR-10 data.
 This uses a [2D-Convolution Layer with Weight Standardization](conv2d.html).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/normalization/weight_standardization/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/f4a783a2a7df11eb921d0242ac1c0002)
 """
 
 import torch

@@ -21,5 +21,3 @@ They also use [Batch normalization](https://nn.labml.ai/normalization/batch_norm
 of [Layer normalization](../normalization/layer_norm/index.html).
 
 Here's [an experiment](https://nn.labml.ai/conv_mixer/experiment.html) that trains ConvMixer on CIFAR-10.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d)

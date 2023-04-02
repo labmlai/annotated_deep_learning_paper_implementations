@@ -9,8 +9,6 @@ summary: This experiment trains an Attention with Linear Biases (ALiBi) based mo
 This is an annotated PyTorch experiment to train a [ALiBi model](index.html).
 
 This is based on [our GPT model](../gpt/index.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1454f9ba044a11ed8364e5e321a405ac)
 """
 
 import torch

@@ -9,7 +9,6 @@ summary: This experiment trains a small switch transformer on tiny Shakespeare d
 This is an annotated PyTorch experiment to train a switch transformer.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/switch/experiment.ipynb)
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/353770ce177c11ecaa5fb74452424f46)
 """
 
 import torch

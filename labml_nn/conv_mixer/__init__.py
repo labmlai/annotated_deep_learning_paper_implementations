@@ -31,8 +31,6 @@ They also use [Batch normalization](../normalization/batch_norm/index.html) inst
 of [Layer normalization](../normalization/layer_norm/index.html).
 
 Here's [an experiment](experiment.html) that trains ConvMixer on CIFAR-10.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d)
 """
 
 import torch

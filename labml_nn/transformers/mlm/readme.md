@@ -53,5 +53,3 @@ Since MLMs have this problem it's a lot faster to train if you start with a smal
 initially and then use a longer sequence length later.
 
 Here is [the training code](https://nn.labml.ai/transformers/mlm/experiment.html) for a simple MLM model.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/3a6d22b6c67111ebb03d6764d13a38d1)

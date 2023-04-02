@@ -8,8 +8,6 @@ summary: >
 #  Train a small model on CIFAR 10
 
 This trains a small model on CIFAR 10 to test how much [distillation](index.html) benefits.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/3b8fda8edaef11eb951eebc4a6e2bfac)
 """
 
 import torch.nn as nn

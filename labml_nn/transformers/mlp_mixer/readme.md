@@ -15,5 +15,3 @@ across the sequence dimension.
 Although the paper applied MLP Mixer on vision tasks,
 we tried it on a [masked language model](https://nn.labml.ai/transformers/mlm/index.html).
 [Here is the experiment code](https://nn.labml.ai/transformers/mlp_mixer/experiment.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/994263d2cdb511eb961e872301f0dbab)

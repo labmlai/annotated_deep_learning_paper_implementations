@@ -6,8 +6,6 @@ summary: >
 ---
 
 #  Train a [Vision Transformer (ViT)](index.html) on CIFAR 10
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/afdd5332188b11edbdf543360515b595)
 """
 
 from labml import experiment

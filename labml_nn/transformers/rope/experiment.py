@@ -7,8 +7,6 @@ summary: This experiment trains a transformer model with Rotary Positional Embed
 # Rotary Positional Embeddings (RoPE) Experiment
 
 This is an annotated PyTorch experiment to train a transformer model with Rotary Positional Embeddings (RoPE).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/1cf508e693be11ecacc98de8b38a61fe)
 """
 
 from labml import experiment

@@ -6,8 +6,6 @@ summary: >
 ---
 
 # Train a Graph Attention Network (GAT) on Cora dataset
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6c636cadf3511eba2f1e707f612f95d)
 """
 
 from typing import Dict

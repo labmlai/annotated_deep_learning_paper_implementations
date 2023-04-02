@@ -8,8 +8,6 @@ summary: >
 #  Train a large model on CIFAR 10
 
 This trains a large model on CIFAR 10 for [distillation](index.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d46cd53edaec11eb93c38d6538aee7d6)
 """
 
 import torch.nn as nn

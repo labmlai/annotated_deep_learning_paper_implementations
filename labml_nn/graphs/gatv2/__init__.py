@@ -52,8 +52,6 @@ GAT fails on this task because of its limited static attention.
 
 Here is [the training code](experiment.html) for training
 a two-layer GATv2 on Cora dataset.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/34b1e2f6ed6f11ebb860997901a2d1e3)
 """
 
 import torch

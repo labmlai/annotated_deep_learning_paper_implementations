@@ -12,8 +12,6 @@ We have not implemented that here.
 
 This is based on
 [training loop and configurations for a simple transformer auto-regressive NLP task](../basic/autoregressive_experiment.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)
 """
 from labml import experiment
 from labml.configs import option

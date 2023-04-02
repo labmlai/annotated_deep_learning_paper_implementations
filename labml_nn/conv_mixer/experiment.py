@@ -13,8 +13,6 @@ This is not an attempt to reproduce the results of the paper.
 The paper uses  image augmentations
 present in [PyTorch Image Models (timm)](https://github.com/rwightman/pytorch-image-models)
 for training. We haven't done this for simplicity - which causes our validation accuracy to drop.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/0fc344da2cd011ecb0bc3fdb2e774a3d)
 """
 
 from labml import experiment

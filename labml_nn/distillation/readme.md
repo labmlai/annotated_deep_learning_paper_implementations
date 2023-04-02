@@ -18,5 +18,3 @@ For instance, when classifying digits, when given an image of digit *7*,
 a generalized model will give a high probability to 7 and a small but non-zero
 probability to 2, while assigning almost zero probability to other digits.
 Distillation uses this information to train a small model better.
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/d6182e2adaf011eb927c91a2a1710932)

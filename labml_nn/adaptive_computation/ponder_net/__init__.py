@@ -58,8 +58,6 @@ The regularization loss biases the network towards taking $\frac{1}{\lambda_p}$ 
  non-zero probabilities for all steps; i.e. promotes exploration.
 
 Here is the [training code `experiment.py`](experiment.html) to train a PonderNet on [Parity Task](../parity.html).
-
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/bfdcea24fa8f11eb89a54df6f6e862b9)
 """
 
 from typing import Tuple
