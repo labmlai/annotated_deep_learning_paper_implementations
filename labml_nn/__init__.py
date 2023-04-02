@@ -14,6 +14,7 @@ We are actively maintaining this repo and adding new
 implementations.
 [![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai) for updates.
 
+## Languages: **[English](https://nn.labml.ai)** | **[Chinese (translated)](https://nn.labml.ai/zh/)**
 
 ## Paper Implementations
 
