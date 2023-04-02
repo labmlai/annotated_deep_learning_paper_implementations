@@ -8,6 +8,6 @@ summary: >
 
 # Gated Linear Units and Variants
 
-* [Experiment that uses `labml.configs`](glu_variants/experiment.html)
-* [Simpler version from scratch](glu_variants/simple.html)
+* [Experiment that uses `labml.configs`](experiment.html)
+* [Simpler version from scratch](simple.html)
 """
