@@ -71,35 +71,34 @@
             <div class='section-link'>
                 <a href='#section-0'>#</a>
             </div>
-            <h1><a href="https://nn.labml.ai/transformers/mlm/index.html">屏蔽语言模型 (MLM)</a></h1>
-<p>这是掩码语言模型（MLM）的 <a href="https://pytorch.org">PyTorch</a> 实现，用于预训练《BERT<a href="https://papers.labml.ai/paper/1810.04805">：用于语言理解的深度双向变换器的预训练》一文中介绍的BER</a> T模型。</p>
+            <h1><a href="https://nn.labml.ai/transformers/mlm/index.html">蒙面语言模型 (MLM)</a></h1>
+<p>这是掩码语言模型 (MLM) 的 <a href="https://pytorch.org">PyTorch</a> 实现，用于预训白文《BERT<a href="https://papers.labml.ai/paper/1810.04805">：预训练深度双向转换器以促进语言理解》中介绍的 BER</a> T 模型。</p>
 <h2>BERT 预训练</h2>
-<p>BERT 模型是一种变压器模型。本文使用传销和下一句预测对模型进行了预训练。我们在这里只实现了传销。</p>
-<h3>下一句话预测</h3>
-<p>在<em>下一个句子预测</em>中，模型会给出两个句子，<code  class="highlight"><span></span><span class="n">A</span></code>
+<p>BERT 模型是变压器模型。本文使用 MLM 和下一句预测对模型进行了预训练。我们只在这里实施了传销。</p>
+<h3>下一句预测</h3>
+<p>在<em>下一个句子预测</em>中，给出两个句子，<code  class="highlight"><span></span><span class="n">A</span></code>
 <code  class="highlight"><span></span><span class="n">B</span></code>
-然后模型做出二进制预测，无论后面的句子<code  class="highlight"><span></span><span class="n">B</span></code>
-是否<code  class="highlight"><span></span><span class="n">A</span></code>
-在实际的文本中。该模型有 50％ 的时间是实际的句子对，50％ 的时间是随机句子对。此分类是在应用 MLM 时完成的。<em>我们还没有在这里实现这一点。</em></p>
-<h2>蒙面 LM</h2>
-<p>这会随机掩盖一定百分比的令牌，并训练模型以预测被掩盖的令牌。他们通过用特殊<strong>令牌替换15％的代<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+然后模型对实际文本<code  class="highlight"><span></span><span class="n">A</span></code>
+中后面的句子是否<code  class="highlight"><span></span><span class="n">B</span></code>
+是后面的句子进行二进制预测。该模型有 50% 的时间为实际句子对，50% 的时间为随机句对。这种分类是在应用传销时完成的。<em>我们还没有在这里实现这一点。</em></p>
+<h2>Masked LM</h2>
+<p>这会随机掩盖一定比例的代币，并训练模型预测被掩码的代币。他们通过用特殊<strong>代币替换15％的代<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
 币来掩盖</strong>它们。</p>
-<p>损失仅在预测屏蔽令牌时计算。这会在微调和实际使用期间造成问题，因为当时没有<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
-令牌。因此，我们可能无法得到任何有意义的表示。</p>
-<p>为了克服这个问题，<strong>10％的被掩盖的令牌被替换为原始令牌</strong>，另外 <strong>10％的蒙面令牌被随机令牌替换</strong>。这将训练模型以提供有关实际令牌的表示，无论该位置的输入令牌是否为 a<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
-。用随机令牌替换会使它给出一个包含来自上下文信息的表示；因为它必须使用上下文来修复随机替换的标记。</p>
+<p>损失仅通过预测被掩码的代币来计算。这在微调和实际使用过程中会导致问题，因为当时没有<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+令牌。因此，我们可能得不到任何有意义的陈述。</p>
+<p>为了克服这个问题<strong>，10％的蒙面代币被替换为原始代币</strong>，另外 <strong>10％的蒙面代币被随机代币所取代</strong>。无论该位置的输入代币是否为，这都会训练模型给出有关实际代币的表现形式<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+。用随机代币替换会使它给出的表现形式也包含来自上下文的信息；因为它必须使用上下文来修复随机替换的标记。</p>
 <h2>训练</h2>
-<p>MLM 比自回归模型更难训练，因为它们的训练信号较小。也就是说，每个样本中只有一小部分预测是训练的。</p>
-<p>另一个问题是，由于模型是双向的，因此任何令牌都可以看到任何其他令牌。这使得 “信用分配” 变得更加困难。假设你有角色等级模型试图预测<code  class="highlight"><span></span><span class="n">home</span> <span class="o">*</span><span class="n">s</span> <span class="n">where</span> <span class="n">i</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span></code>
-。至少在训练的早期阶段，很难弄清楚为什么要替换<code  class="highlight"><span></span><span class="n">i</span></code>
-，可能是整句话中的任何东西。<code  class="highlight"><span></span><span class="o">*</span></code>
-同时，在自回归环境中，模型只需要<code  class="highlight"><span></span><span class="n">h</span></code>
-用来预测<code  class="highlight"><span></span><span class="n">o</span></code>
+<p>MLM 比自回归模型更难训练，因为它们的训练信号较小。也就是说，每个样本只训练了一小部分的预测。</p>
+<p>另一个问题是，由于该模型是双向的，因此任何代币都可以看到任何其他代币。这使得 “信用分配” 变得更加困难。假设你有角色等级模型想要预测<code  class="highlight"><span></span><span class="n">home</span> <span class="o">*</span><span class="n">s</span> <span class="n">where</span> <span class="n">i</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span></code>
+。至少在训练的早期阶段，很难弄清楚为什么要用<code  class="highlight"><span></span><span class="o">*</span></code>
+它来代替<code  class="highlight"><span></span><span class="n">i</span></code>
+，可能是整句话中的任何东西。而在自回归环境中，模型只<code  class="highlight"><span></span><span class="n">h</span></code>
+需要用于预测<code  class="highlight"><span></span><span class="n">o</span></code>
 <code  class="highlight"><span></span><span class="n">e</span></code>
 和<code  class="highlight"><span></span><span class="n">hom</span></code>
-预测等等。因此，该模型最初将首先使用较短的上下文进行预测，然后再学习使用较长的上下文。由于 MLM 有这个问题，如果你一开始使用较小的序列长度，然后再使用更长的序列长度，那么训练速度要快得多。</p>
-<p>下面是一个简单<a href="https://nn.labml.ai/transformers/mlm/experiment.html">的 MLM 模型的训练代码</a>。</p>
-<p><a href="https://app.labml.ai/run/3a6d22b6c67111ebb03d6764d13a38d1"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+预测等等。因此，该模型最初将首先在较短的上下文中开始预测，然后学会使用较长的上下文进行预测。由于 MLM 有这个问题，如果你一开始使用较小的序列长度，然后再使用更长的序列长度，那么训练速度会快得多。</p>
+<p>这是简单 MLM 模型的<a href="https://nn.labml.ai/transformers/mlm/experiment.html">训练代码</a>。</p>
 
         </div>
         <div class='code'>

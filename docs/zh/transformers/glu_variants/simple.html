@@ -71,30 +71,30 @@
             <div class='section-link'>
                 <a href='#section-0'>#</a>
             </div>
-            <h1>门控线性单位和变体</h1>
-</a><p>这将为自动回归训练一个简单的<a href="../../">变压器模型。我们为<a href="../feed_forward">位置前馈网络</a>尝试不同的变体。</p>
+            <h1>门控线性单元和变体</h1>
+</a><p>这可以训练一个简单的<a href="../../">变压器模型进行自动回归。我们为<a href="../feed_forward">位置前馈网络</a>尝试不同的变体。</p>
 <p><em>这是一个不使用<a href="experiment.html"><code  class="highlight"><span></span><span class="n">labml</span><span class="o">.</span><span class="n">configs</span></code>
-</a>模块的更简单的实现。我们决定编写一个更简单的实现，以使不熟悉的读者更容易使用。</em></p>
-<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/glu_variants/simple.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a><a href="https://app.labml.ai/run/86b773f65fc911ebb2ac0242ac1c0002"><img alt="View Run" src="https://img.shields.io/badge/labml-experiment-brightgreen"></a></p>
+</a>模块的更简单的实现。我们决定编写一个更简单的实现，让不熟悉的读者更容易使用。</em></p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/glu_variants/simple.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">20</span><span></span><span class="kn">import</span> <span class="nn">dataclasses</span>
-<span class="lineno">21</span>
-<span class="lineno">22</span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">24</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
-<span class="lineno">25</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
-<span class="lineno">26</span>
-<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">logger</span>
-<span class="lineno">28</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
-<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml.utils.download</span> <span class="kn">import</span> <span class="n">download_file</span>
-<span class="lineno">30</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">transpose_batch</span>
-<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.noam</span> <span class="kn">import</span> <span class="n">Noam</span>
-<span class="lineno">32</span><span class="kn">from</span> <span class="nn">labml_nn.transformers</span> <span class="kn">import</span> <span class="n">Encoder</span><span class="p">,</span> <span class="n">MultiHeadAttention</span>
-<span class="lineno">33</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
-<span class="lineno">34</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.models</span> <span class="kn">import</span> <span class="n">EmbeddingsWithPositionalEncoding</span><span class="p">,</span> <span class="n">TransformerLayer</span>
-<span class="lineno">35</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">19</span><span></span><span class="kn">import</span> <span class="nn">dataclasses</span>
+<span class="lineno">20</span>
+<span class="lineno">21</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">23</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">24</span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="lineno">25</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">logger</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">28</span><span class="kn">from</span> <span class="nn">labml.utils.download</span> <span class="kn">import</span> <span class="n">download_file</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">transpose_batch</span>
+<span class="lineno">30</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.noam</span> <span class="kn">import</span> <span class="n">Noam</span>
+<span class="lineno">31</span><span class="kn">from</span> <span class="nn">labml_nn.transformers</span> <span class="kn">import</span> <span class="n">Encoder</span><span class="p">,</span> <span class="n">MultiHeadAttention</span>
+<span class="lineno">32</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">33</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.models</span> <span class="kn">import</span> <span class="n">EmbeddingsWithPositionalEncoding</span><span class="p">,</span> <span class="n">TransformerLayer</span>
+<span class="lineno">34</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-1'>
@@ -106,7 +106,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">38</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">37</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -117,8 +117,8 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">43</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_embed</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
-<span class="lineno">44</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">42</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_embed</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+<span class="lineno">43</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -130,7 +130,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">src_embed</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">src_embed</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -142,7 +142,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">48</span>        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">47</span>        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -154,7 +154,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">51</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">generator</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
@@ -166,7 +166,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">53</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">52</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-7'>
@@ -177,7 +177,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">55</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">54</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-8'>
@@ -189,8 +189,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">57</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
-<span class="lineno">58</span>            <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">56</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+<span class="lineno">57</span>            <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-9'>
@@ -203,7 +203,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">60</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">59</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_mask</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -215,7 +215,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">62</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">61</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -227,8 +227,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">65</span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
-<span class="lineno">66</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">64</span><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="lineno">65</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -239,16 +239,16 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">70</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-<span class="lineno">71</span>    <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
-<span class="lineno">72</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
-<span class="lineno">73</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span>
-<span class="lineno">74</span>    <span class="n">n_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
-<span class="lineno">75</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
-<span class="lineno">76</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
-<span class="lineno">77</span>    <span class="n">glu_variant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GLU&#39;</span>
-<span class="lineno">78</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="lineno">79</span>    <span class="n">grad_norm_clip</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">69</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="lineno">70</span>    <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="lineno">71</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="lineno">72</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="lineno">73</span>    <span class="n">n_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="lineno">74</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="lineno">75</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
+<span class="lineno">76</span>    <span class="n">glu_variant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GLU&#39;</span>
+<span class="lineno">77</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="lineno">78</span>    <span class="n">grad_norm_clip</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -260,7 +260,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">82</span><span class="k">class</span> <span class="nc">TinyShakespeareDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">81</span><span class="k">class</span> <span class="nc">TinyShakespeareDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-14'>
@@ -271,7 +271,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">87</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">86</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-15'>
@@ -283,7 +283,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">89</span>        <span class="n">path</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;tiny_shakespeare.txt&#39;</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">88</span>        <span class="n">path</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;tiny_shakespeare.txt&#39;</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-16'>
@@ -295,7 +295,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">91</span>        <span class="n">download_file</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">90</span>        <span class="n">download_file</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-17'>
@@ -307,8 +307,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">93</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<span class="lineno">94</span>            <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">92</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="lineno">93</span>            <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-18'>
@@ -320,7 +320,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">97</span>        <span class="n">chars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">text</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">96</span>        <span class="n">chars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">text</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-19'>
@@ -332,7 +332,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">99</span>        <span class="bp">self</span><span class="o">.</span><span class="n">stoi</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chars</span><span class="p">)}</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">98</span>        <span class="bp">self</span><span class="o">.</span><span class="n">stoi</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chars</span><span class="p">)}</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-20'>
@@ -344,7 +344,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">101</span>        <span class="bp">self</span><span class="o">.</span><span class="n">itos</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chars</span><span class="p">)}</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="bp">self</span><span class="o">.</span><span class="n">itos</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chars</span><span class="p">)}</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
@@ -356,7 +356,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">=</span> <span class="n">seq_len</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">=</span> <span class="n">seq_len</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-22'>
@@ -368,7 +368,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">105</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">104</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-23'>
@@ -380,7 +380,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">107</span>    <span class="k">def</span> <span class="nf">text_to_i</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">106</span>    <span class="k">def</span> <span class="nf">text_to_i</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-24'>
@@ -391,7 +391,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">111</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">stoi</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">110</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">stoi</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-25'>
@@ -405,7 +405,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">113</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">112</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-26'>
@@ -416,7 +416,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">119</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">-</span> <span class="mi">1</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">118</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">-</span> <span class="mi">1</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-27'>
@@ -428,7 +428,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">121</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">120</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-28'>
@@ -439,7 +439,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">125</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">124</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-29'>
@@ -451,7 +451,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">128</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">127</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-30'>
@@ -462,7 +462,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">133</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">132</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-31'>
@@ -474,9 +474,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">135</span>        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
-<span class="lineno">136</span>        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-<span class="lineno">137</span>            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">134</span>        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+<span class="lineno">135</span>        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+<span class="lineno">136</span>            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-32'>
@@ -488,7 +488,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">139</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">TinyShakespeareDataset</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">seq_len</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">138</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">TinyShakespeareDataset</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">seq_len</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-33'>
@@ -500,10 +500,10 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">141</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
-<span class="lineno">142</span>                                     <span class="n">batch_size</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
-<span class="lineno">143</span>                                     <span class="n">collate_fn</span><span class="o">=</span><span class="n">transpose_batch</span><span class="p">,</span>
-<span class="lineno">144</span>                                     <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">140</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+<span class="lineno">141</span>                                     <span class="n">batch_size</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+<span class="lineno">142</span>                                     <span class="n">collate_fn</span><span class="o">=</span><span class="n">transpose_batch</span><span class="p">,</span>
+<span class="lineno">143</span>                                     <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-34'>
@@ -515,8 +515,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">148</span>        <span class="k">if</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GLU&#39;</span><span class="p">:</span>
-<span class="lineno">149</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">147</span>        <span class="k">if</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GLU&#39;</span><span class="p">:</span>
+<span class="lineno">148</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-35'>
@@ -528,8 +528,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">152</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;Bilinear&#39;</span><span class="p">:</span>
-<span class="lineno">153</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">151</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;Bilinear&#39;</span><span class="p">:</span>
+<span class="lineno">152</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-36'>
@@ -541,8 +541,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">156</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;ReGLU&#39;</span><span class="p">:</span>
-<span class="lineno">157</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">155</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;ReGLU&#39;</span><span class="p">:</span>
+<span class="lineno">156</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-37'>
@@ -554,8 +554,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">160</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GEGLU&#39;</span><span class="p">:</span>
-<span class="lineno">161</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">159</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GEGLU&#39;</span><span class="p">:</span>
+<span class="lineno">160</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-38'>
@@ -567,8 +567,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">165</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;SwiGLU&#39;</span><span class="p">:</span>
-<span class="lineno">166</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">164</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;SwiGLU&#39;</span><span class="p">:</span>
+<span class="lineno">165</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span><span class="p">(),</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-39'>
@@ -580,8 +580,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">169</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;ReLU&#39;</span><span class="p">:</span>
-<span class="lineno">170</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">())</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">168</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;ReLU&#39;</span><span class="p">:</span>
+<span class="lineno">169</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">())</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-40'>
@@ -593,10 +593,10 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">173</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GELU&#39;</span><span class="p">:</span>
-<span class="lineno">174</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">())</span>
-<span class="lineno">175</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">176</span>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown variant </span><span class="si">{</span><span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">172</span>        <span class="k">elif</span> <span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span> <span class="o">==</span> <span class="s1">&#39;GELU&#39;</span><span class="p">:</span>
+<span class="lineno">173</span>            <span class="n">ffn</span> <span class="o">=</span> <span class="n">FeedForward</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">())</span>
+<span class="lineno">174</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">175</span>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown variant </span><span class="si">{</span><span class="n">configs</span><span class="o">.</span><span class="n">glu_variant</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-41'>
@@ -608,7 +608,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">179</span>        <span class="n">n_chars</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">stoi</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">178</span>        <span class="n">n_chars</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">stoi</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-42'>
@@ -620,7 +620,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">182</span>        <span class="n">mha</span> <span class="o">=</span> <span class="n">MultiHeadAttention</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">181</span>        <span class="n">mha</span> <span class="o">=</span> <span class="n">MultiHeadAttention</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-43'>
@@ -632,8 +632,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">184</span>        <span class="n">transformer_layer</span> <span class="o">=</span> <span class="n">TransformerLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">self_attn</span><span class="o">=</span><span class="n">mha</span><span class="p">,</span> <span class="n">src_attn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="lineno">185</span>                                             <span class="n">feed_forward</span><span class="o">=</span><span class="n">ffn</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">183</span>        <span class="n">transformer_layer</span> <span class="o">=</span> <span class="n">TransformerLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">self_attn</span><span class="o">=</span><span class="n">mha</span><span class="p">,</span> <span class="n">src_attn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="lineno">184</span>                                             <span class="n">feed_forward</span><span class="o">=</span><span class="n">ffn</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-44'>
@@ -645,9 +645,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">191</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoregressiveModel</span><span class="p">(</span><span class="n">EmbeddingsWithPositionalEncoding</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_chars</span><span class="p">),</span>
-<span class="lineno">192</span>                                         <span class="n">Encoder</span><span class="p">(</span><span class="n">transformer_layer</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">n_layers</span><span class="p">),</span>
-<span class="lineno">193</span>                                         <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_chars</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">190</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoregressiveModel</span><span class="p">(</span><span class="n">EmbeddingsWithPositionalEncoding</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_chars</span><span class="p">),</span>
+<span class="lineno">191</span>                                         <span class="n">Encoder</span><span class="p">(</span><span class="n">transformer_layer</span><span class="p">,</span> <span class="n">configs</span><span class="o">.</span><span class="n">n_layers</span><span class="p">),</span>
+<span class="lineno">192</span>                                         <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_chars</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-45'>
@@ -659,7 +659,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">196</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">195</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-46'>
@@ -671,7 +671,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">199</span>        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">Noam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">2_000</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">Noam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">2_000</span><span class="p">,</span> <span class="n">d_model</span><span class="o">=</span><span class="n">configs</span><span class="o">.</span><span class="n">d_model</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-47'>
@@ -683,7 +683,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">202</span>        <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">201</span>        <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-48'>
@@ -696,7 +696,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">epochs</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">204</span>        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">epochs</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-49'>
@@ -708,7 +708,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">207</span>        <span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">grad_norm_clip</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">206</span>        <span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span> <span class="o">=</span> <span class="n">configs</span><span class="o">.</span><span class="n">grad_norm_clip</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-50'>
@@ -720,7 +720,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">210</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;loss.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">209</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;loss.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-51'>
@@ -732,7 +732,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">212</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">211</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-52'>
@@ -744,7 +744,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">218</span>        <span class="n">prompt</span> <span class="o">=</span> <span class="s1">&#39;It is&#39;</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">217</span>        <span class="n">prompt</span> <span class="o">=</span> <span class="s1">&#39;It is&#39;</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-53'>
@@ -756,7 +756,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">220</span>        <span class="n">log</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">219</span>        <span class="n">log</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-54'>
@@ -768,7 +768,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">222</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">221</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-55'>
@@ -780,8 +780,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">224</span>            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="lineno">225</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">223</span>            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">224</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-56'>
@@ -793,7 +793,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">227</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">226</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-57'>
@@ -805,7 +805,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">229</span>            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">228</span>            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-58'>
@@ -817,7 +817,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">231</span>            <span class="n">prompt</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">230</span>            <span class="n">prompt</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-59'>
@@ -829,7 +829,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">233</span>            <span class="n">log</span> <span class="o">+=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">232</span>            <span class="n">log</span> <span class="o">+=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-60'>
@@ -841,7 +841,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">236</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">235</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-61'>
@@ -853,7 +853,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">238</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">237</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-62'>
@@ -865,7 +865,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">244</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">243</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-63'>
@@ -877,7 +877,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">246</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataloader</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">245</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataloader</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-64'>
@@ -889,7 +889,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">248</span>                <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">247</span>                <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-65'>
@@ -901,7 +901,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">251</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">250</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-66'>
@@ -913,7 +913,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">254</span>                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">253</span>                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-67'>
@@ -925,7 +925,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">256</span>                <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">255</span>                <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-68'>
@@ -937,7 +937,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">259</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">target</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">258</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">target</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-69'>
@@ -949,7 +949,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">261</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.train&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">260</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.train&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-70'>
@@ -961,7 +961,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">264</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">263</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-71'>
@@ -973,7 +973,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">266</span>                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">265</span>                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-72'>
@@ -985,7 +985,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">268</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">267</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-73'>
@@ -997,8 +997,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">270</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">271</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">269</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">270</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-74'>
@@ -1010,7 +1010,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">273</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">272</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-75'>
@@ -1022,10 +1022,10 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">276</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">277</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-<span class="lineno">278</span>                    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-<span class="lineno">279</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">275</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">276</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="lineno">277</span>                    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+<span class="lineno">278</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-76'>
@@ -1037,8 +1037,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">282</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">283</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">281</span>                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">282</span>                    <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-77'>
@@ -1050,7 +1050,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">286</span>            <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">285</span>            <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-78'>
@@ -1061,7 +1061,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">289</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">288</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-79'>
@@ -1073,7 +1073,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">291</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;glu_variants&quot;</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">290</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;glu_variants&quot;</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-80'>
@@ -1085,7 +1085,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">293</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">292</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-81'>
@@ -1097,7 +1097,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">295</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">configs</span><span class="p">))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">294</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">configs</span><span class="p">))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-82'>
@@ -1109,7 +1109,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">298</span>    <span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">297</span>    <span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-83'>
@@ -1121,7 +1121,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">300</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">trainer</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">299</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">trainer</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-84'>
@@ -1133,7 +1133,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">303</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">302</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-85'>
@@ -1145,11 +1145,11 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">305</span>        <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <div class="highlight"><pre><span class="lineno">304</span>        <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="lineno">305</span>
 <span class="lineno">306</span>
-<span class="lineno">307</span>
-<span class="lineno">308</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">309</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+<span class="lineno">307</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">308</span>    <span class="n">main</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='footer'>
