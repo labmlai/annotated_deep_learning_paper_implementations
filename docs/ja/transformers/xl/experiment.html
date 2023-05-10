@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="この実験では、小さなシェイクスピアデータセットでトランスフォーマー XL モデルをトレーニングします。"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="トランスフォーマー XL 実験"/>
+    <meta name="twitter:description" content="この実験では、小さなシェイクスピアデータセットでトランスフォーマー XL モデルをトレーニングします。"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/xl/experiment.html"/>
+    <meta property="og:title" content="トランスフォーマー XL 実験"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="トランスフォーマー XL 実験"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="トランスフォーマー XL 実験"/>
+    <meta property="og:description" content="この実験では、小さなシェイクスピアデータセットでトランスフォーマー XL モデルをトレーニングします。"/>
+
+    <title>トランスフォーマー XL 実験</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/xl/experiment.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">xl</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/xl/experiment.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>トランスフォーマー XL 実験</h1>
+<p>これは、トランスフォーマー xl モデルをトレーニングするための注釈付きの PyTorch 実験です。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">11</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="lineno">12</span>
+<span class="lineno">13</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">14</span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">16</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">logger</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_helpers.metrics.simple_state</span> <span class="kn">import</span> <span class="n">SimpleStateModule</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">BatchIndex</span><span class="p">,</span> <span class="n">hook_model_outputs</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">NLPAutoRegressionConfigs</span>
+<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.xl</span> <span class="kn">import</span> <span class="n">TransformerXL</span><span class="p">,</span> <span class="n">TransformerXLLayer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>自動回帰モデル</h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">26</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">31</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">TransformerXL</span><span class="p">):</span>
+<span class="lineno">32</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>トークン埋め込みモジュール</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">34</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_vocab</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>変圧器</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">36</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>最終レイヤー</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>マスク</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">40</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">41</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">43</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>メモリの長さ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">45</span>        <span class="n">m_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">mem</span> <span class="k">else</span> <span class="mi">0</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>トークンのマスクを後から作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="lineno">48</span>            <span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span>
+<span class="lineno">49</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>メモリ用のオールワン (フルビジビリティ) マスクを作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">51</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">m_len</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="lineno">52</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">m_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>メモリがある場合はマスクを連結してください</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">55</span>        <span class="k">if</span> <span class="n">m_len</span><span class="p">:</span>
+<span class="lineno">56</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="n">m_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>それ以外の場合は、後続のマスクを使用してください。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">58</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">59</span>            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>トークンの埋め込み</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">62</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>変圧器に通してください</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>        <span class="n">res</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mem</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>次のトークンのロジットを生成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">mem</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <h2>コンフィギュレーション</h2>
+<p>デフォルトの設定は、実験を開始したときに上書きでき、また上書きされます。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">71</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">NLPAutoRegressionConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">78</span>    <span class="n">model</span><span class="p">:</span> <span class="n">AutoregressiveModel</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>トークンの埋め込みサイズ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>アテンションヘッドの数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">83</span>    <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>脱落確率</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">85</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>FFN 隠れレイヤーのフィーチャ数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>変圧器層の数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">89</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>保存するメモリの数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">91</span>    <span class="n">mem_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>トレーニングと検証を切り替えるときにメモリを維持するステートモジュール</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">93</span>    <span class="n">memory</span> <span class="o">=</span> <span class="n">SimpleStateModule</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>トラッカー構成を設定</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">97</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;accuracy.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="lineno">98</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;loss.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>モジュール出力をログに記録するフックを追加</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>これにより、精度メトリックの統計情報とメモリがトレーニングと検証用に別々に保持されます。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">102</span>        <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>記憶を連結し、古い記憶を削除して、記憶を最大限に活用してください。<code  class="highlight"><span></span><span class="n">mem_len</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span>    <span class="k">def</span> <span class="nf">merge_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>メモリを使用しないように設定されている場合</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">111</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">112</span>            <span class="k">return</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>古いメモリと連結</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">115</span>        <span class="k">if</span> <span class="n">old_mem</span><span class="p">:</span>
+<span class="lineno">116</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">old_mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)]</span>
+<span class="lineno">117</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">118</span>            <span class="n">mem</span> <span class="o">=</span> <span class="n">new_mem</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>古い思い出を切り捨てる</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span><span class="p">:</span>
+<span class="lineno">122</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span><span class="p">:]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">125</span>        <span class="k">return</span> <span class="n">mem</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <h3>トレーニング/検証ステップ</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>データをデバイスに移動</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>トレーニングモード時にグローバルステップ (処理されたトークンの数) を更新</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">137</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>モデル出力をキャプチャするかどうか</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>思い出をゲット</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">142</span>            <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>モデルを実行</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>            <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>マージメモリ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">146</span>            <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>メモリーを更新</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">148</span>            <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>クロスエントロピー損失の計算と記録</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">152</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>精度の計算と記録</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">155</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">156</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">track</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>モデルのトレーニング</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">159</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>勾配の計算</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">161</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>クリップグラデーション</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">163</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            <p>最適化の一歩を踏み出す</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">165</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>各エポックの最後のバッチでモデルパラメータと勾配を記録します</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">167</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">:</span>
+<span class="lineno">168</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            <p>グラデーションをクリア</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">170</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p>追跡したメトリクスを保存する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">173</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            <h3>トレーニング中に定期的にサンプルを生成するサンプリング機能</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">175</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <p>起動プロンプト</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">181</span>        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>印刷用の出力を収集</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">183</span>        <span class="n">log</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>記憶</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">185</span>        <span class="n">mem</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>25トークンのサンプル</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">187</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>プロンプトをトークン化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">189</span>            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>デバイスに移動</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">191</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>モデル出力を取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">193</span>            <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p>モデル予測を取得 (欲張り)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">195</span>            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-61'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-61'>#</a>
+            </div>
+            <p>予測をプロンプトに追加</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">197</span>            <span class="n">prompt</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-62'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-62'>#</a>
+            </div>
+            <p>次のイテレーションでは最後の文字だけをモデルにフィードし、残りはメモリとして残ります</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">199</span>            <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-63'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-63'>#</a>
+            </div>
+            <p>ロギング用の予測を追加</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">201</span>            <span class="n">log</span> <span class="o">+=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-64'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-64'>#</a>
+            </div>
+            <p>メモリを更新</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">203</span>            <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-65'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-65'>#</a>
+            </div>
+            <p>サンプル出力を印刷する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">206</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-66'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-66'>#</a>
+            </div>
+            <h3>自己回帰モデルを初期化</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">209</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="lineno">210</span><span class="k">def</span> <span class="nf">autoregressive_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-67'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-67'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">214</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.xl</span> <span class="kn">import</span> <span class="n">RelativeMultiHeadAttention</span>
+<span class="lineno">215</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">216</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">AutoregressiveModel</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_tokens</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">TransformerXL</span><span class="p">(</span>
+<span class="lineno">217</span>        <span class="n">TransformerXLLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span>
+<span class="lineno">218</span>                           <span class="n">self_attn</span><span class="o">=</span><span class="n">RelativeMultiHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">219</span>                           <span class="n">feed_forward</span><span class="o">=</span><span class="n">FeedForward</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">220</span>                           <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">n_layers</span><span class="p">))</span>
+<span class="lineno">221</span>    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-68'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-68'>#</a>
+            </div>
+            <h3>実験を実行する</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-69'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-69'>#</a>
+            </div>
+            <p>実験を作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">229</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;transformer_xl&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-70'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-70'>#</a>
+            </div>
+            <p>コンフィグの作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">231</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-71'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-71'>#</a>
+            </div>
+            <p>構成をロード</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">233</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-72'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-72'>#</a>
+            </div>
+            <p>オーバーライドする設定の辞書</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">235</span>                       <span class="p">{</span><span class="s1">&#39;tokenizer&#39;</span><span class="p">:</span> <span class="s1">&#39;character&#39;</span><span class="p">,</span>
+<span class="lineno">236</span>                        <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span>
+<span class="lineno">237</span>                        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="lineno">238</span>                        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Noam&#39;</span><span class="p">,</span>
+<span class="lineno">239</span>                        <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="s1">&#39;It is&#39;</span><span class="p">,</span>
+<span class="lineno">240</span>                        <span class="s1">&#39;prompt_separator&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="lineno">241</span>
+<span class="lineno">242</span>                        <span class="s1">&#39;train_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_train_loader&#39;</span><span class="p">,</span>
+<span class="lineno">243</span>                        <span class="s1">&#39;valid_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_valid_loader&#39;</span><span class="p">,</span>
+<span class="lineno">244</span>
+<span class="lineno">245</span>                        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+<span class="lineno">246</span>                        <span class="s1">&#39;mem_len&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<span class="lineno">247</span>                        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+<span class="lineno">248</span>                        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<span class="lineno">249</span>                        <span class="s1">&#39;inner_iterations&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
+<span class="lineno">250</span>                        <span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-73'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-73'>#</a>
+            </div>
+            <p>保存および読み込み用のモデルを設定する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">253</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-74'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-74'>#</a>
+            </div>
+            <p>実験を始める</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">256</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-75'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-75'>#</a>
+            </div>
+            <p><code  class="highlight"><span></span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">run</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">258</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-76'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-76'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">262</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">263</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

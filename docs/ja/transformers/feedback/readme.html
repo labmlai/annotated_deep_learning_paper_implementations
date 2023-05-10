@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="フィードバック変圧器"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/feedback/readme.html"/>
+    <meta property="og:title" content="フィードバック変圧器"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="フィードバック変圧器"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="フィードバック変圧器"/>
+    <meta property="og:description" content=""/>
+
+    <title>フィードバック変圧器</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/feedback/readme.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">feedback</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/feedback/readme.md" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="https://nn.labml.ai/transformers/feedback/index.html">フィードバック変圧器</a></h1>
+<p>これは、<a href="https://papers.labml.ai/paper/2002.09402">フィードバックメモリを用いたシーケンシャル・トランスフォーマーの高位表現へのアクセスに関する論文</a>「<a href="https://pytorch.org">PyTorch」のPyTorch実装です</a>。</p>
+<p>通常のトランスフォーマーはトークンを並行して処理します。各トランス層は、前の層の出力に注目します。フィードバックトランスは、前のステップのすべてのレイヤーの出力に注目します。そのため、これによって繰り返しが発生し、トークンごとに処理する必要があります。これにより、トレーニングが大幅に遅くなります（シーケンスの長さにもよりますが、約5倍から10倍です）。ただし、Feedback Transformerを予測する場合、メモリベクトルをキャッシュすれば次のトークンを予測できるため、より高速です</p>。
+<p>トレーニングをスピードアップするために、この論文では短いシーケンス長から始めて、徐々に長くする方法について説明します。また、事前学習済みの並列変圧器を出発点として使用する方法についても説明します</p>。
+<p>オリジナルのフィードバックトランスは、すべてのレイヤーの出力を保持するわけではありません。代わりに、すべてのレイヤーの出力の加重合計が保持されます。これにより、予測中のキャッシュに使用されるメモリが減ります。このファイルの前半はこれを実装しています。</p>
+<p>更新されたフィードバックトランスフォーマーは、キーと値の計算に使用される重みをレイヤー間で共有します。その後、各ステップのキーと値を一度だけ計算し、キャッシュに保存します。<a href="#shared_kv">このファイルの後半はこれを実装しています</a>。パフォーマンスを向上させるために、カスタム PyTorch 関数を実装しました</p>。
+<p>Tiny <a href="experiment.html">Shakespeareデータセットのフィードバックトランスフォーマーをトレーニングするためのトレーニングコードとノートブックは次のとおりです</a>。</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/feedback/experiment.ipynb">コラボノートブック</a></p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/feedback/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
+
+        </div>
+        <div class='code'>
+            
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

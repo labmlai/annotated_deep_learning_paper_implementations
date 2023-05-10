@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="マスクド・ランゲージ・モデル (MLM)"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/mlm/readme.html"/>
+    <meta property="og:title" content="マスクド・ランゲージ・モデル (MLM)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="マスクド・ランゲージ・モデル (MLM)"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="マスクド・ランゲージ・モデル (MLM)"/>
+    <meta property="og:description" content=""/>
+
+    <title>マスクド・ランゲージ・モデル (MLM)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/mlm/readme.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">mlm</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/mlm/readme.md" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="https://nn.labml.ai/transformers/mlm/index.html">マスクド・ランゲージ・モデル (MLM)</a></h1>
+<p>これは、論文「BERT<a href="https://papers.labml.ai/paper/1810.04805">：言語理解のためのディープ双方向トランスフォーマーの事前トレーニング」で紹介されているBERTモデルの事前トレーニングに使用される、マスクド・ランゲージ・モデル（MLM）<a href="https://pytorch.org">のPyTorch実装です</a></a>。</p>
+<h2>BERT プレトレーニング</h2>
+<p>BERT モデルはトランスモデルです。この論文では、MLMと次の文章予測を使用してモデルを事前にトレーニングしています。ここではMLMを実装しただけです</p>。
+<h3>次の文の予測</h3>
+<p><em>次の文予測では</em>、<code  class="highlight"><span></span><span class="n">A</span></code>
+モデルに2つの文が与えられ、<code  class="highlight"><span></span><span class="n">B</span></code>
+<code  class="highlight"><span></span><span class="n">A</span></code>
+モデルが実際のテキストに続く文かどうかをバイナリ予測します。<code  class="highlight"><span></span><span class="n">B</span></code>
+モデルには、50% の確率で実際の文のペアが入力され、50% の確率でランダムなペアが入力されます。この分類はMLMを適用する際に行われます。<em>ここではこれを実装していません。</em></p>
+<h2>マスクドLM</h2>
+<p>これにより、トークンのパーセンテージがランダムにマスクされ、マスクされたトークンを予測するようにモデルをトレーニングします。<strong><code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+トークンの15％を特別なトークンに置き換えることでマスクします</strong>。</p>
+<p>損失は、マスクされたトークンの予測のみに基づいて計算されます。<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+その時点ではトークンがないため、微調整や実際の使用中に問題が発生します。したがって、意味のある表現が得られない可能性があります</p>。
+<p>これを克服するには、<strong>マスクされたトークンの 10% が元のトークンに置き換えられ</strong>、<strong>さらに 10% のマスクされたトークンがランダムなトークンに置き換えられます</strong>。これにより、<code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+その位置の入力トークンがaであるかどうかに関係なく、実際のトークンについて表現するようにモデルをトレーニングします。また、ランダムなトークンに置き換えると、コンテキストからの情報も含む表現になります。ランダムに置き換えられたトークンを修正するにはコンテキストを使用する必要があるためです。</p>
+<h2>トレーニング</h2>
+<p>MLM はトレーニング信号が小さいため、自己回帰モデルよりもトレーニングが困難です。つまり、サンプルごとにトレーニングされる予測の割合はごくわずかです。</p>
+<p>もう一つの問題は、モデルが双方向なので、どのトークンも他のトークンを見ることができるということです。これにより、「クレジットの割り当て」が難しくなります。キャラクターレベルのモデルが予測しようとしているとしましょう<code  class="highlight"><span></span><span class="n">home</span> <span class="o">*</span><span class="n">s</span> <span class="n">where</span> <span class="n">i</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span></code>
+。少なくともトレーニングの初期段階では、なぜ置換が必要なのかを理解するのは非常に難しいでしょう。文章全体から何でもかまいません。<code  class="highlight"><span></span><span class="o">*</span></code>
+ <code  class="highlight"><span></span><span class="n">i</span></code>
+一方、自己回帰設定では、<code  class="highlight"><span></span><span class="n">h</span></code>
+<code  class="highlight"><span></span><span class="n">o</span></code>
+<code  class="highlight"><span></span><span class="n">hom</span></code>
+モデルは予測や予測などに使用するだけで済みます<code  class="highlight"><span></span><span class="n">e</span></code>
+。そのため、モデルは最初に短いコンテキストで予測を開始し、後で長いコンテキストの使用方法を学習します。MLMにはこの問題があるため、最初は短いシーケンス長から始めて、後で長いシーケンス長を使用する方がトレーニングがはるかに速くなります</p>。
+<p><a href="https://nn.labml.ai/transformers/mlm/experiment.html">シンプルなMLMモデルのトレーニングコードは次のとおりです</a>。</p>
+
+        </div>
+        <div class='code'>
+            
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

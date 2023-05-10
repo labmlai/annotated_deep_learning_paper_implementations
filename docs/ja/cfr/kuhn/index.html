@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="これはKuhn PokerでのCFRの注釈付き実装/チュートリアルです"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="クーンポーカーのCFR"/>
+    <meta name="twitter:description" content="これはKuhn PokerでのCFRの注釈付き実装/チュートリアルです"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <meta property="og:title" content="クーンポーカーのCFR"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="クーンポーカーのCFR"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="クーンポーカーのCFR"/>
+    <meta property="og:description" content="これはKuhn PokerでのCFRの注釈付き実装/チュートリアルです"/>
+
+    <title>クーンポーカーのCFR</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">cfr</a>
+                <a class="parent" href="index.html">kuhn</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/cfr/kuhn/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Kuhn <a href="../index.html">ポーカーにおける反事実に基づく後悔最小化 (CFR)</a></h1>
+<p><a href="../index.html">これは反事実に基づく後悔最小化 (CFR)</a> をクーンポーカーにも適用します。</p>
+<p><a href="https://en.wikipedia.org/wiki/Kuhn_poker">Kuhn Pokerは</a>、2人用の3カードベッティングゲームです。プレイヤーには、エース、キング、クイーンのカードがそれぞれ1枚ずつ配られます（スーツなし）。パックにはカードが3枚しかないので、1枚のカードは残ります。通常のカードランキングと同じように、エースがキングとクイーン、キングがクイーンを倒します</p>。
+<p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>どちらのプレイヤーもアンティチップ（<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>盲目的にチップをベットする）。カードを見た後、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>最初のプレーヤーはパスまたはチップをベットできます。最初のプレーヤーがパスした場合、高いカードを持っているプレーヤーがポットを獲得します。最初のプレーヤーがベットした場合、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> 2番目のプレーはチップまたはパス（つまりフォールド）をベット（つまりコール）できます。2人目のプレイヤーがベットし、高い方のカードを持っているプレイヤーがポットを獲得した場合。2人目のプレイヤーがパス (つまりフォールド) すると、最初のプレイヤーがポットを獲得します。このゲームは繰り返しプレイされるため、優れた戦略を立てることで長期的な効用（または賞金）を狙うことができます</p>。
+<p>ゲームの例をいくつか示します。</p>
+<ul><li><code  class="highlight"><span></span><span class="n">KAp</span></code>
+-プレイヤー 1 は K、プレイヤー 2 は A プレイヤー 1 のパス。プレイヤー 2 にはベットチャンスがなく、プレイヤー 2 <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span> はポットのチップを獲得します</li>。
+<li><code  class="highlight"><span></span><span class="n">QKbp</span></code>
+-プレイヤー1はQ、プレイヤー2はK、プレイヤー1はチップをベットします。プレイヤー 2 パス (フォールド)。<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style="">4</span></span></span></span></span></span>プレイヤー2がフォールドしたため、プレイヤー1はポットを獲得します</li>。
+<li><code  class="highlight"><span></span><span class="n">QAbb</span></code>
+-プレイヤー 1 は Q、プレイヤー 2 は A プレイヤー 1 がチップをベットします。プレイヤー 2 もベット (コール) します。プレイヤー2がポットを獲得します<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style="">4</span></span></span></span></span></span>。</li></ul>
+<p>そこで、<code  class="highlight"><span></span><span class="n">InfoSet</span></code>
+<code  class="highlight"><span></span><span class="n">History</span></code>
+クラスとクラスを Kuhn <a href="../index.html"><code  class="highlight"><span></span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span></code>
+</a>Pokerの仕様で拡張しています。</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/cfr/kuhn/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">37</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="lineno">38</span>
+<span class="lineno">39</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">40</span>
+<span class="lineno">41</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
+<span class="lineno">42</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml_nn.cfr</span> <span class="kn">import</span> <span class="n">History</span> <span class="k">as</span> <span class="n">_History</span><span class="p">,</span> <span class="n">InfoSet</span> <span class="k">as</span> <span class="n">_InfoSet</span><span class="p">,</span> <span class="n">Action</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">CFRConfigs</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.cfr.infoset_saver</span> <span class="kn">import</span> <span class="n">InfoSetSaver</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>Kuhn ポーカーのアクションはパス (<code  class="highlight"><span></span><span class="n">p</span></code>
+) またはベット (<code  class="highlight"><span></span><span class="n">b</span></code>
+)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span><span class="n">ACTIONS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>場に出ている3枚のカードは、エース、キング、クイーンの3枚です。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">49</span><span class="n">CHANCES</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>プレイヤーは2人います</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">51</span><span class="n">PLAYERS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Player</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <h2><a href="../index.html#InfoSet">情報セット</a></h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">54</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">(</span><span class="n">_InfoSet</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>保存/読み込みはサポートしていません</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">59</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">60</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">62</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>アクションのリストを返します。<code  class="highlight"><span></span><span class="n">History</span></code>
+端末の状態はクラスごとに処理されます。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>        <span class="k">return</span> <span class="n">ACTIONS</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>人間が読める文字列表現-ベッティングの確率を教えてくれます</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="lineno">75</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+<span class="lineno">76</span>        <span class="n">bet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)]</span> <span class="o">/</span> <span class="n">total</span>
+<span class="lineno">77</span>        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bet</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s1"> .1f</span><span class="si">}</span><span class="s1">%&#39;</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <h2><a href="../index.html#History">歴史</a></h2>
+<p>これにより、ゲームが終了するタイミングを定義し、ユーティリティを計算し、チャンスイベント（ディーリングカード）をサンプリングします。</p>
+<p>履歴は文字列で保存されます。</p>
+<ul><li>最初の 2 文字は、プレイヤー 1 とプレイヤー 2 に配られるカードです。</li>
+<li>3番目のキャラクターは最初のプレイヤーのアクションです</li>
+<li>4番目のキャラクターは2人目のプレイヤーのアクションです</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span><span class="k">class</span> <span class="nc">History</span><span class="p">(</span><span class="n">_History</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>歴史</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">94</span>    <span class="n">history</span><span class="p">:</span> <span class="nb">str</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>与えられた履歴文字列で初期化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">96</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">history</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>履歴が終端か (ゲームオーバー) か。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">102</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>プレイヤーはまだ行動を起こしていません</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">107</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+<span class="lineno">108</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>最後にプレイしたプレイヤーが合格しました (ゲームオーバー)</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">110</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">111</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>両方のプレーヤーがコール（ベット）（ゲームオーバー）</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">113</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">114</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>その他の組み合わせ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">117</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>プレイヤーのターミナルユーティリティを計算し、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight coloredeq eqe" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>    <span class="k">def</span> <span class="nf">_terminal_utility_p1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">+</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>プレイヤー 1 の方が良いカードを持っているか、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">−</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>そうでなければ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span>        <span class="n">winner</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>2 人目のプレーヤーが合格</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bp&#39;</span><span class="p">:</span>
+<span class="lineno">128</span>            <span class="k">return</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>両方のプレイヤーがコールし、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span>良いカードを持っているプレイヤーがチップを獲得します</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">131</span>            <span class="k">return</span> <span class="n">winner</span> <span class="o">*</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>最初のプレーヤーがパスし、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>良いカードを持っているプレーヤーがチップを獲得します</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">134</span>            <span class="k">return</span> <span class="n">winner</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>歴史は終わらない</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">137</span>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>プレイヤー用のターミナルユーティリティを入手 <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathnormal" style="">i</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">139</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>プレイヤー 1 <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathnormal" style="">i</span></span></span></span></span></span> の場合</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">PLAYERS</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+<span class="lineno">145</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>それ以外の場合は、<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight coloredeq eqf" style=""><span class="mord mtight" style="">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight coloredeq eqe" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">147</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">148</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>最初の 2 つのイベントはカードディール、つまりチャンスイベントです。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">150</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>履歴にアクションを追加して新しい履歴を返す</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">156</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">160</span>        <span class="k">return</span> <span class="n">History</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>現在のプレイヤー</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">162</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">166</span>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>チャンスアクションを試してみよう</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">168</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">172</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>カードをランダムに選ぶ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">174</span>            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">CHANCES</span><span class="p">))</span>
+<span class="lineno">175</span>            <span class="n">chance</span> <span class="o">=</span> <span class="n">CHANCES</span><span class="p">[</span><span class="n">r</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>カードが以前に配られたかどうか確認する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">177</span>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+<span class="lineno">178</span>                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">chance</span><span class="p">:</span>
+<span class="lineno">179</span>                    <span class="n">chance</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">180</span>                    <span class="k">break</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>以前に配られていない場合はカードを返却してください</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">183</span>            <span class="k">if</span> <span class="n">chance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">184</span>                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">chance</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>人間が読める表現</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">186</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">190</span>        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>現在の履歴の情報セットキー。これは、現在のプレイヤーにのみ表示される一連のアクションです。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">192</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>現在のプレイヤーを取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">player</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>現在のプレイヤーは自分のカードとベットアクションを見る</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">202</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InfoSet</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>新しい情報セットオブジェクトを作成する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">204</span>        <span class="k">return</span> <span class="n">InfoSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>空の履歴オブジェクトを作成する関数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">207</span><span class="k">def</span> <span class="nf">create_new_history</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">209</span>    <span class="k">return</span> <span class="n">History</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>構成は CFR 構成クラスを拡張します</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">212</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">216</span>    <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p>Kuhn <code  class="highlight"><span></span><span class="n">create_new_history</span></code>
+ ポーカーのメソッドを設定</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">219</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">)</span>
+<span class="lineno">220</span><span class="k">def</span> <span class="nf">_cnh</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span>    <span class="k">return</span> <span class="n">create_new_history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <h3>実験を実行する</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">227</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>実験を行います。追跡情報を書き込むのは、<code  class="highlight"><span></span><span class="n">sqlite</span></code>
+処理をスピードアップするためだけです。アルゴリズムは反復処理が速く、反復のたびにデータを追跡するため、Tensorboard などの他の宛先への書き込みには比較的時間がかかります。私たちの分析にはSQLiteで十分です</p>。
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">236</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;kuhn_poker&#39;</span><span class="p">,</span> <span class="n">writers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;sqlite&#39;</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>構成を初期化</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">238</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>設定をロード</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">240</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>保存するモデルを設定</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">242</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_model_savers</span><span class="p">({</span><span class="s1">&#39;info_sets&#39;</span><span class="p">:</span> <span class="n">InfoSetSaver</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>実験を始める</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">244</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>イテレーションを始める</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">246</span>        <span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">250</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">251</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

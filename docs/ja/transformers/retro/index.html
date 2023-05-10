@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="これは、数兆のトークンから取得することによる言語モデルの改善という論文のPyTorch実装/チュートリアルです。テキストのチャンクから成るキーバリューデータベースを構築し、それらを取得して予測に使用します。"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="検索機能付きトランスフォーマー (レトロ)"/>
+    <meta name="twitter:description" content="これは、数兆のトークンから取得することによる言語モデルの改善という論文のPyTorch実装/チュートリアルです。テキストのチャンクから成るキーバリューデータベースを構築し、それらを取得して予測に使用します。"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/retro/index.html"/>
+    <meta property="og:title" content="検索機能付きトランスフォーマー (レトロ)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="検索機能付きトランスフォーマー (レトロ)"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="検索機能付きトランスフォーマー (レトロ)"/>
+    <meta property="og:description" content="これは、数兆のトークンから取得することによる言語モデルの改善という論文のPyTorch実装/チュートリアルです。テキストのチャンクから成るキーバリューデータベースを構築し、それらを取得して予測に使用します。"/>
+
+    <title>検索機能付きトランスフォーマー (レトロ)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/retro/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">retro</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/retro/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>検索機能付きトランスフォーマー (レトロ)</h1>
+<p>これは、<a href="https://pytorch.org"><a href="https://papers.labml.ai/paper/2112.04426">数兆のトークンから取得することによる言語モデルの改善という論文をPyTorchで実装したものです</a></a>。</p>
+<p>テキストの塊のデータベースを構築します。これは、チャンクのBERT埋め込みによってキーのインデックスが付けられるキーバリューデータベースです。これらの埋め込みを計算するには、事前にトレーニング済みのフリーズした BERT モデルを使用します。値は、対応するチャンクと、そのチャンクの前に続く同じ長さのテキストです。</p>
+<p>次に、モデルはこのデータベースからモデルへの入力に類似した (最も近い近傍の) テキストを取得します。取得したこれらのテキストは、出力の予測に使用されます</p>。
+<p>検索にはフリーズした BERT モデルを使用するため、トレーニングデータセットのすべての最近傍を事前に計算できます。これにより、トレーニングプロセスがスピードアップします。</p>
+<p>コンポーネント:</p>
+<ul><li><a href="bert_embeddings.html">BERT 埋め込み:テキストのチャンクを</a> BERT に埋め込むためのコード。</li>
+<li><a href="database.html">キーバリューデータベース:チャンクの構築と取得</a></li>
+<li><a href="model.html">モデル</a></li>
+<li><a href="dataset.html">データセット</a>:最も近い近傍を事前計算</li>
+<li><a href="train.html">トレーニングコード</a></li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

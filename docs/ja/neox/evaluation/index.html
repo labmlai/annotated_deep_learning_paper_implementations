@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="LM 評価ハーネスを通じて NLP タスクでモデルを評価するコード"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="評価"/>
+    <meta name="twitter:description" content="LM 評価ハーネスを通じて NLP タスクでモデルを評価するコード"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/neox/evaluation/index.html"/>
+    <meta property="og:title" content="評価"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="評価"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="評価"/>
+    <meta property="og:description" content="LM 評価ハーネスを通じて NLP タスクでモデルを評価するコード"/>
+
+    <title>評価</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/neox/evaluation/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">neox</a>
+                <a class="parent" href="index.html">evaluation</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/neox/evaluation/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>評価</h1>
+<p><a href="https://github.com/EleutherAI/lm-evaluation-harness">Eleutherai/LM-評価ハーネスでモデルをテストするためのコードです</a>。</p>
+<ul><li><a href="half_precision.html">単一の GPU での半精度モデルの評価</a></li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">15</span><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="lineno">17</span>
+<span class="lineno">18</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">19</span><span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">lm_eval</span> <span class="kn">import</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">evaluator</span><span class="p">,</span> <span class="n">utils</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">lm_eval.base</span> <span class="kn">import</span> <span class="n">BaseLM</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">tokenizers</span> <span class="kn">import</span> <span class="n">Tokenizer</span>
+<span class="lineno">23</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">24</span><span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="lineno">25</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml_nn.neox.tokenizer</span> <span class="kn">import</span> <span class="n">get_tokenizer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>評価用ハーネスアダプター</h2>
+<p><a href="https://github.com/EleutherAI/gpt-neox/blob/main/eval_tasks/eval_adapter.py">これはElutherai/GPT-Neoxのアダプターをベースにしています</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span><span class="k">class</span> <span class="nc">EvalHarnessAdapter</span><span class="p">(</span><span class="n">BaseLM</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">tokenizer</span></code>
+<a href="huggingface/tokenizers">ハギングフェイストークナイザーです</a></li>
+<li><code  class="highlight"><span></span><span class="n">vocab_size</span></code>
+はボキャブラリのサイズです (これはトークナイザーのボキャブサイズとは異なります。neoxは埋め込み層モデルを並列化するための追加機能を追加しているからです)。</li>
+<li><code  class="highlight"><span></span><span class="n">batch_size</span></code>
+はバッチサイズ</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Tokenizer</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">45</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
+<span class="lineno">47</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_eot_token_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">token_to_id</span><span class="p">(</span><span class="s2">&quot;&lt;|endoftext|&gt;&quot;</span><span class="p">)</span>
+<span class="lineno">48</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_vocab_size</span> <span class="o">=</span> <span class="n">vocab_size</span>
+<span class="lineno">49</span>
+<span class="lineno">50</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>ボキャブラリーのサイズ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span>    <span class="nd">@property</span>
+<span class="lineno">53</span>    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">54</span>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span>
+<span class="lineno">55</span>
+<span class="lineno">56</span>    <span class="nd">@property</span>
+<span class="lineno">57</span>    <span class="k">def</span> <span class="nf">vocab_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">59</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vocab_size</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>テキスト終了トークン</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">61</span>    <span class="nd">@property</span>
+<span class="lineno">62</span>    <span class="k">def</span> <span class="nf">eot_token_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eot_token_id</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>最大シーケンス長</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>    <span class="nd">@property</span>
+<span class="lineno">67</span>    <span class="k">def</span> <span class="nf">max_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">69</span>        <span class="k">return</span> <span class="mi">2048</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>生成するトークンの最大数</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">71</span>    <span class="nd">@property</span>
+<span class="lineno">72</span>    <span class="k">def</span> <span class="nf">max_gen_toks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>        <span class="k">return</span> <span class="mi">128</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>バッチサイズ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">76</span>    <span class="nd">@property</span>
+<span class="lineno">77</span>    <span class="k">def</span> <span class="nf">batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>与えられたテキストをエンコードする</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">83</span>    <span class="k">def</span> <span class="nf">tok_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">string</span><span class="p">)</span><span class="o">.</span><span class="n">ids</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>トークン ID からテキストをデコード</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">89</span>    <span class="k">def</span> <span class="nf">tok_decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">93</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span>    <span class="k">def</span> <span class="nf">_model_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inps</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">96</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">98</span>    <span class="k">def</span> <span class="nf">_model_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">max_length</span><span class="p">,</span> <span class="n">eos_token_id</span><span class="p">):</span>
+<span class="lineno">99</span>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>    <span class="k">def</span> <span class="nf">greedy_until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requests</span><span class="p">):</span>
+<span class="lineno">102</span>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <h3>次のトークンの対数発生確率を取得</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">requests</span></code>
+コンテキストと予想される継続を含むリクエストのリスト。</li>
+</ul><li><code  class="highlight"><span></span><span class="n">disable_tqdm</span></code>
+True の場合、tqdm プログレスバーを無効にします。</li>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">105</span>    <span class="k">def</span> <span class="nf">_loglikelihood_tokens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requests</span><span class="p">,</span> <span class="n">disable_tqdm</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>結果について</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>同じ長さのシーケンスが近くなるように、リクエストを長さの降順に並べ替えます</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">118</span>        <span class="k">def</span> <span class="nf">_collate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="lineno">119</span>            <span class="n">toks</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="lineno">120</span>            <span class="k">return</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">toks</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">toks</span><span class="p">)</span>
+<span class="lineno">121</span>
+<span class="lineno">122</span>        <span class="n">reord</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">Reorderer</span><span class="p">(</span><span class="n">requests</span><span class="p">,</span> <span class="n">_collate</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p><code  class="highlight"><span></span><span class="n">batch_size</span></code>
+一度に複数のリクエストがあるリクエストをループスルーする</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">125</span>        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">utils</span><span class="o">.</span><span class="n">chunks</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">reord</span><span class="o">.</span><span class="n">get_reordered</span><span class="p">(),</span> <span class="n">disable</span><span class="o">=</span><span class="n">disable_tqdm</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>バッチの入力を保存するには</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>            <span class="n">inps</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>バッチの継続</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">129</span>            <span class="n">continuations</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>入力シーケンスの長さ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">131</span>            <span class="n">inplens</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>バッチ用のパッド入り長さ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>            <span class="n">padded_length</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>チャンク内の各リクエストをループ処理し、パディング付きの PyTorch テンソルにまとめます。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">135</span>            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">context_enc</span><span class="p">,</span> <span class="n">continuation_enc</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>コンテキストと続きを連結する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">137</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">context_enc</span> <span class="o">+</span> <span class="n">continuation_enc</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>サイズが <code  class="highlight"><span></span><span class="n">max_length</span></code>
+</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">139</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>最終トークンを削除</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">141</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>テンソルの作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">143</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p>入力長さ</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">145</span>                <span class="n">inplen</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>パッドの長さを決めてください。短いシーケンスはパディングされます</p>。
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">149</span>                <span class="k">if</span> <span class="n">padded_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">150</span>                    <span class="n">padded_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">inplen</span> <span class="o">/</span> <span class="mi">32</span><span class="p">))</span> <span class="o">*</span> <span class="mi">32</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>padded_length = padded_length が Padded_length でない場合はパディングされた_length、それ以外はプレンなし</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>パディング</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>                <span class="n">padding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">padded_length</span> <span class="o">-</span> <span class="n">inplen</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>パディングを追加</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">157</span>                <span class="n">inp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">inp</span><span class="p">,</span> <span class="n">padding</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">158</span>
+<span class="lineno">159</span>                <span class="n">inps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+<span class="lineno">160</span>                <span class="n">continuations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">continuation_enc</span><span class="p">)</span>
+<span class="lineno">161</span>                <span class="n">inplens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inplen</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>モデルロジットを取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">164</span>            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_call</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">inps</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>ログソフトマックスを取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">167</span>            <span class="n">multi_logits</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>バッチの入力と出力のペアをループ処理します</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">170</span>            <span class="k">for</span> <span class="n">logits</span><span class="p">,</span> <span class="n">inplen</span><span class="p">,</span> <span class="n">cont_toks</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">multi_logits</span><span class="p">,</span> <span class="n">inplens</span><span class="p">,</span> <span class="n">continuations</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p>予測トークンの数を取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">172</span>                <span class="n">contlen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cont_toks</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>それらのログを取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">174</span>                <span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[</span><span class="n">inplen</span> <span class="o">-</span> <span class="n">contlen</span><span class="p">:</span> <span class="n">inplen</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>最も確率の高いトークンを手に入れよう</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">176</span>                <span class="n">greedy_tokens</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>対象トークンを取得</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">178</span>                <span class="n">cont_toks</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">cont_toks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>完全に一致するかどうか</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">180</span>                <span class="n">max_equal</span> <span class="o">=</span> <span class="p">(</span><span class="n">greedy_tokens</span> <span class="o">==</span> <span class="n">cont_toks</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>対象トークンの対数発生可能性</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">182</span>                <span class="n">logits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cont_toks</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            <p>対数推定値の合計と、一致したかどうかを結果に加算します。</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">184</span>                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">max_equal</span><span class="p">)))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p>並べ替えて結果を返す</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">187</span>        <span class="k">return</span> <span class="n">reord</span><span class="o">.</span><span class="n">get_original</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            <h3>与えられた評価を実行</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">189</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">190</span>    <span class="k">def</span> <span class="nf">run_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">eval_tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p><a href="https://github.com/EleutherAI/lm-evaluation-harness">EleutherAI/LM-評価-ハーネスエバリュエーターを実行</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">196</span>        <span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">lm</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_dict</span><span class="o">=</span><span class="n">tasks</span><span class="o">.</span><span class="n">get_task_dict</span><span class="p">(</span><span class="n">eval_tasks</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            <p>構成を追加</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">199</span>        <span class="n">results</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">200</span>            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+<span class="lineno">201</span>        <span class="p">}</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <p></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">204</span>        <span class="k">return</span> <span class="n">results</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <h2>評価用ハーネスアダプター</h2>
+<p><a href="https://github.com/EleutherAI/gpt-neox/blob/main/eval_tasks/eval_adapter.py">これはElutherai/GPT-Neoxのアダプターをベースにしています</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">207</span><span class="k">class</span> <span class="nc">NoeXEvalHarnessAdapter</span><span class="p">(</span><span class="n">EvalHarnessAdapter</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">model</span></code>
+モデルです</li>
+<li><code  class="highlight"><span></span><span class="n">tokenizer</span></code>
+<a href="huggingface/tokenizers">ハギングフェイストークナイザーです</a></li>
+<li><code  class="highlight"><span></span><span class="n">vocab_size</span></code>
+はボキャブラリのサイズです (これはトークナイザーのボキャブサイズとは異なります。neoxは埋め込み層モデルを並列化するための追加機能を追加しているからです)。</li>
+<li><code  class="highlight"><span></span><span class="n">batch_size</span></code>
+はバッチサイズ</li>
+<li><code  class="highlight"><span></span><span class="n">device</span></code>
+モデルのデバイスです</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">214</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Tokenizer</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+<span class="lineno">225</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="lineno">226</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>モデルに電話する</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">228</span>    <span class="k">def</span> <span class="nf">_model_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inps</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">232</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">inps</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <h2>特定のモデルで評価用ハーネスを実行</h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">235</span><span class="k">def</span> <span class="nf">run_eval_harness</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">eval_tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p>トークナイザーをロード</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">241</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Load tokenizer&#39;</span><span class="p">):</span>
+<span class="lineno">242</span>        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-61'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-61'>#</a>
+            </div>
+            <p>何も指定されていない場合はすべてのタスク</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">245</span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">eval_tasks</span><span class="p">:</span>
+<span class="lineno">246</span>        <span class="n">eval_tasks</span> <span class="o">=</span> <span class="p">[</span>
+<span class="lineno">247</span>            <span class="s2">&quot;anli_r1&quot;</span><span class="p">,</span>
+<span class="lineno">248</span>            <span class="s2">&quot;anli_r2&quot;</span><span class="p">,</span>
+<span class="lineno">249</span>            <span class="s2">&quot;anli_r3&quot;</span><span class="p">,</span>
+<span class="lineno">250</span>            <span class="s2">&quot;hellaswag&quot;</span><span class="p">,</span>
+<span class="lineno">251</span>            <span class="s2">&quot;lambada&quot;</span><span class="p">,</span>
+<span class="lineno">252</span>            <span class="s2">&quot;piqa&quot;</span><span class="p">,</span>
+<span class="lineno">253</span>            <span class="s2">&quot;winogrande&quot;</span><span class="p">,</span>
+<span class="lineno">254</span>            <span class="s2">&quot;wsc&quot;</span><span class="p">,</span>
+<span class="lineno">255</span>            <span class="s2">&quot;mathqa&quot;</span><span class="p">,</span>
+<span class="lineno">256</span>        <span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-62'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-62'>#</a>
+            </div>
+            <p>アダプターの作成</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">259</span>    <span class="n">adapter</span> <span class="o">=</span> <span class="n">NoeXEvalHarnessAdapter</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="mi">50_432</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-63'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-63'>#</a>
+            </div>
+            <p>実行</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">262</span>    <span class="k">return</span> <span class="n">adapter</span><span class="o">.</span><span class="n">run_eval</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">eval_tasks</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
