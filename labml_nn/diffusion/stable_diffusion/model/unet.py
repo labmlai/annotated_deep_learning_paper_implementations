@@ -184,7 +184,7 @@ class TimestepEmbedSequential(nn.Sequential):
     """
     ### Sequential block for modules with different inputs
 
-    This sequential module can compose of different modules suck as `ResBlock`,
+    This sequential module can compose of different modules such as `ResBlock`,
     `nn.Conv` and `SpatialTransformer` and calls them with the matching signatures
     """
 
