@@ -137,7 +137,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         # Get sequence length
         seq_len = x.shape[0]
 
-        # $\Theta = {\theta_i = 10000^{\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
+        # $\Theta = {\theta_i = 10000^{-\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
         theta = 1. / (self.base ** (torch.arange(0, self.d, 2).float() / self.d)).to(x.device)
 
         # Create position indexes `[0, 1, ..., seq_len - 1]`
