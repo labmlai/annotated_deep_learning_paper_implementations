@@ -128,7 +128,7 @@ class ResidualBlock(Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
 
         # Shortcut connection should be a projection if the stride length is not $1$
-        # of if the number of channels change
+        # or if the number of channels change
         if stride != 1 or in_channels != out_channels:
             # Projection $W_s x$
             self.shortcut = ShortcutProjection(in_channels, out_channels, stride)
@@ -210,7 +210,7 @@ class BottleneckResidualBlock(Module):
         self.bn3 = nn.BatchNorm2d(out_channels)
 
         # Shortcut connection should be a projection if the stride length is not $1$
-        # of if the number of channels change
+        # or if the number of channels change
         if stride != 1 or in_channels != out_channels:
             # Projection $W_s x$
             self.shortcut = ShortcutProjection(in_channels, out_channels, stride)
