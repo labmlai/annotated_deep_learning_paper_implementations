@@ -15,6 +15,7 @@ summary: >
 * [Noam Optimizer](noam.html)
 * [Rectified Adam Optimizer](radam.html)
 * [AdaBelief Optimizer](ada_belief.html)
+* [Sophia-G Optimizer](sophia.html)
 
 This [MNIST example](mnist_experiment.html) uses these optimizers.
 

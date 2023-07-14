@@ -106,6 +106,7 @@ Solving games with incomplete information such as poker with CFR.
 * [Noam Optimizer](https://nn.labml.ai/optimizers/noam.html)
 * [Rectified Adam Optimizer](https://nn.labml.ai/optimizers/radam.html)
 * [AdaBelief Optimizer](https://nn.labml.ai/optimizers/ada_belief.html)
+* [Sophia-G Optimizer](https://nn.labml.ai/optimizers/sophia.html)
 
 #### ✨ [Normalization Layers](https://nn.labml.ai/normalization/index.html)
 * [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)

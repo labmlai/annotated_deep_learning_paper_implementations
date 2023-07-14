@@ -7,3 +7,4 @@
 * [Noam Optimizer](https://nn.labml.ai/optimizers/noam.html)
 * [Rectified Adam Optimizer](https://nn.labml.ai/optimizers/radam.html)
 * [AdaBelief Optimizer](https://nn.labml.ai/optimizers/ada_belief.html)
+* [Sophia-G Optimizer](https://nn.labml.ai/optimizers/sophia.html)

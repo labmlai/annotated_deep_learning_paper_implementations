@@ -109,6 +109,7 @@ Solving games with incomplete information such as poker with CFR.
 * [Noam Optimizer](optimizers/noam.html)
 * [Rectified Adam Optimizer](optimizers/radam.html)
 * [AdaBelief Optimizer](optimizers/ada_belief.html)
+* [Sophia-G Optimizer](optimizers/sophia.html)
 
 #### ✨ [Normalization Layers](normalization/index.html)
 * [Batch Normalization](normalization/batch_norm/index.html)
