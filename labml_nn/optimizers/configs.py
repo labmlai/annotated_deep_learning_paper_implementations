@@ -67,6 +67,8 @@ class OptimizerConfigs(BaseConfigs):
     # Model embedding size for Noam optimizer
     d_model: int
 
+    rho: float
+
     def __init__(self):
         super().__init__(_primary='optimizer')
 
@@ -135,6 +137,14 @@ def _noam_optimizer(c: OptimizerConfigs):
                 lr=c.learning_rate, betas=c.betas, eps=c.eps,
                 weight_decay=c.weight_decay_obj, amsgrad=c.amsgrad, warmup=c.warmup,
                 d_model=c.d_model)
+
+
+@option(OptimizerConfigs.optimizer, 'Sophia')
+def _sophia_optimizer(c: OptimizerConfigs):
+    from labml_nn.optimizers.sophia import Sophia
+    return Sophia(c.parameters,
+                  lr=c.learning_rate, betas=c.betas, eps=c.eps,
+                  weight_decay=c.weight_decay_obj, rho=c.rho)
 
 
 @option(OptimizerConfigs.optimizer, 'AdamWarmupCosineDecay')
