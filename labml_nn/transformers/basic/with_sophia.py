@@ -1,5 +1,16 @@
+"""
+---
+title: Transformer Auto-Regression Experiment with [Sophia-G optimizer](../../optimizers/sophia.html)
+summary: >
+  This trains a simple transformer model on NLP auto-regression with Sophia-G optimizer.
+---
+
+# Transformer Auto-Regression Experiment with [Sophia-G optimizer](../../optimizers/sophia.html)
+
+This trains a simple transformer introduced in [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
+on an NLP auto-regression task (with Tiny Shakespeare dataset) with [Sophia-G optimizer](../../optimizers/sophia.html).
+"""
 import torch
-from labml.configs import option
 
 from labml import experiment, tracker
 from labml_helpers.train_valid import BatchIndex
@@ -20,7 +31,7 @@ class Configs(TransformerAutoRegressionConfigs):
 
     def step(self, batch: any, batch_idx: BatchIndex):
         """
-        ### Training or validation step
+        ### Training or validation step with Gauss-Newton-Bartlett (GNB) Hessian diagonal estimator
         """
 
         # Set training/eval mode
@@ -29,15 +40,14 @@ class Configs(TransformerAutoRegressionConfigs):
         # Move data to the device
         data, target = batch[0].to(self.device), batch[1].to(self.device)
 
+        # Estimate the Hessian diagonal every $k$ steps
         if isinstance(self.optimizer, Sophia) and self.mode.is_train and batch_idx.idx % self.hess_interval == 0:
-            # Whether to capture model outputs
-            with self.mode.update(is_log_activations=False):
-                # Get model outputs.
-                # It's returning a tuple for states when using RNNs.
-                # This is not implemented yet. 😜
-                output, *_ = self.model(data)
+            # Get model outputs
+            output, *_ = self.model(data)
 
+            # Create a categorical distribution from logits
             samp_dist = torch.distributions.Categorical(logits=output)
+            # Sample $\hat{y}$
             y_sample = samp_dist.sample()
 
             # Calculate and log loss
@@ -48,7 +58,12 @@ class Configs(TransformerAutoRegressionConfigs):
             loss.backward()
             # Clip gradients
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.grad_norm_clip)
-            # Update Hessian estimate
+            # Update EMA Hessian diagonal
+            #
+            # \begin{align}
+            # \hat{h}_t &= B \cdot \nabla_\theta \hat{L} (\theta) \odot \nabla_\theta \hat{L} (\theta) \\
+            # h_t &= \beta_2 h_{t-k} + (1 - \beta_2) \hat{h}_t
+            # \end{align}
             self.optimizer.update_hessian(data.numel())
             # Clear the gradients
             self.optimizer.zero_grad()
@@ -95,7 +110,6 @@ class Configs(TransformerAutoRegressionConfigs):
             tracker.save()
 
 
-
 def main():
     # Create experiment
     experiment.create(name="transformer")
@@ -127,7 +141,7 @@ def main():
         'transformer.n_heads': 16,
         'transformer.ffn.d_ff': 1024,
 
-        # Use [Noam optimizer](../../optimizers/noam.html)
+        # Use [Sophia optimizer](../../optimizers/sophia.html)
         'optimizer.optimizer': 'Sophia',
         'optimizer.learning_rate': 3e-4,
         'optimizer.rho': 0.03,
