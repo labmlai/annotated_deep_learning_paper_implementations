@@ -156,8 +156,7 @@ class Sophia(GenericAdaptiveOptimizer):
         We do the following parameter update,
 
         \begin{align}
-        \theta_{t + 1} &\leftarrow \theta_t - \eta \cdot \operatorname{clip} \bigg(\frac{m_t}{h_t + \epsilon}, \rho \bigg) \\
-        \theta_{t + 1} &\leftarrow \theta_t - \eta \rho \cdot \operatorname{clip} \bigg(\frac{m_t}{\rho h_t + \epsilon}, 1 \bigg)
+        \theta_{t + 1} &\leftarrow \theta_t - \eta \cdot \operatorname{clip} \bigg(\frac{m_t}{h_t + \epsilon}, \rho \bigg)
         \end{align}
         """
 
@@ -182,8 +181,11 @@ class Sophia(GenericAdaptiveOptimizer):
         # Get maximum learning rate $\eta \rho$
         lr = group['lr']
 
-        # $$\operatorname{clip} \bigg(\frac{m_t}{\rho h_t + \epsilon}, 1 \bigg)$$
-        ratio = (m / (rho * hessian + group['eps'])).clamp(-1, 1)
+        # $\eta$
+        eta = lr / rho
 
-        # $$\theta_{t + 1} \leftarrow \theta_t - \eta \rho \cdot \operatorname{clip} \bigg(\frac{m_t}{\rho h_t + \epsilon}, 1 \bigg)$$
-        param.data.add_(ratio, alpha=-lr)
+        # $$\operatorname{clip} \bigg(\frac{m_t}{h_t + \epsilon}, \rho \bigg)$$
+        ratio = (m / (hessian + group['eps'])).clamp(-rho, rho)
+
+        # $$\theta_{t + 1} \leftarrow \theta_t - \eta \cdot \operatorname{clip} \bigg(\frac{m_t}{h_t + \epsilon}, \rho \bigg)$$
+        param.data.add_(ratio, alpha=-eta)
