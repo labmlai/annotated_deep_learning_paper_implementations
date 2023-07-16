@@ -44,7 +44,8 @@ class Configs(NLPAutoRegressionConfigs):
     n_rhn: int = 16
     n_z: int = 16
 
-
+# Using decorator operator @ to configure the model parameters
+# and configure values returned when the the model function
 @option(Configs.model)
 def autoregressive_model(c: Configs):
     """
