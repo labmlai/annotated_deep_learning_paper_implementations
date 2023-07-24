@@ -40,7 +40,7 @@ class GATv2(Module):
         # First graph attention layer where we concatenate the heads
         self.layer1 = GraphAttentionV2Layer(in_features, n_hidden, n_heads,
                                             is_concat=True, dropout=dropout, share_weights=share_weights)
-        # Activation function after first graph attention layer
+        # Exponential Linear Unit Activation function after first graph attention layer
         self.activation = nn.ELU()
         # Final graph attention layer where we average the heads
         self.output = GraphAttentionV2Layer(n_hidden, n_classes, 1,
@@ -100,7 +100,7 @@ def main():
         'optimizer.learning_rate': 5e-3,
         'optimizer.weight_decay': 5e-4,
 
-        'dropout': 0.7,
+        'dropout': 0.6999,
     })
 
     # Start and watch the experiment
