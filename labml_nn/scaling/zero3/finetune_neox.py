@@ -80,8 +80,9 @@ def main(rank: int, world_size: int, init_method: str = 'tcp://localhost:23456')
     torch.cuda.set_device(device)
 
     # Create the experiment
-    experiment.create(name='zero3_neox', writers={'screen', 'labml'})
-    experiment.distributed(rank, world_size)
+    experiment.create(name='zero3_neox', writers={'screen', 'labml'},
+                      distributed_world_size=world_size,
+                      distributed_rank=rank)
 
     # Create configurations
     conf = Configs()
