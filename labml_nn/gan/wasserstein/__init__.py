@@ -67,7 +67,7 @@ If $(\mathbb{P}_{g})$ is represented by a generator $$g_\theta (z)$$ and $z$ is 
 distribution $z \sim p(z)$,
 
 $$
-K \ cdot W(\mathbb{P}_r, \mathbb{P}_\theta) =
+K \cdot W(\mathbb{P}_r, \mathbb{P}_\theta) =
  \max_{w \in \mathcal{W}}
  \mathbb{E}_{x \sim \mathbb{P}_r} [f_w(x)]- \mathbb{E}_{z \sim p(z)} [f_w(g_\theta(z))]
 $$
