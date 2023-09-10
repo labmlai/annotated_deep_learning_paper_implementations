@@ -1,3 +1,10 @@
+# 가짜연구소 7기 이니셔티브 프로젝트 
+
+### nn.labml.ai 번역과 Pytorch 논문 구현 이해하기
+
+Projects 에서 일정 확인
+
+
 [![Twitter](https://img.shields.io/twitter/follow/labmlai?style=social)](https://twitter.com/labmlai)
 [![Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/labmlai)
 
