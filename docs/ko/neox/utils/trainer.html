@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="trainer.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/neox/utils/trainer.html"/>
+    <meta property="og:title" content="trainer.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="trainer.py"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="trainer.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>trainer.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/neox/utils/trainer.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">neox</a>
+                <a class="parent" href="index.html">utils</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/neox/utils/trainer.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">List</span>
+<span class="lineno">2</span>
+<span class="lineno">3</span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="lineno">4</span><span class="kn">import</span> <span class="nn">torch.optim</span>
+<span class="lineno">5</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">6</span><span class="kn">from</span> <span class="nn">torch.cuda</span> <span class="kn">import</span> <span class="n">amp</span>
+<span class="lineno">7</span><span class="kn">from</span> <span class="nn">torch.cuda.amp</span> <span class="kn">import</span> <span class="n">GradScaler</span>
+<span class="lineno">8</span>
+<span class="lineno">9</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span><span class="p">,</span> <span class="n">tracker</span>
+<span class="lineno">10</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">option</span>
+<span class="lineno">11</span><span class="kn">from</span> <span class="nn">labml_nn.neox.utils.finetune</span> <span class="kn">import</span> <span class="n">FineTuner</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h3>Get trainable parameters</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">model</span></code>
+  is the model to train </li>
+<p><em>Returns</em>  a list of parameters for training</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">14</span><span class="k">def</span> <span class="nf">get_trainable_params</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>Get all parameters </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">23</span>    <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>Filter parameters that require gradients </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">25</span>    <span class="n">trainable_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">28</span>    <span class="k">return</span> <span class="n">trainable_params</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">31</span><span class="k">class</span> <span class="nc">TrainerConf</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span>
+<span class="lineno">32</span>    <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+<span class="lineno">33</span>    <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span>
+<span class="lineno">34</span>    <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span> <span class="o">=</span> <span class="s1">&#39;Adam&#39;</span>
+<span class="lineno">35</span>    <span class="n">train_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span>
+<span class="lineno">36</span>    <span class="n">valid_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="lineno">37</span>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span><span class="p">)</span>
+<span class="lineno">38</span>    <span class="n">scaler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GradScaler</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Default&#39;</span>
+<span class="lineno">39</span>    <span class="n">is_amp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="lineno">40</span>    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span>
+<span class="lineno">41</span>
+<span class="lineno">42</span>    <span class="n">is_clone_layers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="lineno">43</span>
+<span class="lineno">44</span>    <span class="n">loss_func</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="lineno">45</span>    <span class="n">checkpoints_per_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">46</span>    <span class="n">samples_per_epoch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">47</span>
+<span class="lineno">48</span>    <span class="n">grad_norm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="lineno">49</span>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3e-4</span>
+<span class="lineno">50</span>    <span class="n">max_seq_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="lineno">51</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="lineno">52</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="lineno">53</span>
+<span class="lineno">54</span>    <span class="n">n_gpus</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span>
+<span class="lineno">55</span>
+<span class="lineno">56</span>    <span class="n">filter_layers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">dataset_split</span></code>
+  train/valid </li>
+<li><code  class="highlight"><span></span><span class="n">sample</span></code>
+  is the sample </li>
+<p><em>Returns</em>  the loss, output and the target</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">58</span>    <span class="k">def</span> <span class="nf">get_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">dataset_split</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">sample</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Forward pass </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">67</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Forward pass&#39;</span><span class="p">):</span>
+<span class="lineno">68</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Move targets to the same device as output </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Calculate loss </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">target</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<span class="lineno">73</span>
+<span class="lineno">74</span>        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">target</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">76</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">77</span>        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
+<span class="lineno">78</span>            <span class="bp">self</span><span class="o">.</span><span class="n">train_epoch</span><span class="p">()</span>
+<span class="lineno">79</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<span class="lineno">82</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<span class="lineno">85</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>    <span class="k">def</span> <span class="nf">get_iterators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Iterate through the batches </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">89</span>        <span class="n">iterators</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_loader</span><span class="p">)]</span>
+<span class="lineno">90</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_loader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">91</span>            <span class="n">iterators</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;valid&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_loader</span><span class="p">))</span>
+<span class="lineno">92</span>
+<span class="lineno">93</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_per_epoch</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">94</span>            <span class="n">iterators</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_epoch</span><span class="p">)]))</span>
+<span class="lineno">95</span>
+<span class="lineno">96</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoints_per_epoch</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">97</span>            <span class="n">iterators</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">,</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoints_per_epoch</span><span class="p">)]))</span>
+<span class="lineno">98</span>
+<span class="lineno">99</span>        <span class="k">return</span> <span class="n">iterators</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>    <span class="k">def</span> <span class="nf">train_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Set model for train </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">103</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="lineno">104</span>
+<span class="lineno">105</span>        <span class="n">iterators</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_iterators</span><span class="p">()</span>
+<span class="lineno">106</span>        <span class="k">for</span> <span class="n">split_name</span><span class="p">,</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="o">*</span><span class="n">iterators</span><span class="p">):</span>
+<span class="lineno">107</span>            <span class="k">if</span> <span class="n">split_name</span> <span class="o">==</span> <span class="s1">&#39;train&#39;</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Set gradients to zero </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">109</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="lineno">110</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">()</span>
+<span class="lineno">111</span>
+<span class="lineno">112</span>            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">set_grad_enabled</span><span class="p">(</span><span class="n">split_name</span> <span class="o">==</span> <span class="s1">&#39;train&#39;</span><span class="p">):</span>
+<span class="lineno">113</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_amp</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Forward pass </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">115</span>                    <span class="k">with</span> <span class="n">amp</span><span class="o">.</span><span class="n">autocast</span><span class="p">():</span>
+<span class="lineno">116</span>                        <span class="n">loss</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span>
+<span class="lineno">117</span>                <span class="k">else</span><span class="p">:</span>
+<span class="lineno">118</span>                    <span class="n">loss</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">split_name</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>Get predictions </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>                <span class="n">pred</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>Calculate accuracy </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">123</span>                <span class="n">accuracy</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">target</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="lineno">124</span>
+<span class="lineno">125</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span><span class="sa">f</span><span class="s1">&#39;loss.</span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">loss</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;acc.</span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="n">accuracy</span> <span class="o">*</span> <span class="mi">100</span><span class="p">})</span>
+<span class="lineno">126</span>
+<span class="lineno">127</span>            <span class="k">if</span> <span class="n">split_name</span> <span class="o">==</span> <span class="s1">&#39;train&#39;</span><span class="p">:</span>
+<span class="lineno">128</span>                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>Backward pass </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>                    <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>tracker.add({&#x27;loss.scaled&#x27;: loss}) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>                <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Backward pass&#39;</span><span class="p">):</span>
+<span class="lineno">134</span>                    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>Optimize </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">137</span>                <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Optimize&#39;</span><span class="p">):</span>
+<span class="lineno">138</span>                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">139</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">140</span>                    <span class="k">else</span><span class="p">:</span>
+<span class="lineno">141</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span><span class="o">.</span><span class="n">unscale_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span>
+<span class="lineno">142</span>                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">143</span>                            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">get_trainable_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">)</span>
+<span class="lineno">144</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span>
+<span class="lineno">145</span>                        <span class="bp">self</span><span class="o">.</span><span class="n">scaler</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+<span class="lineno">146</span>
+<span class="lineno">147</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">150</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainerConf</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="s1">&#39;Adam&#39;</span><span class="p">)</span>
+<span class="lineno">151</span><span class="k">def</span> <span class="nf">adam_optimizer</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainerConf</span><span class="p">):</span>
+<span class="lineno">152</span>    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span>
+<span class="lineno">153</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">get_trainable_params</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="p">),</span> <span class="n">lr</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
+<span class="lineno">154</span>    <span class="k">elif</span> <span class="n">c</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">:</span>
+<span class="lineno">155</span>        <span class="kn">from</span> <span class="nn">labml_nn.optimizers.adam_fp16</span> <span class="kn">import</span> <span class="n">AdamFP16</span>
+<span class="lineno">156</span>        <span class="k">return</span> <span class="n">AdamFP16</span><span class="p">(</span><span class="n">get_trainable_params</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="p">),</span> <span class="n">lr</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
+<span class="lineno">157</span>    <span class="k">else</span><span class="p">:</span>
+<span class="lineno">158</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+<span class="lineno">159</span>
+<span class="lineno">160</span>
+<span class="lineno">161</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainerConf</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="s1">&#39;SGD&#39;</span><span class="p">)</span>
+<span class="lineno">162</span><span class="k">def</span> <span class="nf">sgd_optimizer</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainerConf</span><span class="p">):</span>
+<span class="lineno">163</span>    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">get_trainable_params</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="p">),</span> <span class="n">lr</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
+<span class="lineno">164</span>
+<span class="lineno">165</span>
+<span class="lineno">166</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainerConf</span><span class="o">.</span><span class="n">scaler</span><span class="p">,</span> <span class="s1">&#39;Default&#39;</span><span class="p">)</span>
+<span class="lineno">167</span><span class="k">def</span> <span class="nf">grad_scaler</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainerConf</span><span class="p">):</span>
+<span class="lineno">168</span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">is_amp</span><span class="p">:</span>
+<span class="lineno">169</span>        <span class="k">return</span> <span class="kc">None</span>
+<span class="lineno">170</span>
+<span class="lineno">171</span>    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">:</span>
+<span class="lineno">172</span>        <span class="kn">from</span> <span class="nn">labml_nn.optimizers.adam_fp16</span> <span class="kn">import</span> <span class="n">GradScalerFP16</span>
+<span class="lineno">173</span>        <span class="k">return</span> <span class="n">GradScalerFP16</span><span class="p">()</span>
+<span class="lineno">174</span>    <span class="k">else</span><span class="p">:</span>
+<span class="lineno">175</span>        <span class="k">return</span> <span class="n">GradScaler</span><span class="p">()</span>
+<span class="lineno">176</span>
+<span class="lineno">177</span>
+<span class="lineno">178</span><span class="k">class</span> <span class="nc">PipelineParallelTrainerConf</span><span class="p">(</span><span class="n">TrainerConf</span><span class="p">):</span>
+<span class="lineno">179</span>    <span class="n">is_checkpointing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">180</span>    <span class="n">chunks</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">181</span>
+<span class="lineno">182</span>    <span class="n">fine_tuner</span><span class="p">:</span> <span class="n">FineTuner</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

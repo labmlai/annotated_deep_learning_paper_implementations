@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Masked Language Model (MLM)"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/mlm/readme.html"/>
+    <meta property="og:title" content="Masked Language Model (MLM)"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Masked Language Model (MLM)"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Masked Language Model (MLM)"/>
+    <meta property="og:description" content=""/>
+
+    <title>Masked Language Model (MLM)</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/mlm/readme.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">mlm</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/mlm/readme.md" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="https://nn.labml.ai/transformers/mlm/index.html">Masked Language Model (MLM)</a></h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of Masked Language Model (MLM)  used to pre-train the BERT model introduced in the paper <a href="https://papers.labml.ai/paper/1810.04805">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a>.</p>
+<h2>BERT Pretraining</h2>
+<p>BERT model is a transformer model. The paper pre-trains the model using MLM and with next sentence prediction. We have only implemented MLM here.</p>
+<h3>Next sentence prediction</h3>
+<p>In <em>next sentence prediction</em>, the model is given two sentences <code  class="highlight"><span></span><span class="n">A</span></code>
+ and <code  class="highlight"><span></span><span class="n">B</span></code>
+ and the model makes a binary prediction whether <code  class="highlight"><span></span><span class="n">B</span></code>
+ is the sentence that follows <code  class="highlight"><span></span><span class="n">A</span></code>
+ in the actual text. The model is fed with actual sentence pairs 50% of the time and random pairs 50% of the time. This classification is done while applying MLM. <em>We haven&#x27;t implemented this here.</em></p>
+<h2>Masked LM</h2>
+<p>This masks a percentage of tokens at random and trains the model to predict the masked tokens. They <strong>mask 15% of the tokens</strong> by replacing them with a special <code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+ token.</p>
+<p>The loss is computed on predicting the masked tokens only. This causes a problem during fine-tuning and actual usage since there are no <code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+ tokens  at that time. Therefore we might not get any meaningful representations.</p>
+<p>To overcome this <strong>10% of the masked tokens are replaced with the original token</strong>, and another <strong>10% of the masked tokens are replaced with a random token</strong>. This trains the model to give representations about the actual token whether or not the input token at that position is a <code  class="highlight"><span></span><span class="p">[</span><span class="n">MASK</span><span class="p">]</span></code>
+. And replacing with a random token causes it to give a representation that has information from the context as well; because it has to use the context to fix randomly replaced tokens.</p>
+<h2>Training</h2>
+<p>MLMs are harder to train than autoregressive models because they have a smaller training signal. i.e. only a small percentage of predictions are trained per sample.</p>
+<p>Another problem is since the model is bidirectional, any token can see any other token. This makes the &quot;credit assignment&quot; harder. Let&#x27;s say you have the character level model trying to predict <code  class="highlight"><span></span><span class="n">home</span> <span class="o">*</span><span class="n">s</span> <span class="n">where</span> <span class="n">i</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span></code>
+. At least during the early stages of the training, it&#x27;ll be super hard to figure out why the replacement for <code  class="highlight"><span></span><span class="o">*</span></code>
+ should be <code  class="highlight"><span></span><span class="n">i</span></code>
+, it could be anything from the whole sentence. Whilst, in an autoregressive setting the model will only have to use <code  class="highlight"><span></span><span class="n">h</span></code>
+ to predict <code  class="highlight"><span></span><span class="n">o</span></code>
+ and <code  class="highlight"><span></span><span class="n">hom</span></code>
+ to predict <code  class="highlight"><span></span><span class="n">e</span></code>
+ and so on. So the model will initially start predicting with a shorter context first and then learn to use longer contexts later. Since MLMs have this problem it&#x27;s a lot faster to train if you start with a smaller sequence length initially and then use a longer sequence length later.</p>
+<p>Here is <a href="https://nn.labml.ai/transformers/mlm/experiment.html">the training code</a> for a simple MLM model. </p>
+
+        </div>
+        <div class='code'>
+            
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

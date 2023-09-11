@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Utilities and helper functions"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Utilities and Helpers"/>
+    <meta name="twitter:description" content="Utilities and helper functions"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/neox/utils/index.html"/>
+    <meta property="og:title" content="Utilities and Helpers"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Utilities and Helpers"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Utilities and Helpers"/>
+    <meta property="og:description" content="Utilities and helper functions"/>
+
+    <title>Utilities and Helpers</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/neox/utils/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">neox</a>
+                <a class="parent" href="index.html">utils</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/neox/utils/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Utilities and Helpers</h1>
+<ul><li><a href="cache.html">Cache for intermediate activations (for faster inference)</a> </li>
+<li><a href="finetune.html">Tools for finetuning</a> </li>
+<li><a href="trainer.html">Trainer</a> </li>
+<li><a href="text_dataset.html">Text dataset</a></li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">15</span><span></span><span class="kn">import</span> <span class="nn">typing</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="lineno">17</span>
+<span class="lineno">18</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">19</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml_nn.neox.tokenizer</span> <span class="kn">import</span> <span class="n">get_tokenizer</span>
+<span class="lineno">23</span>
+<span class="lineno">24</span><span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>
+<span class="lineno">25</span>    <span class="kn">from</span> <span class="nn">tokenizers</span> <span class="kn">import</span> <span class="n">Tokenizer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>Tokenizer singleton </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">28</span><span class="n">_TOKENIZER</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Tokenizer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <h3>Get token ids</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">text</span></code>
+  is the text to tokenize </li>
+<p><em>Returns</em>  the token ids</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">31</span><span class="k">def</span> <span class="nf">get_tokens</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">38</span>    <span class="k">global</span> <span class="n">_TOKENIZER</span>
+<span class="lineno">39</span>    <span class="k">if</span> <span class="n">_TOKENIZER</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">40</span>        <span class="n">_TOKENIZER</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">()</span>
+<span class="lineno">41</span>    <span class="k">return</span> <span class="n">_TOKENIZER</span><span class="o">.</span><span class="n">encode_batch</span><span class="p">([</span><span class="n">text</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ids</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <h3>Print tokens from model outputs</h3>
+<p>Pretty prints target tokens along side outputs from the model(s).</p>
+<ul><li><code  class="highlight"><span></span><span class="n">ids</span></code>
+  are the target token ids </li>
+<li><code  class="highlight"><span></span><span class="n">xs</span></code>
+  are the model(s) outputs</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span><span class="k">def</span> <span class="nf">print_token_outputs</span><span class="p">(</span><span class="n">ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">*</span><span class="n">xs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>    <span class="n">ids</span> <span class="o">=</span> <span class="n">ids</span> <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="lineno">54</span>    <span class="n">xs</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+<span class="lineno">55</span>
+<span class="lineno">56</span>    <span class="n">print_tokens</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <h3>Print tokens</h3>
+<p>Pretty prints tokens for comparison</p>
+<ul><li><code  class="highlight"><span></span><span class="n">target</span></code>
+  are the target token ids </li>
+<li><code  class="highlight"><span></span><span class="n">others</span></code>
+  are the sampled outputs from the model(s)</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">59</span><span class="k">def</span> <span class="nf">print_tokens</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">others</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Load tokenizer </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">global</span> <span class="n">_TOKENIZER</span>
+<span class="lineno">71</span>    <span class="k">if</span> <span class="n">_TOKENIZER</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">72</span>        <span class="n">_TOKENIZER</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Convert the tokens to list of strings </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>    <span class="n">text</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">76</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)):</span>
+<span class="lineno">77</span>        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">_TOKENIZER</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="k">if</span> <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;---&#39;</span><span class="p">]</span>
+<span class="lineno">78</span>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">others</span><span class="p">)):</span>
+<span class="lineno">79</span>            <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_TOKENIZER</span><span class="o">.</span><span class="n">decode</span><span class="p">([</span><span class="n">others</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]])</span> <span class="k">if</span> <span class="n">others</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;---&#39;</span><span class="p">)</span>
+<span class="lineno">80</span>
+<span class="lineno">81</span>        <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Stats </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>    <span class="n">correct</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">others</span><span class="p">]</span>
+<span class="lineno">85</span>    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Iterate through tokens </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">88</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)):</span>
+<span class="lineno">89</span>        <span class="n">parts</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">: &#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">meta</span><span class="p">)]</span>
+<span class="lineno">90</span>        <span class="n">parts</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Empty target </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">93</span>        <span class="k">if</span> <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+<span class="lineno">94</span>            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">others</span><span class="p">)):</span>
+<span class="lineno">95</span>                <span class="n">parts</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">]</span>
+<span class="lineno">96</span>
+<span class="lineno">97</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+<span class="lineno">98</span>            <span class="k">continue</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Number of tokens </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>        <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Other outputs </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">others</span><span class="p">)):</span>
+<span class="lineno">105</span>            <span class="n">correct</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">others</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+<span class="lineno">106</span>
+<span class="lineno">107</span>            <span class="n">parts</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span>
+<span class="lineno">108</span>                      <span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">Text</span><span class="o">.</span><span class="n">success</span> <span class="k">if</span> <span class="n">others</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">else</span> <span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">),</span>
+<span class="lineno">109</span>                      <span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">]</span>
+<span class="lineno">110</span>
+<span class="lineno">111</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>Stats </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>    <span class="n">parts</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">highlight</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">]</span>
+<span class="lineno">115</span>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">others</span><span class="p">)):</span>
+<span class="lineno">116</span>        <span class="n">parts</span> <span class="o">+=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">correct</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">]</span>
+<span class="lineno">117</span>    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <h3>Balance layers</h3>
+<p>Split the <code  class="highlight"><span></span><span class="n">n_layers</span></code>
+ into <code  class="highlight"><span></span><span class="n">n_chunks</span></code>
+. This is used for pipeline parallel training.</p>
+<ul><li><code  class="highlight"><span></span><span class="n">n_layers</span></code>
+  is the number of layers </li>
+<li><code  class="highlight"><span></span><span class="n">n_chunks</span></code>
+  is the number of chunks </li>
+<p><em>Returns</em>  returns a list with the number of layers for each chunk</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">120</span><span class="k">def</span> <span class="nf">balance_layers_simple</span><span class="p">(</span><span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_chunks</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>    <span class="n">balance</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">131</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_chunks</span><span class="p">):</span>
+<span class="lineno">132</span>        <span class="n">balance</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n_layers</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">balance</span><span class="p">))</span> <span class="o">//</span> <span class="p">(</span><span class="n">n_chunks</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span>
+<span class="lineno">133</span>
+<span class="lineno">134</span>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">balance</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

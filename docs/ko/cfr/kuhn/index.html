@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of CFR on Kuhn Poker"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="CFR on Kuhn Poker"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of CFR on Kuhn Poker"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <meta property="og:title" content="CFR on Kuhn Poker"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="CFR on Kuhn Poker"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="CFR on Kuhn Poker"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of CFR on Kuhn Poker"/>
+
+    <title>CFR on Kuhn Poker</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/cfr/kuhn/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">cfr</a>
+                <a class="parent" href="index.html">kuhn</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/cfr/kuhn/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="../index.html">Counterfactual Regret Minimization (CFR)</a> on Kuhn Poker</h1>
+<p>This applies <a href="../index.html">Counterfactual Regret Minimization (CFR)</a> to Kuhn poker.</p>
+<p><a href="https://en.wikipedia.org/wiki/Kuhn_poker">Kuhn Poker</a> is a two player 3-card betting game. The players are dealt one card each out of Ace, King and Queen (no suits). There are only three cards in the pack so one card is left out. Ace beats King and Queen and King beats Queen - just like in normal ranking of cards.</p>
+<p>Both players ante <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> chip (blindly bet <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> chip). After looking at the cards, the first player can either pass or bet <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> chip. If first player passes, the the player with higher card wins the pot. If first player bets, the second play can bet (i.e. call) <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> chip or pass (i.e. fold). If the second player bets and the player with the higher card wins the pot. If the second player passes (i.e. folds) the first player gets the pot. This game is played repeatedly and a good strategy will optimize for the long term utility (or winnings).</p>
+<p>Here&#x27;s some example games:</p>
+<ul><li><code  class="highlight"><span></span><span class="n">KAp</span></code>
+ - Player 1 gets K. Player 2 gets A. Player 1 passes. Player 2 doesn&#x27;t get a betting chance and Player 2 wins the pot of <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span> chips. </li>
+<li><code  class="highlight"><span></span><span class="n">QKbp</span></code>
+ - Player 1 gets Q. Player 2 gets K. Player 1 bets a chip. Player 2 passes (folds). Player 1 gets the pot of <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style="">4</span></span></span></span></span></span> because Player 2 folded. </li>
+<li><code  class="highlight"><span></span><span class="n">QAbb</span></code>
+ - Player 1 gets Q. Player 2 gets A. Player 1 bets a chip. Player 2 also bets (calls). Player 2 wins the pot of <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord" style="">4</span></span></span></span></span></span>.</li></ul>
+<p>He we extend the <code  class="highlight"><span></span><span class="n">InfoSet</span></code>
+ class and <code  class="highlight"><span></span><span class="n">History</span></code>
+ class defined in <a href="../index.html"><code  class="highlight"><span></span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span></code>
+</a> with Kuhn Poker specifics.</p>
+<p><a href="https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/cfr/kuhn/experiment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">37</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="lineno">38</span>
+<span class="lineno">39</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">40</span>
+<span class="lineno">41</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
+<span class="lineno">42</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">43</span><span class="kn">from</span> <span class="nn">labml_nn.cfr</span> <span class="kn">import</span> <span class="n">History</span> <span class="k">as</span> <span class="n">_History</span><span class="p">,</span> <span class="n">InfoSet</span> <span class="k">as</span> <span class="n">_InfoSet</span><span class="p">,</span> <span class="n">Action</span><span class="p">,</span> <span class="n">Player</span><span class="p">,</span> <span class="n">CFRConfigs</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">labml_nn.cfr.infoset_saver</span> <span class="kn">import</span> <span class="n">InfoSetSaver</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>Kuhn poker actions are pass (<code  class="highlight"><span></span><span class="n">p</span></code>
+) or bet (<code  class="highlight"><span></span><span class="n">b</span></code>
+) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span><span class="n">ACTIONS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>The three cards in play are Ace, King and Queen </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">49</span><span class="n">CHANCES</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>There are two players </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">51</span><span class="n">PLAYERS</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">List</span><span class="p">[</span><span class="n">Player</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <h2><a href="../index.html#InfoSet">Information set</a></h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">54</span><span class="k">class</span> <span class="nc">InfoSet</span><span class="p">(</span><span class="n">_InfoSet</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Does not support save/load </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">59</span>    <span class="nd">@staticmethod</span>
+<span class="lineno">60</span>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;InfoSet&#39;</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">62</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p> Return the list of actions. Terminal states are handled by <code  class="highlight"><span></span><span class="n">History</span></code>
+ class.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>        <span class="k">return</span> <span class="n">ACTIONS</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p> Human readable string representation - it gives the betting probability</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="lineno">75</span>        <span class="n">total</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+<span class="lineno">76</span>        <span class="n">bet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_strategy</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)]</span> <span class="o">/</span> <span class="n">total</span>
+<span class="lineno">77</span>        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bet</span> <span class="o">*</span> <span class="mi">100</span><span class="si">:</span><span class="s1"> .1f</span><span class="si">}</span><span class="s1">%&#39;</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <h2><a href="../index.html#History">History</a></h2>
+<p>This defines when a game ends, calculates the utility and sample chance events (dealing cards).</p>
+<p>The history is stored in a string:</p>
+<ul><li>First two characters are the cards dealt to player 1 and player 2 </li>
+<li>The third character is the action by the first player </li>
+<li>Fourth character is the action by the second player</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span><span class="k">class</span> <span class="nc">History</span><span class="p">(</span><span class="n">_History</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>History </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">94</span>    <span class="n">history</span><span class="p">:</span> <span class="nb">str</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p> Initialize with a given history string</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">96</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">history</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p> Whether the history is terminal (game over).</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">102</span>    <span class="k">def</span> <span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Players are yet to take actions </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">107</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+<span class="lineno">108</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Last player to play passed (game over) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">110</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">111</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Both players called (bet) (game over) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">113</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">114</span>            <span class="k">return</span> <span class="kc">True</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Any other combination </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">117</span>            <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p> Calculate the terminal utility for player <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span>, <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight coloredeq eqe" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>    <span class="k">def</span> <span class="nf">_terminal_utility_p1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">+</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> if Player 1 has a better card and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">−</span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> otherwise </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span>        <span class="n">winner</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>Second player passed </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bp&#39;</span><span class="p">:</span>
+<span class="lineno">128</span>            <span class="k">return</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>Both players called, the player with better card wins <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqf" style=""><span class="mord" style="">2</span></span></span></span></span></span> chips </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;bb&#39;</span><span class="p">:</span>
+<span class="lineno">131</span>            <span class="k">return</span> <span class="n">winner</span> <span class="o">*</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>First player passed, the player with better card wins <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1</span></span></span></span></span></span> chip </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">133</span>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+<span class="lineno">134</span>            <span class="k">return</span> <span class="n">winner</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>History is non-terminal </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">137</span>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p> Get the terminal utility for player <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathnormal" style="">i</span></span></span></span></span></span></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">139</span>    <span class="k">def</span> <span class="nf">terminal_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Player</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>If <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathnormal" style="">i</span></span></span></span></span></span> is Player 1 </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">PLAYERS</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+<span class="lineno">145</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>Otherwise, <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight coloredeq eqf" style=""><span class="mord mtight" style="">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">−</span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathnormal" style="">u</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight coloredeq eqe" style="">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord mathnormal" style="margin-right:0.04398em">z</span><span class="mclose" style="">)</span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">147</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">148</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminal_utility_p1</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p> The first two events are card dealing; i.e. chance events</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">150</span>    <span class="k">def</span> <span class="nf">is_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p> Add an action to the history and return a new history</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">156</span>    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Action</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">160</span>        <span class="k">return</span> <span class="n">History</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p> Current player</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">162</span>    <span class="k">def</span> <span class="nf">player</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Player</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">166</span>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p> Sample a chance action</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">168</span>    <span class="k">def</span> <span class="nf">sample_chance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Action</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">172</span>        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <p>Randomly pick a card </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">174</span>            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">CHANCES</span><span class="p">))</span>
+<span class="lineno">175</span>            <span class="n">chance</span> <span class="o">=</span> <span class="n">CHANCES</span><span class="p">[</span><span class="n">r</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            <p>See if the card was dealt before </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">177</span>            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+<span class="lineno">178</span>                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">chance</span><span class="p">:</span>
+<span class="lineno">179</span>                    <span class="n">chance</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">180</span>                    <span class="k">break</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>Return the card if it was not dealt before </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">183</span>            <span class="k">if</span> <span class="n">chance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">184</span>                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">chance</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p> Human readable representation</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">186</span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">190</span>        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            <p> Information set key for the current history. This is a string of actions only visible to the current player.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">192</span>    <span class="k">def</span> <span class="nf">info_set_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>Get current player </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">198</span>        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">player</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>Current player sees her card and the betting actions </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">200</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">202</span>    <span class="k">def</span> <span class="nf">new_info_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InfoSet</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>Create a new information set object </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">204</span>        <span class="k">return</span> <span class="n">InfoSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info_set_key</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>A function to create an empty history object </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">207</span><span class="k">def</span> <span class="nf">create_new_history</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">209</span>    <span class="k">return</span> <span class="n">History</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p> Configurations extends the CFR configurations class</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">212</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CFRConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-50'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-50'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">216</span>    <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-51'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-51'>#</a>
+            </div>
+            <p> Set the <code  class="highlight"><span></span><span class="n">create_new_history</span></code>
+ method for Kuhn Poker</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">219</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">create_new_history</span><span class="p">)</span>
+<span class="lineno">220</span><span class="k">def</span> <span class="nf">_cnh</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-52'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-52'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">224</span>    <span class="k">return</span> <span class="n">create_new_history</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-53'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-53'>#</a>
+            </div>
+            <h3>Run the experiment</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">227</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-54'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-54'>#</a>
+            </div>
+            <p>Create an experiment, we only write tracking information to <code  class="highlight"><span></span><span class="n">sqlite</span></code>
+ to speed things up. Since the algorithm iterates fast and we track data on each iteration, writing to other destinations such as Tensorboard can be relatively time consuming. SQLite is enough for our analytics. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">236</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;kuhn_poker&#39;</span><span class="p">,</span> <span class="n">writers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;sqlite&#39;</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-55'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-55'>#</a>
+            </div>
+            <p>Initialize configuration </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">238</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>Load configuration </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">240</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-57'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-57'>#</a>
+            </div>
+            <p>Set models for saving </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">242</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_model_savers</span><span class="p">({</span><span class="s1">&#39;info_sets&#39;</span><span class="p">:</span> <span class="n">InfoSetSaver</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">info_sets</span><span class="p">)})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-58'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-58'>#</a>
+            </div>
+            <p>Start the experiment </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">244</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-59'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-59'>#</a>
+            </div>
+            <p>Start iterating </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">246</span>        <span class="n">conf</span><span class="o">.</span><span class="n">cfr</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-60'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-60'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">250</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">251</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

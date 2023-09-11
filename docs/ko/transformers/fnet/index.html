@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This is an annotated implementation/tutorial of FNet in PyTorch."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="FNet: Mixing Tokens with Fourier Transforms"/>
+    <meta name="twitter:description" content="This is an annotated implementation/tutorial of FNet in PyTorch."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/fnet/index.html"/>
+    <meta property="og:title" content="FNet: Mixing Tokens with Fourier Transforms"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="FNet: Mixing Tokens with Fourier Transforms"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="FNet: Mixing Tokens with Fourier Transforms"/>
+    <meta property="og:description" content="This is an annotated implementation/tutorial of FNet in PyTorch."/>
+
+    <title>FNet: Mixing Tokens with Fourier Transforms</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/fnet/index.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">fnet</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/fnet/__init__.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>FNet: Mixing Tokens with Fourier Transforms</h1>
+<p>This is a <a href="https://pytorch.org">PyTorch</a> implementation of the paper <a href="https://papers.labml.ai/paper/2105.03824">FNet: Mixing Tokens with Fourier Transforms</a>.</p>
+<p>This paper replaces the <a href="../mha.html">self-attention layer</a> with two <a href="https://en.wikipedia.org/wiki/Discrete_Fourier_transform">Fourier transforms</a> to <em>mix</em> tokens. This is a <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">7</span><span class="mord">×</span></span></span></span></span> more efficient than self-attention. The accuracy loss of using this over self-attention is about 92% for <a href="https://paperswithcode.com/method/bert">BERT</a> on <a href="https://paperswithcode.com/dataset/glue">GLUE benchmark</a>.</p>
+<h2>Mixing tokens with two Fourier transforms</h2>
+<p>We apply Fourier transform along the hidden dimension (embedding dimension)  and then along the sequence dimension.</p>
+<p><span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.20001em;vertical-align:-0.35001em;"></span><span class="mord coloredeq eqa" style=""><span class="mord" style=""><span class="mord coloredeq eqb" style=""><span class="mord mathcal coloredeq eqi" style="">R</span></span><span class="mord coloredeq eqb" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord coloredeq eqb" style=""><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">seq</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord coloredeq eqc" style=""><span class="mord coloredeq eqe" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">hidden</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen coloredeq eqe" style="">(</span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal coloredeq eql" style="">x</span></span><span class="mclose coloredeq eqe" style="">)</span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span><span class="mord coloredeq eqb" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span></span></span></span></span></span></span></p>
+<p>where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eql" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span> is the embedding input, <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord mathcal" style="margin-right:0.09931em">F</span></span></span></span></span></span> stands for the fourier transform and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathcal" style="">R</span></span></span></span></span></span> stands for the real component in complex numbers.</p>
+<p>This is very simple to implement on PyTorch - just 1 line of code. The paper suggests using a precomputed DFT matrix and doing matrix multiplication to get the Fourier transformation.</p>
+<p>Here is <a href="experiment.html">the training code</a> for using a FNet based model for classifying <a href="https://paperswithcode.com/dataset/ag-news">AG News</a>.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">41</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="lineno">42</span>
+<span class="lineno">43</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">44</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>FNet - Mix tokens</h2>
+<p>This module simply implements <span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.20001em;vertical-align:-0.35001em;"></span><span class="mord coloredeq eqa" style=""><span class="mord" style=""><span class="mord coloredeq eqb" style=""><span class="mord mathcal coloredeq eqi" style="">R</span></span><span class="mord coloredeq eqb" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord coloredeq eqb" style=""><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">seq</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord coloredeq eqc" style=""><span class="mord coloredeq eqe" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">hidden</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen coloredeq eqe" style="">(</span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal coloredeq eql" style="">x</span></span><span class="mclose coloredeq eqe" style="">)</span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span><span class="mord coloredeq eqb" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span></span></span></span></span></span></span></p>
+<p>The structure of this module is made similar to a <a href="../mha.html">standard attention module</a> so that we can simply replace it.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span><span class="k">class</span> <span class="nc">FNetMix</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p> The <a href="../mha.html">normal attention module</a> can be fed with different token embeddings for <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqf" style=""><span class="mord text" style=""><span class="mord" style="">query</span></span></span></span></span></span></span>,<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqj" style=""><span class="mord text" style=""><span class="mord" style="">key</span></span></span></span></span></span></span>, and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord text" style=""><span class="mord" style="">value</span></span></span></span></span></span></span> and a mask.</p>
+<p>We follow the same function signature so that we can replace it directly.</p>
+<p>For FNet mixing, <span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eql" style=""><span class="mord mathnormal" style="">x</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqf" style=""><span class="mord text" style=""><span class="mord" style="">query</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqj" style=""><span class="mord text" style=""><span class="mord" style="">key</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord text" style=""><span class="mord" style="">value</span></span></span></span></span></span></span></span> and masking is not possible. Shape of <code  class="highlight"><span></span><span class="n">query</span></code>
+ (and <code  class="highlight"><span></span><span class="n">key</span></code>
+ and <code  class="highlight"><span></span><span class="n">value</span></code>
+) is <code  class="highlight"><span></span><span class="p">[</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">d_model</span><span class="p">]</span></code>
+.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">60</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqf" style=""><span class="mord text" style=""><span class="mord" style="">query</span></span></span></span></span></span></span>,<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqj" style=""><span class="mord text" style=""><span class="mord" style="">key</span></span></span></span></span></span></span>, and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord text" style=""><span class="mord" style="">value</span></span></span></span></span></span></span> all should be equal to <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eql" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span> for token mixing </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>        <span class="k">assert</span> <span class="n">query</span> <span class="ow">is</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="n">value</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Token mixing doesn&#x27;t support masking. i.e. all tokens will see all other token embeddings. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>        <span class="k">assert</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Assign to <code  class="highlight"><span></span><span class="n">x</span></code>
+ for clarity </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">77</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">query</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Apply the Fourier transform along the hidden (embedding) dimension <span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">hidden</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen" style="">(</span><span class="mord" style=""><span class="mord mathnormal coloredeq eql" style="">x</span></span><span class="mclose" style="">)</span></span></span></span></span></span></span></p>
+<p>The output of the Fourier transform is a tensor of <a href="https://pytorch.org/docs/stable/complex_numbers.html">complex numbers</a>. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">fft_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Apply the Fourier transform along the sequence dimension <span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.20001em;vertical-align:-0.35001em;"></span><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">seq</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord" style=""><span class="mord coloredeq eqe" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">hidden</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen coloredeq eqe" style="">(</span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal coloredeq eql" style="">x</span></span><span class="mclose coloredeq eqe" style="">)</span></span><span class="mord" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">fft_seq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">fft_hidden</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Get the real component <span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.20001em;vertical-align:-0.35001em;"></span><span class="mord coloredeq eqb" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqi" style="">R</span></span><span class="mord" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord" style=""><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">seq</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">(</span></span></span><span class="mord coloredeq eqc" style=""><span class="mord coloredeq eqe" style=""><span class="mord" style=""><span class="mord mathcal coloredeq eqh" style="margin-right:0.09931em">F</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord text mtight" style=""><span class="mord mtight" style="">hidden</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen coloredeq eqe" style="">(</span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal coloredeq eql" style="">x</span></span><span class="mclose coloredeq eqe" style="">)</span></span><span class="mord coloredeq eqc" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span><span class="mord" style=""><span class="delimsizing size1" style=""><span style="">)</span></span></span></span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">91</span>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">fft_seq</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
