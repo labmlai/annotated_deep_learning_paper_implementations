@@ -29,7 +29,7 @@ class DDIMSampler(DiffusionSampler):
 
     This extends the [`DiffusionSampler` base class](index.html).
 
-    DDPM samples images by repeatedly removing noise by sampling step by step using,
+    DDIM samples images by repeatedly removing noise by sampling step by step using,
 
     \begin{align}
     x_{\tau_{i-1}} &= \sqrt{\alpha_{\tau_{i-1}}}\Bigg(
