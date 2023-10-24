@@ -1,7 +1,7 @@
 # [Graph Attention Networks v2 (GATv2)](https://nn.labml.ai/graphs/gatv2/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the GATv2 operator from the paper
-[How Attentive are Graph Attention Networks?](https://papers.labml.ai/paper/2105.14491).
+[How Attentive are Graph Attention Networks?](https://arxiv.org/abs/2105.14491).
 
 GATv2s work on graph data.
 A graph consists of nodes and edges connecting nodes.

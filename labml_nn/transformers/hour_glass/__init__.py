@@ -8,7 +8,7 @@ summary: >
 # Hierarchical Transformers Are More Efficient Language Models
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Hierarchical Transformers Are More Efficient Language Models](https://papers.labml.ai/paper/2110.13711).
+[Hierarchical Transformers Are More Efficient Language Models](https://arxiv.org/abs/2110.13711).
 
 This paper introduces a hierarchical transformer architecture to handle long sequences
 efficiently. The first half of the transformer layers down-sample tokens and the second

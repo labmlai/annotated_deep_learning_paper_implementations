@@ -6,7 +6,7 @@ summary: Annotated implementation of prioritized experience replay using a binar
 
 # Prioritized Experience Replay Buffer
 
-This implements paper [Prioritized experience replay](https://papers.labml.ai/paper/1511.05952),
+This implements paper [Prioritized experience replay](https://arxiv.org/abs/1511.05952),
 using a binary segment tree.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/rl/dqn/experiment.ipynb)
@@ -21,7 +21,7 @@ class ReplayBuffer:
     """
     ## Buffer for Prioritized Experience Replay
 
-    [Prioritized experience replay](https://papers.labml.ai/paper/1511.05952)
+    [Prioritized experience replay](https://arxiv.org/abs/1511.05952)
      samples important transitions more frequently.
     The transitions are prioritized by the Temporal Difference error (td error), $\delta$.
 

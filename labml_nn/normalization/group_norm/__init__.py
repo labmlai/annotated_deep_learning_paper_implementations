@@ -8,7 +8,7 @@ summary: >
 # Group Normalization
 
 This is a [PyTorch](https://pytorch.org) implementation of
-the [Group Normalization](https://papers.labml.ai/paper/1803.08494) paper.
+the [Group Normalization](https://arxiv.org/abs/1803.08494) paper.
 
 [Batch Normalization](../batch_norm/index.html) works well for large enough batch sizes
 but not well for small batch sizes, because it normalizes over the batch.

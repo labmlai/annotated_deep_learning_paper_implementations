@@ -10,7 +10,7 @@ summary: >
 # Denoising Diffusion Implicit Models (DDIM) Sampling
 
 This implements DDIM sampling from the paper
-[Denoising Diffusion Implicit Models](https://papers.labml.ai/paper/2010.02502)
+[Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502)
 """
 
 from typing import Optional, List

@@ -9,7 +9,7 @@ summary: >
 # Evidential Deep Learning to Quantify Classification Uncertainty
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Evidential Deep Learning to Quantify Classification Uncertainty](https://papers.labml.ai/paper/1806.01768).
+[Evidential Deep Learning to Quantify Classification Uncertainty](https://arxiv.org/abs/1806.01768).
 
 [Dampster-Shafer Theory of Evidence](https://en.wikipedia.org/wiki/Dempster%E2%80%93Shafer_theory)
 assigns belief masses a set of classes (unlike assigning a probability to a single class).

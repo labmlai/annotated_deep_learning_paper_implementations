@@ -8,7 +8,7 @@ summary: >
 # An Attention Free Transformer
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[An Attention Free Transformer](https://papers.labml.ai/paper/2105.14103).
+[An Attention Free Transformer](https://arxiv.org/abs/2105.14103).
 
 This paper replaces the [self-attention layer](../mha.html) with a new efficient operation,
 that has memory complexity of $\mathcal{O}(Td)$, where $T$ is the sequence length

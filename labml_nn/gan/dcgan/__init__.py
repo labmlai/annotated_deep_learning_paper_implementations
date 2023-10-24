@@ -7,7 +7,7 @@ summary: A simple PyTorch implementation/tutorial of Deep Convolutional Generati
 # Deep Convolutional Generative Adversarial Networks (DCGAN)
 
 This is a [PyTorch](https://pytorch.org) implementation of paper
-[Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://papers.labml.ai/paper/1511.06434).
+[Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434).
 
 This implementation is based on the [PyTorch DCGAN Tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html).
 """

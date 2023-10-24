@@ -11,7 +11,7 @@ summary: >
 # Retrieval-Enhanced Transformer (Retro)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Improving language models by retrieving from trillions of tokens](https://papers.labml.ai/paper/2112.04426).
+[Improving language models by retrieving from trillions of tokens](https://arxiv.org/abs/2112.04426).
 
 It builds a database of chunks of text.
 It is a key-value database where the keys are indexed by the BERT embeddings of the chunks.

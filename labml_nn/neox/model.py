@@ -66,7 +66,7 @@ class RoPE(nn.Module):
     """
     ## Rotary Positional Embeddings
 
-    GPT-NeoX uses [rotary positional embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864).
+    GPT-NeoX uses [rotary positional embeddings (RoPE)](https://arxiv.org/abs/2104.09864).
 
     WE have annotated implementation of RoPE [here](https://nn.labml.ai/transformers/rope/index.html)
     with more notes the theory.

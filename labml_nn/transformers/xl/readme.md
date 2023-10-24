@@ -1,7 +1,7 @@
 # [Transformer XL](https://nn.labml.ai/transformers/xl/index.html)
 
 This is an implementation of
-[Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context](https://papers.labml.ai/paper/1901.02860)
+[Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context](https://arxiv.org/abs/1901.02860)
 in [PyTorch](https://pytorch.org).
 
 Transformer has a limited attention span,

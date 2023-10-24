@@ -8,7 +8,7 @@ summary: >
 # Instance Normalization
 
 This is a [PyTorch](https://pytorch.org) implementation of
-[Instance Normalization: The Missing Ingredient for Fast Stylization](https://papers.labml.ai/paper/1607.08022).
+[Instance Normalization: The Missing Ingredient for Fast Stylization](https://arxiv.org/abs/1607.08022).
 
 Instance normalization was introduced to improve [style transfer](https://paperswithcode.com/task/style-transfer).
 It is based on the observation that stylization should not depend on the contrast of the content image.

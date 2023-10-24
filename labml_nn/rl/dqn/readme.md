@@ -1,7 +1,7 @@
 # [Deep Q Networks (DQN)](https://nn.labml.ai/rl/dqn/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of paper
- [Playing Atari with Deep Reinforcement Learning](https://papers.labml.ai/paper/1312.5602)
+ [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
  along with [Dueling Network](https://nn.labml.ai/rl/dqn/model.html), [Prioritized Replay](https://nn.labml.ai/rl/dqn/replay_buffer.html)
  and Double Q Network.
 

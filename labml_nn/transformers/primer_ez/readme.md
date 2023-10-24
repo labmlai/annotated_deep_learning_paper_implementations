@@ -1,7 +1,7 @@
 # [Primer: Searching for Efficient Transformers for Language Modeling](https://nn.labml.ai/transformers/primer_ez/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[Primer: Searching for Efficient Transformers for Language Modeling](https://papers.labml.ai/paper/2109.08668).
+[Primer: Searching for Efficient Transformers for Language Modeling](https://arxiv.org/abs/2109.08668).
 
 The authors do an evolutionary search for transformer architectures.
 They name the architecture found using the search as Primer (PRIMitives searched transformER).
