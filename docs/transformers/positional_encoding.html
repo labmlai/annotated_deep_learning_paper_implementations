@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Implementation with explanation of fixed positional encodings as described in paper Attention is All You Need."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Fixed Positional Encodings"/>
+    <meta name="twitter:description" content="Implementation with explanation of fixed positional encodings as described in paper Attention is All You Need."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/positional_encoding.html"/>
+    <meta property="og:title" content="Fixed Positional Encodings"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Fixed Positional Encodings"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Fixed Positional Encodings"/>
+    <meta property="og:description" content="Implementation with explanation of fixed positional encodings as described in paper Attention is All You Need."/>
+
+    <title>Fixed Positional Encodings</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/positional_encoding.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">transformers</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/positional_encoding.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Fixed Positional Encodings</h1>
+<p>The positional encoding encodes the position along the sequence into  a vector of size <code  class="highlight"><span></span><span class="n">d_model</span></code>
+.</p>
+<span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:6.600059999999999em;vertical-align:-3.0500299999999996em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.5500299999999996em;"><span style="top:-5.55003em;"><span class="pstrut" style="height:3.75em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span><span class="mpunct mtight">,</span><span class="mord mtight">2</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.2500000000000004em;"><span class="pstrut" style="height:3.75em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span><span class="mpunct mtight">,</span><span class="mord mtight">2</span><span class="mord mathnormal mtight">i</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:3.0500299999999996em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.5500299999999996em;"><span style="top:-5.55003em;"><span class="pstrut" style="height:3.75em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathnormal">s</span><span class="mord mathnormal">in</span><span class="mord"><span class="delimsizing size4">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1075599999999999em;"><span style="top:-2.11em;"><span class="pstrut" style="height:3.12193em;"></span><span class="mord"><span class="mord coloredeq eqe" style=""><span class="mord" style="">1000</span><span class="mord" style=""><span class="mord" style="">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.1219299999999999em;"><span style="top:-3.5233700000000003em;margin-right:0.05em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mopen nulldelimiter sizing reset-size3 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8550857142857142em;"><span style="top:-2.656em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">m</span><span class="mord mathnormal mtight" style="">o</span><span class="mord mathnormal mtight" style="">d</span><span class="mord mathnormal mtight" style="">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em"></span></span><span style="top:-3.384em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">2</span><span class="mord mathnormal mtight" style="">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5937428571428571em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size3 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.35193em;"><span class="pstrut" style="height:3.12193em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.79893em;"><span class="pstrut" style="height:3.12193em;"></span><span class="mord"><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="">p</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.01193em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size4">)</span></span></span></span><span style="top:-2.2500000000000004em;"><span class="pstrut" style="height:3.75em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathnormal">cos</span><span class="mord"><span class="delimsizing size4">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1075599999999999em;"><span style="top:-2.11em;"><span class="pstrut" style="height:3.12193em;"></span><span class="mord"><span class="mord coloredeq eqe" style=""><span class="mord" style="">1000</span><span class="mord" style=""><span class="mord" style="">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.1219299999999999em;"><span style="top:-3.5233700000000003em;margin-right:0.05em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mopen nulldelimiter sizing reset-size3 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8550857142857142em;"><span style="top:-2.656em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">m</span><span class="mord mathnormal mtight" style="">o</span><span class="mord mathnormal mtight" style="">d</span><span class="mord mathnormal mtight" style="">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em"></span></span><span style="top:-3.384em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">2</span><span class="mord mathnormal mtight" style="">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5937428571428571em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size3 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.35193em;"><span class="pstrut" style="height:3.12193em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.79893em;"><span class="pstrut" style="height:3.12193em;"></span><span class="mord"><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="">p</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.01193em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size4">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:3.0500299999999996em;"><span></span></span></span></span></span></span></span></span></span></span></span></span><p>Where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.78041em;vertical-align:-0.13597em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord">2</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">2</span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.78041em;vertical-align:-0.13597em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>  are the feature indexes in the encoding, and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="">p</span></span></span></span></span></span> is the position.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">23</span><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="lineno">24</span>
+<span class="lineno">25</span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">26</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">27</span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span><span class="k">class</span> <span class="nc">PositionalEncoding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">31</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">):</span>
+<span class="lineno">32</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="lineno">33</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_prob</span><span class="p">)</span>
+<span class="lineno">34</span>
+<span class="lineno">35</span>        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;positional_encodings&#39;</span><span class="p">,</span> <span class="n">get_positional_encoding</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">max_len</span><span class="p">),</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="lineno">38</span>        <span class="n">pe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">positional_encodings</span><span class="p">[:</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">39</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pe</span>
+<span class="lineno">40</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="lineno">41</span>        <span class="k">return</span> <span class="n">x</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span><span class="k">def</span> <span class="nf">get_positional_encoding</span><span class="p">(</span><span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Empty encodings vectors </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">46</span>    <span class="n">encodings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_len</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Position indexes </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">48</span>    <span class="n">position</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathnormal">i</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>    <span class="n">two_i</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1.1219299999999999em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord" style="">1000</span><span class="mord" style=""><span class="mord" style="">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.1219299999999999em;"><span style="top:-3.5233700000000003em;margin-right:0.05em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mopen nulldelimiter sizing reset-size3 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8550857142857142em;"><span style="top:-2.656em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">m</span><span class="mord mathnormal mtight" style="">o</span><span class="mord mathnormal mtight" style="">d</span><span class="mord mathnormal mtight" style="">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em"></span></span><span style="top:-3.384em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">2</span><span class="mord mathnormal mtight" style="">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5937428571428571em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size3 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span>    <span class="n">div_term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">two_i</span> <span class="o">*</span> <span class="o">-</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10000.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">d_model</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span><span class="mpunct mtight">,</span><span class="mord mtight">2</span><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.0000299999999998em;vertical-align:-1.25003em;"></span><span class="mord mathnormal">s</span><span class="mord mathnormal">in</span><span class="mord"><span class="delimsizing size4">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7475em;"><span style="top:-2.19em;"><span class="pstrut" style="height:3.039505em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">1000</span><span class="mord mtight" style=""><span class="mord mtight" style="">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.485007142857143em;"><span style="top:-3.7374928571428576em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mopen nulldelimiter sizing reset-size1 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0465200000000001em;"><span style="top:-2.468em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">m</span><span class="mord mathnormal mtight" style="">o</span><span class="mord mathnormal mtight" style="">d</span><span class="mord mathnormal mtight" style="">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em"></span></span><span style="top:-3.387em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style=""><span class="mord mtight" style="">2</span><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.88164em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size1 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.269505em;"><span class="pstrut" style="height:3.039505em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4856130000000003em;"><span class="pstrut" style="height:3.039505em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8495050000000002em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size4">)</span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">54</span>    <span class="n">encodings</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span><span class="mpunct mtight">,</span><span class="mord mtight">2</span><span class="mord mathnormal mtight">i</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.0000299999999998em;vertical-align:-1.25003em;"></span><span class="mord mathnormal">cos</span><span class="mord"><span class="delimsizing size4">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7475em;"><span style="top:-2.19em;"><span class="pstrut" style="height:3.039505em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqe" style=""><span class="mord mtight" style="">1000</span><span class="mord mtight" style=""><span class="mord mtight" style="">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.485007142857143em;"><span style="top:-3.7374928571428576em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mopen nulldelimiter sizing reset-size1 size6"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0465200000000001em;"><span style="top:-2.468em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.69444em;"></span><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">m</span><span class="mord mathnormal mtight" style="">o</span><span class="mord mathnormal mtight" style="">d</span><span class="mord mathnormal mtight" style="">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em">l</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.34963999999999995em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.2255000000000003em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line mtight" style="border-bottom-width:0.049em"></span></span><span style="top:-3.387em;"><span class="pstrut" style="height:3em;"></span><span class="mord mtight" style=""><span class="mord mtight" style="">2</span><span class="mord mathnormal mtight" style="">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.88164em;"><span></span></span></span></span></span><span class="mclose nulldelimiter sizing reset-size1 size6"></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.269505em;"><span class="pstrut" style="height:3.039505em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4856130000000003em;"><span class="pstrut" style="height:3.039505em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqg" style=""><span class="mord mathnormal mtight" style="">p</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8495050000000002em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size4">)</span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">56</span>    <span class="n">encodings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Add batch dimension </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">59</span>    <span class="n">encodings</span> <span class="o">=</span> <span class="n">encodings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+<span class="lineno">60</span>
+<span class="lineno">61</span>    <span class="k">return</span> <span class="n">encodings</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span><span class="k">def</span> <span class="nf">_test_positional_encoding</span><span class="p">():</span>
+<span class="lineno">65</span>    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="lineno">66</span>
+<span class="lineno">67</span>    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="lineno">68</span>    <span class="n">pe</span> <span class="o">=</span> <span class="n">get_positional_encoding</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="lineno">69</span>    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">pe</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="lineno">70</span>    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s2">&quot;dim </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">]])</span>
+<span class="lineno">71</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Positional encoding&quot;</span><span class="p">)</span>
+<span class="lineno">72</span>    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="lineno">73</span>
+<span class="lineno">74</span>
+<span class="lineno">75</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">76</span>    <span class="n">_test_positional_encoding</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="experiment_tiny.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/sampling/experiment_tiny.html"/>
+    <meta property="og:title" content="experiment_tiny.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="experiment_tiny.py"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="experiment_tiny.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>experiment_tiny.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/sampling/experiment_tiny.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">sampling</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/sampling/experiment_tiny.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="lineno">2</span>
+<span class="lineno">3</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">4</span>
+<span class="lineno">5</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">6</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="lineno">7</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">8</span><span class="kn">from</span> <span class="nn">labml_helpers.datasets.text</span> <span class="kn">import</span> <span class="n">TextDataset</span>
+<span class="lineno">9</span><span class="kn">from</span> <span class="nn">labml_nn.sampling</span> <span class="kn">import</span> <span class="n">Sampler</span>
+<span class="lineno">10</span><span class="kn">from</span> <span class="nn">labml_nn.sampling.greedy</span> <span class="kn">import</span> <span class="n">GreedySampler</span>
+<span class="lineno">11</span><span class="kn">from</span> <span class="nn">labml_nn.sampling.nucleus</span> <span class="kn">import</span> <span class="n">NucleusSampler</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">labml_nn.sampling.temperature</span> <span class="kn">import</span> <span class="n">TemperatureSampler</span>
+<span class="lineno">13</span><span class="kn">from</span> <span class="nn">labml_nn.sampling.top_k</span> <span class="kn">import</span> <span class="n">TopKSampler</span>
+<span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.basic.autoregressive_experiment</span> <span class="kn">import</span> <span class="n">Configs</span><span class="p">,</span> <span class="n">AutoregressiveTransformer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">17</span><span class="k">def</span> <span class="nf">get_model_dataset</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">AutoregressiveTransformer</span><span class="p">,</span> <span class="n">TextDataset</span><span class="p">]:</span>
+<span class="lineno">18</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+<span class="lineno">19</span>
+<span class="lineno">20</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span>
+<span class="lineno">21</span>
+<span class="lineno">22</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">experiment</span><span class="o">.</span><span class="n">load_configs</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">))</span>
+<span class="lineno">23</span>
+<span class="lineno">24</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">run_uuid</span><span class="p">)</span>
+<span class="lineno">25</span>
+<span class="lineno">26</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span>
+<span class="lineno">27</span>
+<span class="lineno">28</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="lineno">29</span>
+<span class="lineno">30</span>    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">text</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">33</span><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">sampler</span><span class="p">:</span> <span class="n">Sampler</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="lineno">34</span>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+<span class="lineno">35</span>        <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>Collect output for printing </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">38</span>        <span class="n">logs</span> <span class="o">=</span> <span class="p">[[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">meta</span><span class="p">)]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Sample 25 tokens </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">40</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Tokenize the prompt </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">42</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="n">seq_len</span><span class="p">:]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Get the model output </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span>            <span class="n">logits</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="lineno">45</span>            <span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Get the model prediction (greedy) </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span>            <span class="n">res</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+<span class="lineno">48</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">data</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Add the prediction for logging </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+<span class="lineno">51</span>                <span class="n">logs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;&#39;</span> <span class="o">+</span> <span class="n">ds</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">res</span><span class="p">[</span><span class="n">j</span><span class="p">]],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Print the sampled output </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">54</span>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
+<span class="lineno">55</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logs</span><span class="p">[</span><span class="n">j</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">58</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="lineno">59</span>    <span class="n">model</span><span class="p">,</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">get_model_dataset</span><span class="p">(</span><span class="s1">&#39;074d4004cc6b11ecad7a0242ac1c0002&#39;</span><span class="p">)</span>
+<span class="lineno">60</span>    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="lineno">61</span>
+<span class="lineno">62</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;greedy&#39;</span><span class="p">):</span>
+<span class="lineno">63</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">GreedySampler</span><span class="p">(),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">64</span>
+<span class="lineno">65</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;temperature=1.&#39;</span><span class="p">):</span>
+<span class="lineno">66</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">67</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;temperature=.1&#39;</span><span class="p">):</span>
+<span class="lineno">68</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">.1</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">69</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;temperature=10.&#39;</span><span class="p">):</span>
+<span class="lineno">70</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">10.</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">71</span>
+<span class="lineno">72</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;top_k=5&#39;</span><span class="p">):</span>
+<span class="lineno">73</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">TopKSampler</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">1.</span><span class="p">)),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">74</span>
+<span class="lineno">75</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;nucles p=.95&#39;</span><span class="p">):</span>
+<span class="lineno">76</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">NucleusSampler</span><span class="p">(</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">1.</span><span class="p">)),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">77</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;nucles p=.95&#39;</span><span class="p">):</span>
+<span class="lineno">78</span>        <span class="n">sample</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">NucleusSampler</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">TemperatureSampler</span><span class="p">(</span><span class="mf">1.</span><span class="p">)),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;It is&#39;</span><span class="p">)</span>
+<span class="lineno">79</span>
+<span class="lineno">80</span>
+<span class="lineno">81</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">82</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Loads text datasets to fine-tune GPT-NeoX"/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Text Dataset for GPT-NeoX"/>
+    <meta name="twitter:description" content="Loads text datasets to fine-tune GPT-NeoX"/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/neox/utils/text_dataset.html"/>
+    <meta property="og:title" content="Text Dataset for GPT-NeoX"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Text Dataset for GPT-NeoX"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Text Dataset for GPT-NeoX"/>
+    <meta property="og:description" content="Loads text datasets to fine-tune GPT-NeoX"/>
+
+    <title>Text Dataset for GPT-NeoX</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/neox/utils/text_dataset.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">neox</a>
+                <a class="parent" href="index.html">utils</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/neox/utils/text_dataset.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Text Dataset for GPT-NeoX</h1>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">10</span><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">PurePath</span><span class="p">,</span> <span class="n">Path</span>
+<span class="lineno">11</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+<span class="lineno">12</span>
+<span class="lineno">13</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">14</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">lab</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">inspect</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml.utils.download</span> <span class="kn">import</span> <span class="n">download_file</span>
+<span class="lineno">19</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.neox.tokenizer</span> <span class="kn">import</span> <span class="n">get_tokenizer</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h3>Load text file</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">path</span></code>
+  is the location of the text file </li>
+<li><code  class="highlight"><span></span><span class="n">url</span></code>
+  is the URL to download the file from </li>
+<li><code  class="highlight"><span></span><span class="n">filter_subset</span></code>
+  is the number of characters to filter.  Use this during testing when trying large datasets </li>
+<p><em>Returns</em>  the text content</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">23</span><span class="k">def</span> <span class="nf">load_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">PurePath</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">filter_subset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">34</span>    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>Download if it doesn&#x27;t exist </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+<span class="lineno">38</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
+<span class="lineno">39</span>            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+<span class="lineno">40</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">41</span>            <span class="n">download_file</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+<span class="lineno">42</span>
+<span class="lineno">43</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Load data&quot;</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Load data </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">45</span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="lineno">46</span>            <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Filter </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">48</span>        <span class="k">if</span> <span class="n">filter_subset</span><span class="p">:</span>
+<span class="lineno">49</span>            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="n">filter_subset</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span>    <span class="k">return</span> <span class="n">text</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <h2>Dataset for fine-tuning GPT-NeoX</h2>
+<p>This is not optimized to very large datasets.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">55</span><span class="k">class</span> <span class="nc">NeoXDataset</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <ul><li><code  class="highlight"><span></span><span class="n">tokens</span></code>
+  is the list of token ids </li>
+<li><code  class="highlight"><span></span><span class="n">seq_len</span></code>
+  is the sequence length of a single training sample</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">62</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>        <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span> <span class="o">=</span> <span class="n">seq_len</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Number of samples </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>        <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">//</span> <span class="n">seq_len</span>
+<span class="lineno">71</span>        <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">=</span> <span class="n">n_samples</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Truncate </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">73</span>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[:</span><span class="n">n_samples</span> <span class="o">*</span> <span class="n">seq_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Create a PyTorch tensor </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">77</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">78</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <h3>Get a sample</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">idx</span></code>
+  is the index of the sample </li>
+<p><em>Returns</em>  the input and the target</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>        <span class="n">offset</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span>
+<span class="lineno">88</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">seq_len</span><span class="p">]</span>
+<span class="lineno">89</span>
+<span class="lineno">90</span>
+<span class="lineno">91</span><span class="n">DATASETS</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">92</span>    <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="lineno">93</span>        <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare.txt&#39;</span><span class="p">,</span>
+<span class="lineno">94</span>        <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt&#39;</span>
+<span class="lineno">95</span>    <span class="p">}</span>
+<span class="lineno">96</span><span class="p">}</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <h3>Load Dataset</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">seq_len</span></code>
+  is the sequence length of a single training sample </li>
+<li><code  class="highlight"><span></span><span class="n">dataset_name</span></code>
+  is the name of the dataset </li>
+<p><em>Returns</em>  the dataset</p></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">99</span><span class="k">def</span> <span class="nf">get_training_data</span><span class="p">(</span><span class="n">seq_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span> <span class="n">truncate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">108</span>    <span class="n">ds</span> <span class="o">=</span> <span class="n">DATASETS</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Load the content </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">110</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">load_text</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;file&#39;</span><span class="p">],</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Tokenize </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">get_tokenizer</span><span class="p">()</span>
+<span class="lineno">113</span>    <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode_batch</span><span class="p">([</span><span class="n">text</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<span class="lineno">114</span>
+<span class="lineno">115</span>    <span class="k">if</span> <span class="n">truncate</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">116</span>        <span class="n">token_ids</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">ids</span><span class="p">[:</span><span class="n">truncate</span> <span class="o">*</span> <span class="n">seq_len</span><span class="p">]</span>
+<span class="lineno">117</span>    <span class="k">else</span><span class="p">:</span>
+<span class="lineno">118</span>        <span class="n">token_ids</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">ids</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>    <span class="k">return</span> <span class="n">NeoXDataset</span><span class="p">(</span><span class="n">token_ids</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span><span class="k">def</span> <span class="nf">_test</span><span class="p">():</span>
+<span class="lineno">125</span>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">get_training_data</span><span class="p">()</span>
+<span class="lineno">126</span>
+<span class="lineno">127</span>    <span class="n">inspect</span><span class="p">(</span><span class="n">tokens</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">tokens</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">131</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">132</span>    <span class="n">_test</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This experiment compares performance of Adam implementations."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Test performance of Adam implementations"/>
+    <meta name="twitter:description" content="This experiment compares performance of Adam implementations."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/optimizers/performance_test.html"/>
+    <meta property="og:title" content="Test performance of Adam implementations"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Test performance of Adam implementations"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Test performance of Adam implementations"/>
+    <meta property="og:description" content="This experiment compares performance of Adam implementations."/>
+
+    <title>Test performance of Adam implementations</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/optimizers/performance_test.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">optimizers</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/optimizers/performance_test.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Performance testing Adam</h1>
+<pre  class="highlight lang-text"><code><span></span>TorchAdam warmup...[DONE]	222.59ms
+TorchAdam...[DONE]	1,356.01ms
+MyAdam warmup...[DONE]	119.15ms
+MyAdam...[DONE]	1,192.89ms</code></pre>
+<p><a href="https://colab.research.google.com/drive/1ngowaAsADj8VdZfBifu_6L6rtjGoEeoR?usp=sharing"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"></a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">19</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">20</span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_helpers.device</span> <span class="kn">import</span> <span class="n">DeviceInfo</span>
+<span class="lineno">22</span><span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Adam</span> <span class="k">as</span> <span class="n">TorchAdam</span>
+<span class="lineno">23</span>
+<span class="lineno">24</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">monit</span>
+<span class="lineno">25</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.adam</span> <span class="kn">import</span> <span class="n">Adam</span> <span class="k">as</span> <span class="n">MyAdam</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.mnist_experiment</span> <span class="kn">import</span> <span class="n">Model</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">29</span><span class="k">def</span> <span class="nf">test</span><span class="p">():</span>
+<span class="lineno">30</span>    <span class="n">device_info</span> <span class="o">=</span> <span class="n">DeviceInfo</span><span class="p">(</span><span class="n">use_cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cuda_device</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">31</span>    <span class="nb">print</span><span class="p">(</span><span class="n">device_info</span><span class="p">)</span>
+<span class="lineno">32</span>    <span class="n">inp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device_info</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">33</span>    <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device_info</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">34</span>    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="lineno">35</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device_info</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">36</span>    <span class="n">my_adam</span> <span class="o">=</span> <span class="n">MyAdam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+<span class="lineno">37</span>    <span class="n">torch_adam</span> <span class="o">=</span> <span class="n">TorchAdam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+<span class="lineno">38</span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">inp</span><span class="p">),</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">39</span>    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="lineno">40</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;MyAdam warmup&#39;</span><span class="p">):</span>
+<span class="lineno">41</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+<span class="lineno">42</span>            <span class="n">my_adam</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">43</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;MyAdam&#39;</span><span class="p">):</span>
+<span class="lineno">44</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+<span class="lineno">45</span>            <span class="n">my_adam</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">46</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;TorchAdam warmup&#39;</span><span class="p">):</span>
+<span class="lineno">47</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+<span class="lineno">48</span>            <span class="n">torch_adam</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">49</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;TorchAdam&#39;</span><span class="p">):</span>
+<span class="lineno">50</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+<span class="lineno">51</span>            <span class="n">torch_adam</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">52</span>
+<span class="lineno">53</span>
+<span class="lineno">54</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">55</span>    <span class="n">test</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

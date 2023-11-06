@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This experiment trains Primer EZ on Tiny Shakespeare dataset."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Primer EZ experiment"/>
+    <meta name="twitter:description" content="This experiment trains Primer EZ on Tiny Shakespeare dataset."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/primer_ez/experiment.html"/>
+    <meta property="og:title" content="Primer EZ experiment"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Primer EZ experiment"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Primer EZ experiment"/>
+    <meta property="og:description" content="This experiment trains Primer EZ on Tiny Shakespeare dataset."/>
+
+    <title>Primer EZ experiment</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/primer_ez/experiment.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">primer_ez</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/primer_ez/experiment.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1><a href="index.html">Primer EZ</a> Experiment</h1>
+<p>This is an annotated PyTorch experiment to train a <a href="index.html">Primer EZ transformer</a>.</p>
+<p>This is based on our <a href="../basic/experiment.html">vanilla transformer experiment</a>. We use the same experiment and add the Primer EZ modifications.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">15</span><span></span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml_nn.transformers</span> <span class="kn">import</span> <span class="n">TransformerConfigs</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.basic.autoregressive_experiment</span> <span class="kn">import</span> <span class="n">Configs</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.configs</span> <span class="kn">import</span> <span class="n">FeedForwardConfigs</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.primer_ez</span> <span class="kn">import</span> <span class="n">SquaredReLU</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p> Add the <a href="https://docs.labml.ai/api/configs.html#labml.configs.option">option</a>  of <a href="index.html"><strong>squared ReLU</strong></a> to <a href="../configs.html#FFN">configurable</a>  <a href="../feed_forward.html">feed forward module</a>.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">23</span><span class="nd">@option</span><span class="p">(</span><span class="n">FeedForwardConfigs</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span> <span class="s1">&#39;SquaredReLU&#39;</span><span class="p">)</span>
+<span class="lineno">24</span><span class="k">def</span> <span class="nf">_squared_relu</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span>    <span class="k">return</span> <span class="n">SquaredReLU</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p> Add the <a href="https://docs.labml.ai/api/configs.html#labml.configs.option">option</a>  of <a href="index.html"><strong>Multi-DConv-Head Attention</strong></a> to  <a href="../configs.html#TransformerConfigs">configurable transformer</a></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">33</span><span class="nd">@option</span><span class="p">(</span><span class="n">TransformerConfigs</span><span class="o">.</span><span class="n">encoder_attn</span><span class="p">,</span> <span class="s1">&#39;MultiDConvHeadAttention&#39;</span><span class="p">)</span>
+<span class="lineno">34</span><span class="k">def</span> <span class="nf">_d_conv_mha</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TransformerConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">40</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.primer_ez</span> <span class="kn">import</span> <span class="n">MultiDConvHeadAttention</span>
+<span class="lineno">41</span>    <span class="k">return</span> <span class="n">MultiDConvHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p> Add the <a href="https://docs.labml.ai/api/configs.html#labml.configs.option">option</a>  of <a href="variations.html"><strong>Multi Depth-wise Shared Conv Head Attention</strong></a> to  <a href="../configs.html#TransformerConfigs">configurable transformer</a></p>
+<p>📝 <em>This is a variation we tried</em></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span><span class="nd">@option</span><span class="p">(</span><span class="n">TransformerConfigs</span><span class="o">.</span><span class="n">encoder_attn</span><span class="p">,</span> <span class="s1">&#39;MultiDSharedConvHeadAttention&#39;</span><span class="p">)</span>
+<span class="lineno">45</span><span class="k">def</span> <span class="nf">_d_shared_conv_mha</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TransformerConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.primer_ez.variations</span> <span class="kn">import</span> <span class="n">MultiDSharedConvHeadAttention</span>
+<span class="lineno">54</span>    <span class="k">return</span> <span class="n">MultiDSharedConvHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p> Add the <a href="https://docs.labml.ai/api/configs.html#labml.configs.option">option</a>  of <a href="variation.html"><strong>Multi Depth-wise Per Head Conv Head Attention</strong></a> to  <a href="../configs.html#TransformerConfigs">configurable transformer</a></p>
+<p>📝 <em>This is a variation we tried</em></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">57</span><span class="nd">@option</span><span class="p">(</span><span class="n">TransformerConfigs</span><span class="o">.</span><span class="n">encoder_attn</span><span class="p">,</span> <span class="s1">&#39;MultiDPHConvHeadAttention&#39;</span><span class="p">)</span>
+<span class="lineno">58</span><span class="k">def</span> <span class="nf">_d_per_head_conv_mha</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TransformerConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.primer_ez.variations</span> <span class="kn">import</span> <span class="n">MultiDPHConvHeadAttention</span>
+<span class="lineno">67</span>    <span class="k">return</span> <span class="n">MultiDPHConvHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Create experiment </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;primer_ez&quot;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Create configs </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">74</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Override configurations </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">76</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="p">{</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Use character level tokenizer </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">78</span>        <span class="s1">&#39;tokenizer&#39;</span><span class="p">:</span> <span class="s1">&#39;character&#39;</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>Prompt separator is blank </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">80</span>        <span class="s1">&#39;prompt_separator&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Starting prompt for sampling </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">82</span>        <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="s1">&#39;It is &#39;</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Use Tiny Shakespeare dataset </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>        <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Use a context size of <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">256</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">87</span>        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">256</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Train for <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">128</span></span></span></span></span> epochs </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">89</span>        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Batch size <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">32</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">91</span>        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <p>Switch between training and validation for <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">10</span></span></span></span></span> times per epoch </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">94</span>        <span class="s1">&#39;inner_iterations&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>Model size </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">97</span>        <span class="s1">&#39;d_model&#39;</span><span class="p">:</span> <span class="mi">512</span><span class="p">,</span>
+<span class="lineno">98</span>        <span class="s1">&#39;transformer.ffn.d_ff&#39;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>Use Adam optimizer </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">101</span>        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+<span class="lineno">102</span>        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>⭐️ Use <a href="index.html"><strong>squared ReLU</strong></a> activation in the feed forward network.</p>
+<p><em>Replace this with <code  class="highlight"><span></span><span class="n">ReLU</span></code>
+ for <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.10903em;">LU</span></span></span></span></span>.</em> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">107</span>        <span class="s1">&#39;transformer.ffn.activation&#39;</span><span class="p">:</span> <span class="s1">&#39;SquaredReLU&#39;</span><span class="p">,</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>⭐️ Use <a href="index.html"><strong>Multi-DConv-Head Attention</strong></a> for encoder attention.</p>
+<p><em>Replace this with <code  class="highlight"><span></span><span class="n">mha</span></code>
+ for original multi-head attention.</em> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>        <span class="s1">&#39;transformer.encoder_attn&#39;</span><span class="p">:</span> <span class="s1">&#39;MultiDConvHeadAttention&#39;</span><span class="p">,</span>
+<span class="lineno">113</span>    <span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>Set models for saving and loading </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>Start the experiment </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>Run training </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">125</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">126</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

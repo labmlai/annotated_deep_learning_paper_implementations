@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A PyTorch implementation/tutorial of Adam optimizer with warm-up and cosine decay for GPT."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Adam optimizer with warm-up and cosine decay"/>
+    <meta name="twitter:description" content="A PyTorch implementation/tutorial of Adam optimizer with warm-up and cosine decay for GPT."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/optimizers/adam_warmup_cosine_decay.html"/>
+    <meta property="og:title" content="Adam optimizer with warm-up and cosine decay"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Adam optimizer with warm-up and cosine decay"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Adam optimizer with warm-up and cosine decay"/>
+    <meta property="og:description" content="A PyTorch implementation/tutorial of Adam optimizer with warm-up and cosine decay for GPT."/>
+
+    <title>Adam optimizer with warm-up and cosine decay</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/optimizers/adam_warmup_cosine_decay.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">optimizers</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/optimizers/adam_warmup_cosine_decay.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Adam Optimizer with Warmup and Cosine Decay</h1>
+<p>This extends <a href="adam.html">AMSGrad optimizer</a> and adds a warmup stage.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">11</span><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="lineno">13</span>
+<span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers</span> <span class="kn">import</span> <span class="n">WeightDecay</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml_nn.optimizers.amsgrad</span> <span class="kn">import</span> <span class="n">AMSGrad</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p> <a id="EmbeddingsWithPositionalEncoding"></a></p>
+<h2>Adam Optimizer with Warmup and Cosine Decay</h2>
+<p>This class extends from AMSGrad optimizer defined in <a href="amsgrad.html"><code  class="highlight"><span></span><span class="n">amsgrad</span><span class="o">.</span><span class="n">py</span></code>
+</a>.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">18</span><span class="k">class</span> <span class="nc">AdamWarmupCosineDecay</span><span class="p">(</span><span class="n">AMSGrad</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <h3>Initialize the optimizer</h3>
+<ul><li><code  class="highlight"><span></span><span class="n">params</span></code>
+ is the list of parameters </li>
+<li><code  class="highlight"><span></span><span class="n">lr</span></code>
+ is the learning rate <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="margin-right:0.0037em">α</span></span></span></span></span></span> </li>
+<li><code  class="highlight"><span></span><span class="n">betas</span></code>
+ is a tuple of (<span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.05278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>) </li>
+<li><code  class="highlight"><span></span><span class="n">eps</span></code>
+ is <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.69444em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">ϵ</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> or <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">ϵ</span></span></span></span></span></span> based on <code  class="highlight"><span></span><span class="n">optimized_update</span></code>
+ </li>
+<li><code  class="highlight"><span></span><span class="n">weight_decay</span></code>
+ is an instance of class <code  class="highlight"><span></span><span class="n">WeightDecay</span></code>
+ defined in <a href="index.html"><code  class="highlight"><span></span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span></code>
+</a> </li>
+<li>&#x27;optimized_update&#x27; is a flag whether to optimize the bias correction of the second moment  by doing it after adding <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqd" style=""><span class="mord mathnormal" style="">ϵ</span></span></span></span></span></span> </li>
+<li><code  class="highlight"><span></span><span class="n">amsgrad</span></code>
+ is a flag indicating whether to use AMSGrad or fallback to plain Adam </li>
+<li><code  class="highlight"><span></span><span class="n">warmup</span></code>
+ number of warmup steps </li>
+<li><code  class="highlight"><span></span><span class="n">total_steps</span></code>
+ total number of steps. Cosine decay reaches 0 at this, but stays at 10% of <code  class="highlight"><span></span><span class="n">lr</span></code>
+ because we take <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.46528em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="margin-right:0.0037em">α</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">max</span><span class="mopen">(</span><span class="mord coloredeq eqh" style=""><span class="mord" style="">0</span></span><span class="mord">.1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">ec</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mclose">)</span></span></span></span></span> </li>
+<li><code  class="highlight"><span></span><span class="n">defaults</span></code>
+ is a dictionary of default for group values.  This is useful when you want to extend the class <code  class="highlight"><span></span><span class="n">AdamWarmup</span></code>
+.</li></ul>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">27</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">),</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-16</span><span class="p">,</span>
+<span class="lineno">28</span>                 <span class="n">weight_decay</span><span class="p">:</span> <span class="n">WeightDecay</span> <span class="o">=</span> <span class="n">WeightDecay</span><span class="p">(),</span>
+<span class="lineno">29</span>                 <span class="n">optimized_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="lineno">30</span>                 <span class="n">amsgrad</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_steps</span><span class="o">=</span><span class="mf">1e10</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">49</span>        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">defaults</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">defaults</span>
+<span class="lineno">50</span>        <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">warmup</span><span class="o">=</span><span class="n">warmup</span><span class="p">,</span> <span class="n">total_steps</span><span class="o">=</span><span class="n">total_steps</span><span class="p">))</span>
+<span class="lineno">51</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">weight_decay</span><span class="p">,</span> <span class="n">optimized_update</span><span class="p">,</span> <span class="n">amsgrad</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <h3>Get learning-rate</h3>
+<p><span ><span class="katex-display"><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="margin-right:0.0037em">α</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">min</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="delimsizing size3">(</span></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.29208em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.02691em">w</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size3">)</span></span></span></span></span></span></span> where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqi" style=""><span class="mord mathnormal" style="margin-right:0.02691em">w</span></span></span></span></span></span> is the number of warmup steps.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>    <span class="k">def</span> <span class="nf">get_lr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">],</span> <span class="n">group</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>If we are in warmup stage </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">61</span>        <span class="k">if</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;warmup&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>A linearly increasing learning rate from <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord coloredeq eqh" style=""><span class="mord" style="">0</span></span></span></span></span></span> to <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="margin-right:0.0037em">α</span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">63</span>            <span class="k">return</span> <span class="mf">1e-8</span> <span class="o">+</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;warmup&#39;</span><span class="p">]</span>
+<span class="lineno">64</span>        <span class="k">else</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Constant learning rate <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqg" style=""><span class="mord mathnormal" style="margin-right:0.0037em">α</span></span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>            <span class="n">progress</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;warmup&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;total_steps&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;warmup&#39;</span><span class="p">])</span>
+<span class="lineno">67</span>            <span class="k">return</span> <span class="n">group</span><span class="p">[</span><span class="s1">&#39;lr&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">progress</span><span class="p">)))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <h3>Plot learning rate for different warmups and model sizes</h3>
+<p><img alt="Plot of learning rate" src="noam_lr.png"></p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span><span class="k">def</span> <span class="nf">_test_lr</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">76</span>    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="lineno">77</span>    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">78</span>    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">79</span>
+<span class="lineno">80</span>    <span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="lineno">81</span>    <span class="n">opt</span> <span class="o">=</span> <span class="n">AdamWarmupCosineDecay</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">warmup</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">total_steps</span><span class="o">=</span><span class="mf">4e6</span><span class="p">)</span>
+<span class="lineno">82</span>    <span class="n">steps</span> <span class="o">=</span> <span class="mi">20_000</span>
+<span class="lineno">83</span>    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">),</span> <span class="p">[</span><span class="n">opt</span><span class="o">.</span><span class="n">get_lr</span><span class="p">({</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">},</span> <span class="n">opt</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">)])</span>
+<span class="lineno">84</span>    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s2">&quot;5000:4e6&quot;</span><span class="p">,</span> <span class="s2">&quot;5000:2e6&quot;</span><span class="p">,</span> <span class="s2">&quot;5000:1e6&quot;</span><span class="p">])</span>
+<span class="lineno">85</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Learning Rate&quot;</span><span class="p">)</span>
+<span class="lineno">86</span>    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="lineno">87</span>
+<span class="lineno">88</span>    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">6e6</span><span class="p">)</span>
+<span class="lineno">89</span>    <span class="n">step_size</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="lineno">90</span>    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">step_size</span><span class="p">),</span> <span class="p">[</span><span class="n">opt</span><span class="o">.</span><span class="n">get_lr</span><span class="p">({</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">},</span> <span class="n">opt</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)])</span>
+<span class="lineno">91</span>    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s2">&quot;5000:4e6&quot;</span><span class="p">,</span> <span class="s2">&quot;5000:2e6&quot;</span><span class="p">,</span> <span class="s2">&quot;5000:1e6&quot;</span><span class="p">])</span>
+<span class="lineno">92</span>    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Learning Rate&quot;</span><span class="p">)</span>
+<span class="lineno">93</span>    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="lineno">94</span>
+<span class="lineno">95</span>
+<span class="lineno">96</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">97</span>    <span class="n">_test_lr</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

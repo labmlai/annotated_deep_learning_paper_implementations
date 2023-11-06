@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Code for training a U-Net model on Carvana dataset."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="Training a U-Net on Carvana dataset"/>
+    <meta name="twitter:description" content="Code for training a U-Net model on Carvana dataset."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/unet/experiment.html"/>
+    <meta property="og:title" content="Training a U-Net on Carvana dataset"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="Training a U-Net on Carvana dataset"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="Training a U-Net on Carvana dataset"/>
+    <meta property="og:description" content="Code for training a U-Net model on Carvana dataset."/>
+
+    <title>Training a U-Net on Carvana dataset</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/unet/experiment.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">unet</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/unet/experiment.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>Training <a href="index.html">U-Net</a></h1>
+<p>This trains a <a href="index.html">U-Net</a> model on <a href="carvana.html">Carvana dataset</a>. You can find the download instructions <a href="https://www.kaggle.com/competitions/carvana-image-masking-challenge/data">on Kaggle</a>.</p>
+<p>Save the training images inside <code  class="highlight"><span></span><span class="n">carvana</span><span class="o">/</span><span class="n">train</span></code>
+ folder and the masks in <code  class="highlight"><span></span><span class="n">carvana</span><span class="o">/</span><span class="n">train_masks</span></code>
+ folder.</p>
+<p>For simplicity, we do not do a training and validation split.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">19</span><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="lineno">20</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">21</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">22</span><span class="kn">import</span> <span class="nn">torchvision.transforms.functional</span>
+<span class="lineno">23</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">24</span>
+<span class="lineno">25</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">lab</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">26</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span>
+<span class="lineno">27</span><span class="kn">from</span> <span class="nn">labml_helpers.device</span> <span class="kn">import</span> <span class="n">DeviceConfigs</span>
+<span class="lineno">28</span><span class="kn">from</span> <span class="nn">labml_nn.unet.carvana</span> <span class="kn">import</span> <span class="n">CarvanaDataset</span>
+<span class="lineno">29</span><span class="kn">from</span> <span class="nn">labml_nn.unet</span> <span class="kn">import</span> <span class="n">UNet</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <h2>Configurations</h2>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">32</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>Device to train the model on. <a href="https://docs.labml.ai/api/helpers.html#labml_helpers.device.DeviceConfigs"><code  class="highlight"><span></span><span class="n">DeviceConfigs</span></code>
+</a>  picks up an available CUDA device or defaults to CPU. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">39</span>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">DeviceConfigs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p><a href="index.html">U-Net</a> model </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">42</span>    <span class="n">model</span><span class="p">:</span> <span class="n">UNet</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Number of channels in the image. <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">3</span></span></span></span></span> for RGB. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">45</span>    <span class="n">image_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p>Number of channels in the output mask. <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span></span> for binary mask. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">47</span>    <span class="n">mask_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p>Batch size </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Learning rate </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">52</span>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5e-4</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Number of training epochs </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">55</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p>Dataset </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">58</span>    <span class="n">dataset</span><span class="p">:</span> <span class="n">CarvanaDataset</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p>Dataloader </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">60</span>    <span class="n">data_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Loss function </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">63</span>    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCELoss</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Sigmoid function for binary classification </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span>    <span class="n">sigmoid</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Adam optimizer </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>    <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            <p>Initialize the <a href="carvana.html">Carvana dataset</a> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">72</span>        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">CarvanaDataset</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;carvana&#39;</span> <span class="o">/</span> <span class="s1">&#39;train&#39;</span><span class="p">,</span>
+<span class="lineno">73</span>                                      <span class="n">lab</span><span class="o">.</span><span class="n">get_data_path</span><span class="p">()</span> <span class="o">/</span> <span class="s1">&#39;carvana&#39;</span> <span class="o">/</span> <span class="s1">&#39;train_masks&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Initialize the model </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">75</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_channels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_channels</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Create dataloader </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+<span class="lineno">79</span>                                                       <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Create optimizer </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Image logging </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">84</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_image</span><span class="p">(</span><span class="s2">&quot;sample&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            <h3>Sample images</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">86</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">87</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            <p>Get a random sample </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">93</span>        <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">))]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>Move data to device </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">95</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>Get predicted mask </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">98</span>        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>Crop the image to the size of the mask </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">100</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">center_crop</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>Log samples </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">102</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">x</span> <span class="o">*</span> <span class="n">mask</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <h3>Train for an epoch</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">104</span>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>Iterate through the dataset. Use <a href="https://docs.labml.ai/api/monit.html#labml.monit.mix"><code  class="highlight"><span></span><span class="n">mix</span></code>
+</a> to sample <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">50</span></span></span></span></span> times per epoch. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">112</span>        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">mix</span><span class="p">((</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)))):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>Increment global step </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">114</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p>Move data to device </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">116</span>            <span class="n">image</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">mask</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
+            </div>
+            <p>Make the gradients zero </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">119</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-31'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-31'>#</a>
+            </div>
+            <p>Get predicted mask logits </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">121</span>            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-32'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-32'>#</a>
+            </div>
+            <p>Crop the target mask to the size of the logits. Size of the logits will be smaller if we don&#x27;t use padding in convolutional layers in the U-Net. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">124</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">center_crop</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="p">[</span><span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-33'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-33'>#</a>
+            </div>
+            <p>Calculate loss </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">126</span>            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">),</span> <span class="n">mask</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-34'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-34'>#</a>
+            </div>
+            <p>Compute gradients </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">128</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-35'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-35'>#</a>
+            </div>
+            <p>Take an optimization step </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">130</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>Track the loss </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">132</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;loss&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-37'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-37'>#</a>
+            </div>
+            <h3>Training loop</h3>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-38'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-38'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">138</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-39'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-39'>#</a>
+            </div>
+            <p>Train the model </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>            <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-40'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-40'>#</a>
+            </div>
+            <p>New line in the console </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">142</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-41'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-41'>#</a>
+            </div>
+            <p>Save the model </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>            <span class="n">experiment</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-42'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-42'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">147</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-43'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-43'>#</a>
+            </div>
+            <p>Create experiment </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">149</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;unet&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-44'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-44'>#</a>
+            </div>
+            <p>Create configurations </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">152</span>    <span class="n">configs</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-45'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-45'>#</a>
+            </div>
+            <p>Set configurations. You can override the defaults by passing the values in the dictionary. </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">155</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="p">{})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-46'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-46'>#</a>
+            </div>
+            <p>Initialize </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">158</span>    <span class="n">configs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-47'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-47'>#</a>
+            </div>
+            <p>Set models for saving and loading </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">161</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">configs</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-48'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-48'>#</a>
+            </div>
+            <p>Start and run the training loop </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">164</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
+<span class="lineno">165</span>        <span class="n">configs</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-49'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-49'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">169</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">170</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

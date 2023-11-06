@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="This experiment generates MNIST images using convolutional neural network."/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="WGAN-GP experiment with MNIST"/>
+    <meta name="twitter:description" content="This experiment generates MNIST images using convolutional neural network."/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/gan/wasserstein/gradient_penalty/experiment.html"/>
+    <meta property="og:title" content="WGAN-GP experiment with MNIST"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="WGAN-GP experiment with MNIST"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="WGAN-GP experiment with MNIST"/>
+    <meta property="og:description" content="This experiment generates MNIST images using convolutional neural network."/>
+
+    <title>WGAN-GP experiment with MNIST</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/gan/wasserstein/gradient_penalty/experiment.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../../index.html">gan</a>
+                <a class="parent" href="../index.html">wasserstein</a>
+                <a class="parent" href="index.html">gradient_penalty</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/gan/wasserstein/gradient_penalty/experiment.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            <h1>WGAN-GP experiment with MNIST</h1>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">10</span><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">11</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            <p>Import configurations from <a href="../experiment.html">Wasserstein experiment</a> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml_nn.gan.wasserstein.experiment</span> <span class="kn">import</span> <span class="n">Configs</span> <span class="k">as</span> <span class="n">OriginalConfigs</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml_nn.gan.wasserstein.gradient_penalty</span> <span class="kn">import</span> <span class="n">GradientPenalty</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <h2>Configuration class</h2>
+<p>We extend <a href="../../original/experiment.html">original GAN implementation</a> and override the discriminator (critic) loss calculation to include gradient penalty.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">19</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">OriginalConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            <p>Gradient penalty coefficient <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">λ</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">28</span>    <span class="n">gradient_penalty_coefficient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span>    <span class="n">gradient_penalty</span> <span class="o">=</span> <span class="n">GradientPenalty</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            <p> This overrides the original discriminator loss calculation and includes gradient penalty.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">32</span>    <span class="k">def</span> <span class="nf">calc_discriminator_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            <p>Require gradients on <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal" style="">x</span></span></span></span></span></span> to calculate gradient penalty </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">38</span>        <span class="n">data</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>Sample <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">)</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">40</span>        <span class="n">latent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_z</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mopen">(</span><span class="mord coloredeq eqe" style=""><span class="mord mathnormal" style="">x</span></span><span class="mclose">)</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">42</span>        <span class="n">f_real</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            <p><span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">θ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span><span class="mclose">))</span></span></span></span></span> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">44</span>        <span class="n">f_fake</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">latent</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Get discriminator losses </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">46</span>        <span class="n">loss_true</span><span class="p">,</span> <span class="n">loss_false</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discriminator_loss</span><span class="p">(</span><span class="n">f_real</span><span class="p">,</span> <span class="n">f_fake</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Calculate gradient penalties in training mode </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">48</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">49</span>            <span class="n">gradient_penalty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f_real</span><span class="p">)</span>
+<span class="lineno">50</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.gp.&quot;</span><span class="p">,</span> <span class="n">gradient_penalty</span><span class="p">)</span>
+<span class="lineno">51</span>            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_true</span> <span class="o">+</span> <span class="n">loss_false</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_penalty_coefficient</span> <span class="o">*</span> <span class="n">gradient_penalty</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            <p>Skip gradient penalty otherwise </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">53</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">54</span>            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_true</span> <span class="o">+</span> <span class="n">loss_false</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p>Log stuff </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">57</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.discriminator.true.&quot;</span><span class="p">,</span> <span class="n">loss_true</span><span class="p">)</span>
+<span class="lineno">58</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.discriminator.false.&quot;</span><span class="p">,</span> <span class="n">loss_false</span><span class="p">)</span>
+<span class="lineno">59</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.discriminator.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+<span class="lineno">60</span>
+<span class="lineno">61</span>        <span class="k">return</span> <span class="n">loss</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            <p>Create configs object </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">66</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>Create experiment </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">68</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mnist_wassertein_gp_dcgan&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p>Override configurations </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">70</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span>
+<span class="lineno">71</span>                       <span class="p">{</span>
+<span class="lineno">72</span>                           <span class="s1">&#39;discriminator&#39;</span><span class="p">:</span> <span class="s1">&#39;cnn&#39;</span><span class="p">,</span>
+<span class="lineno">73</span>                           <span class="s1">&#39;generator&#39;</span><span class="p">:</span> <span class="s1">&#39;cnn&#39;</span><span class="p">,</span>
+<span class="lineno">74</span>                           <span class="s1">&#39;label_smoothing&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+<span class="lineno">75</span>                           <span class="s1">&#39;generator_loss&#39;</span><span class="p">:</span> <span class="s1">&#39;wasserstein&#39;</span><span class="p">,</span>
+<span class="lineno">76</span>                           <span class="s1">&#39;discriminator_loss&#39;</span><span class="p">:</span> <span class="s1">&#39;wasserstein&#39;</span><span class="p">,</span>
+<span class="lineno">77</span>                           <span class="s1">&#39;discriminator_k&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+<span class="lineno">78</span>                       <span class="p">})</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            <p>Start the experiment and run training loop </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">81</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
+<span class="lineno">82</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="lineno">83</span>
+<span class="lineno">84</span>
+<span class="lineno">85</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">86</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://papers.labml.ai">Trending Research Papers</a>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>
