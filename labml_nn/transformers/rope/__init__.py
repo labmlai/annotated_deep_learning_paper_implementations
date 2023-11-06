@@ -9,7 +9,7 @@ summary: >
 # Rotary Positional Embeddings (RoPE)
 
 This is an implementation of
-[Rotary Positional Embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864)
+[Rotary Positional Embeddings (RoPE)](https://arxiv.org/abs/2104.09864)
 in [PyTorch](https://pytorch.org).
 
 Rotary Positional Embeddings (RoPE) encode position information of tokens

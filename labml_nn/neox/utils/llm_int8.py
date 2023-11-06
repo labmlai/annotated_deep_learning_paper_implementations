@@ -9,7 +9,7 @@ summary: >
 
 This implements a utility function to transform a `nn.Linear` layer to LLM.int8() linear layer.
 
-[LLM.int8() paper](https://papers.labml.ai/paper/eb2bcaee1d0011edaa66a71c10a887e7)
+[LLM.int8() paper](https://arxiv.org/abs/eb2bcaee1d0011edaa66a71c10a887e7)
  shows you can use int8 quantization while handling outliers to
 reduce memory footprint without performance degradation in large language models.
 They convert weights and inputs to scaled 8-bit integers and does matrix multiplication

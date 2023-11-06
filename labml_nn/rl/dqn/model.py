@@ -19,7 +19,7 @@ class Model(Module):
     """
     ## Dueling Network ⚔️ Model for $Q$ Values
 
-    We are using a [dueling network](https://papers.labml.ai/paper/1511.06581)
+    We are using a [dueling network](https://arxiv.org/abs/1511.06581)
      to calculate Q-values.
     Intuition behind dueling network architecture is that in most states
      the action doesn't matter,

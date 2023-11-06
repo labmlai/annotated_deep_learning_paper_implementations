@@ -10,7 +10,7 @@ summary: >
 # Denoising Diffusion Implicit Models (DDIM) Sampling
 
 This implements DDIM sampling from the paper
-[Denoising Diffusion Implicit Models](https://papers.labml.ai/paper/2010.02502)
+[Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502)
 """
 
 from typing import Optional, List
@@ -29,7 +29,7 @@ class DDIMSampler(DiffusionSampler):
 
     This extends the [`DiffusionSampler` base class](index.html).
 
-    DDPM samples images by repeatedly removing noise by sampling step by step using,
+    DDIM samples images by repeatedly removing noise by sampling step by step using,
 
     \begin{align}
     x_{\tau_{i-1}} &= \sqrt{\alpha_{\tau_{i-1}}}\Bigg(

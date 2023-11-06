@@ -7,7 +7,7 @@ summary: A simple PyTorch implementation/tutorial of Sophia optimizer
 # Sophia Optimizer
 
 This is a [PyTorch](https://pytorch.org) implementation of *Sophia-G* from paper
- [Sophia: A Scalable Stochastic Second-order Optimizer for Language Model Pre-training](https://papers.labml.ai/paper/2305.14342).
+ [Sophia: A Scalable Stochastic Second-order Optimizer for Language Model Pre-training](https://arxiv.org/abs/2305.14342).
 Official implementation is available at [Liuhong99/Sophia](https://github.com/Liuhong99/Sophia).
 
 Sophia is more adaptive to heterogeneous curvatures than Adam, more resistant

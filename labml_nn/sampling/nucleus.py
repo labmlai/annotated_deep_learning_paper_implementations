@@ -7,7 +7,7 @@ summary: A PyTorch implementation of nucleus sampling from language models.
 # Nucleus Sampling
 
 This is an implementation of nucleus sampling, introduced in the paper
-[The Curious Case of Neural Text Degeneration](https://papers.labml.ai/paper/1904.09751).
+[The Curious Case of Neural Text Degeneration](https://arxiv.org/abs/1904.09751).
 
 The paper discusses the problems with other sampling methods such as Beam Search,
 [Pure sampling](temperature.html), [Temperature sampling](temperature.html), and

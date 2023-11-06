@@ -7,7 +7,7 @@ summary: A simple PyTorch implementation/tutorial of Adam optimizer
 # Adam Optimizer
 
 This is a [PyTorch](https://pytorch.org) implementation of popular optimizer *Adam* from paper
- [Adam: A Method for Stochastic Optimization](https://papers.labml.ai/paper/1412.6980).
+ [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980).
 
 *Adam* update is,
 

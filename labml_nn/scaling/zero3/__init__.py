@@ -8,7 +8,7 @@ summary: >
 # Zero-DP Memory Optimization
 
 This is an implementation of Zero-DP introduced in the paper
-[ZeRO: Memory Optimization Towards Training A Trillion Parameter Models](https://papers.labml.ai/paper/1910.02054),
+[ZeRO: Memory Optimization Towards Training A Trillion Parameter Models](https://arxiv.org/abs/1910.02054),
 
 It keeps shards of the optimizer state, gradients and parameters into multiple devices/nodes.
 It reduces the memory consumption to $\frac{(2 + 2 + K)\Psi}{N_d}$ of the original model,

@@ -9,7 +9,7 @@ summary: >
 # Sketch RNN
 
 This is an annotated [PyTorch](https://pytorch.org) implementation of the paper
-[A Neural Representation of Sketch Drawings](https://papers.labml.ai/paper/1704.03477).
+[A Neural Representation of Sketch Drawings](https://arxiv.org/abs/1704.03477).
 
 Sketch RNN is a sequence-to-sequence variational auto-encoder.
 Both encoder and decoder are recurrent neural network models.
