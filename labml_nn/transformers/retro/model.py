@@ -28,7 +28,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     We assume the positional information gets embedded in embeddings
     and therefore not use them in causal attention.
     [Non-causal self-attention needs explicit positional information
-     because it cannot infer it](https://papers.labml.ai/paper/3999902edc8511eba3db37f65e372566).*
+     because it cannot infer it](https://arxiv.org/abs/3999902edc8511eba3db37f65e372566).*
     """
 
     def __init__(self, d: int, base: int = 10_000):

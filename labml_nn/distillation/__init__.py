@@ -9,7 +9,7 @@ summary: >
 # Distilling the Knowledge in a Neural Network
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
-[Distilling the Knowledge in a Neural Network](https://papers.labml.ai/paper/1503.02531).
+[Distilling the Knowledge in a Neural Network](https://arxiv.org/abs/1503.02531).
 
 It's a way of training a small network using the knowledge in a trained larger network;
 i.e. distilling the knowledge from the large network.

@@ -9,7 +9,7 @@ summary: >
 # Fast weights transformer
 
 The paper
-[Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://papers.labml.ai/paper/2102.11174)
+[Linear Transformers Are Secretly Fast Weight Memory Systems in PyTorch](https://arxiv.org/abs/2102.11174)
 finds similarities between linear self-attention and fast weight systems
 and makes modifications to self-attention update rule based on that.
 It also introduces a simpler, yet effective kernel function.

@@ -9,7 +9,7 @@ summary: >
 # Relative Multi-Headed Attention
 
 This is an implementation of relative multi-headed attention from paper
-[Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context](https://papers.labml.ai/paper/1901.02860)
+[Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context](https://arxiv.org/abs/1901.02860)
 in [PyTorch](https://pytorch.org).
 """
 

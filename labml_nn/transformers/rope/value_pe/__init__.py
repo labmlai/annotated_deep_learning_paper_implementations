@@ -11,10 +11,10 @@ and this implementation is based on his original code.*
 
 # Rotary Positional Embeddings with Relative distance (RoPER)
 
-[Rotary Positional Embeddings (RoPE)](https://papers.labml.ai/paper/2104.09864) includes
+[Rotary Positional Embeddings (RoPE)](https://arxiv.org/abs/2104.09864) includes
 relative positions in attention score calculation.
 However, the embeddings themselves do not get any positional information
-, [except what it can get implicitly from causal attention](https://papers.labml.ai/paper/2c364684b15b11ecac827bce58715ee7).
+, [except what it can get implicitly from causal attention](https://arxiv.org/abs/2c364684b15b11ecac827bce58715ee7).
 
 RoPER adds relative positional information explicitly to value embeddings.
 Specifically, it adds the relative positions of the tokens it paid attention to.

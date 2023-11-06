@@ -11,7 +11,7 @@ summary: >
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/transformers/basic/autoregressive_experiment.ipynb)
 
 This is a tutorial/implementation of multi-headed attention
-from paper [Attention Is All You Need](https://papers.labml.ai/paper/1706.03762)
+from paper [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 in [PyTorch](https://pytorch.org/).
 The implementation is inspired from [Annotated Transformer](https://nlp.seas.harvard.edu/2018/04/03/attention.html).
 

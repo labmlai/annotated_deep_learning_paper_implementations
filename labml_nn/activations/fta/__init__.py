@@ -11,7 +11,7 @@ summary: >
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/activations/fta/experiment.ipynb)
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of
-[Fuzzy Tiling Activations: A Simple Approach to Learning Sparse Representations Online](https://papers.labml.ai/paper/1911.08068).
+[Fuzzy Tiling Activations: A Simple Approach to Learning Sparse Representations Online](https://arxiv.org/abs/1911.08068).
 
 Fuzzy tiling activations are a form of sparse activations based on binning.
 
