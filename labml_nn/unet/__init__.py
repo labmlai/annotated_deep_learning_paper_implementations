@@ -8,7 +8,7 @@ summary: >
 # U-Net
 
 This is an implementation of the U-Net model from the paper,
-[U-Net: Convolutional Networks for Biomedical Image Segmentation](https://papers.labml.ai/paper/1505.04597).
+[U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597).
 
 U-Net consists of a contracting path and an expansive path.
 The contracting path is a series of convolutional layers and pooling layers,

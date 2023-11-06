@@ -1,7 +1,7 @@
 # [Layer Normalization](https://nn.labml.ai/normalization/layer_norm/index.html)
 
 This is a [PyTorch](https://pytorch.org) implementation of
-[Layer Normalization](https://papers.labml.ai/paper/1607.06450).
+[Layer Normalization](https://arxiv.org/abs/1607.06450).
 
 ### Limitations of [Batch Normalization](https://nn.labml.ai/normalization/batch_norm/index.html)
 

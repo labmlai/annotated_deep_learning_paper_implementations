@@ -1,6 +1,6 @@
 # GPT-NeoX
 
-This is a simple implementation of [Eleuther GPT-NeoX](https://papers.labml.ai/paper/2204.06745) for inference and fine-tuning.
+This is a simple implementation of [Eleuther GPT-NeoX](https://arxiv.org/abs/2204.06745) for inference and fine-tuning.
 
 
 * [Model definition](https://nn.labml.ai/neox/model.html)

@@ -8,7 +8,7 @@ summary: >
 # Weight Standardization
 
 This is a [PyTorch](https://pytorch.org) implementation of Weight Standardization from the paper
- [Micro-Batch Training with Batch-Channel Normalization and Weight Standardization](https://papers.labml.ai/paper/1903.10520).
+ [Micro-Batch Training with Batch-Channel Normalization and Weight Standardization](https://arxiv.org/abs/1903.10520).
 We also have an [annotated implementation of Batch-Channel Normalization](../batch_channel_norm/index.html).
 
 Batch normalization **gives a smooth loss landscape** and
@@ -36,7 +36,7 @@ inputs. So as long as the inputs are normally distributed the outputs remain clo
 This avoids outputs of nodes from always falling beyond the active range of the activation function
 (e.g. always negative input for a ReLU).
 
-*[Refer to the paper for proofs](https://papers.labml.ai/paper/1903.10520)*.
+*[Refer to the paper for proofs](https://arxiv.org/abs/1903.10520)*.
 
 Here is [the training code](experiment.html) for training
 a VGG network that uses weight standardization to classify CIFAR-10 data.

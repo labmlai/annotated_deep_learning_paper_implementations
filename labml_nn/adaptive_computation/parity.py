@@ -9,7 +9,7 @@ summary: >
 # Parity Task
 
 This creates data for Parity Task from the paper
-[Adaptive Computation Time for Recurrent Neural Networks](https://papers.labml.ai/paper/1603.08983).
+[Adaptive Computation Time for Recurrent Neural Networks](https://arxiv.org/abs/1603.08983).
 
 The input of the parity task is a vector with $0$'s $1$'s and $-1$'s.
 The output is the parity of $1$'s - one if there is an odd number of $1$'s and zero otherwise.

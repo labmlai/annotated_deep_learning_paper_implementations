@@ -66,7 +66,7 @@ def _ffn_activation_gelu():
 
     $$x \Phi(x)$$ where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$
 
-    It was introduced in paper [Gaussian Error Linear Units](https://papers.labml.ai/paper/1606.08415).
+    It was introduced in paper [Gaussian Error Linear Units](https://arxiv.org/abs/1606.08415).
     """
     return nn.GELU()
 
@@ -86,7 +86,7 @@ def _feed_forward(c: FeedForwardConfigs):
 
 # ## GLU Variants
 # These are variants with gated hidden layers for the FFN
-# as introduced in paper [GLU Variants Improve Transformer](https://papers.labml.ai/paper/2002.05202).
+# as introduced in paper [GLU Variants Improve Transformer](https://arxiv.org/abs/2002.05202).
 # We have omitted the bias terms as specified in the paper.
 
 # ### FFN with Gated Linear Units

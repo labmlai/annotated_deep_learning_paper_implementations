@@ -8,12 +8,12 @@ summary: >
 # StyleGAN 2
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
- [Analyzing and Improving the Image Quality of StyleGAN](https://papers.labml.ai/paper/1912.04958)
+ [Analyzing and Improving the Image Quality of StyleGAN](https://arxiv.org/abs/1912.04958)
  which introduces **StyleGAN 2**.
 StyleGAN 2 is an improvement over **StyleGAN** from the paper
- [A Style-Based Generator Architecture for Generative Adversarial Networks](https://papers.labml.ai/paper/1812.04948).
+ [A Style-Based Generator Architecture for Generative Adversarial Networks](https://arxiv.org/abs/1812.04948).
 And StyleGAN is based on **Progressive GAN** from the paper
- [Progressive Growing of GANs for Improved Quality, Stability, and Variation](https://papers.labml.ai/paper/1710.10196).
+ [Progressive Growing of GANs for Improved Quality, Stability, and Variation](https://arxiv.org/abs/1710.10196).
 All three papers are from the same authors from [NVIDIA AI](https://twitter.com/NVIDIAAI).
 
 *Our implementation is a minimalistic StyleGAN 2 model training code.
@@ -661,7 +661,7 @@ class DownSample(nn.Module):
     The down-sample operation [smoothens](#smooth) each feature channel and
      scale $2 \times$ using bilinear interpolation.
     This is based on the paper
-     [Making Convolutional Networks Shift-Invariant Again](https://papers.labml.ai/paper/1904.11486).
+     [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
     """
 
     def __init__(self):
@@ -684,7 +684,7 @@ class UpSample(nn.Module):
 
     The up-sample operation scales the image up by $2 \times$ and [smoothens](#smooth) each feature channel.
     This is based on the paper
-     [Making Convolutional Networks Shift-Invariant Again](https://papers.labml.ai/paper/1904.11486).
+     [Making Convolutional Networks Shift-Invariant Again](https://arxiv.org/abs/1904.11486).
     """
 
     def __init__(self):
@@ -841,7 +841,7 @@ class GradientPenalty(nn.Module):
     ## Gradient Penalty
 
     This is the $R_1$ regularization penality from the paper
-    [Which Training Methods for GANs do actually Converge?](https://papers.labml.ai/paper/1801.04406).
+    [Which Training Methods for GANs do actually Converge?](https://arxiv.org/abs/1801.04406).
 
     $$R_1(\psi) = \frac{\gamma}{2} \mathbb{E}_{p_\mathcal{D}(x)}
     \Big[\Vert \nabla_x D_\psi(x)^2 \Vert\Big]$$

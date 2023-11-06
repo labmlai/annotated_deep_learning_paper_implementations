@@ -12,7 +12,7 @@ summary: >
 # Deep Q Networks (DQN)
 
 This is a [PyTorch](https://pytorch.org) implementation of paper
- [Playing Atari with Deep Reinforcement Learning](https://papers.labml.ai/paper/1312.5602)
+ [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602)
  along with [Dueling Network](model.html), [Prioritized Replay](replay_buffer.html)
  and Double Q Network.
 
@@ -76,7 +76,7 @@ class QFuncLoss(Module):
         \textcolor{cyan}{Q}(s', a'; \textcolor{cyan}{\theta}); \textcolor{cyan}{\theta}
     \Big)
     $$
-    We use [double Q-learning](https://papers.labml.ai/paper/1509.06461), where
+    We use [double Q-learning](https://arxiv.org/abs/1509.06461), where
     the $\operatorname{argmax}$ is taken from $\textcolor{cyan}{\theta_i}$ and
     the value is taken from $\textcolor{orange}{\theta_i^{-}}$.
 

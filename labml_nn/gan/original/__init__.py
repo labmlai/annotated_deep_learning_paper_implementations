@@ -7,7 +7,7 @@ summary: A simple PyTorch implementation/tutorial of Generative Adversarial Netw
 # Generative Adversarial Networks (GAN)
 
 This is an implementation of
-[Generative Adversarial Networks](https://papers.labml.ai/paper/1406.2661).
+[Generative Adversarial Networks](https://arxiv.org/abs/1406.2661).
 
 The generator, $G(\pmb{z}; \theta_g)$ generates samples that match the
 distribution of data, while the discriminator, $D(\pmb{x}; \theta_g)$

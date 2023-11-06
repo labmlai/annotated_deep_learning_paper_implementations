@@ -11,7 +11,7 @@ summary: >
 
 This is a [PyTorch](https://pytorch.org) implementation of
 the DeepNorm from the paper
-[DeepNet: Scaling Transformers to 1,000 Layers](https://papers.labml.ai/paper/2203.00555).
+[DeepNet: Scaling Transformers to 1,000 Layers](https://arxiv.org/abs/2203.00555).
 
 The paper proposes a method to stabilize extremely deep transformers through a new normalizing function
 to replace LayerNorm and a weight initialization scheme.
@@ -65,7 +65,7 @@ This function is used to replace Post-LayerNorm.
 
 Where $N$ is the number of layers in the encoder and $M$ is the number of layers in the decoder.
 
-Refer to [the paper](https://papers.labml.ai/paper/2203.00555) for derivation.
+Refer to [the paper](https://arxiv.org/abs/2203.00555) for derivation.
 
 [Here is an experiment implementation](experiment.html) that uses DeepNorm.
 """

@@ -72,7 +72,7 @@ class TransformerLayer(nn.Module):
     Alternative is to do a layer normalization after adding the residuals.
     But we found this to be less stable when training.
     We found a detailed discussion about this in the paper
-     [On Layer Normalization in the Transformer Architecture](https://papers.labml.ai/paper/2002.04745).
+     [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745).
     """
 
     def __init__(self, *,

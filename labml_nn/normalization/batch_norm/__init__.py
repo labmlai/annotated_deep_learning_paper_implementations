@@ -8,7 +8,7 @@ summary: >
 # Batch Normalization
 
 This is a [PyTorch](https://pytorch.org) implementation of Batch Normalization from paper
- [Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift](https://papers.labml.ai/paper/1502.03167).
+ [Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift](https://arxiv.org/abs/1502.03167).
 
 ### Internal Covariate Shift
 

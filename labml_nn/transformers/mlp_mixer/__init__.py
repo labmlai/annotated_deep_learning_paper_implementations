@@ -8,7 +8,7 @@ summary: >
 # MLP-Mixer: An all-MLP Architecture for Vision
 
 This is a [PyTorch](https://pytorch.org) implementation of the paper
-[MLP-Mixer: An all-MLP Architecture for Vision](https://papers.labml.ai/paper/2105.01601).
+[MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/abs/2105.01601).
 
 This paper applies the model on vision tasks.
 The model is similar to a transformer with attention layer being replaced by a MLP

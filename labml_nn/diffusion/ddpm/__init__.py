@@ -11,14 +11,14 @@ summary: >
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/ddpm/experiment.ipynb)
 
 This is a [PyTorch](https://pytorch.org) implementation/tutorial of the paper
-[Denoising Diffusion Probabilistic Models](https://papers.labml.ai/paper/2006.11239).
+[Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239).
 
 In simple terms, we get an image from data and add noise step by step.
 Then We train a model to predict that noise at each step and use the model to
 generate images.
 
 The following definitions and derivations show how this works.
-For details please refer to [the paper](https://papers.labml.ai/paper/2006.11239).
+For details please refer to [the paper](https://arxiv.org/abs/2006.11239).
 
 ## Forward Process
 
