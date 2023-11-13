@@ -19,7 +19,7 @@ Here's the attention formula for $i$-th token,
 
 \begin{align}
 \mathbf{a}_i
-&= \text{softmax} \bigg( \mathbf{q}_i \mathbf{K}^\top + m \cdot \big[-(i-1), \dots, 1, 0 \big] \bigg) \\
+&= \text{softmax} \bigg( \mathbf{q}_i \mathbf{K}^\top + m \cdot \big[-(i-1), \dots, -1, 0 \big] \bigg) \\
 &= \text{softmax} \bigg( \mathbf{q}_i \mathbf{K}^\top + m \cdot \big[0, 1, \dots, (i - 1) \big] \bigg)
 \end{align}
 
