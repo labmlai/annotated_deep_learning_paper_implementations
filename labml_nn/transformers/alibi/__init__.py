@@ -158,7 +158,7 @@ class AlibiMultiHeadAttention(MultiHeadAttention):
 
         # Create AliBi biases if it's not cached
         if self.alibi_biases is None or self.alibi_biases.shape[1] < seq_len:
-            # `mask` has shape [seq_len, seq_len, 1, 1]
+            # `mask` has shape `[seq_len, seq_len, 1, 1]`
             self.alibi_biases = get_alibi_biases(scores.shape[-1], mask[:, :, 0, 0])
 
         # Add AliBi biases to attention scores.
