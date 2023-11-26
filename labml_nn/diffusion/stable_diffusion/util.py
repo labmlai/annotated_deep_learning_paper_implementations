@@ -72,6 +72,10 @@ def load_model(path: Path = None, config=None) -> LatentDiffusion:
         from libs.uvit_multi_post_ln_v1 import UViT
         nnet_model = UViT(**config.nnet)
 
+    with monit.section('Load CFG:'):
+        nnet_standard = UViT(**config.nnet)
+
+
     # Initialize the Latent Diffusion model
     with monit.section('Initialize Latent Diffusion model'):
         model = LatentDiffusion(linear_start=0.00085,
@@ -83,20 +87,26 @@ def load_model(path: Path = None, config=None) -> LatentDiffusion:
                                 clip_embedder=clip_text_embedder,
                                 clip_img_embedder=clip_img_embedder,
                                 caption_decoder=caption_decoder,
-                                nnet_model=nnet_model)
+                                nnet_model=nnet_model,
+                                nnet_standard=nnet_standard)
 
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
         checkpoint = torch.load(path, map_location="cpu")
+        standard_checkpoint = torch.load("models/uvit_v1.pth", map_location='cpu')
 
     # Set model state
     with monit.section('Load state'):
         missing_keys, extra_keys = nnet_model.load_state_dict(checkpoint, False)
+        standard_missing_keys, standard_extra_keys = nnet_standard.load_state_dict(standard_checkpoint, False)
 
     # Debugging output
     inspect(global_step=checkpoint.get('global_step', -1), missing_keys=missing_keys, extra_keys=extra_keys,
             _expand=True)
-
+    
+    # Debugging standard output
+    inspect(global_step=standard_checkpoint.get('global_step', -1), missing_keys=standard_missing_keys, extra_keys=standard_extra_keys,
+            _expand=True)
     #
     model.eval()
     return model
@@ -128,18 +138,16 @@ def load_img(path: str):
     image = image.unsqueeze(0)
 
 def load_img_rm(image):
-
     image = image.resize((512, 512))
     # # Convert to numpy and map to `[-1, 1]` for `[0, 255]`
     # image = np.array(image).to(float32)* (2. / 255.0) - 1
     # # Transpose to shape `[batch_size, channels, height, width]`
     # image = image[None].transpose(0, 3, 1, 2)
-
-    
     image_np = np.array(image).transpose(2, 0, 1)
-                
     # Convert to tensor and normalize
+    # print(image_np,image_np)
     image_tensor = torch.tensor(image_np, dtype=torch.float32)
+    
     image = 2 * (image_tensor / 255) - 1
     image = image.unsqueeze(0)
 

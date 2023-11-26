@@ -63,6 +63,7 @@ class LatentDiffusion(nn.Module):
     * [CLIP embeddings generator](model/clip_embedder.html)
     """
     model: DiffusionWrapper
+    nnet_standard: DiffusionWrapper
     # first_stage_model: Autoencoder
     autoencoder: FrozenAutoencoderKL
     cond_stage_model: CLIPTextEmbedder
@@ -72,6 +73,7 @@ class LatentDiffusion(nn.Module):
         
     def __init__(self,
                  nnet_model: UViT,
+                 nnet_standard: UViT,
                 #  autoencoder: Autoencoder,
                  autoencoder: FrozenAutoencoderKL,
                 #  decoder_consistency:ConsistencyDecoder,
@@ -98,6 +100,7 @@ class LatentDiffusion(nn.Module):
         # Wrap the [U-Net](model/unet.html) to keep the same model structure as
         # [CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion).
         self.model = DiffusionWrapper(nnet_model)
+        self.nnet_standard = DiffusionWrapper(nnet_standard)
         # Auto-encoder and scaling factor
         # self.first_stage_model = autoencoder
         self.latent_scaling_factor = latent_scaling_factor
@@ -169,6 +172,14 @@ class LatentDiffusion(nn.Module):
         Predict noise given the latent representation img, clip_img, text, t_img, t_text, data_type
         """
         return self.model(img, clip_img, text, t_img, t_text, data_type)
+    
+    def standard_forward(self, img, clip_img, text, t_img, t_text, data_type):
+        """
+        ### Predict noise
+
+        Predict noise given the latent representation img, clip_img, text, t_img, t_text, data_type
+        """
+        return self.nnet_standard(img, clip_img, text, t_img, t_text, data_type)
 
     # def forward(self, x: torch.Tensor, t: torch.Tensor, context: torch.Tensor):
     #     """
