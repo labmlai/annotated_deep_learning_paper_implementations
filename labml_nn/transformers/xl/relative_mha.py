@@ -25,7 +25,7 @@ def shift_right(x: torch.Tensor):
     This method shifts $i^{th}$ row of a matrix by $i$ columns.
 
     If the input is `[[1, 2 ,3], [4, 5 ,6], [7, 8, 9]]`, the shifted
-    result would be `[[1, 2 ,3], [0, 4, 5], [6, 0, 7]]`.
+    result would be `[[1, 2 ,3], [0, 4, 5], [9, 0, 7]]`.
     *Ideally we should mask out the lower triangle but it's ok for our purpose*.
     """
 
