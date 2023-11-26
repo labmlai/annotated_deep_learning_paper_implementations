@@ -26,10 +26,14 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from labml_nn.diffusion.stable_diffusion.model.autoencoder import Autoencoder
-from labml_nn.diffusion.stable_diffusion.model.clip_embedder import CLIPTextEmbedder
-from labml_nn.diffusion.stable_diffusion.model.unet import UNetModel
-
+# from labml_nn.diffusion.stable_diffusion.model.autoencoder import Autoencoder
+from labml_nn.diffusion.stable_diffusion.model.clip_embedder import CLIPTextEmbedder, CLIPImageEmbedder
+from libs.caption_decoder import CaptionDecoder
+# from labml_nn.diffusion.stable_diffusion.model.unet import UNetModel
+from libs.uvit_multi_post_ln_v1 import UViT
+import libs.autoencoder
+from libs.autoencoder import *
+# from consistencydecoder import ConsistencyDecoder
 
 class DiffusionWrapper(nn.Module):
     """
@@ -39,12 +43,13 @@ class DiffusionWrapper(nn.Module):
     so that we do not have to map the checkpoint weights explicitly*.
     """
 
-    def __init__(self, diffusion_model: UNetModel):
+    def __init__(self, diffusion_model: UViT):
         super().__init__()
         self.diffusion_model = diffusion_model
-
-    def forward(self, x: torch.Tensor, time_steps: torch.Tensor, context: torch.Tensor):
-        return self.diffusion_model(x, time_steps, context)
+        
+    def forward(self, img, clip_img, text, t_img, t_text, data_type):
+        return self.diffusion_model(img, clip_img, text, t_img, t_text, data_type)
+    
 
 
 class LatentDiffusion(nn.Module):
@@ -54,24 +59,32 @@ class LatentDiffusion(nn.Module):
     This contains following components:
 
     * [AutoEncoder](model/autoencoder.html)
-    * [U-Net](model/unet.html) with [attention](model/unet_attention.html)
+    * [U-ViT](model/uvit) with [attention](model/unet_attention.html)
     * [CLIP embeddings generator](model/clip_embedder.html)
     """
     model: DiffusionWrapper
-    first_stage_model: Autoencoder
+    # first_stage_model: Autoencoder
+    autoencoder: FrozenAutoencoderKL
     cond_stage_model: CLIPTextEmbedder
-
+    image_stage_model: CLIPImageEmbedder
+    caption_decoder: CaptionDecoder
+    # decoder_consistency: ConsistencyDecoder
+        
     def __init__(self,
-                 unet_model: UNetModel,
-                 autoencoder: Autoencoder,
+                 nnet_model: UViT,
+                #  autoencoder: Autoencoder,
+                 autoencoder: FrozenAutoencoderKL,
+                #  decoder_consistency:ConsistencyDecoder,
                  clip_embedder: CLIPTextEmbedder,
+                 clip_img_embedder: CLIPImageEmbedder,
+                 caption_decoder: CaptionDecoder,
                  latent_scaling_factor: float,
                  n_steps: int,
                  linear_start: float,
                  linear_end: float,
                  ):
         """
-        :param unet_model: is the [U-Net](model/unet.html) that predicts noise
+        :param nnet_model: is the [U-Net](model/unet.html) that predicts noise
          $\epsilon_\text{cond}(x_t, c)$, in latent space
         :param autoencoder: is the [AutoEncoder](model/autoencoder.html)
         :param clip_embedder: is the [CLIP embeddings generator](model/clip_embedder.html)
@@ -84,16 +97,20 @@ class LatentDiffusion(nn.Module):
         super().__init__()
         # Wrap the [U-Net](model/unet.html) to keep the same model structure as
         # [CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion).
-        self.model = DiffusionWrapper(unet_model)
+        self.model = DiffusionWrapper(nnet_model)
         # Auto-encoder and scaling factor
-        self.first_stage_model = autoencoder
+        # self.first_stage_model = autoencoder
         self.latent_scaling_factor = latent_scaling_factor
+        self.autoencoder = autoencoder
+        # self.decoder_consistency = decoder_consistency
         # [CLIP embeddings generator](model/clip_embedder.html)
         self.cond_stage_model = clip_embedder
-
+        self.image_stage_model = clip_img_embedder
+        self.caption_decoder = caption_decoder
         # Number of steps $T$
         self.n_steps = n_steps
 
+        
         # $\beta$ schedule
         beta = torch.linspace(linear_start ** 0.5, linear_end ** 0.5, n_steps, dtype=torch.float64) ** 2
         self.beta = nn.Parameter(beta.to(torch.float32), requires_grad=False)
@@ -110,36 +127,58 @@ class LatentDiffusion(nn.Module):
         """
         return next(iter(self.model.parameters())).device
 
-    def get_text_conditioning(self, prompts: List[str]):
+    def get_text_conditioning(self, x):
         """
         ### Get [CLIP embeddings](model/clip_embedder.html) for a list of text prompts
         """
-        return self.cond_stage_model(prompts)
-
-    def autoencoder_encode(self, image: torch.Tensor):
+        return self.cond_stage_model(x)
+    
+    def get_clipimg_embedding(self, images: List[str]):
         """
-        ### Get scaled latent space representation of the image
-
-        The encoder output is a distribution.
-        We sample from that and multiply by the scaling factor.
+        ### Get [CLIP img embeddings](model/clip_embedder.html) for a img
         """
-        return self.latent_scaling_factor * self.first_stage_model.encode(image).sample()
+        return self.image_stage_model(images)
+    
+    def get_encode_prefix(self, x):
+        return self.caption_decoder.encode_prefix(x)
+    
+    def get_decode_prefix(self, x):
+        return self.caption_decoder.decode_prefix(x)
 
-    def autoencoder_decode(self, z: torch.Tensor):
-        """
-        ### Get image from the latent representation
+    # def autoencoder_encode(self, image: torch.Tensor):
+        # """
+        # ### Get scaled latent space representation of the image
 
-        We scale down by the scaling factor and then decode.
-        """
-        return self.first_stage_model.decode(z / self.latent_scaling_factor)
+        # The encoder output is a distribution.
+        # We sample from that and multiply by the scaling factor.
+        # """
+        # return self.latent_scaling_factor * self.first_stage_model.encode(image).sample()
 
-    def forward(self, x: torch.Tensor, t: torch.Tensor, context: torch.Tensor):
+    # def autoencoder_decode(self, z: torch.Tensor):
+    #     """
+    #     ### Get image from the latent representation
+
+    #     We scale down by the scaling factor and then decode.
+    #     """
+    #     return self.first_stage_model.decode(z / self.latent_scaling_factor)
+
+    def forward(self, img, clip_img, text, t_img, t_text, data_type):
         """
         ### Predict noise
 
-        Predict noise given the latent representation $x_t$, time step $t$, and the
-        conditioning context $c$.
-
-        $$\epsilon_\text{cond}(x_t, c)$$
+        Predict noise given the latent representation img, clip_img, text, t_img, t_text, data_type
         """
-        return self.model(x, t, context)
+        return self.model(img, clip_img, text, t_img, t_text, data_type)
+
+    # def forward(self, x: torch.Tensor, t: torch.Tensor, context: torch.Tensor):
+    #     """
+    #     ### Predict noise
+        # x 就是 stable diffusion 的embedding， t 就是时间步， context 就是文本的embedding
+         
+    #     Predict noise given the latent representation $x_t$, time step $t$, and the
+    #     conditioning context $c$.
+
+    #     $$\epsilon_\text{cond}(x_t, c)$$
+    #     """
+    #     return self.model(x, t, context)
+

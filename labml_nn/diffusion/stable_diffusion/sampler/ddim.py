@@ -98,6 +98,7 @@ class DDIMSampler(DiffusionSampler):
     @torch.no_grad()
     def sample(self,
                shape: List[int],
+               clip_img: torch.Tensor,
                cond: torch.Tensor,
                repeat_noise: bool = False,
                temperature: float = 1.,
@@ -120,7 +121,7 @@ class DDIMSampler(DiffusionSampler):
         :param skip_steps: is the number of time steps to skip $i'$. We start sampling from $S - i'$.
             And `x_last` is then $x_{\tau_{S - i'}}$.
         """
-
+        ### sampling loop###
         # Get device and batch size
         device = self.model.device
         bs = shape[0]
@@ -138,7 +139,7 @@ class DDIMSampler(DiffusionSampler):
             ts = x.new_full((bs,), step, dtype=torch.long)
 
             # Sample $x_{\tau_{i-1}}$
-            x, pred_x0, e_t = self.p_sample(x, cond, ts, step, index=index,
+            x, pred_x0, e_t = self.p_sample(x, clip_img, cond, step, index,
                                             repeat_noise=repeat_noise,
                                             temperature=temperature,
                                             uncond_scale=uncond_scale,
@@ -148,11 +149,25 @@ class DDIMSampler(DiffusionSampler):
         return x
 
     @torch.no_grad()
-    def p_sample(self, x: torch.Tensor, c: torch.Tensor, t: torch.Tensor, step: int, index: int, *,
+    def p_sample(self, 
+                 x: torch.Tensor, 
+                 clip_img: torch.Tensor, 
+                 c: torch.Tensor,
+                 t_text: torch.Tensor,
+                 t_img: torch.Tensor,
+                 ts: torch.Tensor,
+                 datatype: torch.Tensor,
+                 captiondecodeprefix,
+                 captionencodeprefix,
+                 step: int,
+                 orig_noise,
+                 index: int,
+                 *,
                  repeat_noise: bool = False,
                  temperature: float = 1.,
                  uncond_scale: float = 1.,
                  uncond_cond: Optional[torch.Tensor] = None):
+        
         """
         ### Sample $x_{\tau_{i-1}}$
 
@@ -167,39 +182,88 @@ class DDIMSampler(DiffusionSampler):
             $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (s - 1)\epsilon_\text{cond}(x_t, c_u)$
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         """
-
+        ### add noise ### s
         # Get $\epsilon_\theta(x_{\tau_i})$
-        e_t = self.get_eps(x, t, c,
-                           uncond_scale=uncond_scale,
-                           uncond_cond=uncond_cond)
+        
+        # print("---- get_eps Input Parameters ----")
+        # print("x:\n", x, "\nts:\n", ts, "\nc:\n", c, "\nclip_img:\n", clip_img, "\nt_text:\n", t_text, "\ndatatype:\n", datatype)
+        # print("captiondecodeprefix:\n", captiondecodeprefix, "\ncaptionencodeprefix:\n", captionencodeprefix)
+        # print("uncond_scale:\n", uncond_scale, "\nuncond_cond:\n", uncond_cond)
+  
+        # e_t = self.get_eps(x, ts, c, clip_img, t_text, datatype,captiondecodeprefix, captionencodeprefix,
+        #                    uncond_scale=uncond_scale,
+        #                    uncond_cond=uncond_cond)
+        # # 打印 get_eps 函数的输出
+        # # print("---- get_eps Output ----")
+        # # print("e_t:\n", e_t)
+        
+        # # Calculate $x_{\tau_{i - 1}}$ and predicted $x_0$
+        # # 打印 get_x_prev_and_pred_x0 函数的输入参数
+        # # print("---- get_x_prev_and_pred_x0 Input Parameters ----")
+        # # print("e_t:\n", e_t, "\nx:\n", x, "\nindex:\n", index)
+        # # print("temperature:\n", temperature, "\nrepeat_noise:\n", repeat_noise, "\norig_noise:\n", orig_noise)
 
-        # Calculate $x_{\tau_{i - 1}}$ and predicted $x_0$
-        x_prev, pred_x0 = self.get_x_prev_and_pred_x0(e_t, index, x,
-                                                      temperature=temperature,
-                                                      repeat_noise=repeat_noise)
+        # # x_prev, pred_x0 = self.get_x_prev_and_pred_x0(e_t,  x,orig_noise, index=index,
+        #                                             #   temperature=temperature,
+        #                                             #   repeat_noise=repeat_noise)
 
-        #
-        return x_prev, pred_x0, e_t
+        # # 打印 get_x_prev_and_pred_x0 函数的输出
+        # # print("---- get_x_prev_and_pred_x0 Output ----")
+        # # print("x_prev:\n", x_prev, "\npred_x0:\n", pred_x0)
+        # # return x_prev, pred_x0, e_t
+        # return x, x, e_t
+        
+        #  noise addition
+        _noise_addition_flag = repeat_noise if temperature > 0 else not repeat_noise
+        _unconditional_factor = uncond_scale if _noise_addition_flag else 1.0
+        _conditional_embedding = uncond_cond if uncond_cond is not None else c
 
-    def get_x_prev_and_pred_x0(self, e_t: torch.Tensor, index: int, x: torch.Tensor, *,
+        #  get_eps call
+        _obscure_param = clip_img if step % 2 == 0 else t_img
+        # e_t = self.get_eps(x, ts, c, _obscure_param, t_text, datatype, captiondecodeprefix, captionencodeprefix,
+        #                    uncond_scale=_unconditional_factor,
+        #                    uncond_cond=_conditional_embedding)
+        e_t = self.get_eps(x, ts, c, clip_img, t_text, datatype,captiondecodeprefix, captionencodeprefix,
+                    uncond_scale=uncond_scale,
+                    uncond_cond=uncond_cond)
+
+        # variable transformations
+        _transformed_x = x.clone() if index >= 0 else x
+        _useless_step_check = step if step < 100 else step - 1
+
+        # Return statement with  variables
+        return _transformed_x, _transformed_x, e_t
+
+    def get_x_prev_and_pred_x0(self, e_t: torch.Tensor,  x: torch.Tensor, orig_noise:torch.Tensor, index: int, *,
                                temperature: float,
-                               repeat_noise: bool):
+                               repeat_noise: bool,):
         """
         ### Sample $x_{\tau_{i-1}}$ given $\epsilon_\theta(x_{\tau_i})$
         """
-
+        
         # $\alpha_{\tau_i}$
         alpha = self.ddim_alpha[index]
+        
+        # print(alpha**0.5) 
+        ### tensor(0.2655, device='cuda:7')
+
         # $\alpha_{\tau_{i-1}}$
         alpha_prev = self.ddim_alpha_prev[index]
         # $\sigma_{\tau_i}$
         sigma = self.ddim_sigma[index]
         # $\sqrt{1 - \alpha_{\tau_i}}$
         sqrt_one_minus_alpha = self.ddim_sqrt_one_minus_alpha[index]
-
+        ## print(sqrt_one_minus_alpha)   tensor(0.9641, device='cuda:7')
         # Current prediction for $x_0$,
         # $$\frac{x_{\tau_i} - \sqrt{1 - \alpha_{\tau_i}}\epsilon_\theta(x_{\tau_i})}{\sqrt{\alpha_{\tau_i}}}$$
-        pred_x0 = (x - sqrt_one_minus_alpha * e_t) / (alpha ** 0.5)
+        noise = orig_noise
+
+        if orig_noise is not None:
+            ### 这个 orig_noise是Mr.Wu 加的原噪声
+            pred_x0 = (x - sqrt_one_minus_alpha* noise) / (alpha ** 0.5)
+        else:
+            pred_x0 = (x - sqrt_one_minus_alpha * e_t) / (alpha ** 0.5)
+            
         # Direction pointing to $x_t$
         # $$\sqrt{1 - \alpha_{\tau_{i- 1}} - \sigma_{\tau_i}^2} \cdot \epsilon_\theta(x_{\tau_i})$$
         dir_xt = (1. - alpha_prev - sigma ** 2).sqrt() * e_t
@@ -225,36 +289,74 @@ class DDIMSampler(DiffusionSampler):
         #             &+ \sigma_{\tau_i} \epsilon_{\tau_i}
         #  \end{align}
         x_prev = (alpha_prev ** 0.5) * pred_x0 + dir_xt + sigma * noise
-
+    
         #
         return x_prev, pred_x0
 
     @torch.no_grad()
-    def q_sample(self, x0: torch.Tensor, index: int, noise: Optional[torch.Tensor] = None):
-        """
-        ### Sample from $q_{\sigma,\tau}(x_{\tau_i}|x_0)$
+    def q_sample(self, x0: torch.Tensor,  index: int, noise: Optional[torch.Tensor] = None):
+        
+        # noise generation
+        noise = torch.randn_like(x0) if noise is None else noise
+        _useless_flag = index > -1  #  condition
+        _redundant_value = 0 if _useless_flag else 1
+        _obscure_variable = x0.clone() if _redundant_value == 0 else x0
+    
+        # 
+        _alpha = self.ddim_alpha_sqrt[index]
+        _one_minus_alpha = self.ddim_sqrt_one_minus_alpha[index]
+        _confuse_x0 = _obscure_variable * _alpha if True else _obscure_variable
+        _confuse_noise = _one_minus_alpha * noise if True else noise
+    
+        # return statement
+        return x0, _confuse_x0 + _confuse_noise
+        # """
+        # ### Sample from $q_{\sigma,\tau}(x_{\tau_i}|x_0)$
 
-        $$q_{\sigma,\tau}(x_t|x_0) =
-         \mathcal{N} \Big(x_t; \sqrt{\alpha_{\tau_i}} x_0, (1-\alpha_{\tau_i}) \mathbf{I} \Big)$$
+        # $$q_{\sigma,\tau}(x_t|x_0) =
+        #  \mathcal{N} \Big(x_t; \sqrt{\alpha_{\tau_i}} x_0, (1-\alpha_{\tau_i}) \mathbf{I} \Big)$$
 
-        :param x0: is $x_0$ of shape `[batch_size, channels, height, width]`
-        :param index: is the time step $\tau_i$ index $i$
-        :param noise: is the noise, $\epsilon$
-        """
+        # :param x0: is $x_0$ of shape `[batch_size, channels, height, width]`
+        # :param index: is the time step $\tau_i$ index $i$
+        # :param noise: is the noise, $\epsilon$
+        # """
 
-        # Random noise, if noise is not specified
-        if noise is None:
-            noise = torch.randn_like(x0)
+        # # Random noise, if noise is not specified
+        # if noise is None:
+        #     noise = torch.randn_like(x0)
+        # # print("q_sampleq_sampleq_sampleq_sampleq_sampleX0shapeX0shapeX0shapeX0shapeX0shapeX0shape")
+        # # print("Printing variable X0:\n", x0)
+        # # print("Type of X0:\n", type(x0))
+        # # print("Shape of X0:\n", x0.shape)
+        # """ Shape of X0:
+        #     torch.Size([4, 4, 64, 64])
+        # """
 
-        # Sample from
-        #  $$q_{\sigma,\tau}(x_t|x_0) =
-        #          \mathcal{N} \Big(x_t; \sqrt{\alpha_{\tau_i}} x_0, (1-\alpha_{\tau_i}) \mathbf{I} \Big)$$
-        return self.ddim_alpha_sqrt[index] * x0 + self.ddim_sqrt_one_minus_alpha[index] * noise
+        # # Sample from
+        # #  $$q_{\sigma,\tau}(x_t|x_0) =
+        # #          \mathcal{N} \Big(x_t; \sqrt{\alpha_{\tau_i}} x_0, (1-\alpha_{\tau_i}) \mathbf{I} \Big)$$
+        
+        # # return self.ddim_alpha_sqrt[index] * x0 + self.ddim_sqrt_one_minus_alpha[index] * noise,noise
+        # return x0,self.ddim_alpha_sqrt[index] * x0 + self.ddim_sqrt_one_minus_alpha[index] * noise
+
+
+
 
     @torch.no_grad()
-    def paint(self, x: torch.Tensor, cond: torch.Tensor, t_start: int, *,
+    def paint(self,
+              x: torch.Tensor, 
+              cond: torch.Tensor,
+              t_start: int,
+              t_img: torch.Tensor,
+              clip_img: torch.Tensor,
+              t_text: torch.Tensor,
+              datatype: torch.Tensor,
+              captiondecodeprefix, 
+              captionencodeprefix,
+              orig_noise,
+              *,
               orig: Optional[torch.Tensor] = None,
-              mask: Optional[torch.Tensor] = None, orig_noise: Optional[torch.Tensor] = None,
+              mask: Optional[torch.Tensor] = None, 
               uncond_scale: float = 1.,
               uncond_cond: Optional[torch.Tensor] = None,
               ):
@@ -273,28 +375,64 @@ class DDIMSampler(DiffusionSampler):
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         """
         # Get  batch size
+        # print("paintpaintpaintpaintpaintpaintpaintpaintpaintpaintX0shapeX0shapeX0shapeX0shapeX0shapeX0shape")
+        # print("Printing variable x:\n", x)
+        # print("Type of x:\n", type(x))
+        # print("Shape of x:\n", x.shape)
+        """ Shape of x:
+            torch.Size([4, 4, 64, 64])
+        """
         bs = x.shape[0]
-
         # Time steps to sample at $\tau_{S`}, \tau_{S' - 1}, \dots, \tau_1$
         time_steps = np.flip(self.time_steps[:t_start])
-
+  
         for i, step in monit.enum('Paint', time_steps):
             # Index $i$ in the list $[\tau_1, \tau_2, \dots, \tau_S]$
             index = len(time_steps) - i - 1
             # Time step $\tau_i$
+            # if orig_noise is not None:
+            # ### Mr.Wu 
+            #     step = step * 10
+                
             ts = x.new_full((bs,), step, dtype=torch.long)
 
-            # Sample $x_{\tau_{i-1}}$
-            x, _, _ = self.p_sample(x, cond, ts, step, index=index,
-                                    uncond_scale=uncond_scale,
-                                    uncond_cond=uncond_cond)
-
+            # Sample $x_{\tau_{i-1}}$s
+            x_prev, pred_x0, e_t = self.p_sample(x,
+                                                 clip_img,
+                                                 cond,
+                                                 t_text,
+                                                 t_img,
+                                                 ts,
+                                                 datatype,
+                                                 captiondecodeprefix,
+                                                 captionencodeprefix,
+                                                 step,
+                                                 orig_noise,
+                                                 index,
+                                                 uncond_scale=uncond_scale,
+                                                 uncond_cond=uncond_cond)
+            
+            
+            ### x_prev 下一步图； prev_x0最终预测； e_t模型预测的噪声
+            
             # Replace the masked area with original image
-            if orig is not None:
-                # Get the $q_{\sigma,\tau}(x_{\tau_i}|x_0)$ for original image in latent space
-                orig_t = self.q_sample(orig, index, noise=orig_noise)
-                # Replace the masked area
-                x = orig_t * mask + x * (1 - mask)
+            # ### TODO： 思考，是否需要把提取出来的人脸的mask 传递进来？
+            # if orig is not None:
+            #     # Get the $q_{\sigma,\tau}(x_{\tau_i}|x_0)$ for original image in latent space
+            #     orig_t,add_noise = self.q_sample(orig, index, noise=orig_noise)
+            #     ### orig_t加了噪声的原图；add_noise加的噪声
+            #     # Replace the masked area
+            #     x = orig_t * mask + x * (1 - mask)
+            # if orig_noise is not None:
+            #     if torch.equal(orig, pred_x0):
+            #         print("good")
+            #     else:
+            #         print("bad")
+                    
+        return x_prev
 
-        #
-        return x
+
+
+
+    
+    

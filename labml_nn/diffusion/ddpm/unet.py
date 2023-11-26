@@ -312,7 +312,7 @@ class UNet(Module):
 
     def __init__(self, image_channels: int = 3, n_channels: int = 64,
                  ch_mults: Union[Tuple[int, ...], List[int]] = (1, 2, 2, 4),
-                 is_attn: Union[Tuple[bool, ...], List[bool]] = (False, False, True, True),
+                 is_attn: Union[Tuple[bool, ...], List[int]] = (False, False, True, True),
                  n_blocks: int = 2):
         """
         * `image_channels` is the number of channels in the image. $3$ for RGB.

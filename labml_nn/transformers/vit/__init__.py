@@ -191,11 +191,11 @@ class VisionTransformer(Module):
         """
         # Get patch embeddings. This gives a tensor of shape `[patches, batch_size, d_model]`
         x = self.patch_emb(x)
+        # Add positional embeddings
+        x = self.pos_emb(x)
         # Concatenate the `[CLS]` token embeddings before feeding the transformer
         cls_token_emb = self.cls_token_emb.expand(-1, x.shape[1], -1)
         x = torch.cat([cls_token_emb, x])
-        # Add positional embeddings
-        x = self.pos_emb(x)
 
         # Pass through transformer layers with no attention masking
         for layer in self.transformer_layers:

@@ -20,9 +20,11 @@ from PIL import Image
 from labml import monit
 from labml.logger import inspect
 from labml_nn.diffusion.stable_diffusion.latent_diffusion import LatentDiffusion
-from labml_nn.diffusion.stable_diffusion.model.autoencoder import Encoder, Decoder, Autoencoder
-from labml_nn.diffusion.stable_diffusion.model.clip_embedder import CLIPTextEmbedder
-from labml_nn.diffusion.stable_diffusion.model.unet import UNetModel
+# from labml_nn.diffusion.stable_diffusion.model.autoencoder import Encoder, Decoder, Autoencoder
+from labml_nn.diffusion.stable_diffusion.model.clip_embedder import CLIPTextEmbedder, CLIPImageEmbedder
+from libs.caption_decoder import CaptionDecoder
+import libs.autoencoder
+# from consistencydecoder import ConsistencyDecoder
 
 
 def set_seed(seed: int):
@@ -34,46 +36,41 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-
-def load_model(path: Path = None) -> LatentDiffusion:
+@torch.no_grad()
+def load_model(path: Path = None, config=None) -> LatentDiffusion:
     """
     ### Load [`LatentDiffusion` model](latent_diffusion.html)
     """
 
-    # Initialize the autoencoder
+    if config.localtest == 1:
+        version = "openai/clip-vit-large-patch14"
+        model = "ViT-B/32"
+        download_root = "home/wuyujia/.cache/clip/decoder.pt"
+    else:
+        version = "/other_models/models--openai--clip-vit-large-patch14/snapshots/8d052a0f05efbaefbc9e8786ba291cfdf93e5bff"
+        model = "/other_models/clip/ViT-B-32.pt"
+        download_root = "/other_models/clip/decoder.pt"
+        
     with monit.section('Initialize autoencoder'):
-        encoder = Encoder(z_channels=4,
-                          in_channels=3,
-                          channels=128,
-                          channel_multipliers=[1, 2, 4, 4],
-                          n_resnet_blocks=2)
-
-        decoder = Decoder(out_channels=3,
-                          z_channels=4,
-                          channels=128,
-                          channel_multipliers=[1, 2, 4, 4],
-                          n_resnet_blocks=2)
-
-        autoencoder = Autoencoder(emb_channels=4,
-                                  encoder=encoder,
-                                  decoder=decoder,
-                                  z_channels=4)
-
+        autoencoder = libs.autoencoder.get_model(**config.autoencoder).to(config.device)
+        autoencoder.requires_grad = False
+        
+    # with monit.section('Initialize ConsistencyDecoder'), torch.cuda.amp.autocast(), torch.no_grad():
+    #     decoder_consistency = ConsistencyDecoder(device=config.device, download_root=download_root)
+        
     # Initialize the CLIP text embedder
     with monit.section('Initialize CLIP Embedder'):
-        clip_text_embedder = CLIPTextEmbedder()
-
-    # Initialize the U-Net
-    with monit.section('Initialize U-Net'):
-        unet_model = UNetModel(in_channels=4,
-                               out_channels=4,
-                               channels=320,
-                               attention_levels=[0, 1, 2],
-                               n_res_blocks=2,
-                               channel_multipliers=[1, 2, 4, 4],
-                               n_heads=8,
-                               tf_layers=1,
-                               d_cond=768)
+        clip_text_embedder = CLIPTextEmbedder(version,device=config.device)
+    # Initialize the ClIP image embber
+    with monit.section('Initialize CLIP Image Embedder'):
+        clip_img_embedder = CLIPImageEmbedder(model,device=config.device)
+    with monit.section('Initialize CaptionDecoder'):
+        caption_decoder = CaptionDecoder(**config.caption_decoder, device=config.device)
+        
+    # Initialize the U-ViT 
+    with monit.section('Initialize U-ViT'):
+        from libs.uvit_multi_post_ln_v1 import UViT
+        nnet_model = UViT(**config.nnet)
 
     # Initialize the Latent Diffusion model
     with monit.section('Initialize Latent Diffusion model'):
@@ -81,10 +78,12 @@ def load_model(path: Path = None) -> LatentDiffusion:
                                 linear_end=0.0120,
                                 n_steps=1000,
                                 latent_scaling_factor=0.18215,
-
+                                # decoder_consistency=decoder_consistency,
                                 autoencoder=autoencoder,
                                 clip_embedder=clip_text_embedder,
-                                unet_model=unet_model)
+                                clip_img_embedder=clip_img_embedder,
+                                caption_decoder=caption_decoder,
+                                nnet_model=nnet_model)
 
     # Load the checkpoint
     with monit.section(f"Loading model from {path}"):
@@ -92,7 +91,7 @@ def load_model(path: Path = None) -> LatentDiffusion:
 
     # Set model state
     with monit.section('Load state'):
-        missing_keys, extra_keys = model.load_state_dict(checkpoint["state_dict"], strict=False)
+        missing_keys, extra_keys = nnet_model.load_state_dict(checkpoint, False)
 
     # Debugging output
     inspect(global_step=checkpoint.get('global_step', -1), missing_keys=missing_keys, extra_keys=extra_keys,
@@ -113,18 +112,40 @@ def load_img(path: str):
     """
     # Open Image
     image = Image.open(path).convert("RGB")
-    # Get image size
-    w, h = image.size
-    # Resize to a multiple of 32
-    w = w - w % 32
-    h = h - h % 32
-    image = image.resize((w, h), resample=PIL.Image.LANCZOS)
-    # Convert to numpy and map to `[-1, 1]` for `[0, 255]`
-    image = np.array(image).astype(np.float32) * (2. / 255.0) - 1
-    # Transpose to shape `[batch_size, channels, height, width]`
-    image = image[None].transpose(0, 3, 1, 2)
+
+    image = image.resize((512, 512))
+    # # Convert to numpy and map to `[-1, 1]` for `[0, 255]`
+    # image = np.array(image).to(float32)* (2. / 255.0) - 1
+    # # Transpose to shape `[batch_size, channels, height, width]`
+    # image = image[None].transpose(0, 3, 1, 2)
+
+    
+    image_np = np.array(image).transpose(2, 0, 1)
+                
+    # Convert to tensor and normalize
+    image_tensor = torch.tensor(image_np, dtype=torch.float32)
+    image = 2 * (image_tensor / 255) - 1
+    image = image.unsqueeze(0)
+
+def load_img_rm(image):
+
+    image = image.resize((512, 512))
+    # # Convert to numpy and map to `[-1, 1]` for `[0, 255]`
+    # image = np.array(image).to(float32)* (2. / 255.0) - 1
+    # # Transpose to shape `[batch_size, channels, height, width]`
+    # image = image[None].transpose(0, 3, 1, 2)
+
+    
+    image_np = np.array(image).transpose(2, 0, 1)
+                
+    # Convert to tensor and normalize
+    image_tensor = torch.tensor(image_np, dtype=torch.float32)
+    image = 2 * (image_tensor / 255) - 1
+    image = image.unsqueeze(0)
+
+
     # Convert to torch
-    return torch.from_numpy(image)
+    return image
 
 
 def save_images(images: torch.Tensor, dest_path: str, prefix: str = '', img_format: str = 'jpeg'):
@@ -135,6 +156,11 @@ def save_images(images: torch.Tensor, dest_path: str, prefix: str = '', img_form
     :param dest_path: is the folder to save images in
     :param prefix: is the prefix to add to file names
     :param img_format: is the image format
+    
+    
+    ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
+    im = Image.fromarray(ndarr)
+    im.save(fp, format=format)
     """
 
     # Create the destination folder
@@ -148,4 +174,27 @@ def save_images(images: torch.Tensor, dest_path: str, prefix: str = '', img_form
     # Save images
     for i, img in enumerate(images):
         img = Image.fromarray((255. * img).astype(np.uint8))
+       
+        # img = Image.fromarray((255. * img).astype(np.float32))
         img.save(os.path.join(dest_path, f"{prefix}{i:05}.{img_format}"), format=img_format)
+        # img.save(os.path.join(dest_path, f"{prefix}{i:05}.{img_format}"), format=img_format)
+
+# 自己加的处理批量图片
+def load_imgs(paths):
+    """
+    ### Load multiple images
+
+    This loads multiple images from files and returns a list of PyTorch tensors.
+
+    :param paths: is a list of image paths
+    """
+    # Create an empty list to store the images
+    images = []
+    # Loop over the paths
+    for path in paths:
+        # Load the image using the `load_img` function
+        image = load_imgs(path)
+        # Append the image to the list
+        images.append(image)
+    # Return the list of images
+    return images
