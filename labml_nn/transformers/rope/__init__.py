@@ -78,7 +78,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     x^{(1)}_m x^{(1)}_n \cos (m - n) \theta +
     x^{(1)}_m x^{(2)}_n \sin(m - n) \theta &+ \\
     - x^{(2)}_m x^{(1)}_n \sin (m - n) \theta +
-    x^{(2)}_m x^{(1)}_n \cos (m - n) \theta &= \\
+    x^{(2)}_m x^{(2)}_n \cos (m - n) \theta &= \\
 
     \big(x^{(1)}_m \cos (m - n)\theta - x^{(2)}_m \sin (m - n) \theta\big) x^{(1)}_n &+ \\
     \big(x^{(2)}_m \cos (m - n)m\theta + x^{(1)}_m \sin (m - n) \theta\big) x^{(2)}_n  &= \\
