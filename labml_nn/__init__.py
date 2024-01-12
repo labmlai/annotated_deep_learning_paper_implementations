@@ -1,5 +1,5 @@
 """
-# [Annotated Research Paper Implementations: Transformers, StyleGAN, Diffusion(DDPM, DDIM), LayerNorm, Nucleus Sampling and more](index.html)
+# [Annotated Research Paper Implementations: Transformers, StyleGAN, Stable Diffusion, DDPM/DDIM, LayerNorm, Nucleus Sampling and more](index.html)
 
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
