@@ -113,7 +113,7 @@ class RelativeMultiHeadAttention(MultiHeadAttention):
 
         # ${(\textcolor{lightgreen}{\mathbf{A + C}})}_{i,j} =
         # Q_i^\top K_j +
-        # \textcolor{orange}{v^\top} K_jZ$
+        # \textcolor{orange}{v^\top} K_j$
         ac = torch.einsum('ibhd,jbhd->ijbh', query + query_pos_bias, key)
         # $\textcolor{lightgreen}{\mathbf{B'}_{i,k}} = Q_i^\top \textcolor{orange}{R_k}$
         b = torch.einsum('ibhd,jhd->ijbh', query, key_pos_emb)
