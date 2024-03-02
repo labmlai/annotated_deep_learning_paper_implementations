@@ -80,7 +80,7 @@
 <span class="lineno">14</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span>
 <span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
 <span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.cifar10</span> <span class="kn">import</span> <span class="n">CIFAR10Configs</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.cifar10</span> <span class="kn">import</span> <span class="n">CIFAR10Configs</span><span class="p">,</span> <span class="n">CIFAR10VGGModel</span>
 <span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml_nn.normalization.group_norm</span> <span class="kn">import</span> <span class="n">GroupNorm</span></pre></div>
         </div>
     </div>
@@ -90,10 +90,11 @@
                 <a href='#section-1'>#</a>
             </div>
             <h3>VGG model for CIFAR-10 classification</h3>
+<p>This derives from the <a href="../../experiments/cifar10.html">generic VGG style architecture</a>.</p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">21</span><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">21</span><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">CIFAR10VGGModel</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -104,9 +105,12 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">26</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">):</span>
-<span class="lineno">27</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="lineno">28</span>        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">28</span>    <span class="k">def</span> <span class="nf">conv_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
+<span class="lineno">29</span>        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+<span class="lineno">30</span>            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<span class="lineno">31</span>            <span class="n">fnorm</span><span class="o">.</span><span class="n">GroupNorm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">),</span><span class="c1">#new</span>
+<span class="lineno">32</span>            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="lineno">33</span>        <span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -114,11 +118,12 @@
             <div class='section-link'>
                 <a href='#section-3'>#</a>
             </div>
-            <p>RGB channels </p>
-
+            
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">30</span>        <span class="n">in_channels</span> <span class="o">=</span> <span class="mi">3</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">35</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">):</span>
+<span class="lineno">36</span>        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">groups</span><span class="c1">#input param:groups to conv_block</span>
+<span class="lineno">37</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">]])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -126,11 +131,10 @@
             <div class='section-link'>
                 <a href='#section-4'>#</a>
             </div>
-            <p>Number of channels in each layer in each block </p>
-
+            
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">32</span>        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="p">[[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="p">[</span><span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">]]:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">40</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CIFAR10Configs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -138,27 +142,24 @@
             <div class='section-link'>
                 <a href='#section-5'>#</a>
             </div>
-            <p>Convolution, Normalization and Activation layers </p>
+            <p>Number of groups </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">34</span>            <span class="k">for</span> <span class="n">channels</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-<span class="lineno">35</span>                <span class="n">layers</span> <span class="o">+=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-<span class="lineno">36</span>                           <span class="n">GroupNorm</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">channels</span><span class="p">),</span>
-<span class="lineno">37</span>                           <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
-<span class="lineno">38</span>                <span class="n">in_channels</span> <span class="o">=</span> <span class="n">channels</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">42</span>    <span class="n">groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
-        <div class='docs'>
+        <div class='docs doc-strings'>
             <div class='section-link'>
                 <a href='#section-6'>#</a>
             </div>
-            <p>Max pooling at end of each block </p>
+            <h3>Create model</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">40</span>            <span class="n">layers</span> <span class="o">+=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">45</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="lineno">46</span><span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-7'>
@@ -166,11 +167,10 @@
             <div class='section-link'>
                 <a href='#section-7'>#</a>
             </div>
-            <p>Create a sequential model with the layers </p>
-
+            
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">43</span>        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">50</span>    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-8'>
@@ -178,11 +178,10 @@
             <div class='section-link'>
                 <a href='#section-8'>#</a>
             </div>
-            <p>Final logits layer </p>
-
+            
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">53</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-9'>
@@ -190,10 +189,11 @@
             <div class='section-link'>
                 <a href='#section-9'>#</a>
             </div>
-            
+            <p>Create experiment </p>
+
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">47</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">55</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;cifar10&#39;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;group norm&#39;</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -201,11 +201,11 @@
             <div class='section-link'>
                 <a href='#section-10'>#</a>
             </div>
-            <p>The VGG layers </p>
+            <p>Create configurations </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">49</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">57</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -213,11 +213,14 @@
             <div class='section-link'>
                 <a href='#section-11'>#</a>
             </div>
-            <p>Reshape for classification layer </p>
+            <p>Load configurations </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">51</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">59</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="p">{</span>
+<span class="lineno">60</span>        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+<span class="lineno">61</span>        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
+<span class="lineno">62</span>    <span class="p">})</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -225,11 +228,12 @@
             <div class='section-link'>
                 <a href='#section-12'>#</a>
             </div>
-            <p>Final linear layer </p>
+            <p>Start the experiment and run the training loop </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">53</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">64</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
+<span class="lineno">65</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -237,122 +241,12 @@
             <div class='section-link'>
                 <a href='#section-13'>#</a>
             </div>
-            
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">56</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">CIFAR10Configs</span><span class="p">):</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-14'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-14'>#</a>
-            </div>
-            <p>Number of groups </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">58</span>    <span class="n">groups</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-15'>
-        <div class='docs doc-strings'>
-            <div class='section-link'>
-                <a href='#section-15'>#</a>
-            </div>
-            <h3>Create model</h3>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">61</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-<span class="lineno">62</span><span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-16'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-16'>#</a>
-            </div>
-            
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">66</span>    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-17'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-17'>#</a>
-            </div>
-            
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">69</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-18'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-18'>#</a>
-            </div>
-            <p>Create experiment </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">71</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;cifar10&#39;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;group norm&#39;</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-19'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-19'>#</a>
-            </div>
-            <p>Create configurations </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">73</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-20'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-20'>#</a>
-            </div>
-            <p>Load configurations </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">75</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="p">{</span>
-<span class="lineno">76</span>        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
-<span class="lineno">77</span>        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
-<span class="lineno">78</span>    <span class="p">})</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-21'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-21'>#</a>
-            </div>
-            <p>Start the experiment and run the training loop </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">80</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span>
-<span class="lineno">81</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-22'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-22'>#</a>
-            </div>
             <p> </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">85</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">86</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">69</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">70</span>    <span class="n">main</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='footer'>
