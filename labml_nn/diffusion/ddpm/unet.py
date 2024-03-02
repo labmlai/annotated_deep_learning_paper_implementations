@@ -32,7 +32,7 @@ from labml_helpers.module import Module
 
 class Swish(Module):
     """
-    ### Swish actiavation function
+    ### Swish activation function
 
     $$x \cdot \sigma(x)$$
     """
