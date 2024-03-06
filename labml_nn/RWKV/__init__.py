@@ -78,6 +78,7 @@ class ChannelMixing(nn.Module):
     def __init__(self,config,layer_id):
         super().__init__()
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
+        # token shifting
         self.layer_id = layer_id
         
         n_embd = config.n_embd
