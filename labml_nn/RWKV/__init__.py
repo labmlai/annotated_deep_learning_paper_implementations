@@ -33,6 +33,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+from labml_helpers.module import Module
+
 
 PREV_X_TIME = 0
 NUM_STATE = 1
@@ -43,7 +45,7 @@ PREV_X_CHANNEL = 4
 """
 ## Layernorm with bias
 """
-class LayerNorm(nn.Module):
+class LayerNorm(Module):
     def __init__(self, ndim, bias):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(ndim))
@@ -71,7 +73,7 @@ class L2Wrap(torch.autograd.Function):
         gy.scatter_(-1, ids, maxx * factor)
         return (grad_output, gy)
 
-class ChannelMixing(nn.Module):
+class ChannelMixing(Module):
     """
     ## Channel Mixing
     """
@@ -129,7 +131,7 @@ class ChannelMixing(nn.Module):
 """
 ## Time Mixing
 """
-class TimeMixing(nn.Module):
+class TimeMixing(Module):
     def __init__(self,config,layer_id):
         super().__init__()
         self.config = config
@@ -236,7 +238,7 @@ class TimeMixing(nn.Module):
 """
 ## RWKV block element
 """
-class Block(nn.Module):
+class Block(Module):
 
     def __init__(self, config,layer_id):
         super().__init__()
@@ -261,13 +263,15 @@ class Block(nn.Module):
         x = x + residual
         return x, state
 
-class RWKV(nn.Module):
+class RWKV(Module):
     def __init__(self, config,lr_init=0.0008):
         super().__init__()
         assert config.vocab_size is not None
         assert config.block_size is not None
         self.config = config
         self.lr_init = lr_init ## used to initialize embedding parameters
+        self.n_layer = config.n_layer
+        self.n_embd = config.n_embd
         """
         ## Initiate model layers
         """
