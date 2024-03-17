@@ -1,15 +1,8 @@
-import copy
-
-import torch.nn as nn
-
-from labml.configs import BaseConfigs, option, calculate, aggregate
-from labml_helpers.module import Module
+from labml.configs import BaseConfigs
 
 
 class RWKVConfigs(BaseConfigs):
     """
-    <a id="TransformerConfigs"></a>
-
     ## Transformer Configurations
 
     This defines configurations for a transformer.
