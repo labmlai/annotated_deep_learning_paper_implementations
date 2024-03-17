@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 from labml_nn.RWKV.configs import RWKVConfigs
 
-from __init__ import RWKV
-from __init__ import TimeMixing
+from labml_nn.RWKV import RWKV
+from labml_nn.RWKV import TimeMixing
 from labml import experiment
 from labml.configs import option
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
