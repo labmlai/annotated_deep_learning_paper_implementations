@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 from typing import List
 from xml.dom import minidom
+import os
 
 from labml import monit
 
@@ -244,6 +245,9 @@ def recurse(path: Path):
 def main():
     diagrams_path = HOME / 'diagrams'
     docs_path = HOME / 'docs'
+
+    # For first invocation
+    os.makedirs(diagrams_path, exist_ok=True)
 
     for p in recurse(diagrams_path):
         source_path = p
