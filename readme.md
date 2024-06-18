@@ -140,59 +140,8 @@ Solving games with incomplete information such as poker with CFR.
 #### ✨ [Scalable Training/Inference](https://nn.labml.ai/scaling/index.html)
 * [Zero3 memory optimizations](https://nn.labml.ai/scaling/zero3/index.html)
 
-## Highlighted Research Paper PDFs
-
-* [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2205.14135.pdf)
-* [Autoregressive Search Engines: Generating Substrings as Document Identifiers](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.10628.pdf)
-* [Training Compute-Optimal Large Language Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2203.15556.pdf)
-* [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1910.02054.pdf)
-* [PaLM: Scaling Language Modeling with Pathways](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2204.02311.pdf)
-* [Hierarchical Text-Conditional Image Generation with CLIP Latents](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/dall-e-2.pdf)
-* [STaR: Self-Taught Reasoner Bootstrapping Reasoning With Reasoning](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2203.14465.pdf)
-* [Improving language models by retrieving from trillions of tokens](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2112.04426.pdf)
-* [NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2003.08934.pdf)
-* [Attention Is All You Need](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1706.03762.pdf)
-* [Denoising Diffusion Probabilistic Models](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2006.11239.pdf)
-* [Primer: Searching for Efficient Transformers for Language Modeling](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2109.08668.pdf)
-* [On First-Order Meta-Learning Algorithms](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1803.02999.pdf)
-* [Learning Transferable Visual Models From Natural Language Supervision](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2103.00020.pdf)
-* [The Sensory Neuron as a Transformer: Permutation-Invariant Neural Networks for Reinforcement Learning](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/2109.02869.pdf)
-* [Meta-Gradient Reinforcement Learning](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/1805.09801.pdf)
-* [ETA Prediction with Graph Neural Networks in Google Maps](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/google_maps_eta.pdf)
-* [PonderNet: Learning to Ponder](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/ponder_net.pdf)
-* [Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/muzero.pdf)
-* [GANs N’ Roses: Stable, Controllable, Diverse Image to Image Translation (works for videos too!)](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/gans_n_roses.pdf)
-* [An Image is Worth 16X16 Word: Transformers for Image Recognition at Scale](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/vit.pdf)
-* [Deep Residual Learning for Image Recognition](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/resnet.pdf)
-* [Distilling the Knowledge in a Neural Network](https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/papers/distillation.pdf)
-
 ### Installation
 
 ```bash
 pip install labml-nn
 ```
-
-### Citing
-
-If you use this for academic research, please cite it using the following BibTeX entry.
-
-```bibtex
-@misc{labml,
- author = {Varuna Jayasiri, Nipun Wijerathne},
- title = {labml.ai Annotated Paper Implementations},
- year = {2020},
- url = {https://nn.labml.ai/},
-}
-```
-
-### Other Projects
-
-#### [🚀 Trending Research Papers](https://papers.labml.ai/)
-
-This shows the most popular research papers on social media. It also aggregates links to useful resources like paper explanations videos and discussions.
-
-
-#### [🧪 labml.ai/labml](https://github.com/labmlai/labml)
-
-This is a library that let's you monitor deep learning model training and hardware usage from your mobile phone. It also comes with a bunch of other tools to help write deep learning code efficiently.
-

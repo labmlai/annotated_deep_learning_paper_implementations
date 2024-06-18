@@ -238,8 +238,6 @@ def main():
     conf = Configs()
     # Load configuration
     experiment.configs(conf)
-    # Set models for saving
-    experiment.add_model_savers({'info_sets': InfoSetSaver(conf.cfr.info_sets)})
     # Start the experiment
     with experiment.start():
         # Start iterating

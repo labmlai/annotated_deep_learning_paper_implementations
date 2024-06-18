@@ -63,16 +63,7 @@ class TransformerLayer(nn.Module):
 
     ## Transformer Layer
 
-    This can act as an encoder layer or a decoder layer.
-
-    🗒 Some implementations, including the paper seem to have differences
-    in where the layer-normalization is done.
-    Here we do a layer normalization before attention and feed-forward networks,
-    and add the original residual vectors.
-    Alternative is to do a layer normalization after adding the residuals.
-    But we found this to be less stable when training.
-    We found a detailed discussion about this in the paper
-     [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745).
+    This can act as an encoder layer or a decoder layer. We use pre-norm.
     """
 
     def __init__(self, *,
