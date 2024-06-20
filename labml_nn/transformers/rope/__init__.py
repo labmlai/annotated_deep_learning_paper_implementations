@@ -223,7 +223,7 @@ def _test_rotary():
     x = x[:, None, None, :]
     inspect(x)
 
-    rotary_pe = RotaryPositionalEmbeddings(3)
+    rotary_pe = RotaryPositionalEmbeddings(4)
     inspect(rotary_pe(x))
 
 
