@@ -231,7 +231,7 @@ class RotaryValuePEMultiHeadAttention(RotaryPEMultiHeadAttention):
 
         # Multiply by values
         # $$\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)V$$
-        x = torch.einsum("ijbh,jbhd->ibhd", attn, self.value_rotary_pe(value))
+        x = torch.einsum("ijbh,jbhd->ibhd", attn, value)
 
         # Rotate in the opposite direction so that each embedding hold the relative positions
         x = self.value_reverse_rotary_pe(x)
