@@ -33,7 +33,7 @@ class GAE:
         \\
         ...
         \\
-        \hat{A_t^{(\infty)}} &= r_t + \gamma r_{t+1} +\gamma^2 r_{t+1} + ... - V(s)
+        \hat{A_t^{(\infty)}} &= r_t + \gamma r_{t+1} +\gamma^2 r_{t+2} + ... - V(s)
         \end{align}
 
         $\hat{A_t^{(1)}}$ is high bias, low variance, whilst
@@ -41,7 +41,7 @@ class GAE:
 
         We take a weighted average of $\hat{A_t^{(k)}}$ to balance bias and variance.
         This is called Generalized Advantage Estimation.
-        $$\hat{A_t} = \hat{A_t^{GAE}} = \sum_k w_k \hat{A_t^{(k)}}$$
+        $$\hat{A_t} = \hat{A_t^{GAE}} = \frac{\sum_k w_k \hat{A_t^{(k)}}}{\sum_k w_k}$$
         We set $w_k = \lambda^{k-1}$, this gives clean calculation for
         $\hat{A_t}$
 
@@ -73,15 +73,10 @@ class GAE:
             # $\hat{A_t} = \delta_t + \gamma \lambda \hat{A_{t+1}}$
             last_advantage = delta + self.gamma * self.lambda_ * last_advantage
 
-            # note that we are collecting in reverse order.
-            # *My initial code was appending to a list and
-            #   I forgot to reverse it later.
-            # It took me around 4 to 5 hours to find the bug.
-            # The performance of the model was improving
-            #  slightly during initial runs,
-            #  probably because the samples are similar.*
+            #
             advantages[:, t] = last_advantage
 
             last_value = values[:, t]
 
+        # $\hat{A_t}$
         return advantages
