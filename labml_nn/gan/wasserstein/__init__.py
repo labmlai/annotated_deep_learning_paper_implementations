@@ -26,7 +26,7 @@ marginal probabilities are $\gamma(x, y)$.
 $\mathbb{E}_{(x,y) \sim \gamma} \Vert x - y \Vert$ is the earth mover distance for
 a given joint distribution ($x$ and $y$ are probabilities).
 
-So $W(\mathbb{P}_r, \mathbb{P}g)$ is equal to the least earth mover distance for
+So $W(\mathbb{P}_r, \mathbb{P}_g)$ is equal to the least earth mover distance for
 any joint distribution between the real distribution $\mathbb{P}_r$ and generated distribution $\mathbb{P}_g$.
 
 The paper shows that Jensen-Shannon (JS) divergence and other measures for the difference between two probability
