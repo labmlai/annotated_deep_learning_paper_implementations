@@ -77,13 +77,11 @@ class HeadFFN(nn.Module):  # todo rename
         self.c_fc = Conv1D(dim, config['n_embd'])
         self.c_proj = Conv1D(config['n_embd'], dim)
         self.act = nn.functional.gelu
-        self.dropout = nn.Dropout(config['resid_pdrop'])
 
     def forward(self, hidden_states):
         hidden_states = self.c_fc(hidden_states)
         hidden_states = self.act(hidden_states)
         hidden_states = self.c_proj(hidden_states)
-        hidden_states = self.dropout(hidden_states)
         return hidden_states
 
 
@@ -97,9 +95,6 @@ class MultiHead(nn.Module):
 
         self.c_att = Conv1D(config['n_embd'] * 3, config['n_embd'])
         self.c_proj = Conv1D(config['n_embd'], config['n_embd'])
-
-        self.resid_dropout = nn.Dropout(config['resid_pdrop'])
-        self.attn_dropout = nn.Dropout(config['attn_pdrop'])
 
     def _split_heads(self, tensor, num_heads, attn_head_size):
         """
@@ -123,7 +118,7 @@ class MultiHead(nn.Module):
             key,
             value,
             attn_mask=None,
-            dropout_p=self.attn_dropout.p if self.training else 0.0,
+            dropout_p=0.0,
             is_causal=True,  # for the triangular mask
         )
 
@@ -132,7 +127,6 @@ class MultiHead(nn.Module):
         attn_output = attn_output.view(batch_size, seq_length, self.embed_dim)
 
         attn_output = self.c_proj(attn_output)
-        attn_output = self.resid_dropout(attn_output)
 
         return attn_output
 
@@ -168,8 +162,6 @@ class GPTModel(nn.Module):
         self.token_embedding = nn.Embedding(config['vocab_size'], config['n_embd'])
         self.position_embedding = nn.Embedding(config['n_positions'], config['n_embd'])
 
-        self.dropout = nn.Dropout(p=config['embd_pdrop'], inplace=False)
-
         self.blocks = nn.ModuleList([Block() for _ in range(config['n_layer'])])
 
         self.final_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
@@ -183,9 +175,7 @@ class GPTModel(nn.Module):
         position_ids = torch.arange(input_shape)  # T C
         position_embeddings = self.position_embedding(position_ids)  # B T C
 
-        embeddings = token_embeddings + position_embeddings
-
-        hidden_states = self.dropout(embeddings)
+        hidden_states = token_embeddings + position_embeddings
 
         for block in self.blocks:
             hidden_states = block(hidden_states)
