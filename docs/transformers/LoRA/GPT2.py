@@ -4,43 +4,12 @@ from transformers import AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
-# config from GPT
 config = {
-    "_name_or_path": "gpt2",
-    "activation_function": "gelu_new",
-    "architectures": [
-        "GPT2LMHeadModel"
-    ],
-    "attn_pdrop": 0.1,
-    "bos_token_id": 50256,
-    "embd_pdrop": 0.1,
-    "eos_token_id": 0,
-    "initializer_range": 0.02,
     "layer_norm_epsilon": 1e-05,
-    "model_type": "gpt2",
-    "n_ctx": 1024,
     "n_embd": 768,
     "n_head": 12,
-    "n_inner": None,
     "n_layer": 12,
     "n_positions": 1024,
-    "reorder_and_upcast_attn": False,
-    "resid_pdrop": 0.1,
-    "scale_attn_by_inverse_layer_idx": False,
-    "scale_attn_weights": True,
-    "summary_activation": None,
-    "summary_first_dropout": 0.1,
-    "summary_proj_to_labels": True,
-    "summary_type": "cls_index",
-    "summary_use_proj": True,
-    "task_specific_params": {
-        "text-generation": {
-            "do_sample": True,
-            "max_length": 50
-        }
-    },
-    "transformers_version": "4.42.4",
-    "use_cache": True,
     "vocab_size": 50257
 }
 
