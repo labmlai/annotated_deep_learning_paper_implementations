@@ -14,37 +14,11 @@ config = {
 }
 
 
-# from transformers
-class Conv1D(nn.Module):
-    """
-    1D-convolutional layer as defined by Radford et al. for OpenAI GPT (and also used in GPT-2).
-
-    Basically works like a linear layer but the weights are transposed.
-
-    Args:
-        nf (`int`): The number of output features.
-        nx (`int`): The number of input features.
-    """
-
-    def __init__(self, nf, nx):
-        super().__init__()
-        self.nf = nf
-        self.weight = nn.Parameter(torch.empty(nx, nf))
-        self.bias = nn.Parameter(torch.zeros(nf))
-        nn.init.normal_(self.weight, std=0.02)
-
-    def forward(self, x):
-        size_out = x.size()[:-1] + (self.nf,)
-        x = torch.addmm(self.bias, x.view(-1, x.size(-1)), self.weight)
-        x = x.view(size_out)
-        return x
-
-
 class HeadFFN(nn.Module):  # todo rename
     def __init__(self, dim):
         super().__init__()
-        self.c_fc = Conv1D(dim, config['n_embd'])
-        self.c_proj = Conv1D(config['n_embd'], dim)
+        self.c_fc = nn.Linear(config['n_embd'], dim)
+        self.c_proj = nn.Linear(dim, config['n_embd'])
         self.act = nn.functional.gelu
 
     def forward(self, hidden_states):
@@ -62,8 +36,8 @@ class MultiHead(nn.Module):
         self.head_dim = self.embed_dim // self.num_heads
         self.split_size = self.embed_dim
 
-        self.c_att = Conv1D(config['n_embd'] * 3, config['n_embd'])
-        self.c_proj = Conv1D(config['n_embd'], config['n_embd'])
+        self.c_att = nn.Linear(config['n_embd'], config['n_embd'] * 3)
+        self.c_proj = nn.Linear(config['n_embd'], config['n_embd'])
 
     def _split_heads(self, tensor, num_heads, attn_head_size):
         """

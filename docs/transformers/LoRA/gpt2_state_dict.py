@@ -32,4 +32,13 @@ for old_key, new_key in mapping.items():
     if old_key in state_dict:
         new_state_dict[new_key] = state_dict[old_key]
 
+# transpose weight matrices of convo 1d layers to use linear layers instead
+convo_layers = ([f'blocks.{i}.ffn.c_fc.weight' for i in range(12)] +
+                [f'blocks.{i}.ffn.c_proj.weight' for i in range(12)] +
+                [f'blocks.{i}.attn.c_att.weight' for i in range(12)] +
+                [f'blocks.{i}.attn.c_proj.weight' for i in range(12)])
+
+for layer in convo_layers:
+    new_state_dict[layer] = torch.transpose(new_state_dict[layer], 0, 1)
+
 torch.save(new_state_dict, 'transformed.pth')
