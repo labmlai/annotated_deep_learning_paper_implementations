@@ -14,7 +14,7 @@ config = {
 }
 
 
-class HeadFFN(nn.Module):  # todo rename
+class FFN(nn.Module):
     def __init__(self, dim):
         super().__init__()
         self.c_fc = nn.Linear(config['n_embd'], dim)
@@ -28,7 +28,7 @@ class HeadFFN(nn.Module):  # todo rename
         return hidden_states
 
 
-class MultiHead(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self):
         super().__init__()
         self.embed_dim = config['n_embd']
@@ -65,7 +65,6 @@ class MultiHead(nn.Module):
             is_causal=True,  # for the triangular mask
         )
 
-        # todo why this?
         attn_output = attn_output.transpose(1, 2).contiguous()
         attn_output = attn_output.view(batch_size, seq_length, self.embed_dim)
 
@@ -78,9 +77,9 @@ class Block(nn.Module):
     def __init__(self):
         super().__init__()
         self.pre_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
-        self.attn = MultiHead()
+        self.attn = MultiHeadAttention()
         self.post_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
-        self.ffn = HeadFFN(config['n_embd'] * 4)
+        self.ffn = FFN(config['n_embd'] * 4)
 
     def forward(self, hidden_states):
         residual = hidden_states
@@ -98,7 +97,6 @@ class Block(nn.Module):
 
 
 class GPTModel(nn.Module):
-    # todo ignored token type embeds, past key values
     def __init__(self):
         super().__init__()
 
@@ -128,31 +126,3 @@ class GPTModel(nn.Module):
         logits = self.lm_head(hidden_states)
 
         return logits
-
-
-model = GPTModel()
-
-state_dict = torch.load('transformed.pth')
-
-missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
-if missing_keys:
-    print(f"Missing keys: {missing_keys}")
-if unexpected_keys:
-    print(f"Unexpected keys: {unexpected_keys}")
-
-prompt = "hello how are you"
-tokenized = tokenizer(prompt, return_tensors="pt")
-
-with torch.no_grad():
-    model.eval()
-    res = model(tokenized['input_ids'])
-
-print(res)
-
-output_ids = torch.argmax(res, dim=-1)
-
-# Decode the token indices back to text
-output_text = tokenizer.decode(output_ids[0])
-
-# Print the tokens of the output
-print(output_text)
