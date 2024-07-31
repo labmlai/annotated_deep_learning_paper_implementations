@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoTokenizer
+from labml_nn.transformers.LoRA import Linear, Embedding
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
@@ -10,15 +11,16 @@ config = {
     "n_head": 12,
     "n_layer": 12,
     "n_positions": 1024,
-    "vocab_size": 50257
+    "vocab_size": 50257,
+    "device": "cuda"
 }
 
 
 class FFN(nn.Module):
     def __init__(self, dim):
         super().__init__()
-        self.c_fc = nn.Linear(config['n_embd'], dim)
-        self.c_proj = nn.Linear(dim, config['n_embd'])
+        self.c_fc = Linear(config['n_embd'], dim, r=32, bias=True)
+        self.c_proj = Linear(dim, config['n_embd'], r=32, bias=True)
         self.act = nn.functional.gelu
 
     def forward(self, hidden_states):
@@ -36,8 +38,8 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = self.embed_dim // self.num_heads
         self.split_size = self.embed_dim
 
-        self.c_att = nn.Linear(config['n_embd'], config['n_embd'] * 3)
-        self.c_proj = nn.Linear(config['n_embd'], config['n_embd'])
+        self.c_att = Linear(config['n_embd'], config['n_embd'] * 3, r=32, bias=True)
+        self.c_proj = Linear(config['n_embd'], config['n_embd'], r=32, bias=True)
 
     def _split_heads(self, tensor, num_heads, attn_head_size):
         """
@@ -100,20 +102,20 @@ class GPTModel(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.token_embedding = nn.Embedding(config['vocab_size'], config['n_embd'])
-        self.position_embedding = nn.Embedding(config['n_positions'], config['n_embd'])
+        self.token_embedding = Embedding(config['vocab_size'], config['n_embd'], r=32)
+        self.position_embedding = Embedding(config['n_positions'], config['n_embd'], r=32)
 
         self.blocks = nn.ModuleList([Block() for _ in range(config['n_layer'])])
 
         self.final_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
 
-        self.lm_head = nn.Linear(config['n_embd'], config['vocab_size'], bias=False)
+        self.lm_head = Linear(config['n_embd'], config['vocab_size'], r=32, bias=False)
 
     def forward(self, input_ids):
         batch_size, input_shape = input_ids.size()
 
         token_embeddings = self.token_embedding(input_ids)  # B T C
-        position_ids = torch.arange(input_shape)  # T C
+        position_ids = torch.arange(input_shape, device=config['device'])  # T C
         position_embeddings = self.position_embedding(position_ids)  # B T C
 
         hidden_states = token_embeddings + position_embeddings

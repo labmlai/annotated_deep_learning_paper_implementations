@@ -53,7 +53,7 @@ class Embedding(nn.Module):
         self.weight = nn.Parameter(torch.empty((num_embeddings, embedding_dim)))
         self.weight.requires_grad = False
 
-        self.scaling = alpha / self.r
+        self.scaling = alpha / r
         self.lora_a = nn.Parameter(torch.empty((num_embeddings, r)))
         self.lora_b = nn.Parameter(torch.empty((r, embedding_dim)))
 
