@@ -1,18 +1,17 @@
+"""
+# LoRA
+"""
+
 import torch
 import torch.nn as nn
 
 
 class Linear(nn.Module):
-    def __init__(
-            self,
-            in_features: int,
-            out_features: int,
-            bias: bool,
-            r: int,
-            alpha: int = None):
+    def __init__(self, in_features: int, out_features: int, bias: bool,
+                 r: int, alpha: int = None):
+        super().__init__()
         if alpha is None:
             alpha = r
-        super().__init__()
         self.weight = nn.Parameter(torch.empty((out_features, in_features)))
         self.weight.requires_grad = False
 
@@ -39,16 +38,11 @@ class Linear(nn.Module):
 
 
 class Embedding(nn.Module):
-    def __init__(
-            self,
-            num_embeddings: int,
-            embedding_dim: int,
-            r: int,
-            alpha: int = None,
-    ):
+    def __init__(self, num_embeddings: int, embedding_dim: int,
+                 r: int, alpha: int = None):
+        super().__init__()
         if alpha is None:
             alpha = r
-        super().__init__()
 
         self.weight = nn.Parameter(torch.empty((num_embeddings, embedding_dim)))
         self.weight.requires_grad = False
