@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoTokenizer
-from labml_nn.transformers.LoRA import Linear, Embedding
+from labml_nn.lora import Linear, Embedding
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
