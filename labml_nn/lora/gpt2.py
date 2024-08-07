@@ -1,26 +1,13 @@
 import torch
 import torch.nn as nn
-from transformers import AutoTokenizer
 from labml_nn.lora import Linear, Embedding
-
-tokenizer = AutoTokenizer.from_pretrained("gpt2")
-
-config = {
-    "layer_norm_epsilon": 1e-05,
-    "n_embd": 768,
-    "n_head": 12,
-    "n_layer": 12,
-    "n_positions": 1024,
-    "vocab_size": 50257,
-    "device": "cuda"
-}
 
 
 class FFN(nn.Module):
-    def __init__(self, dim):
+    def __init__(self, dim: int, n_embed: int, r: int):
         super().__init__()
-        self.c_fc = Linear(config['n_embd'], dim, r=32, bias=True)
-        self.c_proj = Linear(dim, config['n_embd'], r=32, bias=True)
+        self.c_fc = Linear(n_embed, dim, r=r, bias=True)
+        self.c_proj = Linear(dim, n_embed, r=r, bias=True)
         self.act = nn.functional.gelu
 
     def forward(self, hidden_states):
@@ -31,15 +18,15 @@ class FFN(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self):
+    def __init__(self, n_embed: int, r: int):
         super().__init__()
-        self.embed_dim = config['n_embd']
-        self.num_heads = config['n_head']
+        self.embed_dim = n_embed
+        self.num_heads = n_embed
         self.head_dim = self.embed_dim // self.num_heads
         self.split_size = self.embed_dim
 
-        self.c_att = Linear(config['n_embd'], config['n_embd'] * 3, r=32, bias=True)
-        self.c_proj = Linear(config['n_embd'], config['n_embd'], r=32, bias=True)
+        self.c_att = Linear(n_embed, n_embed * 3, r=r, bias=True)
+        self.c_proj = Linear(n_embed, n_embed, r=r, bias=True)
 
     def _split_heads(self, tensor, num_heads, attn_head_size):
         """
@@ -76,12 +63,12 @@ class MultiHeadAttention(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self):
+    def __init__(self, n_embed: int, layer_norm_epsilon: float, r: int):
         super().__init__()
-        self.pre_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
-        self.attn = MultiHeadAttention()
-        self.post_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
-        self.ffn = FFN(config['n_embd'] * 4)
+        self.pre_norm = nn.LayerNorm(n_embed, eps=layer_norm_epsilon)
+        self.attn = MultiHeadAttention(n_embed, r)
+        self.post_norm = nn.LayerNorm(n_embed, eps=layer_norm_epsilon)
+        self.ffn = FFN(n_embed * 4, n_embed, r)
 
     def forward(self, hidden_states):
         residual = hidden_states
@@ -99,23 +86,27 @@ class Block(nn.Module):
 
 
 class GPTModel(nn.Module):
-    def __init__(self):
+    def __init__(self, layer_norm_epsilon: float, n_embd: int, n_layer: int, n_positions: int,
+                 vocab_size: int, r: int, device: torch.device):
         super().__init__()
 
-        self.token_embedding = Embedding(config['vocab_size'], config['n_embd'], r=32)
-        self.position_embedding = Embedding(config['n_positions'], config['n_embd'], r=32)
+        self.token_embedding = Embedding(vocab_size, n_embd, r=r)
+        self.position_embedding = Embedding(n_positions, n_embd, r=r)
 
-        self.blocks = nn.ModuleList([Block() for _ in range(config['n_layer'])])
+        self.blocks = nn.ModuleList([Block(n_embd, layer_norm_epsilon, r=r)
+                                     for _ in range(n_layer)])
 
-        self.final_norm = nn.LayerNorm(config['n_embd'], eps=config['layer_norm_epsilon'])
+        self.final_norm = nn.LayerNorm(n_embd, eps=layer_norm_epsilon)
 
-        self.lm_head = Linear(config['n_embd'], config['vocab_size'], r=32, bias=False)
+        self.lm_head = Linear(n_embd, vocab_size, r=r, bias=False)
+
+        self.device = device
 
     def forward(self, input_ids):
         batch_size, input_shape = input_ids.size()
 
         token_embeddings = self.token_embedding(input_ids)  # B T C
-        position_ids = torch.arange(input_shape, device=config['device'])  # T C
+        position_ids = torch.arange(input_shape, device=self.device)  # T C
         position_embeddings = self.position_embedding(position_ids)  # B T C
 
         hidden_states = token_embeddings + position_embeddings
