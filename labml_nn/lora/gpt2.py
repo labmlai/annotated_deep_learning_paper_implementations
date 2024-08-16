@@ -6,7 +6,9 @@ from labml_nn.lora import Linear, Embedding
 class FFN(nn.Module):
     def __init__(self, dim: int, n_embed: int, r: int):
         super().__init__()
+        # lin1
         self.c_fc = Linear(n_embed, dim, r=r, bias=True)
+        # lin2
         self.c_proj = Linear(dim, n_embed, r=r, bias=True)
         self.act = nn.functional.gelu
 
@@ -25,7 +27,9 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = self.embed_dim // self.num_heads
         self.split_size = self.embed_dim
 
+        # qkv
         self.c_att = Linear(n_embed, n_embed * 3, r=r, bias=True)
+        # out
         self.c_proj = Linear(n_embed, n_embed, r=r, bias=True)
 
     def _split_heads(self, tensor, num_heads, attn_head_size):
@@ -87,7 +91,7 @@ class Block(nn.Module):
 
 class GPTModel(nn.Module):
     def __init__(self, layer_norm_epsilon: float, n_embd: int, n_layer: int, n_positions: int,
-                 vocab_size: int, r: int, device: torch.device):
+                 vocab_size: int, r: int):
         super().__init__()
 
         self.token_embedding = Embedding(vocab_size, n_embd, r=r)
@@ -100,22 +104,27 @@ class GPTModel(nn.Module):
 
         self.lm_head = Linear(n_embd, vocab_size, r=r, bias=False)
 
-        self.device = device
+    def forward(self, input_ids: torch.Tensor):
+        """
+        :param input_ids: has shape `[batch_size, seq_len]`
+        """
+        batch_size, seq_len = input_ids.shape
 
-    def forward(self, input_ids):
-        batch_size, input_shape = input_ids.size()
+        # Get token embeddings
+        token_embeddings = self.token_embedding(input_ids)
+        # Get position ids
+        position_ids = torch.arange(seq_len, device=input_ids.device)[None, :]
+        # Get position embeddings
+        position_embeddings = self.position_embedding(position_ids)
 
-        token_embeddings = self.token_embedding(input_ids)  # B T C
-        position_ids = torch.arange(input_shape, device=self.device)  # T C
-        position_embeddings = self.position_embedding(position_ids)  # B T C
+        # Add position embeddings
+        x = token_embeddings + position_embeddings
 
-        hidden_states = token_embeddings + position_embeddings
-
+        # Run through transformer blocks
         for block in self.blocks:
-            hidden_states = block(hidden_states)
+            x = block(x)
 
-        hidden_states = self.final_norm(hidden_states)
-
-        logits = self.lm_head(hidden_states)
-
-        return logits
+        # Final normalization
+        x = self.final_norm(x)
+        # Get logits from projection layer
+        return self.lm_head(x)
