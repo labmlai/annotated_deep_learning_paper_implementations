@@ -134,8 +134,7 @@ class Trainer(BaseConfigs):
         """
 
         for _ in monit.loop(self.epochs):
-            for i, batch in monit.enum('Train', self.data_loader):
-                inputs = batch[0]
+            for (inputs, ) in monit.iterate('Train', self.data_loader):
                 inputs = inputs.to(self.device)
                 labels = inputs.clone()
 
