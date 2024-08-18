@@ -123,7 +123,6 @@ class Embedding(nn.Module):
         if alpha is None:
             alpha = r
 
-        nn.Embedding
         # The pre-trained embedding weights $W_0^T$ (frozen)
         self.weight = nn.Parameter(torch.empty((num_embeddings, embedding_dim)))
         self.weight.requires_grad = False
