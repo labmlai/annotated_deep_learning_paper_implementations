@@ -4,7 +4,7 @@ title: Finetune GPT-2 with LoRA
 summary: This is training code with notes for fine-tuning pre-trained GPT-2 model with LoRA.
 ---
 
-# Finetune GPT-2 with [LoRA](index.html)
+# Finetune [GPT-2](gpt2.html) with [LoRA](index.html)
 
 Here's a Colab notebook for training a feedback transformer on Tiny Shakespeare dataset.
 
@@ -50,10 +50,15 @@ class Trainer(BaseConfigs):
 
     # Dataset
     text: TensorDataset = "tiny_shakespeare"
+    # Huggingface tokenizer
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    # [GPT2 model](gpt2.html)
     model: GPTModel
+    # Optimizer
     optimizer: torch.optim.Adam
+    # Cross entropy loss
     loss_func = torch.nn.CrossEntropyLoss()
+    # Dataloader
     data_loader: DataLoader
 
     def _load_pretrained_weights(self):
@@ -111,7 +116,7 @@ class Trainer(BaseConfigs):
         """
         ### Initialize the model, optimizer and dataloader
         """
-        # Initialize the model
+        # Initialize the [GPT2 model](gpt2.html)
         self.model = GPTModel(
             layer_norm_epsilon=self.layer_norm_epsilon,
             d_model=self.d_model,
