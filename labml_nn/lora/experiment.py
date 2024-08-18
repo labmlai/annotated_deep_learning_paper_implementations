@@ -12,13 +12,14 @@ Here's a Colab notebook for training a feedback transformer on Tiny Shakespeare 
 """
 
 import torch
+from torch.optim import Adam
+from torch.utils.data import DataLoader, TensorDataset
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
 from labml import lab, monit, tracker
 from labml.configs import BaseConfigs, option
 from labml.utils.download import download_file
 from labml_helpers.device import DeviceConfigs
-from torch.optim import Adam
-from torch.utils.data import DataLoader, TensorDataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from labml_nn.lora.gpt2 import GPTModel
 
 
@@ -32,8 +33,9 @@ class Trainer(BaseConfigs):
 
     # GPT-2 configs
     layer_norm_epsilon: float = 1e-05
-    n_embed: int = 768
-    n_layer: int = 12
+    d_model: int = 768
+    n_layers: int = 12
+    n_heads: int = 12
     n_positions: int = 1024
     vocab_size: int = 50257
 
@@ -102,8 +104,8 @@ class Trainer(BaseConfigs):
         for layer in convo_layers:
             new_state_dict[layer] = torch.transpose(new_state_dict[layer], 0, 1)
 
-        # Load out model
-        self.model.load_state_dict(new_state_dict, strict=False)  # state dict does not have lora weights
+        # Load out model. We use `strict = False` because the state does not have LoRA weights
+        self.model.load_state_dict(new_state_dict, strict=False)
 
     def initialize(self):
         """
@@ -112,8 +114,9 @@ class Trainer(BaseConfigs):
         # Initialize the model
         self.model = GPTModel(
             layer_norm_epsilon=self.layer_norm_epsilon,
-            n_embd=self.n_embed,
-            n_layer=self.n_layer,
+            d_model=self.d_model,
+            n_layers=self.n_layers,
+            n_heads=self.n_heads,
             n_positions=self.n_positions,
             vocab_size=self.vocab_size,
             r=self.lora_r,
@@ -135,7 +138,7 @@ class Trainer(BaseConfigs):
 
         for _ in monit.loop(self.epochs):
             # `inputs` has shape `[batch_size, seq_len]`
-            for (inputs, ) in monit.iterate('Train', self.data_loader):
+            for (inputs,) in monit.iterate('Train', self.data_loader):
                 # Move `inputs` to device
                 inputs = inputs.to(self.device)
                 # Call the model, with the all but the last token

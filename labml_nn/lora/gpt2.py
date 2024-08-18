@@ -1,106 +1,170 @@
+"""
+---
+title: GPT-2 with LoRA
+summary: GPT-2 implementation with LoRA modules
+---
+
+# GPT-2 with [LoRA modules](index.html)
+
+Here's [the training code](experiment.html) for training a GPT2 model with LoRA
+ on Tiny Shakespeare dataset.
+"""
+
 import torch
 import torch.nn as nn
+
 from labml_nn.lora import Linear, Embedding
 
 
 class FFN(nn.Module):
-    def __init__(self, dim: int, n_embed: int, r: int):
-        super().__init__()
-        self.linear_in = Linear(n_embed, dim, r=r, bias=True)
-        self.linear_out = Linear(dim, n_embed, r=r, bias=True)
-        self.act = nn.functional.gelu
+    """
+    ### Feedforward Network
+    """
 
-    def forward(self, hidden_states):
-        hidden_states = self.linear_in(hidden_states)
-        hidden_states = self.act(hidden_states)
-        hidden_states = self.linear_out(hidden_states)
-        return hidden_states
+    def __init__(self, d_model: int, d_ff: int, r: int):
+        """
+        :param d_model: is the number of dimensions
+        :param d_ff: is the size of the hidden dimension
+        :param r: is the lora rank
+        """
+        super().__init__()
+
+        # The linear layers and the activation
+        self.linear_in = Linear(d_model, d_ff, r=r, bias=True)
+        self.linear_out = Linear(d_ff, d_model, r=r, bias=True)
+        self.act = nn.GELU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        :param x: is the embeddings tensor with shape `[batch_size, seq_len, d_model]`
+        """
+        x = self.linear_in(x)
+        x = self.act(x)
+        x = self.linear_out(x)
+        return x
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_embed: int, r: int):
+    """
+    ### Multi-Head Attention
+    """
+
+    def __init__(self, d_model: int, n_heads: int, r: int):
+        """
+        :param d_model: is the number of dimensions in the embeddings
+        :param n_heads: is the number of heads
+        :param r: is the lora rank
+        """
         super().__init__()
-        self.embed_dim = n_embed
-        self.num_heads = n_embed
-        self.head_dim = self.embed_dim // self.num_heads
-        self.split_size = self.embed_dim
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_head = d_model // n_heads
 
-        # query key value
-        self.qkv_projection = Linear(n_embed, n_embed * 3, r=r, bias=True)
-        # out
-        self.output_projection = Linear(n_embed, n_embed, r=r, bias=True)
+        # Linear transformation for QKV
+        self.qkv_projection = Linear(d_model, d_model * 3, r=r, bias=True)
+        # Output projection
+        self.output_projection = Linear(d_model, d_model, r=r, bias=True)
 
-    def _split_heads(self, tensor, num_heads, attn_head_size):
+    def _split_heads(self, x: torch.Tensor):
         """
-        Splits hidden_size dim into attn_head_size and num_heads
+        :param x: is the tensor with shape `[batch_size, seq_len, d_model]`
         """
-        new_shape = tensor.size()[:-1] + (num_heads, attn_head_size)
-        tensor = tensor.view(new_shape)
-        return tensor.permute(0, 2, 1, 3)  # (batch, head, seq_length, head_features)
+        # Split last dimension to `[n_heads, d_head]`
+        x = x.view(x.shape[:-1] + (self.n_heads, self.d_head))
+        # Reorder to `[batch_size, head, seq_length, d_head]`
+        return x.permute(0, 2, 1, 3)
 
-    def forward(self, hidden_states):
-        batch_size, seq_length, _ = hidden_states.size()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        :param x: is the embeddings tensor with shape `[batch_size, seq_len, d_model]`
+        """
+        batch_size, seq_length, _ = x.shape
 
-        query, key, value = self.qkv_projection(hidden_states).split(self.split_size, dim=2)
+        # Get query, key and value
+        q, k, v = self.qkv_projection(x).split(self.d_model, dim=-1)
 
-        query = self._split_heads(query, self.num_heads, self.head_dim)
-        key = self._split_heads(key, self.num_heads, self.head_dim)
-        value = self._split_heads(value, self.num_heads, self.head_dim)
+        # Transform them from shape  `[batch_size, seq_len, d_model]` to `[batch_size, head, seq_length, d_head]`
+        q = self._split_heads(q)
+        k = self._split_heads(k)
+        v = self._split_heads(v)
 
-        attn_output = torch.nn.functional.scaled_dot_product_attention(
-            query,
-            key,
-            value,
-            attn_mask=None,
-            dropout_p=0.0,
-            is_causal=True,  # for the triangular mask
-        )
+        # Apply causal attention
+        attn_output = torch.nn.functional.scaled_dot_product_attention(q, k, v, is_causal=True)
 
-        attn_output = attn_output.transpose(1, 2).contiguous()
-        attn_output = attn_output.view(batch_size, seq_length, self.embed_dim)
+        # Transform them from shape  `[batch_size, head, seq_length, d_head]` to `[batch_size, seq_len, d_model]`
+        attn_output = attn_output.permute(0, 2, 1, 3).reshape(batch_size, seq_length, self.d_model)
 
-        attn_output = self.output_projection(attn_output)
-
-        return attn_output
+        # Final project
+        return self.output_projection(attn_output)
 
 
 class Block(nn.Module):
-    def __init__(self, n_embed: int, layer_norm_epsilon: float, r: int):
+    """
+    ### Decoder block
+    """
+
+    def __init__(self, d_model: int, n_heads: int, layer_norm_epsilon: float, r: int):
+        """
+        :param d_model: is the number of dimensions in the embeddings
+        :param n_heads: is the number of heads
+        :param layer_norm_epsilon: is the layer norm epsilon
+        :param r: is the lora rank
+        """
         super().__init__()
-        self.pre_norm = nn.LayerNorm(n_embed, eps=layer_norm_epsilon)
-        self.attn = MultiHeadAttention(n_embed, r)
-        self.post_norm = nn.LayerNorm(n_embed, eps=layer_norm_epsilon)
-        self.ffn = FFN(n_embed * 4, n_embed, r)
+        # Attention pre-normalization layer
+        self.attn_norm = nn.LayerNorm(d_model, eps=layer_norm_epsilon)
+        # Attention layer
+        self.attn = MultiHeadAttention(d_model, n_heads, r)
+        # FFN pre-normalization layer
+        self.ffn_norm = nn.LayerNorm(d_model, eps=layer_norm_epsilon)
+        # Feed-forward network
+        self.ffn = FFN(d_model, d_model * 4, r)
 
-    def forward(self, hidden_states):
-        residual = hidden_states
-        hidden_states = self.pre_norm(hidden_states)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        :param x: is the embeddings tensor with shape `[batch_size, seq_len, d_model]`
+        """
+        # Attention
+        x = x + self.attn(self.attn_norm(x))
+        # FFN
+        x = x + self.ffn(self.ffn_norm(x))
 
-        attn_output = self.attn(hidden_states)
-
-        hidden_states = attn_output + residual
-        residual = hidden_states
-        hidden_states = self.post_norm(hidden_states)
-        feed_forward_output = self.ffn(hidden_states)
-        hidden_states = feed_forward_output + residual
-
-        return hidden_states
+        return x
 
 
 class GPTModel(nn.Module):
-    def __init__(self, layer_norm_epsilon: float, n_embd: int, n_layer: int, n_positions: int,
+    """
+    ## GPT2 Model
+    """
+
+    def __init__(self, *, d_model: int,
+                 n_heads: int, n_layers: int,
+                 n_positions: int,
+                 layer_norm_epsilon: float,
                  vocab_size: int, r: int):
+        """
+        :param d_model: is the number of dimensions in the embeddings
+        :param n_heads: is the number of attention heads
+        :param n_layers: is the number of decoder layers
+        :param n_positions: is the number of positional embeddings
+        :param layer_norm_epsilon: is the layer norm epsilon
+        :param vocab_size: is the vocabulary size
+        :param r: is the lora rank
+        """
         super().__init__()
 
-        self.token_embedding = Embedding(vocab_size, n_embd, r=r)
-        self.position_embedding = Embedding(n_positions, n_embd, r=r)
+        # Token and absolute positional embeddings
+        self.token_embedding = Embedding(vocab_size, d_model, r=r)
+        self.position_embedding = Embedding(n_positions, d_model, r=r)
 
-        self.blocks = nn.ModuleList([Block(n_embd, layer_norm_epsilon, r=r)
-                                     for _ in range(n_layer)])
+        # Decoder blocks
+        self.blocks = nn.ModuleList([Block(d_model, n_heads, layer_norm_epsilon, r=r)
+                                     for _ in range(n_layers)])
 
-        self.final_norm = nn.LayerNorm(n_embd, eps=layer_norm_epsilon)
-
-        self.lm_head = Linear(n_embd, vocab_size, r=r, bias=False)
+        # Final layer norm
+        self.final_norm = nn.LayerNorm(d_model, eps=layer_norm_epsilon)
+        # Projection layer to logit space
+        self.lm_head = Linear(d_model, vocab_size, r=r, bias=False)
 
     def forward(self, input_ids: torch.Tensor):
         """
