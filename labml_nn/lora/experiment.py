@@ -76,16 +76,16 @@ class Trainer(BaseConfigs):
         for i in range(12):
             mapping[f'transformer.h.{i}.ln_1.weight'] = f'blocks.{i}.pre_norm.weight'
             mapping[f'transformer.h.{i}.ln_1.bias'] = f'blocks.{i}.pre_norm.bias'
-            mapping[f'transformer.h.{i}.attn.c_attn.weight'] = f'blocks.{i}.attn.c_att.weight'
-            mapping[f'transformer.h.{i}.attn.c_attn.bias'] = f'blocks.{i}.attn.c_att.bias'
-            mapping[f'transformer.h.{i}.attn.c_proj.weight'] = f'blocks.{i}.attn.c_proj.weight'
-            mapping[f'transformer.h.{i}.attn.c_proj.bias'] = f'blocks.{i}.attn.c_proj.bias'
+            mapping[f'transformer.h.{i}.attn.c_attn.weight'] = f'blocks.{i}.attn.qkv_projection.weight'
+            mapping[f'transformer.h.{i}.attn.c_attn.bias'] = f'blocks.{i}.attn.qkv_projection.bias'
+            mapping[f'transformer.h.{i}.attn.c_proj.weight'] = f'blocks.{i}.attn.output_projection.weight'
+            mapping[f'transformer.h.{i}.attn.c_proj.bias'] = f'blocks.{i}.attn.output_projection.bias'
             mapping[f'transformer.h.{i}.ln_2.weight'] = f'blocks.{i}.post_norm.weight'
             mapping[f'transformer.h.{i}.ln_2.bias'] = f'blocks.{i}.post_norm.bias'
-            mapping[f'transformer.h.{i}.mlp.c_fc.weight'] = f'blocks.{i}.ffn.c_fc.weight'
-            mapping[f'transformer.h.{i}.mlp.c_fc.bias'] = f'blocks.{i}.ffn.c_fc.bias'
-            mapping[f'transformer.h.{i}.mlp.c_proj.weight'] = f'blocks.{i}.ffn.c_proj.weight'
-            mapping[f'transformer.h.{i}.mlp.c_proj.bias'] = f'blocks.{i}.ffn.c_proj.bias'
+            mapping[f'transformer.h.{i}.mlp.c_fc.weight'] = f'blocks.{i}.ffn.linear_in.weight'
+            mapping[f'transformer.h.{i}.mlp.c_fc.bias'] = f'blocks.{i}.ffn.linear_in.bias'
+            mapping[f'transformer.h.{i}.mlp.c_proj.weight'] = f'blocks.{i}.ffn.linear_out.weight'
+            mapping[f'transformer.h.{i}.mlp.c_proj.bias'] = f'blocks.{i}.ffn.linear_out.bias'
 
         # Move the parameters based on mapping
         new_state_dict = {}
@@ -94,10 +94,10 @@ class Trainer(BaseConfigs):
                 new_state_dict[new_key] = state_dict[old_key]
 
         # GPT-2 hugging face uses 1D Convolution layers. We need to transpose those weights since we use linear layers
-        convo_layers = ([f'blocks.{i}.ffn.c_fc.weight' for i in range(12)] +
-                        [f'blocks.{i}.ffn.c_proj.weight' for i in range(12)] +
-                        [f'blocks.{i}.attn.c_att.weight' for i in range(12)] +
-                        [f'blocks.{i}.attn.c_proj.weight' for i in range(12)])
+        convo_layers = ([f'blocks.{i}.ffn.linear_in.weight' for i in range(12)] +
+                        [f'blocks.{i}.ffn.linear_out.weight' for i in range(12)] +
+                        [f'blocks.{i}.attn.qkv_projection.weight' for i in range(12)] +
+                        [f'blocks.{i}.attn.output_projection.weight' for i in range(12)])
 
         for layer in convo_layers:
             new_state_dict[layer] = torch.transpose(new_state_dict[layer], 0, 1)
@@ -134,8 +134,7 @@ class Trainer(BaseConfigs):
         """
 
         for _ in monit.loop(self.epochs):
-            for i, batch in monit.enum('Train', self.data_loader):
-                inputs = batch[0]
+            for (inputs, ) in monit.iterate('Train', self.data_loader):
                 inputs = inputs.to(self.device)
                 labels = inputs.clone()
 
