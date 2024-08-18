@@ -51,7 +51,7 @@ class Trainer(BaseConfigs):
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
     model: GPTModel
     optimizer: torch.optim.Adam
-    criterion = torch.nn.CrossEntropyLoss()
+    loss_func = torch.nn.CrossEntropyLoss()
     data_loader: DataLoader
 
     def _load_pretrained_weights(self):
@@ -134,25 +134,26 @@ class Trainer(BaseConfigs):
         """
 
         for _ in monit.loop(self.epochs):
+            # `inputs` has shape `[batch_size, seq_len]`
             for (inputs, ) in monit.iterate('Train', self.data_loader):
+                # Move `inputs` to device
                 inputs = inputs.to(self.device)
-                labels = inputs.clone()
+                # Call the model, with the all but the last token
+                logits = self.model(inputs[:, :-1])
+                # Get cross entropy loss
+                loss = self.loss_func(logits.reshape(-1, logits.shape[-1]), inputs[:, 1:].reshape(-1))
 
-                outputs = self.model(inputs)
-
-                shift_logits = outputs[..., :-1, :]
-                shift_labels = labels[..., 1:]
-
-                loss = self.criterion(shift_logits.reshape(-1, shift_logits.size(-1)), shift_labels.reshape(-1))
-
+                # Make gradients 0
                 self.optimizer.zero_grad()
+                # Compute gradients
                 loss.backward()
+                # Optimize
                 self.optimizer.step()
 
-                tracker.add({'loss': loss})
-
-                tracker.save()
+                # Log the loss
+                tracker.save({'loss': loss})
                 tracker.add_global_step()
+            #
             tracker.new_line()
 
 

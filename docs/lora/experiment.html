@@ -167,7 +167,7 @@
 <span class="lineno">51</span>    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;gpt2&quot;</span><span class="p">)</span>
 <span class="lineno">52</span>    <span class="n">model</span><span class="p">:</span> <span class="n">GPTModel</span>
 <span class="lineno">53</span>    <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
-<span class="lineno">54</span>    <span class="n">criterion</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="lineno">54</span>    <span class="n">loss_func</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
 <span class="lineno">55</span>    <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span></pre></div>
         </div>
     </div>
@@ -228,16 +228,16 @@
             <div class="highlight"><pre><span class="lineno">76</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span>
 <span class="lineno">77</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ln_1.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.pre_norm.weight&#39;</span>
 <span class="lineno">78</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ln_1.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.pre_norm.bias&#39;</span>
-<span class="lineno">79</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_attn.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_att.weight&#39;</span>
-<span class="lineno">80</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_attn.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_att.bias&#39;</span>
-<span class="lineno">81</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.weight&#39;</span>
-<span class="lineno">82</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.bias&#39;</span>
+<span class="lineno">79</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_attn.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.qkv_projection.weight&#39;</span>
+<span class="lineno">80</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_attn.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.qkv_projection.bias&#39;</span>
+<span class="lineno">81</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.output_projection.weight&#39;</span>
+<span class="lineno">82</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.output_projection.bias&#39;</span>
 <span class="lineno">83</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ln_2.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.post_norm.weight&#39;</span>
 <span class="lineno">84</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ln_2.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.post_norm.bias&#39;</span>
-<span class="lineno">85</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_fc.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_fc.weight&#39;</span>
-<span class="lineno">86</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_fc.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_fc.bias&#39;</span>
-<span class="lineno">87</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_proj.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_proj.weight&#39;</span>
-<span class="lineno">88</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_proj.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_proj.bias&#39;</span></pre></div>
+<span class="lineno">85</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_fc.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_in.weight&#39;</span>
+<span class="lineno">86</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_fc.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_in.bias&#39;</span>
+<span class="lineno">87</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_proj.weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_out.weight&#39;</span>
+<span class="lineno">88</span>            <span class="n">mapping</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;transformer.h.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.mlp.c_proj.bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_out.bias&#39;</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -264,10 +264,10 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">97</span>        <span class="n">convo_layers</span> <span class="o">=</span> <span class="p">([</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_fc.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
-<span class="lineno">98</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.c_proj.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
-<span class="lineno">99</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_att.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
-<span class="lineno">100</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.c_proj.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)])</span>
+            <div class="highlight"><pre><span class="lineno">97</span>        <span class="n">convo_layers</span> <span class="o">=</span> <span class="p">([</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_in.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
+<span class="lineno">98</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.ffn.linear_out.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
+<span class="lineno">99</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.qkv_projection.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)]</span> <span class="o">+</span>
+<span class="lineno">100</span>                        <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;blocks.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">.attn.output_projection.weight&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)])</span>
 <span class="lineno">101</span>
 <span class="lineno">102</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">convo_layers</span><span class="p">:</span>
 <span class="lineno">103</span>            <span class="n">new_state_dict</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">new_state_dict</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
@@ -373,34 +373,125 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
-<span class="lineno">137</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">enum</span><span class="p">(</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">):</span>
-<span class="lineno">138</span>                <span class="n">inputs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="lineno">139</span>                <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-<span class="lineno">140</span>                <span class="n">labels</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-<span class="lineno">141</span>
-<span class="lineno">142</span>                <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-<span class="lineno">143</span>
-<span class="lineno">144</span>                <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-<span class="lineno">145</span>                <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span>
-<span class="lineno">146</span>
-<span class="lineno">147</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">shift_logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">shift_logits</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">shift_labels</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-<span class="lineno">148</span>
-<span class="lineno">149</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-<span class="lineno">150</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-<span class="lineno">151</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-<span class="lineno">152</span>
-<span class="lineno">153</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">({</span><span class="s1">&#39;loss&#39;</span><span class="p">:</span> <span class="n">loss</span><span class="p">})</span>
-<span class="lineno">154</span>
-<span class="lineno">155</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-<span class="lineno">156</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">()</span>
-<span class="lineno">157</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
-        <div class='docs doc-strings'>
+        <div class='docs'>
             <div class='section-link'>
                 <a href='#section-21'>#</a>
+            </div>
+            <p><code  class="highlight"><span></span><span class="n">inputs</span></code>
+ has shape <code  class="highlight"><span></span><span class="p">[</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">]</span></code>
+ </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">138</span>            <span class="k">for</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">)</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            <p>Move <code  class="highlight"><span></span><span class="n">inputs</span></code>
+ to device </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>                <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            <p>Call the model, with the all but the last token </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">142</span>                <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            <p>Get cross entropy loss </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">144</span>                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">inputs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p>Make gradients 0 </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">147</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            <p>Compute gradients </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">149</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            <p>Optimize </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">151</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            <p>Log the loss </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">({</span><span class="s1">&#39;loss&#39;</span><span class="p">:</span> <span class="n">loss</span><span class="p">})</span>
+<span class="lineno">155</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            <p> </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">157</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-30'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-30'>#</a>
             </div>
             <h3>Tiny Shakespeare dataset</h3>
 <p>It will download from the url if not present</p>
@@ -411,10 +502,10 @@
 <span class="lineno">161</span><span class="k">def</span> <span class="nf">tiny_shakespeare</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Trainer</span><span class="p">):</span></pre></div>
         </div>
     </div>
-    <div class='section' id='section-22'>
+    <div class='section' id='section-31'>
         <div class='docs'>
             <div class='section-link'>
-                <a href='#section-22'>#</a>
+                <a href='#section-31'>#</a>
             </div>
             
         </div>
