@@ -79,7 +79,7 @@ class Linear(nn.Module):
         # Matrix $A \in \mathbb{R}^{r \times k}$
         self.lora_a = nn.Parameter(torch.empty((r, in_features)))
         # Matrix $B \in \mathbb{R}^{d \times r}$, we keep $A$ and $B$ transposed
-        self.lora_b = nn.Parameter(torch.empty((outfeatures, r)))
+        self.lora_b = nn.Parameter(torch.empty((out_features, r)))
 
         with torch.no_grad():
             # Initialize $A$ similar to a weight matrix in a normal linear layer
