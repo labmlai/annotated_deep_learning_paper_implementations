@@ -5,11 +5,12 @@ from pathlib import Path
 from labml import logger
 from labml.logger import Text
 
-HOME = Path('./labml_nn')
+HOME = Path('./labml_nn').absolute()
+print(HOME)
 
 REGEX = re.compile(r"""
  \(
- https://papers\.labml\.ai/paper/  # Start of a numeric entity reference
+ https://arxiv\.org/abs/  # Start of a numeric entity reference
  (?P<id>[0-9\.]+)  # Paper ID
  \)
 """, re.VERBOSE)
