@@ -47,6 +47,8 @@ implementations.
 * [Primer EZ](transformers/primer_ez/index.html)
 * [Hourglass](transformers/hour_glass/index.html)
 
+#### ✨ [Low-Rank Adaptation (LoRA)](lora/index.html)
+
 #### ✨ [Eleuther GPT-NeoX](neox/index.html)
 * [Generate on a 48GB GPU](neox/samples/generate.html)
 * [Finetune on two 48GB GPUs](neox/samples/finetune.html)

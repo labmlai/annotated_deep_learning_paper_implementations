@@ -44,6 +44,8 @@ implementations almost weekly.
 * [Primer EZ](https://nn.labml.ai/transformers/primer_ez/index.html)
 * [Hourglass](https://nn.labml.ai/transformers/hour_glass/index.html)
 
+#### ✨ [Low-Rank Adaptation (LoRA)](https://nn.labml.ai/lora/index.html)
+
 #### ✨ [Eleuther GPT-NeoX](https://nn.labml.ai/neox/index.html)
 * [Generate on a 48GB GPU](https://nn.labml.ai/neox/samples/generate.html)
 * [Finetune on two 48GB GPUs](https://nn.labml.ai/neox/samples/finetune.html)
