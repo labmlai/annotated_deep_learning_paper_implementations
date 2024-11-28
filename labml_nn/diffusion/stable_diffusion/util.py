@@ -115,9 +115,9 @@ def load_img(path: str):
     image = Image.open(path).convert("RGB")
     # Get image size
     w, h = image.size
-    # Resize to a multiple of 32
-    w = w - w % 32
-    h = h - h % 32
+    # Resize to a multiple of 64
+    w = w - w % 64
+    h = h - h % 64
     image = image.resize((w, h), resample=PIL.Image.LANCZOS)
     # Convert to numpy and map to `[-1, 1]` for `[0, 255]`
     image = np.array(image).astype(np.float32) * (2. / 255.0) - 1
