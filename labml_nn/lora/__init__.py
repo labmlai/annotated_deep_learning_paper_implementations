@@ -14,7 +14,7 @@ in [PyTorch](https://pytorch.org).
 
 Low-Rank Adaptation (LoRA) freezes pre-trained model weights and injects
  trainable rank decomposition matrices into each layer of the transformer.
- This makes it possible to efficiently fine-tune large langauge models by
+ This makes it possible to efficiently fine-tune large language models by
  reducing trainable parameters by a large factor.
 
 Here's [the training code](experiment.html) for training a GPT2 model with LoRA
