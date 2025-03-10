@@ -6,10 +6,9 @@
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 These implementations are documented with explanations,
-
-[The website](https://nn.labml.ai/index.html)
-renders these as side-by-side formatted notes.
-We believe these would help you understand these algorithms better.
+which [the website](https://nn.labml.ai/index.html)
+renders as side-by-side formatted notes.
+We believe this will help you understand these algorithms better.
 
 ![Screenshot](https://nn.labml.ai/dqn-light.png)
 
