@@ -185,7 +185,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         # \end{align}
         #
         # for $i \in {1, 2, ..., \frac{d}{2}}$
-        x_rope = (x_rope * self.cos_cached[:x.shape[0]]) + (neg_half_x * self.sin_cached[:x.shape[0]])
+        x_rope = (x_rope * self.cos_cached[:x_rope.shape[0]]) + (neg_half_x * self.sin_cached[:x_rope.shape[0]])
 
         #
         return torch.cat((x_rope, x_pass), dim=-1)
