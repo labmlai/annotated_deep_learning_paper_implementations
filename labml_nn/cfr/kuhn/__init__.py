@@ -41,7 +41,6 @@ import numpy as np
 from labml import experiment
 from labml.configs import option
 from labml_nn.cfr import History as _History, InfoSet as _InfoSet, Action, Player, CFRConfigs
-from labml_nn.cfr.infoset_saver import InfoSetSaver
 
 # Kuhn poker actions are pass (`p`) or bet (`b`)
 ACTIONS = cast(List[Action], ['p', 'b'])

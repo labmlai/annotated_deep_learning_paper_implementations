@@ -13,13 +13,12 @@ You can find the download instructions
 Save the training images inside `carvana/train` folder and the masks in `carvana/train_masks` folder.
 """
 
-from torch import nn
 from pathlib import Path
 
-import torch.utils.data
 import torchvision.transforms.functional
 from PIL import Image
 
+import torch.utils.data
 from labml import lab
 
 

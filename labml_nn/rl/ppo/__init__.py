@@ -26,8 +26,8 @@ The experiment uses [Generalized Advantage Estimation](gae.html).
 """
 
 import torch
-
 from labml_nn.rl.ppo.gae import GAE
+from torch import nn
 
 
 class ClippedPPOLoss(nn.Module):
@@ -178,7 +178,7 @@ class ClippedPPOLoss(nn.Module):
         return -policy_reward.mean()
 
 
-class ClippedValueFunctionLoss(Module):
+class ClippedValueFunctionLoss(nn.Module):
     """
     ## Clipped Value Function Loss
 
