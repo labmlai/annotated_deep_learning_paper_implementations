@@ -57,10 +57,9 @@ from typing import List, Optional
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class ShortcutProjection(Module):
+class ShortcutProjection(nn.Module):
     """
     ## Linear projections for shortcut connection
 
@@ -86,7 +85,7 @@ class ShortcutProjection(Module):
         return self.bn(self.conv(x))
 
 
-class ResidualBlock(Module):
+class ResidualBlock(nn.Module):
     """
     <a id="residual_block"></a>
 
@@ -153,7 +152,7 @@ class ResidualBlock(Module):
         return self.act2(x + shortcut)
 
 
-class BottleneckResidualBlock(Module):
+class BottleneckResidualBlock(nn.Module):
     """
     <a id="bottleneck_residual_block"></a>
 
@@ -237,7 +236,7 @@ class BottleneckResidualBlock(Module):
         return self.act3(x + shortcut)
 
 
-class ResNetBase(Module):
+class ResNetBase(nn.Module):
     """
     ## ResNet Model
 

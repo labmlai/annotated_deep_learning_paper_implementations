@@ -11,14 +11,13 @@ from typing import Optional
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers.fast_weights import DPFP
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class FastWeightsAttention(Module):
+class FastWeightsAttention(nn.Module):
     def __init__(self, heads: int, d_model: int, dropout_prob: float, phi: DPFP):
         super().__init__()
 
@@ -66,7 +65,7 @@ class FastWeightsAttention(Module):
         return self.output(x), weights
 
 
-class FastWeightsAttentionTransformerLayer(Module):
+class FastWeightsAttentionTransformerLayer(nn.Module):
     def __init__(self, *,
                  d_model: int,
                  attn: FastWeightsAttention,
@@ -100,7 +99,7 @@ class FastWeightsAttentionTransformerLayer(Module):
         return x, weights
 
 
-class FastWeightsAttentionTransformer(Module):
+class FastWeightsAttentionTransformer(nn.Module):
     def __init__(self, layer: FastWeightsAttentionTransformerLayer, n_layers: int):
         super().__init__()
         # Make copies of the transformer layer

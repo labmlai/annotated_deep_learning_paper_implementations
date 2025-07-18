@@ -23,7 +23,6 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from labml_helpers.module import Module
 
 PREV_X_TIME = 0
 NUM_STATE = 1
@@ -32,7 +31,7 @@ MAX_STATE = 3
 PREV_X_CHANNEL = 4
 
 
-class LayerNorm(Module):
+class LayerNorm(nn.Module):
     """
     ### Layer normalization with bias
     """
@@ -69,7 +68,7 @@ class L2Wrap(torch.autograd.Function):
         return grad_output, gy
 
 
-class ChannelMixing(Module):
+class ChannelMixing(nn.Module):
     """
     ### Channel Mixing
     """
@@ -120,7 +119,7 @@ class ChannelMixing(Module):
         return out, state
 
 
-class TimeMixing(Module):
+class TimeMixing(nn.Module):
     """
     ### Time Mixing
     """
@@ -218,7 +217,7 @@ class TimeMixing(Module):
         return rwkv, state
 
 
-class Block(Module):
+class Block(nn.Module):
     """
     ## RWKV block element
     """
@@ -245,7 +244,7 @@ class Block(Module):
         return x, state
 
 
-class RWKV(Module):
+class RWKV(nn.Module):
     """
     ## RWKV
     """

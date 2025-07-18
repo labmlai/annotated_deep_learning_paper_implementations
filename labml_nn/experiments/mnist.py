@@ -10,7 +10,6 @@ summary: >
 
 import torch.nn as nn
 import torch.utils.data
-from labml_helpers.module import Module
 
 from labml import tracker
 from labml.configs import option
@@ -34,7 +33,7 @@ class MNISTConfigs(MNISTDatasetConfigs, TrainValidConfigs):
     device: torch.device = DeviceConfigs()
 
     # Classification model
-    model: Module
+    model: nn.Module
     # Number of epochs to train for
     epochs: int = 10
 

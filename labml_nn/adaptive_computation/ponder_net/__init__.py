@@ -65,10 +65,9 @@ from typing import Tuple
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class ParityPonderGRU(Module):
+class ParityPonderGRU(nn.Module):
     """
     ## PonderNet with GRU for Parity Task
 
@@ -177,7 +176,7 @@ class ParityPonderGRU(Module):
         return torch.stack(p), torch.stack(y), p_m, y_m
 
 
-class ReconstructionLoss(Module):
+class ReconstructionLoss(nn.Module):
     """
     ## Reconstruction loss
 
@@ -213,7 +212,7 @@ class ReconstructionLoss(Module):
         return total_loss
 
 
-class RegularizationLoss(Module):
+class RegularizationLoss(nn.Module):
     """
     ## Regularization loss
 

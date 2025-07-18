@@ -36,11 +36,10 @@ Here's [an experiment](experiment.html) that trains ConvMixer on CIFAR-10.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.utils import clone_module_list
 
 
-class ConvMixerLayer(Module):
+class ConvMixerLayer(nn.Module):
     """
     <a id="ConvMixerLayer"></a>
 
@@ -96,7 +95,7 @@ class ConvMixerLayer(Module):
         return x
 
 
-class PatchEmbeddings(Module):
+class PatchEmbeddings(nn.Module):
     """
     <a id="PatchEmbeddings"></a>
 
@@ -136,7 +135,7 @@ class PatchEmbeddings(Module):
         return x
 
 
-class ClassificationHead(Module):
+class ClassificationHead(nn.Module):
     """
     <a id="ClassificationHead"></a>
 
@@ -169,7 +168,7 @@ class ClassificationHead(Module):
         return x
 
 
-class ConvMixer(Module):
+class ConvMixer(nn.Module):
     """
     ## ConvMixer
 

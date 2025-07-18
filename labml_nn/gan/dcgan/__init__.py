@@ -16,11 +16,10 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import calculate
-from labml_helpers.module import Module
 from labml_nn.gan.original.experiment import Configs
 
 
-class Generator(Module):
+class Generator(nn.Module):
     """
     ### Convolutional Generator Network
 
@@ -60,7 +59,7 @@ class Generator(Module):
         return x
 
 
-class Discriminator(Module):
+class Discriminator(nn.Module):
     """
     ### Convolutional Discriminator Network
     """

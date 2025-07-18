@@ -17,7 +17,6 @@ from labml import experiment, tracker, logger
 from labml.configs import option
 from labml.logger import Text
 from labml_helpers.metrics.accuracy import Accuracy
-from labml_helpers.module import Module
 from labml_helpers.train_valid import BatchIndex
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import Encoder, Generator
@@ -30,7 +29,7 @@ class TransformerMLM(nn.Module):
     # Transformer based model for MLM
     """
 
-    def __init__(self, *, encoder: Encoder, src_embed: Module, generator: Generator):
+    def __init__(self, *, encoder: Encoder, src_embed: nn.Module, generator: Generator):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token

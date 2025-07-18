@@ -85,12 +85,11 @@ Here is the code to try this on a [simple MNIST generation experiment](experimen
 """
 
 import torch.utils.data
+from torch import nn
 from torch.nn import functional as F
 
-from labml_helpers.module import Module
 
-
-class DiscriminatorLoss(Module):
+class DiscriminatorLoss(nn.Module):
     """
     ## Discriminator Loss
 
@@ -115,7 +114,7 @@ class DiscriminatorLoss(Module):
         return F.relu(1 - f_real).mean(), F.relu(1 + f_fake).mean()
 
 
-class GeneratorLoss(Module):
+class GeneratorLoss(nn.Module):
     """
     ## Generator Loss
 

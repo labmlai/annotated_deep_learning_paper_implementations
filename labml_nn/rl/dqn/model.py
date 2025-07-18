@@ -12,10 +12,9 @@ summary: Implementation of neural network model for Deep Q Network (DQN).
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class Model(Module):
+class Model(nn.Module):
     """
     ## Dueling Network ⚔️ Model for $Q$ Values
 

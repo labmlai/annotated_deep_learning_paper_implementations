@@ -84,10 +84,9 @@ Here's a [CIFAR 10 classification model](experiment.html) that uses instance nor
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class GroupNorm(Module):
+class GroupNorm(nn.Module):
     r"""
     ## Group Normalization Layer
     """

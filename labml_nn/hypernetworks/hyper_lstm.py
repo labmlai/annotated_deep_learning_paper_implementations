@@ -74,11 +74,10 @@ from typing import Optional, Tuple
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.lstm import LSTMCell
 
 
-class HyperLSTMCell(Module):
+class HyperLSTMCell(nn.Module):
     """
     ## HyperLSTM Cell
 
@@ -199,7 +198,7 @@ class HyperLSTMCell(Module):
         return h_next, c_next, h_hat, c_hat
 
 
-class HyperLSTM(Module):
+class HyperLSTM(nn.Module):
     """
     # HyperLSTM module
     """

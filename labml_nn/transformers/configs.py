@@ -11,7 +11,6 @@ import copy
 import torch.nn as nn
 
 from labml.configs import BaseConfigs, option, calculate, aggregate
-from labml_helpers.module import Module
 from .feed_forward import FeedForward
 from .mha import MultiHeadAttention
 from .models import EmbeddingsWithPositionalEncoding, EmbeddingsWithLearnedPositionalEncoding, TransformerLayer, \
@@ -186,9 +185,9 @@ class TransformerConfigs(BaseConfigs):
     decoder: Decoder = 'default'
 
     # Embedding layer for source
-    src_embed: Module = 'fixed_pos'
+    src_embed: nn.Module = 'fixed_pos'
     # Embedding layer for target (for decoder)
-    tgt_embed: Module = 'fixed_pos'
+    tgt_embed: nn.Module = 'fixed_pos'
 
     # Logit generator for prediction
     generator: Generator = 'default'

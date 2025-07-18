@@ -18,7 +18,6 @@ import torch.utils.data
 
 from labml import tracker, experiment
 from labml.configs import option, calculate
-from labml_helpers.module import Module
 from labml_helpers.schedule import Schedule, RelativePiecewise
 from labml_helpers.train_valid import BatchIndex
 from labml_nn.experiments.mnist import MNISTConfigs
@@ -26,7 +25,7 @@ from labml_nn.uncertainty.evidence import KLDivergenceLoss, TrackStatistics, Max
     CrossEntropyBayesRisk, SquaredErrorBayesRisk
 
 
-class Model(Module):
+class Model(nn.Module):
     """
     ## LeNet based model fro MNIST classification
     """
@@ -94,7 +93,7 @@ class Configs(MNISTConfigs):
     # Dropout
     dropout: float = 0.5
     # Module to convert the model output to non-zero evidences
-    outputs_to_evidence: Module
+    outputs_to_evidence: nn.Module
 
     def init(self):
         """

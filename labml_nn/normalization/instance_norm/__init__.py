@@ -29,10 +29,9 @@ Here's a [CIFAR 10 classification model](experiment.html) that uses instance nor
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class InstanceNorm(Module):
+class InstanceNorm(nn.Module):
     r"""
     ## Instance Normalization Layer
 

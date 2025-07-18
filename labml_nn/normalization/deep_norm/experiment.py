@@ -17,14 +17,13 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.normalization.deep_norm import DeepNormTransformerLayer
 from labml_nn.transformers import MultiHeadAttention
 from labml_nn.transformers.feed_forward import FeedForward
 
 
-class AutoregressiveTransformer(Module):
+class AutoregressiveTransformer(nn.Module):
     """
     ## Auto-Regressive model
 

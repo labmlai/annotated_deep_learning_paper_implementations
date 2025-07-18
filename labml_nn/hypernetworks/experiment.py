@@ -3,19 +3,18 @@ import torch.nn as nn
 from labml import experiment
 from labml.configs import option
 from labml.utils.pytorch import get_modules
-from labml_helpers.module import Module
 
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.hypernetworks.hyper_lstm import HyperLSTM
 from labml_nn.lstm import LSTM
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """
 
-    def __init__(self, n_vocab: int, d_model: int, rnn_model: Module):
+    def __init__(self, n_vocab: int, d_model: int, rnn_model: nn.Module):
         super().__init__()
         # Token embedding module
         self.src_embed = nn.Embedding(n_vocab, d_model)
@@ -38,7 +37,7 @@ class Configs(NLPAutoRegressionConfigs):
     """
 
     model: AutoregressiveModel
-    rnn_model: Module
+    rnn_model: nn.Module
 
     d_model: int = 512
     n_rhn: int = 16

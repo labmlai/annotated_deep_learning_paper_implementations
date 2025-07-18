@@ -28,10 +28,8 @@ a two-layer GAT on Cora dataset.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
-
-class GraphAttentionLayer(Module):
+class GraphAttentionLayer(nn.Module):
     """
     ## Graph attention layer
 

@@ -95,13 +95,12 @@ Here are [the training code](experiment.html) and a notebook for training a fast
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class DPFP(Module):
+class DPFP(nn.Module):
     """
     ## Deterministic Parameter Free Project (DPFP)
 
@@ -173,7 +172,7 @@ class DPFP(Module):
         return x_repeat * x_rolled
 
 
-class FastWeightsAttention(Module):
+class FastWeightsAttention(nn.Module):
     """
     ## Fast Weights Attention
 
@@ -268,7 +267,7 @@ class FastWeightsAttention(Module):
         return self.output(x)
 
 
-class FastWeightsAttentionTransformerLayer(Module):
+class FastWeightsAttentionTransformerLayer(nn.Module):
     """
     This is a general transformer layer that combines self attention and feedforward network.
     """
@@ -308,7 +307,7 @@ class FastWeightsAttentionTransformerLayer(Module):
         return x
 
 
-class FastWeightsAttentionTransformer(Module):
+class FastWeightsAttentionTransformer(nn.Module):
     """
     This is a general transformer module with multiple transformer layers
     """

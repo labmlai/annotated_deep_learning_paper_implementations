@@ -57,10 +57,9 @@ a two-layer GATv2 on Cora dataset.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class GraphAttentionV2Layer(Module):
+class GraphAttentionV2Layer(nn.Module):
     """
     ## Graph attention v2 layer
     This is a single graph attention v2 layer.

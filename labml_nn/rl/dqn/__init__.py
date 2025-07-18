@@ -27,11 +27,10 @@ import torch
 from torch import nn
 
 from labml import tracker
-from labml_helpers.module import Module
 from labml_nn.rl.dqn.replay_buffer import ReplayBuffer
 
 
-class QFuncLoss(Module):
+class QFuncLoss(nn.Module):
     """
     ## Train the model
 

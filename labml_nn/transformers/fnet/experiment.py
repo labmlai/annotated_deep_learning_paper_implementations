@@ -17,7 +17,6 @@ from torch import nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_classification import NLPClassificationConfigs
 from labml_nn.transformers import Encoder
 from labml_nn.transformers import TransformerConfigs
@@ -27,7 +26,7 @@ class TransformerClassifier(nn.Module):
     """
     # Transformer based classifier model
     """
-    def __init__(self, encoder: Encoder, src_embed: Module, generator: nn.Linear):
+    def __init__(self, encoder: Encoder, src_embed: nn.Module, generator: nn.Linear):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token

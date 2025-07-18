@@ -37,10 +37,9 @@ from typing import Union, List
 import torch
 from torch import nn, Size
 
-from labml_helpers.module import Module
 
 
-class LayerNorm(Module):
+class LayerNorm(nn.Module):
     r"""
     ## Layer Normalization
 

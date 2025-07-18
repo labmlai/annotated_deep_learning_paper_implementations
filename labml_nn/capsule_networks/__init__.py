@@ -33,10 +33,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 
-from labml_helpers.module import Module
 
-
-class Squash(Module):
+class Squash(nn.Module):
     """
     ## Squash
 
@@ -70,7 +68,7 @@ class Squash(Module):
         return (s2 / (1 + s2)) * (s / torch.sqrt(s2 + self.epsilon))
 
 
-class Router(Module):
+class Router(nn.Module):
     """
     ## Routing Algorithm
 
@@ -133,7 +131,7 @@ class Router(Module):
         return v
 
 
-class MarginLoss(Module):
+class MarginLoss(nn.Module):
     """
     ## Margin loss for class existence
 
@@ -153,6 +151,7 @@ class MarginLoss(Module):
     The $\lambda$ down-weighting is used to stop the length of all capsules from
     falling during the initial phase of training.
     """
+
     def __init__(self, *, n_labels: int, lambda_: float = 0.5, m_positive: float = 0.9, m_negative: float = 0.1):
         super().__init__()
 

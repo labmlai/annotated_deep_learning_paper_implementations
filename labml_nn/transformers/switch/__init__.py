@@ -39,13 +39,12 @@ Here's [the training code](experiment.html) and a notebook for training a switch
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import MultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class SwitchFeedForward(Module):
+class SwitchFeedForward(nn.Module):
     """
     ## Routing among multiple FFNs
     """
@@ -165,7 +164,7 @@ class SwitchFeedForward(Module):
         return final_output, counts, route_prob.sum(0), len(dropped), route_prob_max
 
 
-class SwitchTransformerLayer(Module):
+class SwitchTransformerLayer(nn.Module):
     """
     # Switch Transformer Block
 
@@ -212,7 +211,7 @@ class SwitchTransformerLayer(Module):
         return x, counts, route_prob, n_dropped, route_prob_max
 
 
-class SwitchTransformer(Module):
+class SwitchTransformer(nn.Module):
     """
     ## Switch Transformer
     """

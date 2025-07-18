@@ -20,12 +20,11 @@ from labml.logger import Text
 from labml_helpers.datasets.text import TextDataset, SequentialDataLoader, SequentialUnBatchedDataset, TextFileDataset
 from labml_helpers.device import DeviceConfigs
 from labml_helpers.metrics.accuracy import Accuracy
-from labml_helpers.module import Module
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
-class CrossEntropyLoss(Module):
+class CrossEntropyLoss(nn.Module):
     """
     ### Cross entropy loss
     """
@@ -54,7 +53,7 @@ class NLPAutoRegressionConfigs(TrainValidConfigs):
     device: torch.device = DeviceConfigs()
 
     # Autoregressive model
-    model: Module
+    model: nn.Module
     # Text dataset
     text: TextDataset
     # Batch size

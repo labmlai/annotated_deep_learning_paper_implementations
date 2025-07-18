@@ -25,11 +25,10 @@ a VGG network that uses weight standardization to classify CIFAR-10 data.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.normalization.batch_norm import BatchNorm
 
 
-class BatchChannelNorm(Module):
+class BatchChannelNorm(nn.Module):
     """
     ## Batch-Channel Normalization
 
@@ -66,7 +65,7 @@ class BatchChannelNorm(Module):
         return self.channel_norm(x)
 
 
-class EstimatedBatchNorm(Module):
+class EstimatedBatchNorm(nn.Module):
     """
     ## Estimated Batch Normalization
 
@@ -166,7 +165,7 @@ class EstimatedBatchNorm(Module):
         return x_norm.view(x_shape)
 
 
-class ChannelNorm(Module):
+class ChannelNorm(nn.Module):
     """
     ## Channel Normalization
 

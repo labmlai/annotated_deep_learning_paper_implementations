@@ -36,10 +36,8 @@ import torch.nn as nn
 import torch.utils.data
 import torch.utils.data
 
-from labml_helpers.module import Module
 
-
-class DiscriminatorLogitsLoss(Module):
+class DiscriminatorLogitsLoss(nn.Module):
     """
     ## Discriminator Loss
 
@@ -92,7 +90,7 @@ class DiscriminatorLogitsLoss(Module):
                 self.loss_false(logits_false, self.labels_false[:len(logits_false)]))
 
 
-class GeneratorLogitsLoss(Module):
+class GeneratorLogitsLoss(nn.Module):
     """
     ## Generator Loss
 
@@ -102,6 +100,7 @@ class GeneratorLogitsLoss(Module):
         \log \Big(1 - D\Big(G\Big(\pmb{z}^{(i)}\Big)\Big)\Big)
     \Bigg]$$
     """
+
     def __init__(self, smoothing: float = 0.2):
         super().__init__()
         self.loss_true = nn.BCEWithLogitsLoss()

@@ -97,10 +97,9 @@ a CNN classifier that uses batch normalization for MNIST dataset.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class BatchNorm(Module):
+class BatchNorm(nn.Module):
     r"""
     ## Batch Normalization Layer
 

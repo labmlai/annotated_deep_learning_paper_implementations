@@ -17,7 +17,6 @@ from labml import experiment, tracker, monit, logger
 from labml.configs import option
 from labml.logger import Text
 from labml_helpers.metrics.simple_state import SimpleStateModule
-from labml_helpers.module import Module
 from labml_helpers.train_valid import BatchIndex, hook_model_outputs
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers.compressive import CompressiveTransformer, AttentionReconstructionLoss, \
@@ -29,7 +28,7 @@ class CompressedMemory(NamedTuple):
     c_mem: List[torch.Tensor]
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """

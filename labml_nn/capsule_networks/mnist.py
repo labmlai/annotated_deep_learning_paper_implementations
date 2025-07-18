@@ -21,12 +21,11 @@ from labml import experiment, tracker
 from labml.configs import option
 from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.metrics.accuracy import AccuracyDirect
-from labml_helpers.module import Module
 from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.capsule_networks import Squash, Router, MarginLoss
 
 
-class MNISTCapsuleNetworkModel(Module):
+class MNISTCapsuleNetworkModel(nn.Module):
     """
     ## Model for classifying MNIST digits
     """

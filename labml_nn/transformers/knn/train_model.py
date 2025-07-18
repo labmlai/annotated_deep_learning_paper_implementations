@@ -10,22 +10,22 @@ This trains a simple [transformer](../../) model for auto-regression.
 """
 
 import torch
+from torch import nn
 from labml import experiment
 from labml.configs import option
 from labml.utils.pytorch import get_modules
-from labml_helpers.module import Module
 
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import Encoder, Generator, TransformerConfigs
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """
 
-    def __init__(self, src_embed: Module, encoder: Encoder, generator: Generator, *,
+    def __init__(self, src_embed: nn.Module, encoder: Encoder, generator: Generator, *,
                  is_save_ff_input: bool = False):
         super().__init__()
         # Token embedding module

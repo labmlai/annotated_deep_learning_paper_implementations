@@ -14,7 +14,6 @@ import torch.nn as nn
 from labml import lab
 from labml.configs import option
 from labml_helpers.datasets.cifar10 import CIFAR10Configs as CIFAR10DatasetConfigs
-from labml_helpers.module import Module
 from labml_nn.experiments.mnist import MNISTConfigs
 
 
@@ -67,7 +66,7 @@ def cifar10_valid_no_augment():
                    ]))
 
 
-class CIFAR10VGGModel(Module):
+class CIFAR10VGGModel(nn.Module):
     """
     ### VGG model for CIFAR-10 classification
     """

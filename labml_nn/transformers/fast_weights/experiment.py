@@ -19,16 +19,15 @@ from torch import nn
 from labml import experiment
 from labml.configs import option
 from labml.utils.pytorch import get_modules
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """
 
-    def __init__(self, n_vocab: int, d_model: int, transformer: Module):
+    def __init__(self, n_vocab: int, d_model: int, transformer: nn.Module):
         super().__init__()
         # Token embedding module
         self.src_embed = nn.Embedding(n_vocab, d_model)

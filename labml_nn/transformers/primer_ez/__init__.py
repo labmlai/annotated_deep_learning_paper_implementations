@@ -38,11 +38,10 @@ kernels for each of the $d_k$ channels.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers import MultiHeadAttention
 
 
-class SquaredReLU(Module):
+class SquaredReLU(nn.Module):
     """
     ## Squared ReLU activation
 
@@ -63,7 +62,7 @@ class SquaredReLU(Module):
         return x * x
 
 
-class SpatialDepthWiseConvolution(Module):
+class SpatialDepthWiseConvolution(nn.Module):
     """
     ## Spatial Depth Wise Convolution
     """

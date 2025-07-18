@@ -43,12 +43,11 @@ It's a simple experiment that anyone can run and play with ViTs.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers import TransformerLayer
 from labml_nn.utils import clone_module_list
 
 
-class PatchEmbeddings(Module):
+class PatchEmbeddings(nn.Module):
     """
     <a id="PatchEmbeddings"></a>
 
@@ -89,7 +88,7 @@ class PatchEmbeddings(Module):
         return x
 
 
-class LearnedPositionalEmbeddings(Module):
+class LearnedPositionalEmbeddings(nn.Module):
     """
     <a id="LearnedPositionalEmbeddings"></a>
 
@@ -117,7 +116,7 @@ class LearnedPositionalEmbeddings(Module):
         return x + pe
 
 
-class ClassificationHead(Module):
+class ClassificationHead(nn.Module):
     """
     <a id="ClassificationHead"></a>
 
@@ -152,7 +151,7 @@ class ClassificationHead(Module):
         return x
 
 
-class VisionTransformer(Module):
+class VisionTransformer(nn.Module):
     """
     ## Vision Transformer
 

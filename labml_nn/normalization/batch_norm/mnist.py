@@ -15,12 +15,11 @@ import torch.utils.data
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.mnist import MNISTConfigs
 from labml_nn.normalization.batch_norm import BatchNorm
 
 
-class Model(Module):
+class Model(nn.Module):
     """
     ### Model definition
     """

@@ -50,10 +50,9 @@ from labml.configs import BaseConfigs
 from labml.utils.download import download_file
 from labml.utils.pytorch import get_modules
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.module import Module
 
 
-class GeneratorResNet(Module):
+class GeneratorResNet(nn.Module):
     """
     The generator is a residual network.
     """
@@ -116,7 +115,7 @@ class GeneratorResNet(Module):
         return self.layers(x)
 
 
-class ResidualBlock(Module):
+class ResidualBlock(nn.Module):
     """
     This is the residual block, with two convolution layers.
     """
@@ -136,7 +135,7 @@ class ResidualBlock(Module):
         return x + self.block(x)
 
 
-class Discriminator(Module):
+class Discriminator(nn.Module):
     """
     This is the discriminator.
     """
@@ -168,7 +167,7 @@ class Discriminator(Module):
         return self.layers(img)
 
 
-class DiscriminatorBlock(Module):
+class DiscriminatorBlock(nn.Module):
     """
     This is the discriminator block module.
     It does a convolution, an optional normalization, and a leaky ReLU.

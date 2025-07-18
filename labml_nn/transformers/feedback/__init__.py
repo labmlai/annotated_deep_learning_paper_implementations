@@ -45,13 +45,12 @@ from typing import Optional
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class FeedbackAttention(Module):
+class FeedbackAttention(nn.Module):
     r"""
     ## Feedback Attention
 
@@ -195,7 +194,7 @@ class FeedbackAttention(Module):
         return self.output(x)
 
 
-class FeedbackTransformerLayer(Module):
+class FeedbackTransformerLayer(nn.Module):
     """
     ## Feedback Transformer Layer
 
@@ -249,7 +248,7 @@ class FeedbackTransformerLayer(Module):
         return x
 
 
-class FeedbackTransformer(Module):
+class FeedbackTransformer(nn.Module):
     """
     ## Feedback Transformer Module
     """
@@ -441,7 +440,7 @@ class Stack:
         self.last = None
 
 
-class FeedbackTransformerKV(Module):
+class FeedbackTransformerKV(nn.Module):
     """
     ## Updated Feedback Transformer Module
 

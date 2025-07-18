@@ -32,19 +32,18 @@ Took help from [PyTorch Sketch RNN](https://github.com/alexis-jacq/Pytorch-Sketc
 import math
 from typing import Optional, Tuple, Any
 
+import einops
 import numpy as np
+from matplotlib import pyplot as plt
+
 import torch
 import torch.nn as nn
-from matplotlib import pyplot as plt
-from torch import optim
-from torch.utils.data import Dataset, DataLoader
-
-import einops
 from labml import lab, experiment, tracker, monit
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
+from torch import optim
+from torch.utils.data import Dataset, DataLoader
 
 
 class StrokesDataset(Dataset):
@@ -194,7 +193,7 @@ class BivariateGaussianMixture:
         return cat_dist, multi_dist
 
 
-class EncoderRNN(Module):
+class EncoderRNN(nn.Module):
     """
     ## Encoder module
 
@@ -238,7 +237,7 @@ class EncoderRNN(Module):
         return z, mu, sigma_hat
 
 
-class DecoderRNN(Module):
+class DecoderRNN(nn.Module):
     """
     ## Decoder module
 
@@ -309,13 +308,13 @@ class DecoderRNN(Module):
         return dist, q_logits, state
 
 
-class ReconstructionLoss(Module):
+class ReconstructionLoss(nn.Module):
     """
     ## Reconstruction Loss
     """
 
     def forward(self, mask: torch.Tensor, target: torch.Tensor,
-                 dist: 'BivariateGaussianMixture', q_logits: torch.Tensor):
+                dist: 'BivariateGaussianMixture', q_logits: torch.Tensor):
         # Get $\Pi$ and $\mathcal{N}(\mu_{x}, \mu_{y}, \sigma_{x}, \sigma_{y}, \rho_{xy})$
         pi, mix = dist.get_distribution()
         # `target` has shape `[seq_len, batch_size, 5]` where the last dimension is the features
@@ -348,7 +347,7 @@ class ReconstructionLoss(Module):
         return loss_stroke + loss_pen
 
 
-class KLDivLoss(Module):
+class KLDivLoss(nn.Module):
     """
     ## KL-Divergence loss
 

@@ -61,10 +61,9 @@ from typing import Optional
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class AFTLocal(Module):
+class AFTLocal(nn.Module):
     """
     ### AFT Local Operation
 

@@ -27,10 +27,8 @@ from typing import Optional, Tuple, Union, List
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
-
-class Swish(Module):
+class Swish(nn.Module):
     """
     ### Swish activation function
 
@@ -83,7 +81,7 @@ class TimeEmbedding(nn.Module):
         return emb
 
 
-class ResidualBlock(Module):
+class ResidualBlock(nn.Module):
     """
     ### Residual block
 
@@ -140,7 +138,7 @@ class ResidualBlock(Module):
         return h + self.shortcut(x)
 
 
-class AttentionBlock(Module):
+class AttentionBlock(nn.Module):
     """
     ### Attention block
 
@@ -208,7 +206,7 @@ class AttentionBlock(Module):
         return res
 
 
-class DownBlock(Module):
+class DownBlock(nn.Module):
     """
     ### Down block
 
@@ -229,7 +227,7 @@ class DownBlock(Module):
         return x
 
 
-class UpBlock(Module):
+class UpBlock(nn.Module):
     """
     ### Up block
 
@@ -252,7 +250,7 @@ class UpBlock(Module):
         return x
 
 
-class MiddleBlock(Module):
+class MiddleBlock(nn.Module):
     """
     ### Middle block
 
@@ -305,7 +303,7 @@ class Downsample(nn.Module):
         return self.conv(x)
 
 
-class UNet(Module):
+class UNet(nn.Module):
     """
     ## U-Net
     """

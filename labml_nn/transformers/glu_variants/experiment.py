@@ -17,19 +17,18 @@ import torch
 from labml import experiment
 from labml.configs import option
 from labml.utils.pytorch import get_modules
-from labml_helpers.module import Module
-
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import Encoder, Generator, TransformerConfigs
 from labml_nn.transformers.utils import subsequent_mask
+from torch import nn
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """
 
-    def __init__(self, src_embed: Module, encoder: Encoder, generator: Generator):
+    def __init__(self, src_embed: nn.Module, encoder: Encoder, generator: Generator):
         super().__init__()
         # Token embedding module
         self.src_embed = src_embed

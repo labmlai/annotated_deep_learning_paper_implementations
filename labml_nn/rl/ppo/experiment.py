@@ -22,7 +22,6 @@ from torch.distributions import Categorical
 
 from labml import monit, tracker, logger, experiment
 from labml.configs import FloatDynamicHyperParam, IntDynamicHyperParam
-from labml_helpers.module import Module
 from labml_nn.rl.game import Worker
 from labml_nn.rl.ppo import ClippedPPOLoss, ClippedValueFunctionLoss
 from labml_nn.rl.ppo.gae import GAE
@@ -34,7 +33,7 @@ else:
     device = torch.device("cpu")
 
 
-class Model(Module):
+class Model(nn.Module):
     """
     ## Model
     """

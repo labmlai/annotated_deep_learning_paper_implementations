@@ -12,11 +12,10 @@ We tried some variations to see which changes in Primer EZ has most benefits.
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers import MultiHeadAttention
 
 
-class SpatialDepthWiseSharedConvolution(Module):
+class SpatialDepthWiseSharedConvolution(nn.Module):
     """
     ## Spatial Depth Wise Shared Convolution
 
@@ -78,7 +77,7 @@ class MultiDSharedConvHeadAttention(MultiHeadAttention):
         self.value = nn.Sequential(self.value, SpatialDepthWiseSharedConvolution())
 
 
-class SpatialDepthWisePerHeadConvolution(Module):
+class SpatialDepthWisePerHeadConvolution(nn.Module):
     """
     ## Spatial Depth Wise Per Head Convolution
     """

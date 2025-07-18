@@ -10,13 +10,12 @@ summary: >
 """
 import matplotlib.pyplot as plt
 import numpy as np
+
 import torch
-import torch.nn as nn
-
-from labml_helpers.module import Module
+from torch import nn
 
 
-class LabelSmoothingLoss(Module):
+class LabelSmoothingLoss(nn.Module):
     def __init__(self, size: int, padding_idx: int, smoothing: float = 0.0):
         super().__init__()
         self.loss = nn.KLDivLoss(reduction='sum')

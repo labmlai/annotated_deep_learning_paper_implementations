@@ -13,12 +13,11 @@ from torch import nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.graphs.gat.experiment import Configs as GATConfigs
 from labml_nn.graphs.gatv2 import GraphAttentionV2Layer
 
 
-class GATv2(Module):
+class GATv2(nn.Module):
     """
     ## Graph Attention Network v2 (GATv2)
 

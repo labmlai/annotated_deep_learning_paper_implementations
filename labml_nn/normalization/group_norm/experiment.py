@@ -13,9 +13,7 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.cifar10 import CIFAR10Configs, CIFAR10VGGModel
-from labml_nn.normalization.group_norm import GroupNorm
 
 
 class Model(CIFAR10VGGModel):
@@ -28,12 +26,12 @@ class Model(CIFAR10VGGModel):
     def conv_block(self, in_channels, out_channels) -> nn.Module:
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            fnorm.GroupNorm(self.groups, out_channels),#new
+            fnorm.GroupNorm(self.groups, out_channels),  # new
             nn.ReLU(inplace=True),
         )
 
     def __init__(self, groups: int = 32):
-        self.groups = groups#input param:groups to conv_block
+        self.groups = groups  # input param:groups to conv_block
         super().__init__([[64, 64], [128, 128], [256, 256, 256], [512, 512, 512], [512, 512, 512]])
 
 

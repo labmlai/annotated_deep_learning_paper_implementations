@@ -50,12 +50,11 @@ Here is the [training code `experiment.py`](experiment.html) to train a model on
 """
 
 import torch
-
 from labml import tracker
-from labml_helpers.module import Module
+from torch import nn
 
 
-class MaximumLikelihoodLoss(Module):
+class MaximumLikelihoodLoss(nn.Module):
     """
     <a id="MaximumLikelihoodLoss"></a>
 
@@ -80,6 +79,7 @@ class MaximumLikelihoodLoss(Module):
     &= \sum_{k=1}^K y_k \bigg( \log S - \log \textcolor{orange}{\alpha_k} \bigg)
     \end{align}
     """
+
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
         """
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
@@ -97,7 +97,7 @@ class MaximumLikelihoodLoss(Module):
         return loss.mean()
 
 
-class CrossEntropyBayesRisk(Module):
+class CrossEntropyBayesRisk(nn.Module):
     """
     <a id="CrossEntropyBayesRisk"></a>
 
@@ -144,7 +144,7 @@ class CrossEntropyBayesRisk(Module):
         return loss.mean()
 
 
-class SquaredErrorBayesRisk(Module):
+class SquaredErrorBayesRisk(nn.Module):
     """
     <a id="SquaredErrorBayesRisk"></a>
 
@@ -214,7 +214,7 @@ class SquaredErrorBayesRisk(Module):
         return loss.mean()
 
 
-class KLDivergenceLoss(Module):
+class KLDivergenceLoss(nn.Module):
     """
     <a id="KLDivergenceLoss"></a>
 
@@ -238,6 +238,7 @@ class KLDivergenceLoss(Module):
     $\psi(\cdot)$ is the $digamma$ function and
     $\tilde{S} = \sum_{k=1}^K \tilde{\alpha}_k$
     """
+
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
         """
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
@@ -281,7 +282,7 @@ class KLDivergenceLoss(Module):
         return loss.mean()
 
 
-class TrackStatistics(Module):
+class TrackStatistics(nn.Module):
     """
     <a id="TrackStatistics"></a>
 
@@ -289,6 +290,7 @@ class TrackStatistics(Module):
 
     This module computes statistics and tracks them with [labml `tracker`](https://docs.labml.ai/api/tracker.html).
     """
+
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
         # Number of classes
         n_classes = evidence.shape[-1]

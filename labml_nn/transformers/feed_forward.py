@@ -36,12 +36,11 @@ We have also implemented experiments on these:
 """
 
 import torch
-from torch import nn as nn
-
-from labml_helpers.module import Module
+from torch import nn
 
 
-class FeedForward(Module):
+
+class FeedForward(nn.Module):
     """
     ## FFN module
     """

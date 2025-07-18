@@ -36,14 +36,13 @@ from torch import nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.optimizers.configs import OptimizerConfigs
 from labml_nn.transformers import TransformerConfigs, Encoder
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class GPT(Module):
+class GPT(nn.Module):
     """
     ## GPT model
 
@@ -51,7 +50,7 @@ class GPT(Module):
     a final linear layer that gives token logits.
     """
 
-    def __init__(self, encoder: Encoder, src_embed: Module, generator: Module):
+    def __init__(self, encoder: Encoder, src_embed: nn.Module, generator: nn.Module):
         """
         * `encoder` is the transformer [Encoder](../models.html#Encoder)
         * `src_embed` is the token

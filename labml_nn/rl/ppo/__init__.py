@@ -27,11 +27,10 @@ The experiment uses [Generalized Advantage Estimation](gae.html).
 
 import torch
 
-from labml_helpers.module import Module
 from labml_nn.rl.ppo.gae import GAE
 
 
-class ClippedPPOLoss(Module):
+class ClippedPPOLoss(nn.Module):
     """
     ## PPO Loss
 

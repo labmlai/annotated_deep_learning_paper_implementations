@@ -46,10 +46,10 @@ Here is the [code for an experiment](experiment.html) that uses gradient penalty
 import torch
 import torch.autograd
 
-from labml_helpers.module import Module
+from torch import nn
 
 
-class GradientPenalty(Module):
+class GradientPenalty(nn.Module):
     """
     ## Gradient Penalty
     """

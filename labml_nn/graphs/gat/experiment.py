@@ -18,7 +18,6 @@ from labml import lab, monit, tracker, experiment
 from labml.configs import BaseConfigs, option, calculate
 from labml.utils import download
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.module import Module
 from labml_nn.graphs.gat import GraphAttentionLayer
 from labml_nn.optimizers.configs import OptimizerConfigs
 
@@ -106,7 +105,7 @@ class CoraDataset:
                 self.adj_mat[e2][e1] = True
 
 
-class GAT(Module):
+class GAT(nn.Module):
     """
     ## Graph Attention Network (GAT)
 

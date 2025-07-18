@@ -18,7 +18,6 @@ from labml import tracker, monit, experiment
 from labml.configs import option, calculate
 from labml_helpers.datasets.mnist import MNISTConfigs
 from labml_helpers.device import DeviceConfigs
-from labml_helpers.module import Module
 from labml_helpers.optimizer import OptimizerConfigs
 from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.gan.original import DiscriminatorLogitsLoss, GeneratorLogitsLoss
@@ -33,7 +32,7 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-class Generator(Module):
+class Generator(nn.Module):
     """
     ### Simple MLP Generator
 
@@ -58,7 +57,7 @@ class Generator(Module):
         return self.layers(x).view(x.shape[0], 1, 28, 28)
 
 
-class Discriminator(Module):
+class Discriminator(nn.Module):
     """
     ### Simple MLP Discriminator
 
@@ -96,8 +95,8 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     epochs: int = 10
 
     is_save_models = True
-    discriminator: Module = 'mlp'
-    generator: Module = 'mlp'
+    discriminator: nn.Module = 'mlp'
+    generator: nn.Module = 'mlp'
     generator_optimizer: torch.optim.Adam
     discriminator_optimizer: torch.optim.Adam
     generator_loss: GeneratorLogitsLoss = 'original'

@@ -3,11 +3,10 @@ import math
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers import MultiHeadAttention
 
 
-class SpatialDepthWiseConvolution(Module):
+class SpatialDepthWiseConvolution(nn.Module):
     """
     ## Spatial Depth Wise Convolution
 

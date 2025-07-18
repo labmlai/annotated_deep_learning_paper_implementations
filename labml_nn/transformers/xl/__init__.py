@@ -37,13 +37,12 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 
-from labml_helpers.module import Module
 from labml_nn.utils import clone_module_list
 from .relative_mha import RelativeMultiHeadAttention
 from ..feed_forward import FeedForward
 
 
-class TransformerXLLayer(Module):
+class TransformerXLLayer(nn.Module):
     """
     ## Transformer XL Layer
 
@@ -105,7 +104,7 @@ class TransformerXLLayer(Module):
         return x
 
 
-class TransformerXL(Module):
+class TransformerXL(nn.Module):
     """
     ## Transformer XL Model
 

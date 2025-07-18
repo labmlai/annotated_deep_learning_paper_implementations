@@ -30,13 +30,12 @@ from typing import List
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 from labml_nn.transformers import MultiHeadAttention, TransformerLayer
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class HourGlass(Module):
+class HourGlass(nn.Module):
     """
     ## Hourglass model
 
@@ -132,7 +131,7 @@ class HourGlass(Module):
         return x
 
 
-class ShiftRight(Module):
+class ShiftRight(nn.Module):
     """
     ### Shift right operation
 
@@ -162,7 +161,7 @@ class ShiftRight(Module):
         return torch.cat([prefix, x[:-self.shift]])
 
 
-class AvgPoolShortening(Module):
+class AvgPoolShortening(nn.Module):
     """
     ### Average pool shortening
 
@@ -186,7 +185,7 @@ class AvgPoolShortening(Module):
         return self.pool(x.permute(1, 2, 0)).permute(2, 0, 1)
 
 
-class NaiveUpSampling(Module):
+class NaiveUpSampling(nn.Module):
     """
     ### Naive up-sampling
 
@@ -214,7 +213,7 @@ class NaiveUpSampling(Module):
         return expanded
 
 
-class AutoregressiveMask(Module):
+class AutoregressiveMask(nn.Module):
     """
     ### Generate auto-regressive mask
     """
@@ -233,7 +232,7 @@ class AutoregressiveMask(Module):
         return self.mask
 
 
-class LinearPoolingShortening(Module):
+class LinearPoolingShortening(nn.Module):
     """
     ### 🚧 Linear pooling for down-sampling
 
@@ -246,7 +245,7 @@ class LinearPoolingShortening(Module):
         raise NotImplementedError
 
 
-class AttentionBasedShortening(Module):
+class AttentionBasedShortening(nn.Module):
     """
     ### 🚧 Down-sampling with attention
 
@@ -263,7 +262,7 @@ class AttentionBasedShortening(Module):
         raise NotImplementedError
 
 
-class LinearUpSampling(Module):
+class LinearUpSampling(nn.Module):
     """
     ### 🚧 Linear projection for up-sampling
 
@@ -275,7 +274,7 @@ class LinearUpSampling(Module):
         raise NotImplementedError
 
 
-class AttentionBasedUpSampling(Module):
+class AttentionBasedUpSampling(nn.Module):
     """
     ### 🚧 Attention based up-sampling
 

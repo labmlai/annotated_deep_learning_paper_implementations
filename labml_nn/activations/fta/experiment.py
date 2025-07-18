@@ -25,7 +25,6 @@ import torch.nn as nn
 
 from labml import experiment
 from labml.configs import option
-from labml_helpers.module import Module
 from labml_nn.activations.fta import FTA
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import MultiHeadAttention, TransformerLayer
@@ -65,7 +64,7 @@ class FeedForwardFTA(nn.Module):
         return self.layer2(x)
 
 
-class AutoregressiveTransformer(Module):
+class AutoregressiveTransformer(nn.Module):
     """
     ## Auto-Regressive model
 

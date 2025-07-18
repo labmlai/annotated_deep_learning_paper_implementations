@@ -14,10 +14,9 @@ from typing import Optional, Tuple
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class LSTMCell(Module):
+class LSTMCell(nn.Module):
     """
     ## Long Short-Term Memory Cell
 
@@ -100,7 +99,7 @@ class LSTMCell(Module):
         return h_next, c_next
 
 
-class LSTM(Module):
+class LSTM(nn.Module):
     """
     ## Multilayer LSTM
     """

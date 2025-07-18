@@ -19,7 +19,6 @@ We decided to write a simpler implementation to make it easier for readers who a
 import dataclasses
 
 import torch
-from labml_helpers.module import Module
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
@@ -34,12 +33,12 @@ from labml_nn.transformers.models import EmbeddingsWithPositionalEncoding, Trans
 from labml_nn.transformers.utils import subsequent_mask
 
 
-class AutoregressiveModel(Module):
+class AutoregressiveModel(nn.Module):
     """
     ## Auto regressive model
     """
 
-    def __init__(self, src_embed: Module, encoder: Encoder, generator: Module):
+    def __init__(self, src_embed: nn.Module, encoder: Encoder, generator: nn.Module):
         super().__init__()
         # Token embedding module
         self.src_embed = src_embed

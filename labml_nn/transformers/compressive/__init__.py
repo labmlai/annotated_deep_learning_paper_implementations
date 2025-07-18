@@ -56,14 +56,14 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from labml_helpers.module import Module, TypedModuleList
+from labml_helpers.module import TypedModuleList
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.transformers.xl.relative_mha import RelativeMultiHeadAttention
 from labml_nn.utils import clone_module_list
 
 
-class Conv1dCompression(Module):
+class Conv1dCompression(nn.Module):
     """
     ## 1D Convolution Compression $f_c$
 
@@ -93,7 +93,7 @@ class Conv1dCompression(Module):
         return c_mem.permute(2, 0, 1)
 
 
-class CompressiveTransformerLayer(Module):
+class CompressiveTransformerLayer(nn.Module):
     """
     ## Compressive Transformer Layer
 
@@ -175,7 +175,7 @@ class CompressiveTransformerLayer(Module):
         return x
 
 
-class CompressiveTransformer(Module):
+class CompressiveTransformer(nn.Module):
     """
     ## Compressive Transformer Model
 

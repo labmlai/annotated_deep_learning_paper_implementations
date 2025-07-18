@@ -13,10 +13,9 @@ from typing import Optional
 import torch
 from torch import nn
 
-from labml_helpers.module import Module
 
 
-class RHNCell(Module):
+class RHNCell(nn.Module):
     """
     ## Recurrent Highway Network Cell
 
@@ -107,7 +106,7 @@ class RHNCell(Module):
         return s
 
 
-class RHN(Module):
+class RHN(nn.Module):
     """
     ## Multilayer Recurrent Highway Network
     """
