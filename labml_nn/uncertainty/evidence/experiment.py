@@ -18,8 +18,8 @@ import torch.utils.data
 
 from labml import tracker, experiment
 from labml.configs import option, calculate
-from labml_helpers.schedule import Schedule, RelativePiecewise
-from labml_helpers.train_valid import BatchIndex
+from labml_nn.helpers.schedule import Schedule, RelativePiecewise
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.experiments.mnist import MNISTConfigs
 from labml_nn.uncertainty.evidence import KLDivergenceLoss, TrackStatistics, MaximumLikelihoodLoss, \
     CrossEntropyBayesRisk, SquaredErrorBayesRisk
@@ -178,7 +178,7 @@ def kl_div_coef(c: Configs):
     ### KL Divergence Loss Coefficient Schedule
     """
 
-    # Create a [relative piecewise schedule](https://docs.labml.ai/api/helpers.html#labml_helpers.schedule.Piecewise)
+    # Create a [relative piecewise schedule](../../helpers/schedule.html)
     return RelativePiecewise(c.kl_div_coef_schedule, c.epochs * len(c.train_dataset))
 
 

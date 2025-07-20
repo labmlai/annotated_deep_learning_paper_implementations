@@ -26,7 +26,7 @@ from PIL import Image
 
 from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs, option
-from labml_helpers.device import DeviceConfigs
+from labml_nn.helpers.device  import DeviceConfigs
 from labml_nn.diffusion.ddpm import DenoiseDiffusion
 from labml_nn.diffusion.ddpm.unet import UNet
 
@@ -36,7 +36,7 @@ class Configs(BaseConfigs):
     ## Configurations
     """
     # Device to train the model on.
-    # [`DeviceConfigs`](https://docs.labml.ai/api/helpers.html#labml_helpers.device.DeviceConfigs)
+    # [`DeviceConfigs`](../../device.html)
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 

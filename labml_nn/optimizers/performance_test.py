@@ -18,7 +18,7 @@ MyAdam...[DONE]	1,192.89ms
 
 import torch
 import torch.nn as nn
-from labml_helpers.device import DeviceInfo
+from labml_nn.helpers.device import DeviceInfo
 from torch.optim import Adam as TorchAdam
 
 from labml import monit

@@ -16,13 +16,12 @@ from typing import Any
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
-
 from labml import experiment, tracker
 from labml.configs import option
-from labml_helpers.datasets.mnist import MNISTConfigs
-from labml_helpers.metrics.accuracy import AccuracyDirect
-from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.capsule_networks import Squash, Router, MarginLoss
+from labml_nn.helpers.datasets import MNISTConfigs
+from labml_nn.helpers.metrics import AccuracyDirect
+from labml_nn.helpers.trainer import SimpleTrainValidConfigs, BatchIndex
 
 
 class MNISTCapsuleNetworkModel(nn.Module):

@@ -16,8 +16,8 @@ from torch import nn
 from labml import experiment, tracker, logger
 from labml.configs import option
 from labml.logger import Text
-from labml_helpers.metrics.accuracy import Accuracy
-from labml_helpers.train_valid import BatchIndex
+from labml_nn.helpers.metrics import Accuracy
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers import Encoder, Generator
 from labml_nn.transformers import TransformerConfigs

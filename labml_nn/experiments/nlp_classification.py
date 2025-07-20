@@ -20,9 +20,9 @@ from torchtext.vocab import Vocab
 
 from labml import lab, tracker, monit
 from labml.configs import option
-from labml_helpers.device import DeviceConfigs
-from labml_helpers.metrics.accuracy import Accuracy
-from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
+from labml_nn.helpers.device  import DeviceConfigs
+from labml_nn.helpers.metrics  import Accuracy
+from labml_nn.helpers.trainer  import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 

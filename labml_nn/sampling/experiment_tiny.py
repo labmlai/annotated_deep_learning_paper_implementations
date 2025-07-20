@@ -5,7 +5,7 @@ import torch
 from labml import experiment, monit
 from labml import logger
 from labml.logger import Text
-from labml_helpers.datasets.text import TextDataset
+from labml_nn.helpers.datasets import TextDataset
 from labml_nn.sampling import Sampler
 from labml_nn.sampling.greedy import GreedySampler
 from labml_nn.sampling.nucleus import NucleusSampler

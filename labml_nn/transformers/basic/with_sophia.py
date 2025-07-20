@@ -13,7 +13,7 @@ on an NLP auto-regression task (with Tiny Shakespeare dataset) with [Sophia-G op
 import torch
 
 from labml import experiment, tracker
-from labml_helpers.train_valid import BatchIndex
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.optimizers.sophia import Sophia
 from labml_nn.transformers.basic.autoregressive_experiment import Configs as TransformerAutoRegressionConfigs
 

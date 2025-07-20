@@ -16,10 +16,10 @@ from torchvision import transforms
 
 from labml import tracker, monit, experiment
 from labml.configs import option, calculate
-from labml_helpers.datasets.mnist import MNISTConfigs
-from labml_helpers.device import DeviceConfigs
-from labml_helpers.optimizer import OptimizerConfigs
-from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
+from labml_nn.helpers.datasets import MNISTConfigs
+from labml_nn.helpers.device  import DeviceConfigs
+from labml_nn.helpers.optimizer import OptimizerConfigs
+from labml_nn.helpers.trainer  import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.gan.original import DiscriminatorLogitsLoss, GeneratorLogitsLoss
 
 

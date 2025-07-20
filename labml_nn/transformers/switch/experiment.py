@@ -16,7 +16,7 @@ import torch.nn as nn
 
 from labml import experiment, tracker
 from labml.configs import option
-from labml_helpers.train_valid import BatchIndex
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 
 

@@ -56,7 +56,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from labml_helpers.module import TypedModuleList
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.mha import PrepareForMultiHeadAttention
 from labml_nn.transformers.xl.relative_mha import RelativeMultiHeadAttention
@@ -233,7 +232,7 @@ class AttentionReconstructionLoss:
     attention reconstruction loss, we detach all other parameters except $f_c$
     from the gradient computation.
     """
-    def __init__(self, layers: TypedModuleList[CompressiveTransformerLayer]):
+    def __init__(self, layers: nn.ModuleList):
         """
         `layers` is the list of Compressive Transformer layers
         """

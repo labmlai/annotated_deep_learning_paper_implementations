@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, RandomSampler
 
 from labml import monit, lab, tracker, experiment, logger
 from labml.logger import Text
-from labml_helpers.datasets.text import TextFileDataset
+from labml_nn.helpers.datasets import TextFileDataset
 from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
 from labml_nn.transformers.retro.dataset import Dataset, RetroIndex

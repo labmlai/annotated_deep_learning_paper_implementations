@@ -39,8 +39,8 @@ from PIL import Image
 
 from labml import tracker, lab, monit, experiment
 from labml.configs import BaseConfigs
-from labml_helpers.device import DeviceConfigs
-from labml_helpers.train_valid import ModeState, hook_model_outputs
+from labml_nn.helpers.device import DeviceConfigs
+from labml_nn.helpers.trainer import ModeState, hook_model_outputs
 from labml_nn.gan.stylegan import Discriminator, Generator, MappingNetwork, GradientPenalty, PathLengthPenalty
 from labml_nn.gan.wasserstein import DiscriminatorLoss, GeneratorLoss
 from labml_nn.utils import cycle_dataloader
@@ -88,7 +88,7 @@ class Configs(BaseConfigs):
     """
 
     # Device to train the model on.
-    # [`DeviceConfigs`](https://docs.labml.ai/api/helpers.html#labml_helpers.device.DeviceConfigs)
+    # [`DeviceConfigs`](../../helpers/device.html)
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 

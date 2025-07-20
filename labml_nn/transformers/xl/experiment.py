@@ -16,8 +16,8 @@ from labml.logger import Text
 
 from labml import experiment, tracker, monit, logger
 from labml.configs import option
-from labml_helpers.metrics.simple_state import SimpleStateModule
-from labml_helpers.train_valid import BatchIndex, hook_model_outputs
+from labml_nn.helpers.metrics import SimpleStateModule
+from labml_nn.helpers.trainer import BatchIndex, hook_model_outputs
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
 from labml_nn.transformers.xl import TransformerXL, TransformerXLLayer
 

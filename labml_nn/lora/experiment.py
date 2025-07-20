@@ -19,7 +19,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from labml import lab, monit, tracker
 from labml.configs import BaseConfigs, option
 from labml.utils.download import download_file
-from labml_helpers.device import DeviceConfigs
+from labml_nn.helpers.device import DeviceConfigs
 from labml_nn.lora.gpt2 import GPTModel
 
 

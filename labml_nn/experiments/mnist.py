@@ -13,10 +13,10 @@ import torch.utils.data
 
 from labml import tracker
 from labml.configs import option
-from labml_helpers.datasets.mnist import MNISTConfigs as MNISTDatasetConfigs
-from labml_helpers.device import DeviceConfigs
-from labml_helpers.metrics.accuracy import Accuracy
-from labml_helpers.train_valid import TrainValidConfigs, BatchIndex, hook_model_outputs
+from labml_nn.helpers.datasets import MNISTConfigs as MNISTDatasetConfigs
+from labml_nn.helpers.device  import DeviceConfigs
+from labml_nn.helpers.metrics  import Accuracy
+from labml_nn.helpers.trainer  import TrainValidConfigs, BatchIndex, hook_model_outputs
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 

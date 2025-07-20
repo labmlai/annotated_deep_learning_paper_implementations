@@ -21,7 +21,6 @@ setuptools.setup(
                                                'test',
                                                'test.*')),
     install_requires=['labml==0.4.168',
-                      'labml-helpers==0.4.89',
                       'torch',
                       'torchtext',
                       'torchvision',

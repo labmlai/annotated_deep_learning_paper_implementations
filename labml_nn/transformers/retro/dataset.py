@@ -20,7 +20,7 @@ import torch
 from torch.utils.data import Dataset as PyTorchDataset
 
 from labml import lab, monit
-from labml_helpers.datasets.text import TextFileDataset, TextDataset
+from labml_nn.helpers.datasets import TextFileDataset, TextDataset
 from labml_nn.transformers.retro.database import RetroIndex
 
 

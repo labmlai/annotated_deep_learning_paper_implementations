@@ -75,7 +75,7 @@ from torch import nn
 
 from labml import experiment, tracker
 from labml.configs import option
-from labml_helpers.train_valid import BatchIndex
+from labml_nn.helpers.trainer  import BatchIndex
 from labml_nn.distillation.large import LargeModel
 from labml_nn.distillation.small import SmallModel
 from labml_nn.experiments.cifar10 import CIFAR10Configs

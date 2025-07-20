@@ -17,7 +17,7 @@ import torch
 
 from labml import tracker, experiment, logger, monit
 from labml.internal.configs.dynamic_hyperparam import FloatDynamicHyperParam
-from labml_helpers.schedule import Piecewise
+from labml_nn.helpers.schedule import Piecewise
 from labml_nn.rl.dqn import QFuncLoss
 from labml_nn.rl.dqn.model import Model
 from labml_nn.rl.dqn.replay_buffer import ReplayBuffer

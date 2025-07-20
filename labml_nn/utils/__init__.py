@@ -8,19 +8,18 @@ summary: A bunch of utility functions and classes
 """
 
 import copy
-
+from torch import nn
 from torch.utils.data import Dataset, IterableDataset
 
-from labml_helpers.module import M, TypedModuleList
 
 
-def clone_module_list(module: M, n: int) -> TypedModuleList[M]:
+def clone_module_list(module: nn.Module, n: int) -> nn.ModuleList:
     """
     ## Clone Module
 
     Make a `nn.ModuleList` with clones of a given module
     """
-    return TypedModuleList([copy.deepcopy(module) for _ in range(n)])
+    return nn.ModuleList([copy.deepcopy(module) for _ in range(n)])
 
 
 def cycle_dataloader(data_loader):

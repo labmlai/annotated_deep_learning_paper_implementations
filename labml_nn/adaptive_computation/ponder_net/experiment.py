@@ -17,8 +17,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from labml import tracker, experiment
-from labml_helpers.metrics.accuracy import AccuracyDirect
-from labml_helpers.train_valid import SimpleTrainValidConfigs, BatchIndex
+from labml_nn.helpers.metrics import AccuracyDirect
+from labml_nn.helpers.trainer import SimpleTrainValidConfigs, BatchIndex
 from labml_nn.adaptive_computation.parity import ParityDataset
 from labml_nn.adaptive_computation.ponder_net import ParityPonderGRU, ReconstructionLoss, RegularizationLoss
 
@@ -26,7 +26,7 @@ from labml_nn.adaptive_computation.ponder_net import ParityPonderGRU, Reconstruc
 class Configs(SimpleTrainValidConfigs):
     """
     Configurations with a
-     [simple training loop](https://docs.labml.ai/api/helpers.html#labml_helpers.train_valid.SimpleTrainValidConfigs)
+     [simple training loop](../../helpers/trainer.html)
     """
 
     # Number of epochs

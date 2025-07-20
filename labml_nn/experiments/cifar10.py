@@ -13,7 +13,7 @@ import torch.nn as nn
 
 from labml import lab
 from labml.configs import option
-from labml_helpers.datasets.cifar10 import CIFAR10Configs as CIFAR10DatasetConfigs
+from labml_nn.helpers.datasets import CIFAR10Configs as CIFAR10DatasetConfigs
 from labml_nn.experiments.mnist import MNISTConfigs
 
 
@@ -21,8 +21,7 @@ class CIFAR10Configs(CIFAR10DatasetConfigs, MNISTConfigs):
     """
     ## Configurations
 
-    This extends from CIFAR 10 dataset configurations from
-     [`labml_helpers`](https://github.com/labmlai/labml/tree/master/helpers)
+    This extends from [CIFAR 10 dataset configurations](../helpers/datasets.html)
      and [`MNISTConfigs`](mnist.html).
     """
     # Use CIFAR10 dataset by default

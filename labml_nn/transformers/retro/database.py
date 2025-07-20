@@ -20,7 +20,7 @@ import numpy as np
 import torch
 
 from labml import lab, monit
-from labml_helpers.datasets.text import TextFileDataset
+from labml_nn.helpers.datasets import TextFileDataset
 from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 

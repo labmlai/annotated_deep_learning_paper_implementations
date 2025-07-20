@@ -49,7 +49,7 @@ from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs
 from labml.utils.download import download_file
 from labml.utils.pytorch import get_modules
-from labml_helpers.device import DeviceConfigs
+from labml_nn.helpers.device  import DeviceConfigs
 
 
 class GeneratorResNet(nn.Module):

@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from labml import experiment, tracker
 from labml.configs import option, calculate
-from labml_helpers.datasets.text import SequentialUnBatchedDataset
+from labml_nn.helpers.datasets import SequentialUnBatchedDataset
 from labml_nn.transformers.alibi import AlibiMultiHeadAttention
 from labml_nn.experiments.nlp_autoregression import transpose_batch
 from labml_nn.transformers import TransformerConfigs

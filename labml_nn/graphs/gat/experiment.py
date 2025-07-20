@@ -17,7 +17,7 @@ from torch import nn
 from labml import lab, monit, tracker, experiment
 from labml.configs import BaseConfigs, option, calculate
 from labml.utils import download
-from labml_helpers.device import DeviceConfigs
+from labml_nn.helpers.device import DeviceConfigs
 from labml_nn.graphs.gat import GraphAttentionLayer
 from labml_nn.optimizers.configs import OptimizerConfigs
 

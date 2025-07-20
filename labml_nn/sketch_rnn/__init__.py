@@ -39,9 +39,9 @@ from matplotlib import pyplot as plt
 import torch
 import torch.nn as nn
 from labml import lab, experiment, tracker, monit
-from labml_helpers.device import DeviceConfigs
-from labml_helpers.optimizer import OptimizerConfigs
-from labml_helpers.train_valid import TrainValidConfigs, hook_model_outputs, BatchIndex
+from labml_nn.helpers.device import DeviceConfigs
+from labml_nn.helpers.optimizer import OptimizerConfigs
+from labml_nn.helpers.trainer import TrainValidConfigs, hook_model_outputs, BatchIndex
 from torch import optim
 from torch.utils.data import Dataset, DataLoader
 

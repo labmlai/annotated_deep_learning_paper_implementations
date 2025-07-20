@@ -24,7 +24,7 @@ from torch import nn
 
 from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs
-from labml_helpers.device import DeviceConfigs
+from labml_nn.helpers.device import DeviceConfigs
 from labml_nn.unet.carvana import CarvanaDataset
 from labml_nn.unet import UNet
 
@@ -34,7 +34,7 @@ class Configs(BaseConfigs):
     ## Configurations
     """
     # Device to train the model on.
-    # [`DeviceConfigs`](https://docs.labml.ai/api/helpers.html#labml_helpers.device.DeviceConfigs)
+    # [`DeviceConfigs`](../helpers/device.html)
     #  picks up an available CUDA device or defaults to CPU.
     device: torch.device = DeviceConfigs()
 
