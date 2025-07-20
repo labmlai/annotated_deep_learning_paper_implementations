@@ -9,18 +9,18 @@ summary: This experiment generates MNIST images using multi-layer perceptron.
 
 from typing import Any
 
+from torchvision import transforms
+
 import torch
 import torch.nn as nn
 import torch.utils.data
-from torchvision import transforms
-
 from labml import tracker, monit, experiment
 from labml.configs import option, calculate
-from labml_nn.helpers.datasets import MNISTConfigs
-from labml_nn.helpers.device  import DeviceConfigs
-from labml_nn.helpers.optimizer import OptimizerConfigs
-from labml_nn.helpers.trainer  import TrainValidConfigs, hook_model_outputs, BatchIndex
 from labml_nn.gan.original import DiscriminatorLogitsLoss, GeneratorLogitsLoss
+from labml_nn.helpers.datasets import MNISTConfigs
+from labml_nn.helpers.device import DeviceConfigs
+from labml_nn.helpers.optimizer import OptimizerConfigs
+from labml_nn.helpers.trainer import TrainValidConfigs, BatchIndex
 
 
 def weights_init(m):
@@ -110,8 +110,6 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         """
         self.state_modules = []
 
-        hook_model_outputs(self.mode, self.generator, 'generator')
-        hook_model_outputs(self.mode, self.discriminator, 'discriminator')
         tracker.set_scalar("loss.generator.*", True)
         tracker.set_scalar("loss.discriminator.*", True)
         tracker.set_image("generated", True, 1 / 100)
@@ -187,7 +185,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         """
         Calculate generator loss
         """
-        latent =  self.sample_z(batch_size)
+        latent = self.sample_z(batch_size)
         generated_images = self.generator(latent)
         logits = self.discriminator(generated_images)
         loss = self.generator_loss(logits)
@@ -197,8 +195,6 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         tracker.add("loss.generator.", loss)
 
         return loss
-
-
 
 
 @option(Configs.dataset_transforms)

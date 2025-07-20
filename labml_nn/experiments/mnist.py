@@ -16,7 +16,7 @@ from labml.configs import option
 from labml_nn.helpers.datasets import MNISTConfigs as MNISTDatasetConfigs
 from labml_nn.helpers.device  import DeviceConfigs
 from labml_nn.helpers.metrics  import Accuracy
-from labml_nn.helpers.trainer  import TrainValidConfigs, BatchIndex, hook_model_outputs
+from labml_nn.helpers.trainer  import TrainValidConfigs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
@@ -52,8 +52,6 @@ class MNISTConfigs(MNISTDatasetConfigs, TrainValidConfigs):
         # Set tracker configurations
         tracker.set_scalar("loss.*", True)
         tracker.set_scalar("accuracy.*", True)
-        # Add a hook to log module outputs
-        hook_model_outputs(self.mode, self.model, 'model')
         # Add accuracy as a state module.
         # The name is probably confusing, since it's meant to store
         # states between training and validation for RNNs.

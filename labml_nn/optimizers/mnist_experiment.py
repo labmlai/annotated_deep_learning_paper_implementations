@@ -14,7 +14,7 @@ from labml.configs import option
 from labml_nn.helpers.datasets import MNISTConfigs
 from labml_nn.helpers.device import DeviceConfigs
 from labml_nn.helpers.metrics import Accuracy
-from labml_nn.helpers.trainer import TrainValidConfigs, BatchIndex, hook_model_outputs
+from labml_nn.helpers.trainer import TrainValidConfigs, BatchIndex
 from labml_nn.optimizers.configs import OptimizerConfigs
 
 
@@ -22,6 +22,7 @@ class Model(nn.Module):
     """
     ## The model
     """
+
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 20, 5, 1)
@@ -60,7 +61,6 @@ class Configs(MNISTConfigs, TrainValidConfigs):
     def init(self):
         tracker.set_queue("loss.*", 20, True)
         tracker.set_scalar("accuracy.*", True)
-        hook_model_outputs(self.mode, self.model, 'model')
         self.state_modules = [self.accuracy_func]
 
     def step(self, batch: any, batch_idx: BatchIndex):

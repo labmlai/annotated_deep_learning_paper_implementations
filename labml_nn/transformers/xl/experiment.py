@@ -12,13 +12,12 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from labml.logger import Text
-
 from labml import experiment, tracker, monit, logger
 from labml.configs import option
-from labml_nn.helpers.metrics import SimpleStateModule
-from labml_nn.helpers.trainer import BatchIndex, hook_model_outputs
+from labml.logger import Text
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
+from labml_nn.helpers.metrics import SimpleStateModule
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.transformers.xl import TransformerXL, TransformerXLLayer
 
 
@@ -95,8 +94,6 @@ class Configs(NLPAutoRegressionConfigs):
         # Set tracker configurations
         tracker.set_scalar("accuracy.*", True)
         tracker.set_scalar("loss.*", True)
-        # Add a hook to log module outputs
-        hook_model_outputs(self.mode, self.model, 'model')
         # This will keep the accuracy metric stats and memories separate for training and validation.
         self.state_modules = [self.accuracy, self.memory]
 

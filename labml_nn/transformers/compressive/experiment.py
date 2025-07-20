@@ -12,13 +12,12 @@ from typing import List, Tuple, NamedTuple
 
 import torch
 import torch.nn as nn
-
 from labml import experiment, tracker, monit, logger
 from labml.configs import option
 from labml.logger import Text
-from labml_nn.helpers.metrics import SimpleStateModule
-from labml_nn.helpers.trainer import BatchIndex, hook_model_outputs
 from labml_nn.experiments.nlp_autoregression import NLPAutoRegressionConfigs
+from labml_nn.helpers.metrics import SimpleStateModule
+from labml_nn.helpers.trainer import BatchIndex
 from labml_nn.transformers.compressive import CompressiveTransformer, AttentionReconstructionLoss, \
     CompressiveTransformerLayer, Conv1dCompression
 
@@ -119,8 +118,6 @@ class Configs(NLPAutoRegressionConfigs):
         tracker.set_scalar("loss.*", True)
         # Do not print the attention reconstruction loss in the terminal
         tracker.set_scalar("ar_loss.*", False)
-        # Add a hook to log module outputs
-        hook_model_outputs(self.mode, self.model, 'model')
         # This will keep the accuracy metric stats and memories separate for training and validation.
         self.state_modules = [self.accuracy, self.memory]
 

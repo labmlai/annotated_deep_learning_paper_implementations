@@ -66,19 +66,15 @@ class TrainingLoop:
     def __init__(self, *,
                  loop_count: int,
                  loop_step: Optional[int],
-                 is_save_models: bool,
                  log_new_line_interval: int,
                  log_write_interval: int,
-                 save_models_interval: int,
                  is_loop_on_interrupt: bool):
         self.__loop_count = loop_count
         self.__loop_step = loop_step
-        self.__is_save_models = is_save_models
         self.__log_new_line_interval = log_new_line_interval
         self.__log_write_interval = log_write_interval
         self.__last_write_step = 0
         self.__last_new_line_step = 0
-        self.__save_models_interval = save_models_interval
         self.__last_save_step = 0
         self.__signal_received = None
         self.__is_loop_on_interrupt = is_loop_on_interrupt
@@ -115,21 +111,6 @@ class TrainingLoop:
             pass
         tracker.save()
         tracker.new_line()
-        if self.__is_save_models:
-            logger.log("Saving model...")
-            experiment.save_checkpoint()
-
-    # def is_interval(self, interval: int, global_step: Optional[int] = None):
-    #     if global_step is None:
-    #         global_step = tracker.get_global_step()
-    #
-    #     if global_step - self.__loop_step < 0:
-    #         return False
-    #
-    #     if global_step // interval > (global_step - self.__loop_step) // interval:
-    #         return True
-    #     else:
-    #         return False
 
     def __next__(self):
         if self.__signal_received is not None:
@@ -152,18 +133,6 @@ class TrainingLoop:
         if global_step - self.__last_new_line_step >= self.__log_new_line_interval:
             tracker.new_line()
             self.__last_new_line_step = global_step
-        # if self.is_interval(self.__log_write_interval, global_step):
-        #     tracker.save()
-        # if self.is_interval(self.__log_new_line_interval, global_step):
-        #     logger.log()
-
-        # if (self.__is_save_models and
-        #         self.is_interval(self.__save_models_interval, global_step)):
-        #     experiment.save_checkpoint()
-        if (self.__is_save_models and
-                global_step - self.__last_save_step >= self.__save_models_interval):
-            experiment.save_checkpoint()
-            self.__last_save_step = global_step
 
         return global_step
 
@@ -198,9 +167,6 @@ class TrainingLoopConfigs(BaseConfigs):
     Arguments:
         loop_count (int): Total number of steps. Defaults to ``10``.
         loop_step (int): Number of steps to increment per iteration. Defaults to ``1``.
-        is_save_models (bool): Whether to call :func:`labml.experiment.save_checkpoint` on each iteration.
-         Defaults to ``False``.
-        save_models_interval (int): The interval (in steps) to save models. Defaults to ``1``.
         log_new_line_interval (int): The interval (in steps) to print a new line to the screen.
          Defaults to ``1``.
         log_write_interval (int): The interval (in steps) to call :func:`labml.tracker.save`.
@@ -210,10 +176,8 @@ class TrainingLoopConfigs(BaseConfigs):
     """
     loop_count: int = 10
     loop_step: int = 1
-    is_save_models: bool = False
     log_new_line_interval: int = 1
     log_write_interval: int = 1
-    save_models_interval: int = 1
     is_loop_on_interrupt: bool = False
 
     training_loop: TrainingLoop
@@ -223,19 +187,15 @@ class TrainingLoopConfigs(BaseConfigs):
 def _loop_configs(c: TrainingLoopConfigs):
     return TrainingLoop(loop_count=c.loop_count,
                         loop_step=c.loop_step,
-                        is_save_models=c.is_save_models,
                         log_new_line_interval=c.log_new_line_interval,
                         log_write_interval=c.log_write_interval,
-                        save_models_interval=c.save_models_interval,
                         is_loop_on_interrupt=c.is_loop_on_interrupt)
 
 
 meta_config(TrainingLoopConfigs.loop_step,
             TrainingLoopConfigs.loop_count,
-            TrainingLoopConfigs.is_save_models,
             TrainingLoopConfigs.log_new_line_interval,
             TrainingLoopConfigs.log_write_interval,
-            TrainingLoopConfigs.save_models_interval,
             TrainingLoopConfigs.is_loop_on_interrupt)
 
 

@@ -32,17 +32,17 @@ import math
 from pathlib import Path
 from typing import Iterator, Tuple
 
-import torch
-import torch.utils.data
 import torchvision
 from PIL import Image
 
+import torch
+import torch.utils.data
 from labml import tracker, lab, monit, experiment
 from labml.configs import BaseConfigs
-from labml_nn.helpers.device import DeviceConfigs
-from labml_nn.helpers.trainer import ModeState, hook_model_outputs
 from labml_nn.gan.stylegan import Discriminator, Generator, MappingNetwork, GradientPenalty, PathLengthPenalty
 from labml_nn.gan.wasserstein import DiscriminatorLoss, GeneratorLoss
+from labml_nn.helpers.device import DeviceConfigs
+from labml_nn.helpers.trainer import ModeState
 from labml_nn.utils import cycle_dataloader
 
 
@@ -164,8 +164,6 @@ class Configs(BaseConfigs):
 
     # Training mode state for logging activations
     mode: ModeState
-    # Whether to log model layer outputs
-    log_layer_outputs: bool = False
 
     # <a id="dataset_path"></a>
     # We trained this on [CelebA-HQ dataset](https://github.com/tkarras/progressive_growing_of_gans).
@@ -198,12 +196,6 @@ class Configs(BaseConfigs):
         self.mapping_network = MappingNetwork(self.d_latent, self.mapping_network_layers).to(self.device)
         # Create path length penalty loss
         self.path_length_penalty = PathLengthPenalty(0.99).to(self.device)
-
-        # Add model hooks to monitor layer outputs
-        if self.log_layer_outputs:
-            hook_model_outputs(self.mode, self.discriminator, 'discriminator')
-            hook_model_outputs(self.mode, self.generator, 'generator')
-            hook_model_outputs(self.mode, self.mapping_network, 'mapping_network')
 
         # Discriminator and generator losses
         self.discriminator_loss = DiscriminatorLoss().to(self.device)

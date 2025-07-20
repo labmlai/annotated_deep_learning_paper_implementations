@@ -41,7 +41,7 @@ import torch.nn as nn
 from labml import lab, experiment, tracker, monit
 from labml_nn.helpers.device import DeviceConfigs
 from labml_nn.helpers.optimizer import OptimizerConfigs
-from labml_nn.helpers.trainer import TrainValidConfigs, hook_model_outputs, BatchIndex
+from labml_nn.helpers.trainer import TrainValidConfigs, BatchIndex
 from torch import optim
 from torch.utils.data import Dataset, DataLoader
 
@@ -529,10 +529,6 @@ class Configs(TrainValidConfigs):
         self.train_loader = DataLoader(self.train_dataset, self.batch_size, shuffle=True)
         # Create validation data loader
         self.valid_loader = DataLoader(self.valid_dataset, self.batch_size)
-
-        # Add hooks to monitor layer outputs on Tensorboard
-        hook_model_outputs(self.mode, self.encoder, 'encoder')
-        hook_model_outputs(self.mode, self.decoder, 'decoder')
 
         # Configure the tracker to print the total train/validation loss
         tracker.set_scalar("loss.total.*", True)
