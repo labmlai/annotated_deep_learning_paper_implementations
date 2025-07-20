@@ -703,10 +703,6 @@ class CFR:
             self.tracker(self.info_sets)
             tracker.save()
 
-            # Save checkpoints every $1,000$ iterations
-            if (t + 1) % 1_000 == 0:
-                experiment.save_checkpoint()
-
         # Print the information sets
         logger.inspect(self.info_sets)
 

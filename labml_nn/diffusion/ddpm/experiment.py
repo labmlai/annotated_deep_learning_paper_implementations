@@ -19,16 +19,16 @@ simplicity.
 """
 from typing import List
 
-import torch
-import torch.utils.data
 import torchvision
 from PIL import Image
 
+import torch
+import torch.utils.data
 from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs, option
-from labml_nn.helpers.device  import DeviceConfigs
 from labml_nn.diffusion.ddpm import DenoiseDiffusion
 from labml_nn.diffusion.ddpm.unet import UNet
+from labml_nn.helpers.device import DeviceConfigs
 
 
 class Configs(BaseConfigs):
@@ -154,8 +154,6 @@ class Configs(BaseConfigs):
             self.sample()
             # New line in the console
             tracker.new_line()
-            # Save the model
-            experiment.save_checkpoint()
 
 
 class CelebADataset(torch.utils.data.Dataset):

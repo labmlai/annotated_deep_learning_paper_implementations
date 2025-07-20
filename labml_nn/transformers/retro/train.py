@@ -12,9 +12,6 @@ This is the training code for
 """
 
 import torch
-from torch import nn
-from torch.utils.data import DataLoader, RandomSampler
-
 from labml import monit, lab, tracker, experiment, logger
 from labml.logger import Text
 from labml_nn.helpers.datasets import TextFileDataset
@@ -22,6 +19,8 @@ from labml_nn.optimizers.noam import Noam
 from labml_nn.transformers.retro import model as retro
 from labml_nn.transformers.retro.dataset import Dataset, RetroIndex
 from labml_nn.transformers.retro.model import RetroModel, NearestNeighborEncoder
+from torch import nn
+from torch.utils.data import DataLoader, RandomSampler
 
 
 class Sampler:
@@ -217,7 +216,6 @@ def train():
             logger.log([(prompt.replace('\n', '\\n\n'), Text.subtle),
                         (sampler.sample(prompt, 128).replace('\n', '\\n\n'), Text.none)])
             # Save models
-            experiment.save_checkpoint()
 
 
 #

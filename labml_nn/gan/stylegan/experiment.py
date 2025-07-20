@@ -404,7 +404,8 @@ class Configs(BaseConfigs):
             tracker.add('generated', torch.cat([generated_images[:6], real_images[:3]], dim=0))
         # Save model checkpoints
         if (idx + 1) % self.save_checkpoint_interval == 0:
-            experiment.save_checkpoint()
+            # Save checkpoint
+            pass
 
         # Flush tracker
         tracker.save()

@@ -570,8 +570,6 @@ class Configs(BaseConfigs):
                 # Save images at intervals
                 batches_done = epoch * len(self.dataloader) + i
                 if batches_done % self.sample_interval == 0:
-                    # Save models when sampling images
-                    experiment.save_checkpoint()
                     # Sample images
                     self.sample_images(batches_done)
 

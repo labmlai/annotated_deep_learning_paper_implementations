@@ -19,9 +19,6 @@ We decided to write a simpler implementation to make it easier for readers who a
 import dataclasses
 
 import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader
-
 from labml import experiment, lab, tracker, monit, logger
 from labml.logger import Text
 from labml.utils.download import download_file
@@ -31,6 +28,8 @@ from labml_nn.transformers import Encoder, MultiHeadAttention
 from labml_nn.transformers.feed_forward import FeedForward
 from labml_nn.transformers.models import EmbeddingsWithPositionalEncoding, TransformerLayer
 from labml_nn.transformers.utils import subsequent_mask
+from torch import nn
+from torch.utils.data import Dataset, DataLoader
 
 
 class AutoregressiveModel(nn.Module):
@@ -279,9 +278,6 @@ class Trainer:
                 # Save the tracked metrics
                 if (i + 1) % 10 == 0:
                     tracker.save()
-
-            # Save the model
-            experiment.save_checkpoint()
 
 
 def main():

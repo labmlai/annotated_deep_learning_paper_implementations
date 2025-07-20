@@ -17,16 +17,16 @@ For simplicity, we do not do a training and validation split.
 """
 
 import numpy as np
+import torchvision.transforms.functional
+
 import torch
 import torch.utils.data
-import torchvision.transforms.functional
-from torch import nn
-
 from labml import lab, tracker, experiment, monit
 from labml.configs import BaseConfigs
 from labml_nn.helpers.device import DeviceConfigs
-from labml_nn.unet.carvana import CarvanaDataset
 from labml_nn.unet import UNet
+from labml_nn.unet.carvana import CarvanaDataset
+from torch import nn
 
 
 class Configs(BaseConfigs):
@@ -141,7 +141,6 @@ class Configs(BaseConfigs):
             # New line in the console
             tracker.new_line()
             # Save the model
-            experiment.save_checkpoint()
 
 
 def main():
