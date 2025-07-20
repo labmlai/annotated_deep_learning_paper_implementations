@@ -143,12 +143,10 @@ class Configs(NLPAutoRegressionConfigs):
         with torch.no_grad():
             data, labels = self.mlm(data)
 
-        # Whether to capture model outputs
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Get model outputs.
-            # It's returning a tuple for states when using RNNs.
-            # This is not implemented yet.
-            output, *_ = self.model(data)
+        # Get model outputs.
+        # It's returning a tuple for states when using RNNs.
+        # This is not implemented yet.
+        output, *_ = self.model(data)
 
         # Calculate and log the loss
         loss = self.loss_func(output.view(-1, output.shape[-1]), labels.view(-1))

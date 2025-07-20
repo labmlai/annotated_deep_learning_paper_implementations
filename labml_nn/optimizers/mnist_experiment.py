@@ -71,9 +71,8 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         if self.mode.is_train:
             tracker.add_global_step(len(data))
 
-        # Run the model and specify whether to log the activations
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            output = self.model(data)
+        # Run the model
+        output = self.model(data)
 
         # Calculate the loss
         loss = self.loss_func(output, target)

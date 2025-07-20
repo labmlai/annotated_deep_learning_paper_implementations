@@ -73,10 +73,8 @@ class MNISTConfigs(MNISTDatasetConfigs, TrainValidConfigs):
         if self.mode.is_train:
             tracker.add_global_step(len(data))
 
-        # Whether to capture model outputs
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Get model outputs.
-            output = self.model(data)
+        # Get model outputs.
+        output = self.model(data)
 
         # Calculate and log loss
         loss = self.loss_func(output, target)

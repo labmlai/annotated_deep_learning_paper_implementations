@@ -127,10 +127,8 @@ class Configs(MNISTConfigs, SimpleTrainValidConfigs):
         if self.mode.is_train:
             tracker.add_global_step(len(data))
 
-        # Whether to log activations
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Run the model
-            caps, reconstructions, pred = self.model(data)
+        # Run the model
+        caps, reconstructions, pred = self.model(data)
 
         # Calculate the total loss
         loss = self.margin_loss(caps, target) + 0.0005 * self.reconstruction_loss(reconstructions, data)

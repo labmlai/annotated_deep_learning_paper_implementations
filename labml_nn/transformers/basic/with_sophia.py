@@ -75,12 +75,10 @@ class Configs(TransformerAutoRegressionConfigs):
             if self.mode.is_train:
                 tracker.add_global_step(data.shape[0] * data.shape[1])
 
-            # Whether to capture model outputs
-            with self.mode.update(is_log_activations=batch_idx.is_last and self.is_log_model_activations):
-                # Get model outputs.
-                # It's returning a tuple for states when using RNNs.
-                # This is not implemented yet. 😜
-                output, *_ = self.model(data)
+            # Get model outputs.
+            # It's returning a tuple for states when using RNNs.
+            # This is not implemented yet. 😜
+            output, *_ = self.model(data)
 
             # Calculate and log loss
             loss = self.loss_func(output, target)

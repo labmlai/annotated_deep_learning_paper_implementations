@@ -132,16 +132,14 @@ class Configs(NLPAutoRegressionConfigs):
         if self.mode.is_train:
             tracker.add_global_step(data.shape[0] * data.shape[1])
 
-        # Whether to capture model outputs
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Get memories
-            mem = self.memory.get()
-            # Run the model
-            output, new_mem = self.model(data, mem)
-            # Merge memory
-            mem = self.merge_memory(mem, new_mem)
-            # Update memories
-            self.memory.set(mem)
+        # Get memories
+        mem = self.memory.get()
+        # Run the model
+        output, new_mem = self.model(data, mem)
+        # Merge memory
+        mem = self.merge_memory(mem, new_mem)
+        # Update memories
+        self.memory.set(mem)
 
         # Calculate and log cross entropy loss
         loss = self.loss_func(output, target)

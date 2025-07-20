@@ -102,10 +102,8 @@ class Configs(NLPAutoRegressionConfigs):
         if self.mode.is_train:
             tracker.add_global_step(data.shape[0] * data.shape[1])
 
-        # Whether to capture model outputs
-        with self.mode.update(is_log_activations=batch_idx.is_last):
-            # Get model outputs.
-            output, counts, route_prob, n_dropped, route_prob_max = self.model(data)
+        # Get model outputs.
+        output, counts, route_prob, n_dropped, route_prob_max = self.model(data)
 
         # Calculate and cross entropy loss
         cross_entropy_loss = self.loss_func(output, target)

@@ -3,12 +3,11 @@ import typing
 from typing import Dict, List, Callable
 from typing import Optional, Tuple, Any, Collection
 
-import labml.utils.pytorch as pytorch_utils
 import torch.optim
 import torch.optim
 import torch.utils.data
 import torch.utils.data
-from labml import tracker, logger, experiment, monit
+from labml import tracker, logger, monit
 from labml.configs import BaseConfigs, meta_config, option
 from labml.internal.monitor import Loop
 from labml.logger import Text
@@ -204,8 +203,6 @@ class ModeState:
         self._rollback_stack = []
 
         self.is_train = False
-        self.is_log_activations = False
-        self.is_log_parameters = False
         self.is_optimize = False
 
     def _enter(self, mode: Dict[str, any]):
@@ -231,13 +228,9 @@ class ModeState:
 
     def update(self, *,
                is_train: Optional[bool] = None,
-               is_log_parameters: Optional[bool] = None,
-               is_log_activations: Optional[bool] = None,
                is_optimize: Optional[bool] = None):
         return Mode(self,
                     is_train=is_train,
-                    is_log_parameters=is_log_parameters,
-                    is_log_activations=is_log_activations,
                     is_optimize=is_optimize)
 
 
@@ -256,35 +249,6 @@ class Mode:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.mode._exit(self.idx)
-
-
-class ForwardHook:
-    def __init__(self, mode: ModeState, model_name, name: str, module: torch.nn.Module):
-        self.mode = mode
-        self.model_name = model_name
-        self.name = name
-        self.module = module
-        module.register_forward_hook(self)
-
-    def save(self, name: str, output):
-        if isinstance(output, torch.Tensor):
-            pytorch_utils.store_var(name, output)
-        elif isinstance(output, tuple):
-            for i, o in enumerate(output):
-                self.save(f"{name}.{i}", o)
-
-    def __call__(self, module, i, o):
-        if not self.mode.is_log_activations:
-            return
-
-        self.save(f"module.{self.model_name}.{self.name}", o)
-
-
-def hook_model_outputs(mode: ModeState, model: torch.nn.Module, model_name: str = "model"):
-    for name, module in model.named_modules():
-        if name == '':
-            name = 'full'
-        ForwardHook(mode, model_name, name, module)
 
 
 class Trainer:
@@ -493,10 +457,6 @@ class SimpleTrainValidConfigs(TrainValidConfigs):
          arguments.
         update_batches (int): Number of batches to accumulate before taking an optimizer step.
          Defaults to ``1``.
-        log_params_updates (int): How often (number of batches) to track model parameters and gradients.
-         Defaults to a large number; i.e. logs every epoch.
-        log_activations_batches (int): How often to log model activations.
-         Defaults to a large number; i.e. logs every epoch.
         log_save_batches (int): How often to call :func:`labml.tracker.save`.
     """
     optimizer: torch.optim.Adam
@@ -506,8 +466,6 @@ class SimpleTrainValidConfigs(TrainValidConfigs):
     loss_func: nn.Module
 
     update_batches: int = 1
-    log_params_updates: int = 2 ** 32  # 0 if not
-    log_activations_batches: int = 2 ** 32  # 0 if not
     log_save_batches: int = 1
 
     state_modules: List[StateModule] = []
@@ -522,10 +480,8 @@ class SimpleTrainValidConfigs(TrainValidConfigs):
         if self.mode.is_train:
             tracker.add_global_step(len(data))
 
-        is_log_activations = batch_idx.is_interval(self.log_activations_batches)
         with monit.section("model"):
-            with self.mode.update(is_log_activations=is_log_activations):
-                output = self.model(data)
+            output = self.model(data)
 
         loss = self.loss_func(output, target)
         tracker.add("loss.", loss)
@@ -537,8 +493,6 @@ class SimpleTrainValidConfigs(TrainValidConfigs):
             if batch_idx.is_interval(self.update_batches):
                 with monit.section('optimize'):
                     self.optimizer.step()
-                if batch_idx.is_interval(self.log_params_updates):
-                    tracker.add('model', self.model)
                 self.optimizer.zero_grad()
 
             if batch_idx.is_interval(self.log_save_batches):
@@ -546,8 +500,7 @@ class SimpleTrainValidConfigs(TrainValidConfigs):
 
 
 meta_config(SimpleTrainValidConfigs.update_batches,
-            SimpleTrainValidConfigs.log_params_updates,
-            SimpleTrainValidConfigs.log_activations_batches)
+            )
 
 
 @option(SimpleTrainValidConfigs.optimizer)

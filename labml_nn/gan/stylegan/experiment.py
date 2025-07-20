@@ -315,38 +315,36 @@ class Configs(BaseConfigs):
 
             # Accumulate gradients for `gradient_accumulate_steps`
             for i in range(self.gradient_accumulate_steps):
-                # Update `mode`. Set whether to log activation
-                with self.mode.update(is_log_activations=(idx + 1) % self.log_generated_interval == 0):
-                    # Sample images from generator
-                    generated_images, _ = self.generate_images(self.batch_size)
-                    # Discriminator classification for generated images
-                    fake_output = self.discriminator(generated_images.detach())
+                # Sample images from generator
+                generated_images, _ = self.generate_images(self.batch_size)
+                # Discriminator classification for generated images
+                fake_output = self.discriminator(generated_images.detach())
 
-                    # Get real images from the data loader
-                    real_images = next(self.loader).to(self.device)
-                    # We need to calculate gradients w.r.t. real images for gradient penalty
-                    if (idx + 1) % self.lazy_gradient_penalty_interval == 0:
-                        real_images.requires_grad_()
-                    # Discriminator classification for real images
-                    real_output = self.discriminator(real_images)
+                # Get real images from the data loader
+                real_images = next(self.loader).to(self.device)
+                # We need to calculate gradients w.r.t. real images for gradient penalty
+                if (idx + 1) % self.lazy_gradient_penalty_interval == 0:
+                    real_images.requires_grad_()
+                # Discriminator classification for real images
+                real_output = self.discriminator(real_images)
 
-                    # Get discriminator loss
-                    real_loss, fake_loss = self.discriminator_loss(real_output, fake_output)
-                    disc_loss = real_loss + fake_loss
+                # Get discriminator loss
+                real_loss, fake_loss = self.discriminator_loss(real_output, fake_output)
+                disc_loss = real_loss + fake_loss
 
-                    # Add gradient penalty
-                    if (idx + 1) % self.lazy_gradient_penalty_interval == 0:
-                        # Calculate and log gradient penalty
-                        gp = self.gradient_penalty(real_images, real_output)
-                        tracker.add('loss.gp', gp)
-                        # Multiply by coefficient and add gradient penalty
-                        disc_loss = disc_loss + 0.5 * self.gradient_penalty_coefficient * gp * self.lazy_gradient_penalty_interval
+                # Add gradient penalty
+                if (idx + 1) % self.lazy_gradient_penalty_interval == 0:
+                    # Calculate and log gradient penalty
+                    gp = self.gradient_penalty(real_images, real_output)
+                    tracker.add('loss.gp', gp)
+                    # Multiply by coefficient and add gradient penalty
+                    disc_loss = disc_loss + 0.5 * self.gradient_penalty_coefficient * gp * self.lazy_gradient_penalty_interval
 
-                    # Compute gradients
-                    disc_loss.backward()
+                # Compute gradients
+                disc_loss.backward()
 
-                    # Log discriminator loss
-                    tracker.add('loss.discriminator', disc_loss)
+                # Log discriminator loss
+                tracker.add('loss.discriminator', disc_loss)
 
             if (idx + 1) % self.log_generated_interval == 0:
                 # Log discriminator model parameters occasionally
