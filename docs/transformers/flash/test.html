@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="test.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/transformers/flash/test.html"/>
+    <meta property="og:title" content="test.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="test.py"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="test.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>test.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/transformers/flash/test.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="../index.html">transformers</a>
+                <a class="parent" href="index.html">flash</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/transformers/flash/test.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">import</span> <span class="nn">triton</span>
+<span class="lineno">2</span>
+<span class="lineno">3</span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="lineno">4</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">logger</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">5</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.flash</span> <span class="kn">import</span> <span class="n">attention</span>
+<span class="lineno">6</span>
+<span class="lineno">7</span><span class="n">HI_PRES_TORCH</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">10</span><span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">11</span><span class="k">def</span> <span class="nf">_calc_abs_rel_error</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">):</span>
+<span class="lineno">12</span>    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+<span class="lineno">13</span>    <span class="n">max_abs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="lineno">14</span>    <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="n">atol</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">15</span>    <span class="n">d</span> <span class="o">=</span> <span class="n">d</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+<span class="lineno">16</span>    <span class="n">max_rel</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="lineno">17</span>
+<span class="lineno">18</span>    <span class="k">return</span> <span class="n">max_abs</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">max_rel</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="lineno">19</span>
+<span class="lineno">20</span>
+<span class="lineno">21</span><span class="k">def</span> <span class="nf">_test_op</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_heads</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">q_seq_len</span><span class="p">,</span> <span class="n">kv_seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="lineno">22</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Init&#39;</span><span class="p">):</span>
+<span class="lineno">23</span>        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="lineno">24</span>        <span class="n">q</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_heads</span><span class="p">,</span> <span class="n">q_seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span>
+<span class="lineno">25</span>                         <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">())</span>
+<span class="lineno">26</span>        <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">kv_seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span>
+<span class="lineno">27</span>                         <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">())</span>
+<span class="lineno">28</span>        <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">kv_seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span>
+<span class="lineno">29</span>                         <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">())</span>
+<span class="lineno">30</span>        <span class="n">sm_scale</span> <span class="o">=</span> <span class="n">d_head</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.5</span>
+<span class="lineno">31</span>        <span class="n">d_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            <p>reference implementation </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">33</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tril</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">q_seq_len</span><span class="p">,</span> <span class="n">kv_seq_len</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+<span class="lineno">34</span>        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+<span class="lineno">35</span>
+<span class="lineno">36</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Pytorch&#39;</span><span class="p">):</span>
+<span class="lineno">37</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">q_seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span>
+<span class="lineno">38</span>                         <span class="n">k</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">sm_scale</span>
+<span class="lineno">39</span>        <span class="k">if</span> <span class="n">causal</span><span class="p">:</span>
+<span class="lineno">40</span>            <span class="n">p</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+<span class="lineno">41</span>        <span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">HI_PRES_TORCH</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+<span class="lineno">42</span>        <span class="n">ref_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">v</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+<span class="lineno">43</span>        <span class="n">ref_out</span> <span class="o">=</span> <span class="n">ref_out</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="lineno">44</span>        <span class="n">ref_out</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">d_out</span><span class="p">)</span>
+<span class="lineno">45</span>        <span class="n">ref_dv</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>
+<span class="lineno">46</span>        <span class="n">ref_dk</span><span class="p">,</span> <span class="n">k</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>
+<span class="lineno">47</span>        <span class="n">ref_dq</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>
+<span class="lineno">48</span>        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+<span class="lineno">49</span>
+<span class="lineno">50</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Triton&#39;</span><span class="p">):</span>
+<span class="lineno">51</span>        <span class="k">assert</span> <span class="n">q</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtype</span>
+<span class="lineno">52</span>        <span class="n">tri_out</span> <span class="o">=</span> <span class="n">attention</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="n">sm_scale</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+<span class="lineno">53</span>        <span class="n">monit</span><span class="o">.</span><span class="n">progress</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="lineno">54</span>
+<span class="lineno">55</span>        <span class="n">tri_out</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">d_out</span><span class="p">)</span>
+<span class="lineno">56</span>        <span class="n">monit</span><span class="o">.</span><span class="n">progress</span><span class="p">(</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="lineno">57</span>        <span class="n">tri_dv</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+<span class="lineno">58</span>        <span class="n">tri_dk</span><span class="p">,</span> <span class="n">k</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+<span class="lineno">59</span>        <span class="n">tri_dq</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+<span class="lineno">60</span>        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+<span class="lineno">61</span>
+<span class="lineno">62</span>    <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;Test&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            <p>compare </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">64</span>        <span class="n">passed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="lineno">65</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">tri_out</span><span class="p">,</span> <span class="n">ref_out</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
+<span class="lineno">66</span>            <span class="n">abs_err</span><span class="p">,</span> <span class="n">rel_err</span> <span class="o">=</span> <span class="n">_calc_abs_rel_error</span><span class="p">(</span><span class="n">ref_out</span><span class="p">,</span> <span class="n">tri_out</span><span class="p">)</span>
+<span class="lineno">67</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="s1">&#39;[FAILED]&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39; Out mismatch </span><span class="si">{</span><span class="n">abs_err</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">rel_err</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="lineno">68</span>            <span class="n">passed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">69</span>        <span class="n">rtol</span> <span class="o">=</span> <span class="mf">1e-1</span>
+<span class="lineno">70</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">tri_dq</span><span class="p">,</span> <span class="n">ref_dq</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">):</span>
+<span class="lineno">71</span>            <span class="n">abs_err</span><span class="p">,</span> <span class="n">rel_err</span> <span class="o">=</span> <span class="n">_calc_abs_rel_error</span><span class="p">(</span><span class="n">ref_dq</span><span class="p">,</span> <span class="n">tri_dq</span><span class="p">)</span>
+<span class="lineno">72</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="s1">&#39;[FAILED]&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39; dQ mismatch </span><span class="si">{</span><span class="n">abs_err</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">rel_err</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="lineno">73</span>            <span class="n">passed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">74</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">tri_dv</span><span class="p">,</span> <span class="n">ref_dv</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">):</span>
+<span class="lineno">75</span>            <span class="n">abs_err</span><span class="p">,</span> <span class="n">rel_err</span> <span class="o">=</span> <span class="n">_calc_abs_rel_error</span><span class="p">(</span><span class="n">ref_dv</span><span class="p">,</span> <span class="n">tri_dv</span><span class="p">)</span>
+<span class="lineno">76</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="s1">&#39;[FAILED]&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39; dV mismatch </span><span class="si">{</span><span class="n">abs_err</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">rel_err</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="lineno">77</span>            <span class="n">passed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">78</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">tri_dk</span><span class="p">,</span> <span class="n">ref_dk</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">):</span>
+<span class="lineno">79</span>            <span class="n">abs_err</span><span class="p">,</span> <span class="n">rel_err</span> <span class="o">=</span> <span class="n">_calc_abs_rel_error</span><span class="p">(</span><span class="n">ref_dk</span><span class="p">,</span> <span class="n">tri_dk</span><span class="p">)</span>
+<span class="lineno">80</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="s1">&#39;[FAILED]&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39; dK mismatch </span><span class="si">{</span><span class="n">abs_err</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">rel_err</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="lineno">81</span>            <span class="n">passed</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">82</span>
+<span class="lineno">83</span>        <span class="k">if</span> <span class="n">passed</span><span class="p">:</span>
+<span class="lineno">84</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;[PASSED]&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>
+<span class="lineno">85</span>            <span class="n">s</span><span class="o">.</span><span class="n">success</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="lineno">86</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">87</span>            <span class="n">s</span><span class="o">.</span><span class="n">success</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">88</span>        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">91</span><span class="k">def</span> <span class="nf">_perf_triton_fn</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+<span class="lineno">92</span>                    <span class="n">dtype</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="p">):</span>
+<span class="lineno">93</span>    <span class="n">q</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span> <span class="o">*</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">94</span>    <span class="n">k</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">95</span>    <span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">96</span>    <span class="n">sm_scale</span> <span class="o">=</span> <span class="n">d_head</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.5</span>
+<span class="lineno">97</span>    <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">attention</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="n">sm_scale</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">100</span><span class="k">def</span> <span class="nf">_perf_flash</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span>
+<span class="lineno">101</span>                <span class="n">dtype</span><span class="p">):</span>
+<span class="lineno">102</span>    <span class="n">q</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">k_heads</span> <span class="o">*</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">103</span>    <span class="n">k</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">104</span>    <span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">d_head</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">105</span>    <span class="kn">from</span> <span class="nn">flash_attn</span> <span class="kn">import</span> <span class="n">flash_attn_func</span>
+<span class="lineno">106</span>    <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">flash_attn_func</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">causal</span><span class="o">=</span><span class="n">causal</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">109</span><span class="k">def</span> <span class="nf">_perf_fn</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">k_heads</span><span class="p">,</span> <span class="n">n_groups</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">d_head</span><span class="p">,</span> <span class="n">causal</span><span class="p">,</span> <span class="n">is_bwd</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="lineno">110</span>    <span class="k">if</span> <span class="n">is_bwd</span><span class="p">:</span>
+<span class="lineno">111</span>        <span class="n">o</span> <span class="o">=</span> <span class="n">fn</span><span class="p">()</span>
+<span class="lineno">112</span>        <span class="n">do</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+<span class="lineno">113</span>        <span class="n">fn</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">do</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="lineno">114</span>    <span class="n">ms</span> <span class="o">=</span> <span class="n">triton</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">do_bench</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+<span class="lineno">115</span>
+<span class="lineno">116</span>    <span class="n">flops_per_matmul</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">batch_size</span> <span class="o">*</span> <span class="n">k_heads</span> <span class="o">*</span> <span class="n">n_groups</span> <span class="o">*</span> <span class="n">seq_len</span> <span class="o">*</span> <span class="n">seq_len</span> <span class="o">*</span> <span class="n">d_head</span>
+<span class="lineno">117</span>    <span class="n">total_flops</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">flops_per_matmul</span>
+<span class="lineno">118</span>    <span class="k">if</span> <span class="n">causal</span><span class="p">:</span>
+<span class="lineno">119</span>        <span class="n">total_flops</span> <span class="o">*=</span> <span class="mf">0.5</span>
+<span class="lineno">120</span>    <span class="k">if</span> <span class="n">is_bwd</span><span class="p">:</span>
+<span class="lineno">121</span>        <span class="n">total_flops</span> <span class="o">*=</span> <span class="mf">2.5</span>  <span class="c1"># 2.0(bwd) + 0.5(recompute)</span>
+<span class="lineno">122</span>
+<span class="lineno">123</span>    <span class="n">tf_ps</span> <span class="o">=</span> <span class="n">total_flops</span> <span class="o">*</span> <span class="mf">1e-12</span> <span class="o">/</span> <span class="p">(</span><span class="n">ms</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span>
+<span class="lineno">124</span>    <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">key</span><span class="p">),</span> <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ms</span><span class="w"> </span><span class="si">:</span><span class="s1">,.1f</span><span class="si">}</span><span class="s1">ms&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">tf_ps</span><span class="w"> </span><span class="si">:</span><span class="s1">,.2f</span><span class="si">}</span><span class="s1">TFps&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">127</span><span class="k">def</span> <span class="nf">_test</span><span class="p">():</span>
+<span class="lineno">128</span>    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span><span class="p">)</span>
+<span class="lineno">129</span>    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">130</span>
+<span class="lineno">131</span>    <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bfloat16</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            <p>only works on post-Ampere GPUs right now </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">134</span>    <span class="n">_test_op</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">135</span>    <span class="n">_test_op</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">4096</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">136</span>    <span class="n">_test_op</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">137</span>    <span class="n">_test_op</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">138</span>
+<span class="lineno">139</span>    <span class="n">_conf</span> <span class="o">=</span> <span class="p">{</span>
+<span class="lineno">140</span>        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+<span class="lineno">141</span>        <span class="s1">&#39;k_heads&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+<span class="lineno">142</span>        <span class="s1">&#39;n_groups&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+<span class="lineno">143</span>        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">2048</span><span class="p">,</span>
+<span class="lineno">144</span>        <span class="s1">&#39;d_head&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+<span class="lineno">145</span>    <span class="p">}</span>
+<span class="lineno">146</span>
+<span class="lineno">147</span>    <span class="k">for</span> <span class="n">_causal</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]:</span>
+<span class="lineno">148</span>        <span class="k">for</span> <span class="n">is_bwd</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]:</span>
+<span class="lineno">149</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;Causal&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">_causal</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;Non-causal&quot;</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">&quot; Backward&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_bwd</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">Text</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+<span class="lineno">150</span>            <span class="n">_perf_fn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flash&#39;</span><span class="p">,</span> <span class="n">_perf_flash</span><span class="p">(</span><span class="n">causal</span><span class="o">=</span><span class="n">_causal</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="o">**</span><span class="n">_conf</span><span class="p">),</span>
+<span class="lineno">151</span>                     <span class="n">is_bwd</span><span class="o">=</span><span class="n">is_bwd</span><span class="p">,</span>
+<span class="lineno">152</span>                     <span class="n">causal</span><span class="o">=</span><span class="n">_causal</span><span class="p">,</span> <span class="o">**</span><span class="n">_conf</span><span class="p">)</span>
+<span class="lineno">153</span>            <span class="n">_perf_fn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;triton&#39;</span><span class="p">,</span> <span class="n">_perf_triton_fn</span><span class="p">(</span><span class="n">causal</span><span class="o">=</span><span class="n">_causal</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="o">**</span><span class="n">_conf</span><span class="p">),</span>
+<span class="lineno">154</span>                     <span class="n">is_bwd</span><span class="o">=</span><span class="n">is_bwd</span><span class="p">,</span>
+<span class="lineno">155</span>                     <span class="n">causal</span><span class="o">=</span><span class="n">_causal</span><span class="p">,</span> <span class="o">**</span><span class="n">_conf</span><span class="p">)</span>
+<span class="lineno">156</span>
+<span class="lineno">157</span>
+<span class="lineno">158</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="lineno">159</span>    <span class="n">_test</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

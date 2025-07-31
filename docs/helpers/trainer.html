@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:image:src" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta name="twitter:title" content="trainer.py"/>
+    <meta name="twitter:description" content=""/>
+    <meta name="twitter:site" content="@labmlai"/>
+    <meta name="twitter:creator" content="@labmlai"/>
+
+    <meta property="og:url" content="https://nn.labml.ai/helpers/trainer.html"/>
+    <meta property="og:title" content="trainer.py"/>
+    <meta property="og:image" content="https://avatars1.githubusercontent.com/u/64068543?s=400&amp;v=4"/>
+    <meta property="og:site_name" content="trainer.py"/>
+    <meta property="og:type" content="object"/>
+    <meta property="og:title" content="trainer.py"/>
+    <meta property="og:description" content=""/>
+
+    <title>trainer.py</title>
+    <link rel="shortcut icon" href="/icon.png"/>
+    <link rel="stylesheet" href="../pylit.css?v=1">
+    <link rel="canonical" href="https://nn.labml.ai/helpers/trainer.html"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.18/dist/katex.min.css" integrity="sha384-zTROYFVGOfTw7JV7KUu8udsvW2fx4lWOsCEDqhBreBwlHI4ioVRtmIvEThzJHGET" crossorigin="anonymous">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4V3HC8HBLH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-4V3HC8HBLH');
+    </script>
+</head>
+<body>
+<div id='container'>
+    <div id="background"></div>
+    <div class='section'>
+        <div class='docs'>
+            <p>
+                <a class="parent" href="/">home</a>
+                <a class="parent" href="index.html">helpers</a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations" target="_blank">
+                    <img alt="Github"
+                         src="https://img.shields.io/github/stars/labmlai/annotated_deep_learning_paper_implementations?style=social"
+                         style="max-width:100%;"/></a>
+                <a href="https://twitter.com/labmlai" rel="nofollow" target="_blank">
+                    <img alt="Twitter"
+                         src="https://img.shields.io/twitter/follow/labmlai?style=social"
+                         style="max-width:100%;"/></a>
+            </p>
+            <p>
+                <a href="https://github.com/labmlai/annotated_deep_learning_paper_implementations/tree/master/labml_nn/helpers/trainer.py" target="_blank">
+                    View code on Github</a>
+            </p>
+        </div>
+    </div>
+    <div class='section' id='section-0'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-0'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">1</span><span></span><span class="kn">import</span> <span class="nn">signal</span>
+<span class="lineno">2</span><span class="kn">import</span> <span class="nn">typing</span>
+<span class="lineno">3</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="lineno">4</span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Collection</span>
+<span class="lineno">5</span>
+<span class="lineno">6</span><span class="kn">import</span> <span class="nn">torch.optim</span>
+<span class="lineno">7</span><span class="kn">import</span> <span class="nn">torch.optim</span>
+<span class="lineno">8</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">9</span><span class="kn">import</span> <span class="nn">torch.utils.data</span>
+<span class="lineno">10</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">monit</span>
+<span class="lineno">11</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">BaseConfigs</span><span class="p">,</span> <span class="n">meta_config</span><span class="p">,</span> <span class="n">option</span>
+<span class="lineno">12</span><span class="kn">from</span> <span class="nn">labml.internal.monitor</span> <span class="kn">import</span> <span class="n">Loop</span>
+<span class="lineno">13</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">14</span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">.device</span> <span class="kn">import</span> <span class="n">DeviceConfigs</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">.metrics</span> <span class="kn">import</span> <span class="n">StateModule</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-1'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-1'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">19</span><span class="k">class</span> <span class="nc">TrainingLoopIterator</span><span class="p">(</span><span class="n">Collection</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-2'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-2'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">20</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="lineno">21</span>        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">step</span>
+<span class="lineno">22</span>        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">=</span> <span class="n">total</span>
+<span class="lineno">23</span>        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+<span class="lineno">24</span>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-3'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-3'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">26</span>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">27</span>        <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">28</span>        <span class="k">return</span> <span class="bp">self</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-4'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-4'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">30</span>    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">31</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">32</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">33</span>                <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span>
+<span class="lineno">34</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">35</span>                <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+<span class="lineno">36</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">37</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">38</span>                <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">39</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">40</span>                <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="lineno">41</span>
+<span class="lineno">42</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">:</span>
+<span class="lineno">43</span>            <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">()</span>
+<span class="lineno">44</span>
+<span class="lineno">45</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">46</span>            <span class="k">return</span> <span class="n">tracker</span><span class="o">.</span><span class="n">get_global_step</span><span class="p">()</span>
+<span class="lineno">47</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">48</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">i</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-5'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-5'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">50</span>    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="lineno">51</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">52</span>            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">)</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+<span class="lineno">53</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">54</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-6'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-6'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">56</span>    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="lineno">57</span>        <span class="k">return</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-7'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-7'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">60</span><span class="k">class</span> <span class="nc">TrainingLoop</span><span class="p">:</span>
+<span class="lineno">61</span>    <span class="n">_iter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TrainingLoopIterator</span><span class="p">]</span>
+<span class="lineno">62</span>    <span class="n">__loop</span><span class="p">:</span> <span class="n">Loop</span>
+<span class="lineno">63</span>    <span class="n">__signal_received</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-8'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-8'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">65</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">66</span>                 <span class="n">loop_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">67</span>                 <span class="n">loop_step</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="lineno">68</span>                 <span class="n">log_new_line_interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">69</span>                 <span class="n">log_write_interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">70</span>                 <span class="n">is_loop_on_interrupt</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="lineno">71</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__loop_count</span> <span class="o">=</span> <span class="n">loop_count</span>
+<span class="lineno">72</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__loop_step</span> <span class="o">=</span> <span class="n">loop_step</span>
+<span class="lineno">73</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__log_new_line_interval</span> <span class="o">=</span> <span class="n">log_new_line_interval</span>
+<span class="lineno">74</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__log_write_interval</span> <span class="o">=</span> <span class="n">log_write_interval</span>
+<span class="lineno">75</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__last_write_step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">76</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__last_new_line_step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">77</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__last_save_step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">78</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__signal_received</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">79</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__is_loop_on_interrupt</span> <span class="o">=</span> <span class="n">is_loop_on_interrupt</span>
+<span class="lineno">80</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-9'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-9'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">82</span>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">83</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span> <span class="o">=</span> <span class="n">TrainingLoopIterator</span><span class="p">(</span><span class="n">tracker</span><span class="o">.</span><span class="n">get_global_step</span><span class="p">(),</span>
+<span class="lineno">84</span>                                          <span class="bp">self</span><span class="o">.</span><span class="n">__loop_count</span><span class="p">,</span>
+<span class="lineno">85</span>                                          <span class="bp">self</span><span class="o">.</span><span class="n">__loop_step</span><span class="p">)</span>
+<span class="lineno">86</span>
+<span class="lineno">87</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__loop</span> <span class="o">=</span> <span class="n">monit</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">Collection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">))</span>
+<span class="lineno">88</span>
+<span class="lineno">89</span>        <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__loop</span><span class="p">)</span>
+<span class="lineno">90</span>        <span class="k">try</span><span class="p">:</span>
+<span class="lineno">91</span>            <span class="bp">self</span><span class="o">.</span><span class="n">old_handler</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__handler</span><span class="p">)</span>
+<span class="lineno">92</span>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+<span class="lineno">93</span>            <span class="k">pass</span>
+<span class="lineno">94</span>        <span class="k">return</span> <span class="bp">self</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-10'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-10'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">96</span>    <span class="nd">@property</span>
+<span class="lineno">97</span>    <span class="k">def</span> <span class="nf">idx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">98</span>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">:</span>
+<span class="lineno">99</span>            <span class="k">return</span> <span class="mi">0</span>
+<span class="lineno">100</span>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="o">.</span><span class="n">i</span><span class="p">:</span>
+<span class="lineno">101</span>            <span class="k">return</span> <span class="mi">0</span>
+<span class="lineno">102</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__loop_step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">103</span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="o">.</span><span class="n">i</span>
+<span class="lineno">104</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="o">.</span><span class="n">i</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">__loop_step</span>
+<span class="lineno">105</span>
+<span class="lineno">106</span>    <span class="k">def</span> <span class="nf">__finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">107</span>        <span class="k">try</span><span class="p">:</span>
+<span class="lineno">108</span>            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_handler</span><span class="p">)</span>
+<span class="lineno">109</span>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+<span class="lineno">110</span>            <span class="k">pass</span>
+<span class="lineno">111</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="lineno">112</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span>
+<span class="lineno">113</span>
+<span class="lineno">114</span>    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">115</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__signal_received</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">116</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Killing Loop.&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">)</span>
+<span class="lineno">117</span>            <span class="n">monit</span><span class="o">.</span><span class="n">finish_loop</span><span class="p">()</span>
+<span class="lineno">118</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__finish</span><span class="p">()</span>
+<span class="lineno">119</span>            <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">(</span><span class="s2">&quot;SIGINT&quot;</span><span class="p">)</span>
+<span class="lineno">120</span>
+<span class="lineno">121</span>        <span class="k">try</span><span class="p">:</span>
+<span class="lineno">122</span>            <span class="n">global_step</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__loop</span><span class="p">)</span>
+<span class="lineno">123</span>        <span class="k">except</span> <span class="ne">StopIteration</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="lineno">124</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__finish</span><span class="p">()</span>
+<span class="lineno">125</span>            <span class="k">raise</span> <span class="n">e</span>
+<span class="lineno">126</span>
+<span class="lineno">127</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_global_step</span><span class="p">(</span><span class="n">global_step</span><span class="p">)</span>
+<span class="lineno">128</span>
+<span class="lineno">129</span>        <span class="k">if</span> <span class="n">global_step</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_write_step</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__log_write_interval</span><span class="p">:</span>
+<span class="lineno">130</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="lineno">131</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__last_write_step</span> <span class="o">=</span> <span class="n">global_step</span>
+<span class="lineno">132</span>        <span class="k">if</span> <span class="n">global_step</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_new_line_step</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__log_new_line_interval</span><span class="p">:</span>
+<span class="lineno">133</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">new_line</span><span class="p">()</span>
+<span class="lineno">134</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__last_new_line_step</span> <span class="o">=</span> <span class="n">global_step</span>
+<span class="lineno">135</span>
+<span class="lineno">136</span>        <span class="k">return</span> <span class="n">global_step</span>
+<span class="lineno">137</span>
+<span class="lineno">138</span>    <span class="k">def</span> <span class="nf">__handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-11'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-11'>#</a>
+            </div>
+            <p>Pass second interrupt without delaying </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">140</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__signal_received</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">141</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">SIGINT received twice. Stopping...&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">)</span>
+<span class="lineno">142</span>            <span class="bp">self</span><span class="o">.</span><span class="n">old_handler</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">__signal_received</span><span class="p">)</span>
+<span class="lineno">143</span>            <span class="k">return</span>
+<span class="lineno">144</span>
+<span class="lineno">145</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_loop_on_interrupt</span><span class="p">:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-12'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-12'>#</a>
+            </div>
+            <p>Store the interrupt signal for later </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">147</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__signal_received</span> <span class="o">=</span> <span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+<span class="lineno">148</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">SIGINT received. Delaying KeyboardInterrupt.&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">)</span>
+<span class="lineno">149</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">150</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__finish</span><span class="p">()</span>
+<span class="lineno">151</span>            <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;Killing loop...&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">danger</span><span class="p">)</span>
+<span class="lineno">152</span>            <span class="bp">self</span><span class="o">.</span><span class="n">old_handler</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-13'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-13'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">154</span>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">155</span>        <span class="k">return</span> <span class="s2">&quot;LabTrainingLoop&quot;</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-14'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-14'>#</a>
+            </div>
+            <p> This is a configurable training loop. You can extend this class for your configurations if it involves a training loop.</p>
+<p>&gt;&gt;&gt; for step in conf.training_loop: &gt;&gt;&gt; ...</p>
+<p>Arguments:  loop_count (int): Total number of steps. Defaults to <code  class="highlight"><span></span></code>
+10<code  class="highlight"><span></span></code>
+.  loop_step (int): Number of steps to increment per iteration. Defaults to <code  class="highlight"><span></span></code>
+1<code  class="highlight"><span></span></code>
+.  log_new_line_interval (int): The interval (in steps) to print a new line to the screen.  Defaults to <code  class="highlight"><span></span></code>
+1<code  class="highlight"><span></span></code>
+.  log_write_interval (int): The interval (in steps) to call :func:<code  class="highlight"><span></span><span class="n">labml</span><span class="o">.</span><span class="n">tracker</span><span class="o">.</span><span class="n">save</span></code>
+.  Defaults to <code  class="highlight"><span></span></code>
+1<code  class="highlight"><span></span></code>
+.  is_loop_on_interrupt (bool): Whether to handle keyboard interrupts and wait until a iteration is complete.  Defaults to <code  class="highlight"><span></span></code>
+False<code  class="highlight"><span></span></code>
+.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">158</span><span class="k">class</span> <span class="nc">TrainingLoopConfigs</span><span class="p">(</span><span class="n">BaseConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-15'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-15'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">176</span>    <span class="n">loop_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="lineno">177</span>    <span class="n">loop_step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">178</span>    <span class="n">log_new_line_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">179</span>    <span class="n">log_write_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">180</span>    <span class="n">is_loop_on_interrupt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">181</span>
+<span class="lineno">182</span>    <span class="n">training_loop</span><span class="p">:</span> <span class="n">TrainingLoop</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-16'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-16'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">185</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">training_loop</span><span class="p">)</span>
+<span class="lineno">186</span><span class="k">def</span> <span class="nf">_loop_configs</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainingLoopConfigs</span><span class="p">):</span>
+<span class="lineno">187</span>    <span class="k">return</span> <span class="n">TrainingLoop</span><span class="p">(</span><span class="n">loop_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">loop_count</span><span class="p">,</span>
+<span class="lineno">188</span>                        <span class="n">loop_step</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">loop_step</span><span class="p">,</span>
+<span class="lineno">189</span>                        <span class="n">log_new_line_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">log_new_line_interval</span><span class="p">,</span>
+<span class="lineno">190</span>                        <span class="n">log_write_interval</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">log_write_interval</span><span class="p">,</span>
+<span class="lineno">191</span>                        <span class="n">is_loop_on_interrupt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">is_loop_on_interrupt</span><span class="p">)</span>
+<span class="lineno">192</span>
+<span class="lineno">193</span>
+<span class="lineno">194</span><span class="n">meta_config</span><span class="p">(</span><span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">loop_step</span><span class="p">,</span>
+<span class="lineno">195</span>            <span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">loop_count</span><span class="p">,</span>
+<span class="lineno">196</span>            <span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">log_new_line_interval</span><span class="p">,</span>
+<span class="lineno">197</span>            <span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">log_write_interval</span><span class="p">,</span>
+<span class="lineno">198</span>            <span class="n">TrainingLoopConfigs</span><span class="o">.</span><span class="n">is_loop_on_interrupt</span><span class="p">)</span>
+<span class="lineno">199</span>
+<span class="lineno">200</span>
+<span class="lineno">201</span><span class="k">class</span> <span class="nc">ModeState</span><span class="p">:</span>
+<span class="lineno">202</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">203</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">204</span>
+<span class="lineno">205</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_train</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">206</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_optimize</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="lineno">207</span>
+<span class="lineno">208</span>    <span class="k">def</span> <span class="nf">_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]):</span>
+<span class="lineno">209</span>        <span class="n">rollback</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">210</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mode</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">211</span>            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">212</span>                <span class="k">continue</span>
+<span class="lineno">213</span>            <span class="n">rollback</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<span class="lineno">214</span>            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="lineno">215</span>
+<span class="lineno">216</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rollback</span><span class="p">)</span>
+<span class="lineno">217</span>
+<span class="lineno">218</span>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span><span class="p">)</span>
+<span class="lineno">219</span>
+<span class="lineno">220</span>    <span class="k">def</span> <span class="nf">_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">221</span>        <span class="k">assert</span> <span class="n">n</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span><span class="p">)</span>
+<span class="lineno">222</span>
+<span class="lineno">223</span>        <span class="n">rollback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="lineno">224</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="lineno">225</span>
+<span class="lineno">226</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rollback</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">227</span>            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="lineno">228</span>
+<span class="lineno">229</span>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">230</span>               <span class="n">is_train</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="lineno">231</span>               <span class="n">is_optimize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="lineno">232</span>        <span class="k">return</span> <span class="n">Mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="lineno">233</span>                    <span class="n">is_train</span><span class="o">=</span><span class="n">is_train</span><span class="p">,</span>
+<span class="lineno">234</span>                    <span class="n">is_optimize</span><span class="o">=</span><span class="n">is_optimize</span><span class="p">)</span>
+<span class="lineno">235</span>
+<span class="lineno">236</span>
+<span class="lineno">237</span><span class="k">class</span> <span class="nc">Mode</span><span class="p">:</span>
+<span class="lineno">238</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">ModeState</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">any</span><span class="p">):</span>
+<span class="lineno">239</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+<span class="lineno">240</span>        <span class="bp">self</span><span class="o">.</span><span class="n">update</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="lineno">241</span>        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<span class="lineno">242</span>            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">243</span>                <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+<span class="lineno">244</span>
+<span class="lineno">245</span>        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="lineno">246</span>
+<span class="lineno">247</span>    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">248</span>        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">_enter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">)</span>
+<span class="lineno">249</span>
+<span class="lineno">250</span>    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+<span class="lineno">251</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idx</span><span class="p">)</span>
+<span class="lineno">252</span>
+<span class="lineno">253</span>
+<span class="lineno">254</span><span class="k">class</span> <span class="nc">Trainer</span><span class="p">:</span>
+<span class="lineno">255</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+<span class="lineno">256</span>                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="lineno">257</span>                 <span class="n">mode</span><span class="p">:</span> <span class="n">ModeState</span><span class="p">,</span>
+<span class="lineno">258</span>                 <span class="n">data_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">,</span>
+<span class="lineno">259</span>                 <span class="n">inner_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="lineno">260</span>                 <span class="n">state_modules</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StateModule</span><span class="p">],</span>
+<span class="lineno">261</span>                 <span class="n">is_track_time</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="lineno">262</span>                 <span class="n">step</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">any</span><span class="p">,</span> <span class="s1">&#39;BatchIndex&#39;</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
+<span class="lineno">263</span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_track_time</span> <span class="o">=</span> <span class="n">is_track_time</span>
+<span class="lineno">264</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+<span class="lineno">265</span>        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+<span class="lineno">266</span>        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">step</span>
+<span class="lineno">267</span>        <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span> <span class="o">=</span> <span class="n">state_modules</span>
+<span class="lineno">268</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__iterable</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">269</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__states</span> <span class="o">=</span> <span class="p">[</span><span class="n">sm</span><span class="o">.</span><span class="n">create_state</span><span class="p">()</span> <span class="k">for</span> <span class="n">sm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span><span class="p">]</span>
+<span class="lineno">270</span>        <span class="bp">self</span><span class="o">.</span><span class="n">inner_iterations</span> <span class="o">=</span> <span class="n">inner_iterations</span>
+<span class="lineno">271</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">data_loader</span>
+<span class="lineno">272</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span> <span class="o">=</span> <span class="n">BatchIndex</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">)</span>
+<span class="lineno">273</span>
+<span class="lineno">274</span>    <span class="k">def</span> <span class="nf">set_data_loader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">):</span>
+<span class="lineno">275</span>        <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">data_loader</span>
+<span class="lineno">276</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span> <span class="o">=</span> <span class="n">BatchIndex</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">)</span>
+<span class="lineno">277</span>        <span class="bp">self</span><span class="o">.</span><span class="n">__iterable</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">278</span>
+<span class="lineno">279</span>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">280</span>        <span class="k">for</span> <span class="n">sm</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__states</span><span class="p">):</span>
+<span class="lineno">281</span>            <span class="n">sm</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="lineno">282</span>
+<span class="lineno">283</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__iterable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">completed</span><span class="p">:</span>
+<span class="lineno">284</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">)</span>
+<span class="lineno">285</span>            <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">)</span>
+<span class="lineno">286</span>            <span class="k">for</span> <span class="n">sm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span><span class="p">:</span>
+<span class="lineno">287</span>                <span class="n">sm</span><span class="o">.</span><span class="n">on_epoch_start</span><span class="p">()</span>
+<span class="lineno">288</span>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">set_grad_enabled</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">):</span>
+<span class="lineno">289</span>            <span class="bp">self</span><span class="o">.</span><span class="n">__iterate</span><span class="p">()</span>
+<span class="lineno">290</span>
+<span class="lineno">291</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">completed</span><span class="p">:</span>
+<span class="lineno">292</span>            <span class="k">for</span> <span class="n">sm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span><span class="p">:</span>
+<span class="lineno">293</span>                <span class="n">sm</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+<span class="lineno">294</span>
+<span class="lineno">295</span>    <span class="k">def</span> <span class="nf">__iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">296</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">is_partial</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_track</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_track_time</span><span class="p">):</span>
+<span class="lineno">297</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">298</span>                <span class="n">monit</span><span class="o">.</span><span class="n">progress</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="lineno">299</span>            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">iteration_completed</span><span class="p">:</span>
+<span class="lineno">300</span>                <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__iterable</span><span class="p">)</span>
+<span class="lineno">301</span>
+<span class="lineno">302</span>                <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="p">)</span>
+<span class="lineno">303</span>
+<span class="lineno">304</span>                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">305</span>                <span class="n">monit</span><span class="o">.</span><span class="n">progress</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">epoch_progress</span><span class="p">)</span>
+<span class="lineno">306</span>
+<span class="lineno">307</span>        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_index</span><span class="o">.</span><span class="n">step_inner</span><span class="p">()</span>
+<span class="lineno">308</span>
+<span class="lineno">309</span>
+<span class="lineno">310</span><span class="k">class</span> <span class="nc">BatchIndex</span><span class="p">:</span>
+<span class="lineno">311</span>    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">312</span>    <span class="n">total</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">313</span>    <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">314</span>    <span class="n">total_iterations</span><span class="p">:</span> <span class="nb">int</span>
+<span class="lineno">315</span>
+<span class="lineno">316</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">317</span>        <span class="bp">self</span><span class="o">.</span><span class="n">total_iterations</span> <span class="o">=</span> <span class="n">total_iterations</span>
+<span class="lineno">318</span>        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">=</span> <span class="n">total</span>
+<span class="lineno">319</span>
+<span class="lineno">320</span>    <span class="k">def</span> <span class="nf">is_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">321</span>        <span class="k">if</span> <span class="n">interval</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">322</span>            <span class="k">return</span> <span class="kc">False</span>
+<span class="lineno">323</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span><span class="p">:</span>
+<span class="lineno">324</span>            <span class="k">return</span> <span class="kc">True</span>
+<span class="lineno">325</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">326</span>            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">interval</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="lineno">327</span>
+<span class="lineno">328</span>    <span class="nd">@property</span>
+<span class="lineno">329</span>    <span class="k">def</span> <span class="nf">is_last</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">330</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span>
+<span class="lineno">331</span>
+<span class="lineno">332</span>    <span class="nd">@property</span>
+<span class="lineno">333</span>    <span class="k">def</span> <span class="nf">completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">334</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_iterations</span>
+<span class="lineno">335</span>
+<span class="lineno">336</span>    <span class="nd">@property</span>
+<span class="lineno">337</span>    <span class="k">def</span> <span class="nf">iteration_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-17'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-17'>#</a>
+            </div>
+            <p>// is important so that the last step happens on the last iteration </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">339</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_iterations</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-18'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-18'>#</a>
+            </div>
+            <p> This is a configurable module that you can extend for experiments that involve a training and validation datasets (i.e. most DL experiments).</p>
+<p>Arguments:  epochs (int): Number of epochs to train on. Defaults to <code  class="highlight"><span></span></code>
+10<code  class="highlight"><span></span></code>
+.  train_loader (torch.utils.data.DataLoader): Training data loader.  valid_loader (torch.utils.data.DataLoader): Training data loader.  inner_iterations (int): Number of times to switch between training and validation  within an epoch. Defaults to <code  class="highlight"><span></span></code>
+1<code  class="highlight"><span></span></code>
+.</p>
+<p>You can override <code  class="highlight"><span></span></code>
+init<code  class="highlight"><span></span></code>
+, <code  class="highlight"><span></span></code>
+step<code  class="highlight"><span></span></code>
+ functions. There is also a <code  class="highlight"><span></span></code>
+sample<code  class="highlight"><span></span></code>
+ function that you can override to generate samples ever time it switches between training and validation.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">341</span>    <span class="nd">@property</span>
+<span class="lineno">342</span>    <span class="k">def</span> <span class="nf">epoch_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">343</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total</span>
+<span class="lineno">344</span>
+<span class="lineno">345</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">346</span>        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="lineno">347</span>
+<span class="lineno">348</span>    <span class="k">def</span> <span class="nf">step_inner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">349</span>        <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="lineno">350</span>
+<span class="lineno">351</span>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">total_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="lineno">352</span>        <span class="bp">self</span><span class="o">.</span><span class="n">total</span> <span class="o">=</span> <span class="n">total</span>
+<span class="lineno">353</span>        <span class="bp">self</span><span class="o">.</span><span class="n">total_iterations</span> <span class="o">=</span> <span class="n">total_iterations</span>
+<span class="lineno">354</span>        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">355</span>        <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="lineno">356</span>
+<span class="lineno">357</span>
+<span class="lineno">358</span><span class="k">class</span> <span class="nc">TrainValidConfigs</span><span class="p">(</span><span class="n">TrainingLoopConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-19'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-19'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">373</span>    <span class="n">state_modules</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StateModule</span><span class="p">]</span>
+<span class="lineno">374</span>
+<span class="lineno">375</span>    <span class="n">mode</span><span class="p">:</span> <span class="n">ModeState</span>
+<span class="lineno">376</span>
+<span class="lineno">377</span>    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="lineno">378</span>
+<span class="lineno">379</span>    <span class="n">trainer</span><span class="p">:</span> <span class="n">Trainer</span>
+<span class="lineno">380</span>    <span class="n">validator</span><span class="p">:</span> <span class="n">Trainer</span>
+<span class="lineno">381</span>    <span class="n">train_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span>
+<span class="lineno">382</span>    <span class="n">valid_loader</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span>
+<span class="lineno">383</span>
+<span class="lineno">384</span>    <span class="n">loop_count</span> <span class="o">=</span> <span class="s1">&#39;_data_loop_count&#39;</span>
+<span class="lineno">385</span>    <span class="n">loop_step</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">386</span>
+<span class="lineno">387</span>    <span class="n">inner_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">388</span>
+<span class="lineno">389</span>    <span class="n">is_track_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-20'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-20'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">391</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">392</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-21'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-21'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">394</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span>
+<span class="lineno">395</span>        <span class="k">raise</span> <span class="ne">NotImplementedError</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-22'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-22'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">397</span>    <span class="k">def</span> <span class="nf">run_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">398</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">):</span>
+<span class="lineno">399</span>            <span class="k">with</span> <span class="n">tracker</span><span class="o">.</span><span class="n">namespace</span><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">):</span>
+<span class="lineno">400</span>                <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+<span class="lineno">401</span>            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_train</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="lineno">402</span>                <span class="k">with</span> <span class="n">tracker</span><span class="o">.</span><span class="n">namespace</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">):</span>
+<span class="lineno">403</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="p">()</span>
+<span class="lineno">404</span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">:</span>
+<span class="lineno">405</span>                <span class="k">with</span> <span class="n">tracker</span><span class="o">.</span><span class="n">namespace</span><span class="p">(</span><span class="s1">&#39;valid&#39;</span><span class="p">):</span>
+<span class="lineno">406</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">()</span>
+<span class="lineno">407</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-23'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-23'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">409</span>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">410</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;Initialize&quot;</span><span class="p">):</span>
+<span class="lineno">411</span>            <span class="bp">self</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+<span class="lineno">412</span>        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span>
+<span class="lineno">413</span>        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span>
+<span class="lineno">414</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_loop</span><span class="p">:</span>
+<span class="lineno">415</span>            <span class="bp">self</span><span class="o">.</span><span class="n">run_step</span><span class="p">()</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-24'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-24'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">417</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">418</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-25'>
+        <div class='docs doc-strings'>
+            <div class='section-link'>
+                <a href='#section-25'>#</a>
+            </div>
+            <p> This is a configurable module that works for many standard DL experiments.</p>
+<p>Arguments:  model: A PyTorch model.  optimizer: A PyTorch optimizer to update model.  device: The device to train the model on. This defaults to a configurable device  loss_function: A function to calculate the loss. This should accept <code  class="highlight"><span></span></code>
+model_output, target<code  class="highlight"><span></span></code>
+ as  arguments.  update_batches (int): Number of batches to accumulate before taking an optimizer step.  Defaults to <code  class="highlight"><span></span></code>
+1<code  class="highlight"><span></span></code>
+.  log_save_batches (int): How often to call :func:<code  class="highlight"><span></span><span class="n">labml</span><span class="o">.</span><span class="n">tracker</span><span class="o">.</span><span class="n">save</span></code>
+.</p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">421</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">trainer</span><span class="p">)</span>
+<span class="lineno">422</span><span class="k">def</span> <span class="nf">_default_trainer</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainValidConfigs</span><span class="p">):</span>
+<span class="lineno">423</span>    <span class="k">return</span> <span class="n">Trainer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span>
+<span class="lineno">424</span>                   <span class="n">mode</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+<span class="lineno">425</span>                   <span class="n">data_loader</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">train_loader</span><span class="p">,</span>
+<span class="lineno">426</span>                   <span class="n">inner_iterations</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">,</span>
+<span class="lineno">427</span>                   <span class="n">state_modules</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">state_modules</span><span class="p">,</span>
+<span class="lineno">428</span>                   <span class="n">is_track_time</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">is_track_time</span><span class="p">,</span>
+<span class="lineno">429</span>                   <span class="n">step</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="lineno">430</span>
+<span class="lineno">431</span>
+<span class="lineno">432</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">validator</span><span class="p">)</span>
+<span class="lineno">433</span><span class="k">def</span> <span class="nf">_default_validator</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainValidConfigs</span><span class="p">):</span>
+<span class="lineno">434</span>    <span class="k">return</span> <span class="n">Trainer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Valid&#39;</span><span class="p">,</span>
+<span class="lineno">435</span>                   <span class="n">mode</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+<span class="lineno">436</span>                   <span class="n">data_loader</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">valid_loader</span><span class="p">,</span>
+<span class="lineno">437</span>                   <span class="n">inner_iterations</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">inner_iterations</span><span class="p">,</span>
+<span class="lineno">438</span>                   <span class="n">state_modules</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">state_modules</span><span class="p">,</span>
+<span class="lineno">439</span>                   <span class="n">is_track_time</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">is_track_time</span><span class="p">,</span>
+<span class="lineno">440</span>                   <span class="n">step</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="lineno">441</span>
+<span class="lineno">442</span>
+<span class="lineno">443</span><span class="nd">@option</span><span class="p">(</span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">loop_count</span><span class="p">)</span>
+<span class="lineno">444</span><span class="k">def</span> <span class="nf">_data_loop_count</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">TrainValidConfigs</span><span class="p">):</span>
+<span class="lineno">445</span>    <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">epochs</span>
+<span class="lineno">446</span>
+<span class="lineno">447</span>
+<span class="lineno">448</span><span class="k">class</span> <span class="nc">SimpleTrainValidConfigs</span><span class="p">(</span><span class="n">TrainValidConfigs</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-26'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-26'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">462</span>    <span class="n">optimizer</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span>
+<span class="lineno">463</span>    <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+<span class="lineno">464</span>    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">DeviceConfigs</span><span class="p">()</span>
+<span class="lineno">465</span>
+<span class="lineno">466</span>    <span class="n">loss_func</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+<span class="lineno">467</span>
+<span class="lineno">468</span>    <span class="n">update_batches</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">469</span>    <span class="n">log_save_batches</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="lineno">470</span>
+<span class="lineno">471</span>    <span class="n">state_modules</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StateModule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-27'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-27'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">473</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="lineno">474</span>        <span class="k">pass</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-28'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-28'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">476</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span>
+<span class="lineno">477</span>        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">)</span>
+<span class="lineno">478</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="lineno">479</span>
+<span class="lineno">480</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">481</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="lineno">482</span>
+<span class="lineno">483</span>        <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">):</span>
+<span class="lineno">484</span>            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="lineno">485</span>
+<span class="lineno">486</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">487</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+<span class="lineno">488</span>
+<span class="lineno">489</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">490</span>            <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;backward&#39;</span><span class="p">):</span>
+<span class="lineno">491</span>                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="lineno">492</span>
+<span class="lineno">493</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_interval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_batches</span><span class="p">):</span>
+<span class="lineno">494</span>                <span class="k">with</span> <span class="n">monit</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;optimize&#39;</span><span class="p">):</span>
+<span class="lineno">495</span>                    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="lineno">496</span>                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="lineno">497</span>
+<span class="lineno">498</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_interval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_save_batches</span><span class="p">):</span>
+<span class="lineno">499</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="lineno">500</span>
+<span class="lineno">501</span>
+<span class="lineno">502</span><span class="n">meta_config</span><span class="p">(</span><span class="n">SimpleTrainValidConfigs</span><span class="o">.</span><span class="n">update_batches</span><span class="p">,</span>
+<span class="lineno">503</span>            <span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-29'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-29'>#</a>
+            </div>
+            
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">506</span><span class="nd">@option</span><span class="p">(</span><span class="n">SimpleTrainValidConfigs</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span>
+<span class="lineno">507</span><span class="k">def</span> <span class="nf">_default_optimizer</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">SimpleTrainValidConfigs</span><span class="p">):</span>
+<span class="lineno">508</span>    <span class="kn">from</span> <span class="nn">.optimizer</span> <span class="kn">import</span> <span class="n">OptimizerConfigs</span>
+<span class="lineno">509</span>    <span class="n">opt_conf</span> <span class="o">=</span> <span class="n">OptimizerConfigs</span><span class="p">()</span>
+<span class="lineno">510</span>    <span class="n">opt_conf</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+<span class="lineno">511</span>    <span class="k">return</span> <span class="n">opt_conf</span></pre></div>
+        </div>
+    </div>
+    <div class='footer'>
+        <a href="https://labml.ai">labml.ai</a>
+    </div>
+</div>
+<script src=../interactive.js?v=1"></script>
+<script>
+    function handleImages() {
+        var images = document.querySelectorAll('p>img')
+
+        for (var i = 0; i < images.length; ++i) {
+            handleImage(images[i])
+        }
+    }
+
+    function handleImage(img) {
+        img.parentElement.style.textAlign = 'center'
+
+        var modal = document.createElement('div')
+        modal.id = 'modal'
+
+        var modalContent = document.createElement('div')
+        modal.appendChild(modalContent)
+
+        var modalImage = document.createElement('img')
+        modalContent.appendChild(modalImage)
+
+        var span = document.createElement('span')
+        span.classList.add('close')
+        span.textContent = 'x'
+        modal.appendChild(span)
+
+        img.onclick = function () {
+            console.log('clicked')
+            document.body.appendChild(modal)
+            modalImage.src = img.src
+        }
+
+        span.onclick = function () {
+            document.body.removeChild(modal)
+        }
+    }
+
+    handleImages()
+</script>
+</body>
+</html>

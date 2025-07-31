@@ -80,16 +80,14 @@
 <span class="lineno">12</span>
 <span class="lineno">13</span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="lineno">14</span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
-<span class="lineno">15</span>
-<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">logger</span>
-<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
-<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
-<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_helpers.metrics.simple_state</span> <span class="kn">import</span> <span class="n">SimpleStateModule</span>
-<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_helpers.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_helpers.train_valid</span> <span class="kn">import</span> <span class="n">BatchIndex</span><span class="p">,</span> <span class="n">hook_model_outputs</span>
-<span class="lineno">22</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">NLPAutoRegressionConfigs</span>
-<span class="lineno">23</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.compressive</span> <span class="kn">import</span> <span class="n">CompressiveTransformer</span><span class="p">,</span> <span class="n">AttentionReconstructionLoss</span><span class="p">,</span> \
-<span class="lineno">24</span>    <span class="n">CompressiveTransformerLayer</span><span class="p">,</span> <span class="n">Conv1dCompression</span></pre></div>
+<span class="lineno">15</span><span class="kn">from</span> <span class="nn">labml</span> <span class="kn">import</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">tracker</span><span class="p">,</span> <span class="n">monit</span><span class="p">,</span> <span class="n">logger</span>
+<span class="lineno">16</span><span class="kn">from</span> <span class="nn">labml.configs</span> <span class="kn">import</span> <span class="n">option</span>
+<span class="lineno">17</span><span class="kn">from</span> <span class="nn">labml.logger</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="lineno">18</span><span class="kn">from</span> <span class="nn">labml_nn.experiments.nlp_autoregression</span> <span class="kn">import</span> <span class="n">NLPAutoRegressionConfigs</span>
+<span class="lineno">19</span><span class="kn">from</span> <span class="nn">labml_nn.helpers.metrics</span> <span class="kn">import</span> <span class="n">SimpleStateModule</span>
+<span class="lineno">20</span><span class="kn">from</span> <span class="nn">labml_nn.helpers.trainer</span> <span class="kn">import</span> <span class="n">BatchIndex</span>
+<span class="lineno">21</span><span class="kn">from</span> <span class="nn">labml_nn.transformers.compressive</span> <span class="kn">import</span> <span class="n">CompressiveTransformer</span><span class="p">,</span> <span class="n">AttentionReconstructionLoss</span><span class="p">,</span> \
+<span class="lineno">22</span>    <span class="n">CompressiveTransformerLayer</span><span class="p">,</span> <span class="n">Conv1dCompression</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-1'>
@@ -100,9 +98,9 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">27</span><span class="k">class</span> <span class="nc">CompressedMemory</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="lineno">28</span>    <span class="n">mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
-<span class="lineno">29</span>    <span class="n">c_mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">25</span><span class="k">class</span> <span class="nc">CompressedMemory</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="lineno">26</span>    <span class="n">mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
+<span class="lineno">27</span>    <span class="n">c_mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-2'>
@@ -114,7 +112,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">32</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">30</span><span class="k">class</span> <span class="nc">AutoregressiveModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-3'>
@@ -125,8 +123,8 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">37</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">CompressiveTransformer</span><span class="p">):</span>
-<span class="lineno">38</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">35</span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">CompressiveTransformer</span><span class="p">):</span>
+<span class="lineno">36</span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-4'>
@@ -138,7 +136,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">40</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_vocab</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">38</span>        <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_vocab</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-5'>
@@ -150,7 +148,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">40</span>        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-6'>
@@ -162,7 +160,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">42</span>        <span class="bp">self</span><span class="o">.</span><span class="n">generator</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_vocab</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-7'>
@@ -174,8 +172,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">46</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="lineno">47</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">44</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="lineno">45</span>        <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="kc">None</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-8'>
@@ -186,7 +184,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">49</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mem</span><span class="p">:</span> <span class="n">CompressedMemory</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">47</span>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mem</span><span class="p">:</span> <span class="n">CompressedMemory</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-9'>
@@ -198,11 +196,11 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">51</span>        <span class="k">if</span> <span class="n">mem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<span class="lineno">52</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="n">mem</span><span class="o">.</span><span class="n">mem</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">c_mem</span>
-<span class="lineno">53</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">54</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="lineno">55</span>            <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">49</span>        <span class="k">if</span> <span class="n">mem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">50</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="n">mem</span><span class="o">.</span><span class="n">mem</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">c_mem</span>
+<span class="lineno">51</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">52</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">53</span>            <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-10'>
@@ -214,9 +212,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">58</span>        <span class="n">m_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">mem</span> <span class="k">else</span> <span class="mi">0</span>
-<span class="lineno">59</span>        <span class="k">if</span> <span class="n">c_mem</span><span class="p">:</span>
-<span class="lineno">60</span>            <span class="n">m_len</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">56</span>        <span class="n">m_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">mem</span> <span class="k">else</span> <span class="mi">0</span>
+<span class="lineno">57</span>        <span class="k">if</span> <span class="n">c_mem</span><span class="p">:</span>
+<span class="lineno">58</span>            <span class="n">m_len</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-11'>
@@ -228,9 +226,9 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">63</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="lineno">64</span>            <span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span>
-<span class="lineno">65</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">61</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="lineno">62</span>            <span class="kn">from</span> <span class="nn">labml_nn.transformers.utils</span> <span class="kn">import</span> <span class="n">subsequent_mask</span>
+<span class="lineno">63</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span> <span class="o">=</span> <span class="n">subsequent_mask</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-12'>
@@ -242,8 +240,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">67</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">m_len</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="lineno">68</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">m_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">65</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">m_len</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="lineno">66</span>            <span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">m_len</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-13'>
@@ -255,8 +253,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">71</span>        <span class="k">if</span> <span class="n">m_len</span><span class="p">:</span>
-<span class="lineno">72</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="n">m_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">69</span>        <span class="k">if</span> <span class="n">m_len</span><span class="p">:</span>
+<span class="lineno">70</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_mem</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="n">m_len</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-14'>
@@ -268,8 +266,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">74</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">75</span>            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">72</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">73</span>            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_x</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-15'>
@@ -281,7 +279,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">78</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">76</span>        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_embed</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-16'>
@@ -293,7 +291,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">res</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">78</span>        <span class="n">res</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-17'>
@@ -305,7 +303,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">82</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">80</span>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-18'>
@@ -317,7 +315,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">84</span>        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">mem</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">82</span>        <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">mem</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-19'>
@@ -330,7 +328,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">87</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">NLPAutoRegressionConfigs</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">85</span><span class="k">class</span> <span class="nc">Configs</span><span class="p">(</span><span class="n">NLPAutoRegressionConfigs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-20'>
@@ -341,7 +339,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">94</span>    <span class="n">model</span><span class="p">:</span> <span class="n">AutoregressiveModel</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">92</span>    <span class="n">model</span><span class="p">:</span> <span class="n">AutoregressiveModel</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-21'>
@@ -353,7 +351,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">97</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">95</span>    <span class="n">d_model</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-22'>
@@ -365,7 +363,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">99</span>    <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">97</span>    <span class="n">heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-23'>
@@ -377,7 +375,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">101</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">99</span>    <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-24'>
@@ -389,7 +387,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">103</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">101</span>    <span class="n">d_ff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-25'>
@@ -401,7 +399,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">105</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">103</span>    <span class="n">n_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-26'>
@@ -413,7 +411,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">107</span>    <span class="n">mem_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">105</span>    <span class="n">mem_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-27'>
@@ -425,7 +423,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">109</span>    <span class="n">memory</span> <span class="o">=</span> <span class="n">SimpleStateModule</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">107</span>    <span class="n">memory</span> <span class="o">=</span> <span class="n">SimpleStateModule</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-28'>
@@ -437,7 +435,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">111</span>    <span class="n">attention_reconstruction_loss</span><span class="p">:</span> <span class="n">AttentionReconstructionLoss</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">109</span>    <span class="n">attention_reconstruction_loss</span><span class="p">:</span> <span class="n">AttentionReconstructionLoss</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-29'>
@@ -449,7 +447,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">113</span>    <span class="n">compression_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">111</span>    <span class="n">compression_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-30'>
@@ -461,7 +459,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">115</span>    <span class="n">c_mem_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">113</span>    <span class="n">c_mem_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-31'>
@@ -472,7 +470,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">117</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">115</span>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-32'>
@@ -484,8 +482,8 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">119</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;accuracy.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-<span class="lineno">120</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;loss.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">117</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;accuracy.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="lineno">118</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;loss.*&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-33'>
@@ -497,7 +495,7 @@
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">122</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;ar_loss.*&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">120</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">set_scalar</span><span class="p">(</span><span class="s2">&quot;ar_loss.*&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-34'>
@@ -505,37 +503,38 @@
             <div class='section-link'>
                 <a href='#section-34'>#</a>
             </div>
-            <p>Add a hook to log module outputs </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">124</span>        <span class="n">hook_model_outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-35'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-35'>#</a>
-            </div>
             <p>This will keep the accuracy metric stats and memories separate for training and validation. </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">126</span>        <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">122</span>        <span class="bp">self</span><span class="o">.</span><span class="n">state_modules</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="p">]</span></pre></div>
         </div>
     </div>
-    <div class='section' id='section-36'>
+    <div class='section' id='section-35'>
         <div class='docs doc-strings'>
             <div class='section-link'>
-                <a href='#section-36'>#</a>
+                <a href='#section-35'>#</a>
             </div>
             <p> Concatenate new memories and compress the oldest memories.</p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">128</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
-<span class="lineno">129</span>    <span class="k">def</span> <span class="nf">merge_compress_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mem</span><span class="p">:</span> <span class="n">CompressedMemory</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> \
-<span class="lineno">130</span>            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CompressedMemory</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">124</span>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="lineno">125</span>    <span class="k">def</span> <span class="nf">merge_compress_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mem</span><span class="p">:</span> <span class="n">CompressedMemory</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> \
+<span class="lineno">126</span>            <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">CompressedMemory</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-36'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-36'>#</a>
+            </div>
+            <p>If the configurations specify not to use memory </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">132</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="lineno">133</span>            <span class="k">return</span> <span class="n">CompressedMemory</span><span class="p">([],</span> <span class="p">[]),</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-37'>
@@ -543,12 +542,14 @@
             <div class='section-link'>
                 <a href='#section-37'>#</a>
             </div>
-            <p>If the configurations specify not to use memory </p>
+            <p>Get memory and compressed memory </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<span class="lineno">137</span>            <span class="k">return</span> <span class="n">CompressedMemory</span><span class="p">([],</span> <span class="p">[]),</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">136</span>        <span class="k">if</span> <span class="n">mem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="lineno">137</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="n">mem</span><span class="o">.</span><span class="n">mem</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">c_mem</span>
+<span class="lineno">138</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">139</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-38'>
@@ -556,14 +557,14 @@
             <div class='section-link'>
                 <a href='#section-38'>#</a>
             </div>
-            <p>Get memory and compressed memory </p>
+            <p>Concatenate new memories with old memory </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">140</span>        <span class="k">if</span> <span class="n">mem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<span class="lineno">141</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="n">mem</span><span class="o">.</span><span class="n">mem</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">c_mem</span>
-<span class="lineno">142</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">143</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">142</span>        <span class="k">if</span> <span class="n">mem</span><span class="p">:</span>
+<span class="lineno">143</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)]</span>
+<span class="lineno">144</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">145</span>            <span class="n">mem</span> <span class="o">=</span> <span class="n">new_mem</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-39'>
@@ -571,14 +572,12 @@
             <div class='section-link'>
                 <a href='#section-39'>#</a>
             </div>
-            <p>Concatenate new memories with old memory </p>
+            <p>Compress the oldest memories if there are more memories than <code  class="highlight"><span></span><span class="n">mem_len</span></code>
+ </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">146</span>        <span class="k">if</span> <span class="n">mem</span><span class="p">:</span>
-<span class="lineno">147</span>            <span class="n">mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)]</span>
-<span class="lineno">148</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">149</span>            <span class="n">mem</span> <span class="o">=</span> <span class="n">new_mem</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">148</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-40'>
@@ -586,12 +585,12 @@
             <div class='section-link'>
                 <a href='#section-40'>#</a>
             </div>
-            <p>Compress the oldest memories if there are more memories than <code  class="highlight"><span></span><span class="n">mem_len</span></code>
- </p>
+            <p>Calculate the number of compressed memories to make <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">c</span><span class="mord mathnormal mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="mord"><span class="delimsizing size3">⌈</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.08968em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.5102em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqc" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8278285714285715em;"><span style="top:-2.214em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span></span><span class="mbin mtight">−</span><span class="mord mtight coloredeq eqd" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.16454285714285719em;"><span style="top:-2.357em;margin-left:-0.10903em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size3">⌉</span></span></span></span></span></span>, where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.998892em;vertical-align:-0.247em;"></span><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span></span></span></span></span></span> is the number of memories we have and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqd" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> is the maximum number of memories we maintain (<code  class="highlight"><span></span><span class="n">mem_len</span></code>
+). </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">152</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">152</span>            <span class="n">n_c_mem</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-41'>
@@ -599,12 +598,11 @@
             <div class='section-link'>
                 <a href='#section-41'>#</a>
             </div>
-            <p>Calculate the number of compressed memories to make <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">c</span><span class="mord mathnormal mtight">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="mord"><span class="delimsizing size3">⌈</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.08968em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.5102em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight coloredeq eqc" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8278285714285715em;"><span style="top:-2.214em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286em;"><span></span></span></span></span></span></span></span><span class="mbin mtight">−</span><span class="mord mtight coloredeq eqd" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.16454285714285719em;"><span style="top:-2.357em;margin-left:-0.10903em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord"><span class="delimsizing size3">⌉</span></span></span></span></span></span>, where <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.998892em;vertical-align:-0.247em;"></span><span class="mord coloredeq eqc" style=""><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.751892em;"><span style="top:-2.4530000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mtight" style="">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span></span></span></span></span></span> is the number of memories we have and <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqd" style=""><span class="mord" style=""><span class="mord mathnormal" style="margin-right:0.10903em">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mathnormal mtight" style="">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> is the maximum number of memories we maintain (<code  class="highlight"><span></span><span class="n">mem_len</span></code>
-). </p>
+            <p>Number of memories to compress <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqb" style=""><span class="mord mathnormal" style="">c</span><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">c</span><span class="mord mathnormal mtight" style="">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">156</span>            <span class="n">n_c_mem</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_len</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">154</span>            <span class="n">n_old</span> <span class="o">=</span> <span class="n">n_c_mem</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-42'>
@@ -612,11 +610,11 @@
             <div class='section-link'>
                 <a href='#section-42'>#</a>
             </div>
-            <p>Number of memories to compress <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqb" style=""><span class="mord mathnormal" style="">c</span><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">c</span><span class="mord mathnormal mtight" style="">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> </p>
+            <p>A list to keep memories that need to be compressed for each layer. </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">158</span>            <span class="n">n_old</span> <span class="o">=</span> <span class="n">n_c_mem</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">compression_rate</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">156</span>            <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-43'>
@@ -624,11 +622,11 @@
             <div class='section-link'>
                 <a href='#section-43'>#</a>
             </div>
-            <p>A list to keep memories that need to be compressed for each layer. </p>
+            <p>A list to keep the memories that do not get compressed for each layer. </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">160</span>            <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">158</span>            <span class="n">uncompressed_mem</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-44'>
@@ -636,11 +634,11 @@
             <div class='section-link'>
                 <a href='#section-44'>#</a>
             </div>
-            <p>A list to keep the memories that do not get compressed for each layer. </p>
+            <p>Iterate through memories of each layer. </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">162</span>            <span class="n">uncompressed_mem</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">160</span>            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-45'>
@@ -648,11 +646,11 @@
             <div class='section-link'>
                 <a href='#section-45'>#</a>
             </div>
-            <p>Iterate through memories of each layer. </p>
+            <p>Split the memories at <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqb" style=""><span class="mord mathnormal" style="">c</span><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">c</span><span class="mord mathnormal mtight" style="">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">164</span>            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">162</span>                <span class="n">cm</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">[</span><span class="n">n_old</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_old</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-46'>
@@ -660,11 +658,11 @@
             <div class='section-link'>
                 <a href='#section-46'>#</a>
             </div>
-            <p>Split the memories at <span ><span class="katex"><span aria-hidden="true" class="katex-html"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord coloredeq eqb" style=""><span class="mord mathnormal" style="">c</span><span class="mord" style=""><span class="mord mathnormal" style="">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight" style=""><span class="mord mtight" style=""><span class="mord mathnormal mtight" style="">c</span><span class="mord mathnormal mtight" style="">m</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span> </p>
+            <p>Collect memories to compress </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">166</span>                <span class="n">cm</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">[</span><span class="n">n_old</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_old</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">164</span>                <span class="n">mem_to_compress</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cm</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-47'>
@@ -672,11 +670,11 @@
             <div class='section-link'>
                 <a href='#section-47'>#</a>
             </div>
-            <p>Collect memories to compress </p>
+            <p>Collect remaining memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">168</span>                <span class="n">mem_to_compress</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cm</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">166</span>                <span class="n">uncompressed_mem</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-48'>
@@ -684,11 +682,11 @@
             <div class='section-link'>
                 <a href='#section-48'>#</a>
             </div>
-            <p>Collect remaining memories </p>
+            <p>Update the memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">170</span>                <span class="n">uncompressed_mem</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">168</span>            <span class="n">mem</span> <span class="o">=</span> <span class="n">uncompressed_mem</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-49'>
@@ -696,11 +694,13 @@
             <div class='section-link'>
                 <a href='#section-49'>#</a>
             </div>
-            <p>Update the memories </p>
+            <p>Compress the memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">172</span>            <span class="n">mem</span> <span class="o">=</span> <span class="n">uncompressed_mem</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">171</span>            <span class="n">new_c_mem</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="lineno">172</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+<span class="lineno">173</span>                <span class="n">new_c_mem</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">mem_to_compress</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-50'>
@@ -708,13 +708,12 @@
             <div class='section-link'>
                 <a href='#section-50'>#</a>
             </div>
-            <p>Compress the memories </p>
+            <p>Concatenate newly compressed memories with old compressed memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">175</span>            <span class="n">new_c_mem</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="lineno">176</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
-<span class="lineno">177</span>                <span class="n">new_c_mem</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">mem_to_compress</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">176</span>            <span class="k">if</span> <span class="n">c_mem</span><span class="p">:</span>
+<span class="lineno">177</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">nm</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">c_mem</span><span class="p">,</span> <span class="n">new_c_mem</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-51'>
@@ -722,12 +721,12 @@
             <div class='section-link'>
                 <a href='#section-51'>#</a>
             </div>
-            <p>Concatenate newly compressed memories with old compressed memories </p>
+            <p>If there are no old compressed memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">180</span>            <span class="k">if</span> <span class="n">c_mem</span><span class="p">:</span>
-<span class="lineno">181</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">nm</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">c_mem</span><span class="p">,</span> <span class="n">new_c_mem</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">179</span>            <span class="k">else</span><span class="p">:</span>
+<span class="lineno">180</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="n">new_c_mem</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-52'>
@@ -735,12 +734,12 @@
             <div class='section-link'>
                 <a href='#section-52'>#</a>
             </div>
-            <p>If there are no old compressed memories </p>
+            <p>Truncate old memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">183</span>            <span class="k">else</span><span class="p">:</span>
-<span class="lineno">184</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="n">new_c_mem</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">183</span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span><span class="p">:</span>
+<span class="lineno">184</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span><span class="p">:]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">c_mem</span><span class="p">]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-53'>
@@ -748,12 +747,13 @@
             <div class='section-link'>
                 <a href='#section-53'>#</a>
             </div>
-            <p>Truncate old memories </p>
+            <p>No memories are compressed if the number of memories is less than <code  class="highlight"><span></span><span class="n">mem_len</span></code>
+ </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">187</span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c_mem</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span><span class="p">:</span>
-<span class="lineno">188</span>                <span class="n">c_mem</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">c_mem_len</span><span class="p">:]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">c_mem</span><span class="p">]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">186</span>        <span class="k">else</span><span class="p">:</span>
+<span class="lineno">187</span>            <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-54'>
@@ -761,37 +761,35 @@
             <div class='section-link'>
                 <a href='#section-54'>#</a>
             </div>
-            <p>No memories are compressed if the number of memories is less than <code  class="highlight"><span></span><span class="n">mem_len</span></code>
- </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">190</span>        <span class="k">else</span><span class="p">:</span>
-<span class="lineno">191</span>            <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="p">[]</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-55'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-55'>#</a>
-            </div>
             <p>Return memories and the memories that were compressed. Memories that were compressed are needed for the reconstruction loss computation. </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">195</span>        <span class="k">return</span> <span class="n">CompressedMemory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span><span class="p">),</span> <span class="n">mem_to_compress</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">191</span>        <span class="k">return</span> <span class="n">CompressedMemory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">c_mem</span><span class="p">),</span> <span class="n">mem_to_compress</span></pre></div>
         </div>
     </div>
-    <div class='section' id='section-56'>
+    <div class='section' id='section-55'>
         <div class='docs doc-strings'>
             <div class='section-link'>
-                <a href='#section-56'>#</a>
+                <a href='#section-55'>#</a>
             </div>
             <h3>Training/validation step</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">197</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">193</span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">batch_idx</span><span class="p">:</span> <span class="n">BatchIndex</span><span class="p">):</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-56'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-56'>#</a>
+            </div>
+            <p>Move data to the device </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">199</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-57'>
@@ -799,11 +797,12 @@
             <div class='section-link'>
                 <a href='#section-57'>#</a>
             </div>
-            <p>Move data to the device </p>
+            <p>Update global step (number of tokens processed) when in training mode </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">203</span>        <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">202</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
+<span class="lineno">203</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-58'>
@@ -811,12 +810,11 @@
             <div class='section-link'>
                 <a href='#section-58'>#</a>
             </div>
-            <p>Update global step (number of tokens processed) when in training mode </p>
+            <p>Get memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">206</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span>
-<span class="lineno">207</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add_global_step</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">206</span>        <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-59'>
@@ -824,11 +822,11 @@
             <div class='section-link'>
                 <a href='#section-59'>#</a>
             </div>
-            <p>Whether to capture model outputs </p>
+            <p>Run the model </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">210</span>        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">is_log_activations</span><span class="o">=</span><span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">208</span>        <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-60'>
@@ -836,11 +834,11 @@
             <div class='section-link'>
                 <a href='#section-60'>#</a>
             </div>
-            <p>Get memories </p>
+            <p>Merge and compress memory </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">212</span>            <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">210</span>        <span class="n">mem</span><span class="p">,</span> <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_compress_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-61'>
@@ -848,11 +846,11 @@
             <div class='section-link'>
                 <a href='#section-61'>#</a>
             </div>
-            <p>Run the model </p>
+            <p>Update memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">214</span>            <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">212</span>        <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-62'>
@@ -860,11 +858,12 @@
             <div class='section-link'>
                 <a href='#section-62'>#</a>
             </div>
-            <p>Merge and compress memory </p>
+            <p>Calculate and log cross entropy loss </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">216</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">mem_to_compress</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_compress_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">215</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">216</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-63'>
@@ -872,11 +871,11 @@
             <div class='section-link'>
                 <a href='#section-63'>#</a>
             </div>
-            <p>Update memories </p>
+            <p>Calculate attention reconstruction loss if memories were compressed in this step </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">218</span>            <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">219</span>        <span class="k">if</span> <span class="n">mem_to_compress</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-64'>
@@ -884,12 +883,11 @@
             <div class='section-link'>
                 <a href='#section-64'>#</a>
             </div>
-            <p>Calculate and log cross entropy loss </p>
+            <p>Get attention reconstruction loss </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">221</span>        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_func</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-<span class="lineno">222</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;loss.&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">221</span>            <span class="n">ar_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attention_reconstruction_loss</span><span class="p">(</span><span class="n">new_mem</span><span class="p">,</span> <span class="n">mem_to_compress</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-65'>
@@ -897,11 +895,11 @@
             <div class='section-link'>
                 <a href='#section-65'>#</a>
             </div>
-            <p>Calculate attention reconstruction loss if memories were compressed in this step </p>
+            <p>Track attention reconstruction loss </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">225</span>        <span class="k">if</span> <span class="n">mem_to_compress</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">223</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;ar_loss.&quot;</span><span class="p">,</span> <span class="n">ar_loss</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-66'>
@@ -909,11 +907,11 @@
             <div class='section-link'>
                 <a href='#section-66'>#</a>
             </div>
-            <p>Get attention reconstruction loss </p>
+            <p>Add attention reconstruction loss to loss </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">227</span>            <span class="n">ar_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attention_reconstruction_loss</span><span class="p">(</span><span class="n">new_mem</span><span class="p">,</span> <span class="n">mem_to_compress</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">225</span>            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">+</span> <span class="n">ar_loss</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-67'>
@@ -921,11 +919,12 @@
             <div class='section-link'>
                 <a href='#section-67'>#</a>
             </div>
-            <p>Track attention reconstruction loss </p>
+            <p>Calculate and log accuracy </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">229</span>            <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;ar_loss.&quot;</span><span class="p">,</span> <span class="n">ar_loss</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">228</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<span class="lineno">229</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">track</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-68'>
@@ -933,11 +932,11 @@
             <div class='section-link'>
                 <a href='#section-68'>#</a>
             </div>
-            <p>Add attention reconstruction loss to loss </p>
+            <p>Train the model </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">231</span>            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">+</span> <span class="n">ar_loss</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">232</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-69'>
@@ -945,12 +944,11 @@
             <div class='section-link'>
                 <a href='#section-69'>#</a>
             </div>
-            <p>Calculate and log accuracy </p>
+            <p>Calculate gradients </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">234</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-<span class="lineno">235</span>        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">track</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">234</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-70'>
@@ -958,11 +956,11 @@
             <div class='section-link'>
                 <a href='#section-70'>#</a>
             </div>
-            <p>Train the model </p>
+            <p>Clip gradients </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">238</span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">is_train</span><span class="p">:</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">236</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-71'>
@@ -970,11 +968,11 @@
             <div class='section-link'>
                 <a href='#section-71'>#</a>
             </div>
-            <p>Calculate gradients </p>
+            <p>Take optimizer step </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">240</span>            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">238</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-72'>
@@ -982,11 +980,12 @@
             <div class='section-link'>
                 <a href='#section-72'>#</a>
             </div>
-            <p>Clip gradients </p>
+            <p>Log the model parameters and gradients on last batch of every epoch </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">242</span>            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grad_norm_clip</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">240</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">:</span>
+<span class="lineno">241</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-73'>
@@ -994,11 +993,11 @@
             <div class='section-link'>
                 <a href='#section-73'>#</a>
             </div>
-            <p>Take optimizer step </p>
+            <p>Clear the gradients </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">244</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">243</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-74'>
@@ -1006,24 +1005,23 @@
             <div class='section-link'>
                 <a href='#section-74'>#</a>
             </div>
-            <p>Log the model parameters and gradients on last batch of every epoch </p>
+            <p>Save the tracked metrics </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">246</span>            <span class="k">if</span> <span class="n">batch_idx</span><span class="o">.</span><span class="n">is_last</span><span class="p">:</span>
-<span class="lineno">247</span>                <span class="n">tracker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">246</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-75'>
-        <div class='docs'>
+        <div class='docs doc-strings'>
             <div class='section-link'>
                 <a href='#section-75'>#</a>
             </div>
-            <p>Clear the gradients </p>
+            <h3>Sampling function to generate samples periodically while training</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">249</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">248</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-76'>
@@ -1031,23 +1029,23 @@
             <div class='section-link'>
                 <a href='#section-76'>#</a>
             </div>
-            <p>Save the tracked metrics </p>
+            <p>Starting prompt </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">252</span>        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">254</span>        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-77'>
-        <div class='docs doc-strings'>
+        <div class='docs'>
             <div class='section-link'>
                 <a href='#section-77'>#</a>
             </div>
-            <h3>Sampling function to generate samples periodically while training</h3>
+            <p>Collect output for printing </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">254</span>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">256</span>        <span class="n">log</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-78'>
@@ -1055,11 +1053,11 @@
             <div class='section-link'>
                 <a href='#section-78'>#</a>
             </div>
-            <p>Starting prompt </p>
+            <p>memory </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">260</span>        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">258</span>        <span class="n">mem</span> <span class="o">=</span> <span class="n">CompressedMemory</span><span class="p">([],</span> <span class="p">[])</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-79'>
@@ -1067,11 +1065,11 @@
             <div class='section-link'>
                 <a href='#section-79'>#</a>
             </div>
-            <p>Collect output for printing </p>
+            <p>Sample 25 tokens </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">262</span>        <span class="n">log</span> <span class="o">=</span> <span class="p">[(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">Text</span><span class="o">.</span><span class="n">subtle</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">260</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-80'>
@@ -1079,11 +1077,11 @@
             <div class='section-link'>
                 <a href='#section-80'>#</a>
             </div>
-            <p>memory </p>
+            <p>Tokenize the prompt </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">264</span>        <span class="n">mem</span> <span class="o">=</span> <span class="n">CompressedMemory</span><span class="p">([],</span> <span class="p">[])</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">262</span>            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-81'>
@@ -1091,11 +1089,11 @@
             <div class='section-link'>
                 <a href='#section-81'>#</a>
             </div>
-            <p>Sample 25 tokens </p>
+            <p>Move to device </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">266</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">monit</span><span class="o">.</span><span class="n">iterate</span><span class="p">(</span><span class="s1">&#39;Sample&#39;</span><span class="p">,</span> <span class="mi">25</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">264</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-82'>
@@ -1103,11 +1101,11 @@
             <div class='section-link'>
                 <a href='#section-82'>#</a>
             </div>
-            <p>Tokenize the prompt </p>
+            <p>Get the model output </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">268</span>            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">text_to_i</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">266</span>            <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-83'>
@@ -1115,11 +1113,11 @@
             <div class='section-link'>
                 <a href='#section-83'>#</a>
             </div>
-            <p>Move to device </p>
+            <p>Get the model prediction (greedy) </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">270</span>            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">268</span>            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-84'>
@@ -1127,11 +1125,11 @@
             <div class='section-link'>
                 <a href='#section-84'>#</a>
             </div>
-            <p>Get the model output </p>
+            <p>Add the prediction to prompt </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">272</span>            <span class="n">output</span><span class="p">,</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mem</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">270</span>            <span class="n">prompt</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-85'>
@@ -1139,11 +1137,11 @@
             <div class='section-link'>
                 <a href='#section-85'>#</a>
             </div>
-            <p>Get the model prediction (greedy) </p>
+            <p>Only feed the last character to model in next iteration, rest will go in as memories </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">274</span>            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">272</span>            <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-86'>
@@ -1151,11 +1149,11 @@
             <div class='section-link'>
                 <a href='#section-86'>#</a>
             </div>
-            <p>Add the prediction to prompt </p>
+            <p>Add the prediction for logging </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">276</span>            <span class="n">prompt</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">274</span>            <span class="n">log</span> <span class="o">+=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-87'>
@@ -1163,11 +1161,11 @@
             <div class='section-link'>
                 <a href='#section-87'>#</a>
             </div>
-            <p>Only feed the last character to model in next iteration, rest will go in as memories </p>
+            <p>Update and compress memory </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">278</span>            <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">276</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_compress_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-88'>
@@ -1175,23 +1173,24 @@
             <div class='section-link'>
                 <a href='#section-88'>#</a>
             </div>
-            <p>Add the prediction for logging </p>
+            <p>Print the sampled output </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">280</span>            <span class="n">log</span> <span class="o">+=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">prompt_separator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">itos</span><span class="p">[</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">Text</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">279</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-89'>
-        <div class='docs'>
+        <div class='docs doc-strings'>
             <div class='section-link'>
                 <a href='#section-89'>#</a>
             </div>
-            <p>Update and compress memory </p>
+            <h3>Initialize the auto-regressive model</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">282</span>            <span class="n">mem</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_compress_memory</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">new_mem</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">282</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="lineno">283</span><span class="k">def</span> <span class="nf">autoregressive_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-90'>
@@ -1199,11 +1198,18 @@
             <div class='section-link'>
                 <a href='#section-90'>#</a>
             </div>
-            <p>Print the sampled output </p>
-
+            
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">285</span>        <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">287</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.xl</span> <span class="kn">import</span> <span class="n">RelativeMultiHeadAttention</span>
+<span class="lineno">288</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
+<span class="lineno">289</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">AutoregressiveModel</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_tokens</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">CompressiveTransformer</span><span class="p">(</span>
+<span class="lineno">290</span>        <span class="n">CompressiveTransformerLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span>
+<span class="lineno">291</span>                                    <span class="n">self_attn</span><span class="o">=</span><span class="n">RelativeMultiHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">292</span>                                    <span class="n">feed_forward</span><span class="o">=</span><span class="n">FeedForward</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
+<span class="lineno">293</span>                                    <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span>
+<span class="lineno">294</span>                                    <span class="n">compress</span><span class="o">=</span><span class="n">Conv1dCompression</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">compression_rate</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">)),</span> <span class="n">c</span><span class="o">.</span><span class="n">n_layers</span><span class="p">))</span>
+<span class="lineno">295</span>    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-91'>
@@ -1211,12 +1217,12 @@
             <div class='section-link'>
                 <a href='#section-91'>#</a>
             </div>
-            <h3>Initialize the auto-regressive model</h3>
+            <h3>Initialize the attention reconstruction loss</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">288</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-<span class="lineno">289</span><span class="k">def</span> <span class="nf">autoregressive_model</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">298</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">attention_reconstruction_loss</span><span class="p">)</span>
+<span class="lineno">299</span><span class="k">def</span> <span class="nf">attention_reconstruction_loss</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-92'>
@@ -1227,15 +1233,7 @@
             
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">293</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.xl</span> <span class="kn">import</span> <span class="n">RelativeMultiHeadAttention</span>
-<span class="lineno">294</span>    <span class="kn">from</span> <span class="nn">labml_nn.transformers.feed_forward</span> <span class="kn">import</span> <span class="n">FeedForward</span>
-<span class="lineno">295</span>    <span class="n">m</span> <span class="o">=</span> <span class="n">AutoregressiveModel</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_tokens</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">CompressiveTransformer</span><span class="p">(</span>
-<span class="lineno">296</span>        <span class="n">CompressiveTransformerLayer</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span>
-<span class="lineno">297</span>                                    <span class="n">self_attn</span><span class="o">=</span><span class="n">RelativeMultiHeadAttention</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
-<span class="lineno">298</span>                                    <span class="n">feed_forward</span><span class="o">=</span><span class="n">FeedForward</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_ff</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">),</span>
-<span class="lineno">299</span>                                    <span class="n">dropout_prob</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span>
-<span class="lineno">300</span>                                    <span class="n">compress</span><span class="o">=</span><span class="n">Conv1dCompression</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">compression_rate</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">d_model</span><span class="p">)),</span> <span class="n">c</span><span class="o">.</span><span class="n">n_layers</span><span class="p">))</span>
-<span class="lineno">301</span>    <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">303</span>    <span class="k">return</span> <span class="n">AttentionReconstructionLoss</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-93'>
@@ -1243,12 +1241,11 @@
             <div class='section-link'>
                 <a href='#section-93'>#</a>
             </div>
-            <h3>Initialize the attention reconstruction loss</h3>
+            <h3>Run the experiment</h3>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">304</span><span class="nd">@option</span><span class="p">(</span><span class="n">Configs</span><span class="o">.</span><span class="n">attention_reconstruction_loss</span><span class="p">)</span>
-<span class="lineno">305</span><span class="k">def</span> <span class="nf">attention_reconstruction_loss</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="n">Configs</span><span class="p">):</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">306</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-94'>
@@ -1256,22 +1253,23 @@
             <div class='section-link'>
                 <a href='#section-94'>#</a>
             </div>
-            
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">309</span>    <span class="k">return</span> <span class="n">AttentionReconstructionLoss</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-95'>
-        <div class='docs doc-strings'>
-            <div class='section-link'>
-                <a href='#section-95'>#</a>
-            </div>
-            <h3>Run the experiment</h3>
+            <p>Create experiment </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">312</span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">311</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;compressive_transformer&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></pre></div>
+        </div>
+    </div>
+    <div class='section' id='section-95'>
+        <div class='docs'>
+            <div class='section-link'>
+                <a href='#section-95'>#</a>
+            </div>
+            <p>Create configs </p>
+
+        </div>
+        <div class='code'>
+            <div class="highlight"><pre><span class="lineno">313</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-96'>
@@ -1279,11 +1277,11 @@
             <div class='section-link'>
                 <a href='#section-96'>#</a>
             </div>
-            <p>Create experiment </p>
+            <p>Load configurations </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">317</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;compressive_transformer&quot;</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">315</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-97'>
@@ -1291,11 +1289,27 @@
             <div class='section-link'>
                 <a href='#section-97'>#</a>
             </div>
-            <p>Create configs </p>
+            <p>A dictionary of configurations to override </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">319</span>    <span class="n">conf</span> <span class="o">=</span> <span class="n">Configs</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">317</span>                       <span class="p">{</span><span class="s1">&#39;tokenizer&#39;</span><span class="p">:</span> <span class="s1">&#39;character&#39;</span><span class="p">,</span>
+<span class="lineno">318</span>                        <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span>
+<span class="lineno">319</span>                        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
+<span class="lineno">320</span>                        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;AdamW&#39;</span><span class="p">,</span>
+<span class="lineno">321</span>                        <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="s1">&#39;It is&#39;</span><span class="p">,</span>
+<span class="lineno">322</span>                        <span class="s1">&#39;prompt_separator&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="lineno">323</span>
+<span class="lineno">324</span>                        <span class="s1">&#39;train_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_train_loader&#39;</span><span class="p">,</span>
+<span class="lineno">325</span>                        <span class="s1">&#39;valid_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_valid_loader&#39;</span><span class="p">,</span>
+<span class="lineno">326</span>
+<span class="lineno">327</span>                        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+<span class="lineno">328</span>                        <span class="s1">&#39;mem_len&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+<span class="lineno">329</span>                        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+<span class="lineno">330</span>                        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<span class="lineno">331</span>                        <span class="s1">&#39;inner_iterations&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
+<span class="lineno">332</span>                        <span class="s1">&#39;compression_rate&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+<span class="lineno">333</span>                        <span class="p">})</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-98'>
@@ -1303,11 +1317,11 @@
             <div class='section-link'>
                 <a href='#section-98'>#</a>
             </div>
-            <p>Load configurations </p>
+            <p>Set models for saving and loading </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">321</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">336</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-99'>
@@ -1315,27 +1329,11 @@
             <div class='section-link'>
                 <a href='#section-99'>#</a>
             </div>
-            <p>A dictionary of configurations to override </p>
+            <p>Start the experiment </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">323</span>                       <span class="p">{</span><span class="s1">&#39;tokenizer&#39;</span><span class="p">:</span> <span class="s1">&#39;character&#39;</span><span class="p">,</span>
-<span class="lineno">324</span>                        <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;tiny_shakespeare&#39;</span><span class="p">,</span>
-<span class="lineno">325</span>                        <span class="s1">&#39;optimizer.learning_rate&#39;</span><span class="p">:</span> <span class="mf">2.5e-4</span><span class="p">,</span>
-<span class="lineno">326</span>                        <span class="s1">&#39;optimizer.optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;AdamW&#39;</span><span class="p">,</span>
-<span class="lineno">327</span>                        <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="s1">&#39;It is&#39;</span><span class="p">,</span>
-<span class="lineno">328</span>                        <span class="s1">&#39;prompt_separator&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-<span class="lineno">329</span>
-<span class="lineno">330</span>                        <span class="s1">&#39;train_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_train_loader&#39;</span><span class="p">,</span>
-<span class="lineno">331</span>                        <span class="s1">&#39;valid_loader&#39;</span><span class="p">:</span> <span class="s1">&#39;sequential_valid_loader&#39;</span><span class="p">,</span>
-<span class="lineno">332</span>
-<span class="lineno">333</span>                        <span class="s1">&#39;seq_len&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
-<span class="lineno">334</span>                        <span class="s1">&#39;mem_len&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
-<span class="lineno">335</span>                        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
-<span class="lineno">336</span>                        <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
-<span class="lineno">337</span>                        <span class="s1">&#39;inner_iterations&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
-<span class="lineno">338</span>                        <span class="s1">&#39;compression_rate&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-<span class="lineno">339</span>                        <span class="p">})</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">339</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-100'>
@@ -1343,11 +1341,12 @@
             <div class='section-link'>
                 <a href='#section-100'>#</a>
             </div>
-            <p>Set models for saving and loading </p>
+            <p><code  class="highlight"><span></span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">run</span></code>
+ </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">342</span>    <span class="n">experiment</span><span class="o">.</span><span class="n">add_pytorch_models</span><span class="p">({</span><span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">model</span><span class="p">})</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">341</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='section' id='section-101'>
@@ -1355,37 +1354,12 @@
             <div class='section-link'>
                 <a href='#section-101'>#</a>
             </div>
-            <p>Start the experiment </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">345</span>    <span class="k">with</span> <span class="n">experiment</span><span class="o">.</span><span class="n">start</span><span class="p">():</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-102'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-102'>#</a>
-            </div>
-            <p><code  class="highlight"><span></span><span class="n">TrainValidConfigs</span><span class="o">.</span><span class="n">run</span></code>
- </p>
-
-        </div>
-        <div class='code'>
-            <div class="highlight"><pre><span class="lineno">347</span>        <span class="n">conf</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></pre></div>
-        </div>
-    </div>
-    <div class='section' id='section-103'>
-        <div class='docs'>
-            <div class='section-link'>
-                <a href='#section-103'>#</a>
-            </div>
             <p> </p>
 
         </div>
         <div class='code'>
-            <div class="highlight"><pre><span class="lineno">351</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-<span class="lineno">352</span>    <span class="n">main</span><span class="p">()</span></pre></div>
+            <div class="highlight"><pre><span class="lineno">345</span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="lineno">346</span>    <span class="n">main</span><span class="p">()</span></pre></div>
         </div>
     </div>
     <div class='footer'>
