@@ -6,11 +6,13 @@
 \begin{align}
 S_{ij} &= q_i k_j^T
 \\
-P_{ij} &= \frac{e^{S_{ij}}}{\sum_j e^{S_{ij}}}
+L_i &= \sum_j e^{S_{ij}}
 \\
-O_i &= \sum_j P_{ij} o_j
+P_{ij} &= \frac{e^{S_{ij}}}{L_i}
 \\
-&= \frac{1}{\sum_j e^{S_{ij}}} \sum_j  e^{S_{ij}} o_j
+O_i &= \sum_j P_{ij} V_j
+\\
+&= \frac{1}{L_i} \sum_j  e^{S_{ij}} V_j
 \end{align}
 
 You can compute $O_i$, instead of doing the full softmax,
@@ -18,9 +20,9 @@ by computing the sum of exponents $l_i$ and the unnormalized output $\tilde{O}_i
 while iterating over keys:
 
 \begin{align}
-S_{ij} &= q_i k_j^T
+S_{ij} &= Q_i K_j^T
 \\
-l_i &= l_i + e^{S_{ij}}
+l_i &\leftarrow l_i + e^{S_{ij}}
 \\
 \tilde{O}_i &\leftarrow \tilde{O}_i + e^{S_{ij}} o_j
 \end{align}
@@ -55,6 +57,44 @@ Then finally,
 $$O_i = \frac{\tilde{O}_i}{l_i}$$
 
 ## Backward pass
+
+\begin{align}
+dV_j &= \sum_i P_{ij} dO_i
+\\
+dP_{ij} &= dO_{i} V_j^T
+\\
+dS_{ij} &= d\text{softmax}(dP_{ij})
+\\
+&= \sum_k P_{ik} (\delta_{jk} - P_{ij}) dP_{ik}
+\\
+&= P_{ij} dP_{ij} - P_{ij} \sum P_{ik} dP_{ik}
+\\
+dQ_i &= \sum_j dS_{ij} K_j
+\\
+qK_j &= \sum_i dS_{ij} Q_i
+\end{align}
+
+where $\delta_{jk}$ is $1$ when $j = k$ and $0$ otherwise.
+
+Flash attention paper introduces $D_i$ to simplify $dS$ computation.
+
+\begin{align}
+D_i &= \sum_k P_{ik} dP_{ik}
+\\
+&= \sum_k P_{ik} dO_i V_k^T
+\\
+&= dO_i \sum_k P_{ik} V_k^T
+\\
+&= dO_i O_i^T
+\end{align}
+
+Then,
+
+\begin{align}
+dS_{ij} = P_{ij} dP_{ij} - D_i P_{ij}
+\end{align}
+
+*Note: $Q_i$, $K_j$, $dQ_i$, etc are row vectors.*
 """
 
 from typing import Any, Tuple
