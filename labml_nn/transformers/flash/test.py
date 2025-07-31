@@ -19,7 +19,7 @@ def _calc_abs_rel_error(a: torch.Tensor, b: torch.Tensor, atol=1e-2):
 
 
 def _test_op(batch_size, n_heads, k_heads, q_seq_len, kv_seq_len, d_head, causal, dtype, device):
-    with monit.section('Init'):
+    with monit.section(f'Init {q_seq_len} {kv_seq_len} {d_head}'):
         torch.manual_seed(20)
         q = (torch.empty((batch_size, n_heads, q_seq_len, d_head),
                          dtype=dtype, device=device).normal_(mean=0.0, std=0.5).requires_grad_())
@@ -88,8 +88,7 @@ def _test_op(batch_size, n_heads, k_heads, q_seq_len, kv_seq_len, d_head, causal
         torch.cuda.synchronize()
 
 
-def _perf_triton_fn(*, device,
-                    dtype, batch_size, k_heads, n_groups, seq_len, d_head, causal, ):
+def _perf_triton_fn(*, device, dtype, batch_size, k_heads, n_groups, seq_len, d_head, causal):
     q = torch.randn((batch_size, k_heads * n_groups, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
     k = torch.randn((batch_size, k_heads, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
     v = torch.randn((batch_size, k_heads, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
@@ -97,8 +96,7 @@ def _perf_triton_fn(*, device,
     return lambda: attention(q, k, v, causal, sm_scale)
 
 
-def _perf_flash(*, batch_size, k_heads, n_groups, seq_len, d_head, causal, device,
-                dtype):
+def _perf_flash(*, batch_size, k_heads, n_groups, seq_len, d_head, causal, device, dtype):
     q = torch.randn((batch_size, seq_len, k_heads * n_groups, d_head), dtype=dtype, device=device, requires_grad=True)
     k = torch.randn((batch_size, seq_len, k_heads, d_head), dtype=dtype, device=device, requires_grad=True)
     v = torch.randn((batch_size, seq_len, k_heads, d_head), dtype=dtype, device=device, requires_grad=True)
@@ -128,13 +126,13 @@ def _test():
     device = torch.device('cuda:0')
     torch.cuda.set_device(device)
 
-    dtype = torch.bfloat16
+    dtype = torch.float16
 
     # only works on post-Ampere GPUs right now
     _test_op(1, 4, 1, 2048, 2048, 128, True, dtype=dtype, device=device)
-    _test_op(16, 32, 8, 2048, 4096, 128, False, dtype=dtype, device=device)
+    _test_op(16, 32, 8, 2001, 4001, 128, False, dtype=dtype, device=device)
     _test_op(4, 32, 8, 2048, 1024, 128, False, dtype=dtype, device=device)
-    _test_op(4, 32, 8, 2048, 2048, 128, True, dtype=dtype, device=device)
+    _test_op(4, 32, 8, 2001, 4001, 128, True, dtype=dtype, device=device)
 
     _conf = {
         'batch_size': 16,
