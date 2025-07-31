@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 
 import torch
+from torchvision import transforms
 
 from labml import lab, monit
 from labml_nn.diffusion.stable_diffusion.sampler.ddim import DDIMSampler
@@ -67,6 +68,8 @@ class Img2Img:
         prompts = batch_size * [prompt]
         # Load image
         orig_image = load_img(orig_img).to(self.device)
+        # Encode the image in the latent space and make `batch_size` copies of it
+        orig = self.model.autoencoder_encode(orig_image).repeat(batch_size, 1, 1, 1)
         # Encode the image in the latent space and make `batch_size` copies of it
         orig = self.model.autoencoder_encode(orig_image).repeat(batch_size, 1, 1, 1)
 
