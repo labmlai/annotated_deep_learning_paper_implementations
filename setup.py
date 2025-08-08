@@ -4,8 +4,8 @@ with open("readme.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='labml-nn',
-    version='0.5.0',
+    name='labml_nn',
+    version='0.5.1',
     author="Varuna Jayasiri, Nipun Wijerathne",
     author_email="vpjayasiri@gmail.com, hnipun@gmail.com",
     description="🧑‍🏫 Implementations/tutorials of deep learning papers with side-by-side notes 📝; including transformers (original, xl, switch, feedback, vit), optimizers (adam, radam, adabelief), gans(dcgan, cyclegan, stylegan2), 🎮 reinforcement learning (ppo, dqn), capsnet, distillation, diffusion, etc. 🧠",
