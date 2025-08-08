@@ -1,6 +1,12 @@
-import triton
+"""
+### Test Flash Attention Implementation
+
+This is the code to test and measure performance of our flash attention implementation
+"""
 
 import torch
+import triton
+
 from labml import logger, monit
 from labml_nn.transformers.flash import attention
 
@@ -9,6 +15,9 @@ HI_PRES_TORCH = torch.float32
 
 @torch.no_grad()
 def _calc_abs_rel_error(a: torch.Tensor, b: torch.Tensor, atol=1e-2):
+    """
+    #### Calculate absolute and relative error for reporting
+    """
     d = (a - b).abs()
     max_abs = d.max()
     d = (d - atol).clamp(min=0)
@@ -18,7 +27,11 @@ def _calc_abs_rel_error(a: torch.Tensor, b: torch.Tensor, atol=1e-2):
     return max_abs.cpu().item(), max_rel.cpu().item()
 
 
-def _test_op(batch_size, n_heads, k_heads, q_seq_len, kv_seq_len, d_head, causal, dtype, device):
+def test_fwd_bwd(batch_size, n_heads, k_heads, q_seq_len, kv_seq_len, d_head, causal, dtype, device):
+    """
+    #### Compare our implementation with naive PyTorch attention
+    """
+
     with monit.section(f'Init {q_seq_len} {kv_seq_len} {d_head}'):
         torch.manual_seed(20)
         q = (torch.empty((batch_size, n_heads, q_seq_len, d_head),
@@ -89,6 +102,9 @@ def _test_op(batch_size, n_heads, k_heads, q_seq_len, kv_seq_len, d_head, causal
 
 
 def _perf_triton_fn(*, device, dtype, batch_size, k_heads, n_groups, seq_len, d_head, causal):
+    """
+    Get a partial function to test performance of our implementation
+    """
     q = torch.randn((batch_size, k_heads * n_groups, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
     k = torch.randn((batch_size, k_heads, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
     v = torch.randn((batch_size, k_heads, seq_len, d_head), dtype=dtype, device=device, requires_grad=True)
@@ -97,6 +113,9 @@ def _perf_triton_fn(*, device, dtype, batch_size, k_heads, n_groups, seq_len, d_
 
 
 def _perf_flash(*, batch_size, k_heads, n_groups, seq_len, d_head, causal, device, dtype):
+    """
+    Get a partial function to test performance of original flash implementation
+    """
     q = torch.randn((batch_size, seq_len, k_heads * n_groups, d_head), dtype=dtype, device=device, requires_grad=True)
     k = torch.randn((batch_size, seq_len, k_heads, d_head), dtype=dtype, device=device, requires_grad=True)
     v = torch.randn((batch_size, seq_len, k_heads, d_head), dtype=dtype, device=device, requires_grad=True)
@@ -104,7 +123,10 @@ def _perf_flash(*, batch_size, k_heads, n_groups, seq_len, d_head, causal, devic
     return lambda: flash_attn_func(q, k, v, causal=causal)
 
 
-def _perf_fn(name, fn, *, batch_size, k_heads, n_groups, seq_len, d_head, causal, is_bwd: bool):
+def measure_performance(name, fn, *, batch_size, k_heads, n_groups, seq_len, d_head, causal, is_bwd: bool):
+    """
+    ### Measure the speed
+    """
     if is_bwd:
         o = fn()
         do = torch.randn_like(o)
@@ -122,17 +144,17 @@ def _perf_fn(name, fn, *, batch_size, k_heads, n_groups, seq_len, d_head, causal
     logger.log((f'{name}', logger.Text.key), ': ', f'{ms :,.1f}ms', ' ', f'{tf_ps :,.2f}TFps')
 
 
-def _test():
+def main():
     device = torch.device('cuda:0')
     torch.cuda.set_device(device)
 
     dtype = torch.float16
 
     # only works on post-Ampere GPUs right now
-    _test_op(1, 4, 1, 2048, 2048, 128, True, dtype=dtype, device=device)
-    _test_op(16, 32, 8, 2001, 4001, 128, False, dtype=dtype, device=device)
-    _test_op(4, 32, 8, 2048, 1024, 128, False, dtype=dtype, device=device)
-    _test_op(4, 32, 8, 2001, 4001, 128, True, dtype=dtype, device=device)
+    test_fwd_bwd(1, 4, 1, 2048, 2048, 128, True, dtype=dtype, device=device)
+    test_fwd_bwd(16, 32, 8, 2001, 4001, 128, False, dtype=dtype, device=device)
+    test_fwd_bwd(4, 32, 8, 2048, 1024, 128, False, dtype=dtype, device=device)
+    test_fwd_bwd(4, 32, 8, 2001, 4001, 128, True, dtype=dtype, device=device)
 
     _conf = {
         'batch_size': 16,
@@ -145,13 +167,13 @@ def _test():
     for _causal in [False, True]:
         for is_bwd in [False, True]:
             logger.log(f'{"Causal" if _causal else "Non-causal"} {" Backward" if is_bwd else ""}', logger.Text.title)
-            _perf_fn(f'flash', _perf_flash(causal=_causal, device=device, dtype=dtype, **_conf),
-                     is_bwd=is_bwd,
-                     causal=_causal, **_conf)
-            _perf_fn(f'triton', _perf_triton_fn(causal=_causal, device=device, dtype=dtype, **_conf),
-                     is_bwd=is_bwd,
-                     causal=_causal, **_conf)
+            measure_performance(f'flash', _perf_flash(causal=_causal, device=device, dtype=dtype, **_conf),
+                                is_bwd=is_bwd,
+                                causal=_causal, **_conf)
+            measure_performance(f'triton', _perf_triton_fn(causal=_causal, device=device, dtype=dtype, **_conf),
+                                is_bwd=is_bwd,
+                                causal=_causal, **_conf)
 
 
 if __name__ == "__main__":
-    _test()
+    main()

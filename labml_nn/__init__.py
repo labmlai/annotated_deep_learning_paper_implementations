@@ -25,6 +25,7 @@ implementations.
 #### ✨ [Transformers](transformers/index.html)
 
 * [Multi-headed attention](transformers/mha.html)
+* [Triton Flash Attention](transformers/flash/index.html)
 * [Transformer building blocks](transformers/models.html)
 * [Transformer XL](transformers/xl/index.html)
     * [Relative multi-headed attention](transformers/xl/relative_mha.html)

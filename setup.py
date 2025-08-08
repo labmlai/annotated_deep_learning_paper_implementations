@@ -5,7 +5,7 @@ with open("readme.md", "r", encoding="utf-8") as f:
 
 setuptools.setup(
     name='labml-nn',
-    version='0.4.137',
+    version='0.5.0',
     author="Varuna Jayasiri, Nipun Wijerathne",
     author_email="vpjayasiri@gmail.com, hnipun@gmail.com",
     description="🧑‍🏫 Implementations/tutorials of deep learning papers with side-by-side notes 📝; including transformers (original, xl, switch, feedback, vit), optimizers (adam, radam, adabelief), gans(dcgan, cyclegan, stylegan2), 🎮 reinforcement learning (ppo, dqn), capsnet, distillation, diffusion, etc. 🧠",
@@ -20,7 +20,7 @@ setuptools.setup(
                                                'labml_helpers', 'labml_helpers.*',
                                                'test',
                                                'test.*')),
-    install_requires=['labml==0.4.168',
+    install_requires=['labml',
                       'torch',
                       'torchtext',
                       'torchvision',

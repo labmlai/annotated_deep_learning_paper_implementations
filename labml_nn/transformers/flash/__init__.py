@@ -1,7 +1,35 @@
 """
+---
+title: Flash Attention
+summary: >
+  This is a PyTorch/Triton implementation of Flash Attention 2
+  with explanations.
+---
+
 # Flash Attention
 
+Flash attention speeds up transformer attention mechanism by reducing the number of
+memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM.
+
+It's introduced in paper
+[FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135)
+and further optimized in paper
+[FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning](https://arxiv.org/abs/2307.08691).
+Official CUDA implementation can be found at [Dao-AILab/flash-attention](https://github.com/Dao-AILab/flash-attention).
+
+Our implementation is based on the
+[Triton's example implementation](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html).
+
+*Note: You can click on the mathematical symbols or identifiers to highlight them*.
+
+You can run [test.py](./test.html) to see correctness and measure performance of this implementation.
+
 ## Forward pass
+
+Here's the attention forward pass. The formulas represent a single attention head.
+$Q_i$ is query vector (row vector) at position $i$
+and $K_j$ and $V_j$ are the key and value row vectors at position $j$.
+$O_i$ is the output vector at position $i$.
 
 \begin{align}
 S_{ij} &= \sigma Q_i K_j^T
@@ -14,6 +42,12 @@ O_i &= \sum_j P_{ij} V_j
 \\
 &= \frac{1}{L_i} \sum_j  e^{S_{ij}} V_j
 \end{align}
+
+$S_{ij}$ is the attention score matrix before softmax,
+$L_i$ is the softmax denominator,
+and $P_{ij}$ is the attention matrix after softmax.
+
+#### Flash Attention Optimization
 
 You can compute $O_i$, instead of doing the full softmax,
 by computing the sum of exponents $l_i$ and the unnormalized output $\tilde{O}_i$
@@ -57,7 +91,13 @@ Then finally,
 
 $$O_i = \frac{\tilde{O}_i}{l_i}$$
 
+This reduces the memory usage since we don't have to compute full $S_{ij}$ matrix or $P_{ij}$ matrix.
+It also speeds up since we don't have to load these large matrices.
+Instead it only loads blocks of $K$ and $V$ as it iterates over them.
+
 ## Backward pass
+
+Here's the standard backward pass. $dO_i$ is the gradient vector on the output $O_i$
 
 \begin{align}
 dV_j &= \sum_i P_{ij} dO_i
@@ -95,7 +135,14 @@ Then,
 dS_{ij} = P_{ij} dP_{ij} - D_i P_{ij}
 \end{align}
 
-*Note: $Q_i$, $K_j$, $dQ_i$, etc are row vectors.*
+Flash attention saves $L_i$ from the forward pass since it doesn't take much memory.
+So during the backward pass it doesn't have to keep computing $l_i$ or $m_i$.
+
+It first computes $D_i$.
+Then it iterates over the queries and compute (accumulate) $dK_j$ and $dV_j$.
+Finally it iterates over the keys and compute (accumulate) $dQ_i$.
+
+In both forward and backward pass we calculate logarithms and exponentials of $2$ instead of $e$ for performance.
 """
 
 from typing import Any, Tuple
@@ -110,9 +157,12 @@ HI_PRES_TORCH: torch.dtype = torch.float32
 
 class AttentionFunc(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
+    def forward(ctx: Any,
+                q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
                 causal: bool, sm_scale: float) -> torch.Tensor:
         """
+        ### Forward pass
+
         Group query attention forward pass. Returns the output in shape `[batch_size, n_heads, q_seq_len, d_head]`.
 
         :param ctx: is the context for torch gradient descent
@@ -121,7 +171,7 @@ class AttentionFunc(torch.autograd.Function):
         :param k: has shape `[batch_size, k_heads, kv_seq_len, d_head]`
         :param v: has shape `[batch_size, k_heads, kv_seq_len, d_head]`
         :param causal: whether to apply causal attention mask
-        :param sm_scale: softmax scale factor
+        :param sm_scale: softmax scale factor $\sigma$
         """
         batch_size, n_heads, q_seq_len, d_head = q.shape
         _, k_heads, kv_seq_len, _ = k.shape
@@ -171,6 +221,8 @@ class AttentionFunc(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, do: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, None, None]:
         """
+        ### Backward pass
+
         The backward pass computes the gradients of the input tensors.
 
         :param ctx: is the context for torch gradient descent
@@ -264,22 +316,27 @@ def _get_autotune_configs(inner_loop: str) -> list:
     """
 
     configs = []
-    # List possible BLOCK_Q and BLOCK_K that satisfy BLOCK_Q divisible by BLOCK_K
-    # and also try to cover a wide range
-    for bm in [64, 128, 256]:
-        # We'll try bn in [16, 32, 64, 128] that are divisors and <= bm
-        for bn in [64, 128, 256]:
-            if inner_loop == 'key' and bm % bn != 0:
+
+    # Possible options for `BLOCK_Q`
+    for bq in [64, 128, 256]:
+        # Possible options for `BLOCK_K`
+        for bk in [64, 128, 256]:
+            # If the inner loop is along keys the `BLOCK_Q` must be a multiple of `BLOCK_K` for causal masking
+            if inner_loop == 'key' and bq % bk != 0:
                 continue
-            if inner_loop == 'query' and bn % bm != 0:
+            # Similarly when the inner loop is along queries
+            if inner_loop == 'query' and bk % bq != 0:
                 continue
+
+            # Number of stages and warps
             for s in [2, 3, 4]:
                 for w in [4, 8]:
-                    if bm * bn < 128 * 128 and w == 8:
+                    if bq * bk < 128 * 128 and w == 8:
                         continue
 
-                    configs.append(triton.Config({'BLOCK_Q': bm, 'BLOCK_K': bn}, num_stages=s, num_warps=w))
+                    configs.append(triton.Config({'BLOCK_Q': bq, 'BLOCK_K': bk}, num_stages=s, num_warps=w))
 
+    # **Use `return configs` to autotune. Trying all combinations is slow for testing.**
     return configs[:1]
 
 
@@ -292,34 +349,37 @@ def _attn_fwd(t_q, t_k, t_v, sm_scale_log2e, t_lse, t_o,
               kv_seq_len: tl.constexpr,
               d_head: tl.constexpr,
               is_causal: tl.constexpr,
-              BLOCK_Q: tl.constexpr,  # q seq len block
-              BLOCK_K: tl.constexpr,  # k seq len block
+              BLOCK_Q: tl.constexpr,
+              BLOCK_K: tl.constexpr,
               ):
     """
-    :param t_q: query
-    :param t_k: keys
-    :param t_v: values
-    :param sm_scale: softmax scale
+    ### Triton kernel for Flash attention forward pass
+
+    :param t_q: queries $Q_i$
+    :param t_k: keys $K_j$
+    :param t_v: values $V_j$
+    :param sm_scale_log2e: $\sigma \log_2 e$ softmax scale multiplied by $\log_2 e$
     :param t_lse: $\log_2 \sum_j e^{S_{ij}}$ (out)
-    :param t_o: output (out)
-    :param n_groups: number of groups
+    :param t_o: $O_i$ output
+    :param n_groups: number of groups in GQA
     :param q_seq_len: query sequence length
     :param kv_seq_len: key/value sequence length
-    :param d_head: size of a head
-    :param BLOCK_Q: block size  for query sequence length
-    :param BLOCK_K: block size  for key sequence length
+    :param d_head: number of dimensions in a head
+    :param BLOCK_Q: block size for query sequence length
+    :param BLOCK_K: block size for key sequence length
     :param is_causal: whether causal attention
 
     Strides `z`, `h`, `m` and  `d` denote the stride of the corresponding dimensions
-     (`batch_size`, `n_heads`, `seq_len`, `d_head`) in the query.
-    Stride `n` denote the stride on `seq_len` of key.
+     (`batch_size`, `n_heads`, `q_seq_len`, `d_head`) in the query.
+    Stride `n` denote the stride on `kv_seq_len` of key.
     """
 
+    # We are computing the attention for $O_i$ for `i` ... `i + BLOCK_Q' in batch/head combination $z$.
     i = tl.program_id(0)
     z = tl.program_id(1) // n_groups
-    g = tl.program_id(1) % n_groups  # TODO
+    g = tl.program_id(1) % n_groups
 
-    # Create block pointers
+    # #### Create block pointers
     p_q = tl.make_block_ptr(t_q + z * n_groups * q_seq_len * d_head + g * q_seq_len * d_head,
                             (q_seq_len, d_head),
                             (d_head, 1),
@@ -354,6 +414,7 @@ def _attn_fwd(t_q, t_k, t_v, sm_scale_log2e, t_lse, t_o,
     # Initialize offsets
     offs_i = i * BLOCK_Q + tl.arange(0, BLOCK_Q)
     offs_j = tl.arange(0, BLOCK_K)
+
     # Mask for $Q$ for the last block
     i_mask = offs_i < q_seq_len
 
@@ -427,6 +488,12 @@ def _attn_fwd_inner(b_o, b_l, b_m, b_q,
                     q_seq_len: tl.constexpr,
                     kv_seq_len: tl.constexpr
                     ):
+    """
+    #### Inner loop to calculate $O_i$
+
+    This iterates through keys and values starting from `j` for `steps` number of steps.
+    In each step it processes `BLOCK_K` entries of keys/values.
+    """
     tl.static_assert(BLOCK_Q % BLOCK_K == 0)
 
     # Move $K_j$ and $V_j$ pointers
@@ -492,6 +559,9 @@ def _attn_bwd_d(t_o, t_do,
                 q_seq_len: tl.constexpr,
                 n_groups: tl.constexpr,
                 ):
+    """
+    #### Triton kernel to compute $D_i$
+    """
     i = tl.program_id(0) * BLOCK_Q
     z = tl.program_id(1)
 
@@ -539,9 +609,10 @@ def _attn_bwd_dkdv(t_q, t_k, t_v, sm_scale,
                    BLOCK_K: tl.constexpr,
                    ):
     """
-    Compute $dK_j$ and $dV_j$ for $j1 \dots j2$ by iterating over $Q_i$
+    #### Triton kernel to compute $dK_j$ and $dV_j$
     """
 
+    # Compute $dK_j$ and $dV_j$ for `j` ... `j + BLOCK_K` by iterating over $Q_i$
     j = tl.program_id(0) * BLOCK_K
     z = tl.program_id(1)
 
@@ -623,7 +694,7 @@ def _attn_bwd_dkdv(t_q, t_k, t_v, sm_scale,
                 kv_seq_len=kv_seq_len,
             )
 
-            # Innerloop on queries after the diagonal
+            # Inner loop on queries after the diagonal
             b_dk, b_dv = _attn_bwd_dkdv_inner(
                 b_dk, b_dv,
                 p_qT, b_k, b_v, p_do,
@@ -671,7 +742,9 @@ def _attn_bwd_dkdv_inner(b_dk, b_dv,
                          MASK: tl.constexpr,
                          q_seq_len: tl.constexpr,
                          kv_seq_len: tl.constexpr):
-    """Inner loop along query"""
+    """
+    #### Inner loop to calculate $dK_j$, $dV_j$
+    """
 
     # To apply the mask
     tl.static_assert(BLOCK_K % BLOCK_Q == 0)
@@ -755,6 +828,10 @@ def _attn_bwd_dq(t_q, t_k, t_v, t_do,
                  BLOCK_Q: tl.constexpr,
                  BLOCK_K: tl.constexpr,
                  ):
+    """
+    #### Triton kernel to compute $dQ_i$
+    """
+
     i = tl.program_id(0) * BLOCK_Q
     z = tl.program_id(1) // n_groups
     g = tl.program_id(1) % n_groups  # TODO
@@ -863,7 +940,9 @@ def _attn_bwd_dq_inner(b_dq, b_q, p_kT, p_vT,
                        MASK: tl.constexpr,
                        q_seq_len: tl.constexpr,
                        kv_seq_len: tl.constexpr):
-    """Inner loop over key"""
+    """
+    #### Inner loop to calculate $dQ_i$
+    """
 
     # Offsets
     offs_i = i + tl.arange(0, BLOCK_Q)
