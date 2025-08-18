@@ -81,7 +81,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     x^{(2)}_m x^{(2)}_n \cos (m - n) \theta &= \\
 
     \big(x^{(1)}_m \cos (m - n)\theta - x^{(2)}_m \sin (m - n) \theta\big) x^{(1)}_n &+ \\
-    \big(x^{(2)}_m \cos (m - n)m\theta + x^{(1)}_m \sin (m - n) \theta\big) x^{(2)}_n  &= \\
+    \big(x^{(2)}_m \cos (m - n)\theta + x^{(1)}_m \sin (m - n) \theta\big) x^{(2)}_n  &= \\
 
     \Big \langle RoPE\big(x^{(1)}_m, x^{(2)}_m, m - n\big),  RoPE\big(x^{(1)}_n, x^{(2)}_n, 0\big) \Big \rangle
     \end{align}
@@ -95,7 +95,8 @@ class RotaryPositionalEmbeddings(nn.Module):
     The paper suggests using $\Theta = {\theta_i = 10000^{\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
     for the $\frac{d}{2}$ pairs of features.
 
-    We pair feature $i$ with feature $i + \frac{d}{2}$. So for position $m$ we transform
+    The original implementation of RoPE divide the $d$-dimension features into $\frac{d}{2}$ pairs of features ($i$, $i + 1$).
+    In this implementation we pair feature $i$ with feature $i + \frac{d}{2}$. So for position $m$ we transform
 
     \begin{align}
     \begin{pmatrix}
