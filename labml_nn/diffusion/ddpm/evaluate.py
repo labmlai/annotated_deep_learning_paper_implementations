@@ -26,7 +26,13 @@ class Sampler:
     ## Sampler class
     """
 
-    def __init__(self, diffusion: DenoiseDiffusion, image_channels: int, image_size: int, device: torch.device):
+    def __init__(
+        self,
+        diffusion: DenoiseDiffusion,
+        image_channels: int,
+        image_size: int,
+        device: torch.device,
+    ):
         """
         * `diffusion` is the `DenoiseDiffusion` instance
         * `image_channels` is the number of channels in the image
@@ -63,9 +69,11 @@ class Sampler:
         # $$\tilde\beta_t = \frac{1 - \bar\alpha_{t-1}}{1 - \bar\alpha_t} \beta_t$$
         self.beta_tilde = self.beta * (1 - alpha_bar_tm1) / (1 - self.alpha_bar)
         # $$\frac{\sqrt{\bar\alpha_{t-1}}\beta_t}{1 - \bar\alpha_t}$$
-        self.mu_tilde_coef1 = self.beta * (alpha_bar_tm1 ** 0.5) / (1 - self.alpha_bar)
+        self.mu_tilde_coef1 = self.beta * (alpha_bar_tm1**0.5) / (1 - self.alpha_bar)
         # $$\frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1}}{1-\bar\alpha_t}$$
-        self.mu_tilde_coef2 = (self.alpha ** 0.5) * (1 - alpha_bar_tm1) / (1 - self.alpha_bar)
+        self.mu_tilde_coef2 = (
+            (self.alpha**0.5) * (1 - alpha_bar_tm1) / (1 - self.alpha_bar)
+        )
         # $\sigma^2 = \beta$
         self.sigma2 = self.beta
 
@@ -80,6 +88,7 @@ class Sampler:
     def make_video(self, frames, path="video.mp4"):
         """Helper function to create a video"""
         import imageio
+
         # 20 second video
         writer = imageio.get_writer(path, fps=len(frames) // 20)
         # Add each image
@@ -91,7 +100,7 @@ class Sampler:
         writer.close()
 
     def sample_animation(self, n_frames: int = 1000, create_video: bool = True):
-        """
+        r"""
         #### Sample an image step-by-step using $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
         We sample an image step-by-step using $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$ and at each step
@@ -101,14 +110,17 @@ class Sampler:
         """
 
         # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
-        xt = torch.randn([1, self.image_channels, self.image_size, self.image_size], device=self.device)
+        xt = torch.randn(
+            [1, self.image_channels, self.image_size, self.image_size],
+            device=self.device,
+        )
 
         # Interval to log $\hat{x}_0$
         interval = self.n_steps // n_frames
         # Frames for video
         frames = []
         # Sample $T$ steps
-        for t_inv in monit.iterate('Denoise', self.n_steps):
+        for t_inv in monit.iterate("Denoise", self.n_steps):
             # $t$
             t_ = self.n_steps - t_inv - 1
             # $t$ in a tensor
@@ -128,8 +140,10 @@ class Sampler:
         if create_video:
             self.make_video(frames)
 
-    def interpolate(self, x1: torch.Tensor, x2: torch.Tensor, lambda_: float, t_: int = 100):
-        """
+    def interpolate(
+        self, x1: torch.Tensor, x2: torch.Tensor, lambda_: float, t_: int = 100
+    ):
+        r"""
         #### Interpolate two images $x_0$ and $x'_0$
 
         We get $x_t \sim q(x_t|x_0)$ and $x'_t \sim q(x'_t|x_0)$.
@@ -144,20 +158,28 @@ class Sampler:
         * `x2` is $x'_0$
         * `lambda_` is $\lambda$
         * `t_` is $t$
-        """
+        r"""
 
         # Number of samples
         n_samples = x1.shape[0]
         # $t$ tensor
         t = torch.full((n_samples,), t_, device=self.device)
         # $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
-        xt = (1 - lambda_) * self.diffusion.q_sample(x1, t) + lambda_ * self.diffusion.q_sample(x2, t)
+        xt = (1 - lambda_) * self.diffusion.q_sample(
+            x1, t
+        ) + lambda_ * self.diffusion.q_sample(x2, t)
 
         # $$\bar{x}_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|\bar{x}_t)$$
         return self._sample_x0(xt, t_)
 
-    def interpolate_animate(self, x1: torch.Tensor, x2: torch.Tensor, n_frames: int = 100, t_: int = 100,
-                            create_video=True):
+    def interpolate_animate(
+        self,
+        x1: torch.Tensor,
+        x2: torch.Tensor,
+        n_frames: int = 100,
+        t_: int = 100,
+        create_video=True,
+    ):
         """
         #### Interpolate two images $x_0$ and $x'_0$ and make a video
 
@@ -166,7 +188,7 @@ class Sampler:
         * `n_frames` is the number of frames for the image
         * `t_` is $t$
         * `create_video` specifies whether to make a video or to show each frame
-        """
+        r"""
 
         # Show original images
         self.show_image(x1, "x1")
@@ -183,7 +205,7 @@ class Sampler:
 
         frames = []
         # Get frames with different $\lambda$
-        for i in monit.iterate('Interpolate', n_frames + 1, is_children_silent=True):
+        for i in monit.iterate("Interpolate", n_frames + 1, is_children_silent=True):
             # $\lambda$
             lambda_ = i / n_frames
             # $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
@@ -206,15 +228,17 @@ class Sampler:
 
         * `xt` is $x_t$
         * `n_steps` is $t$
-        """
+        r"""
 
         # Number of sampels
         n_samples = xt.shape[0]
         # Iterate until $t$ steps
-        for t_ in monit.iterate('Denoise', n_steps):
+        for t_ in monit.iterate("Denoise", n_steps):
             t = n_steps - t_ - 1
             # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
-            xt = self.diffusion.p_sample(xt, xt.new_full((n_samples,), t, dtype=torch.long))
+            xt = self.diffusion.p_sample(
+                xt, xt.new_full((n_samples,), t, dtype=torch.long)
+            )
 
         # Return $x_0$
         return xt
@@ -222,9 +246,12 @@ class Sampler:
     def sample(self, n_samples: int = 16):
         """
         #### Generate images
-        """
+        r"""
         # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
-        xt = torch.randn([n_samples, self.image_channels, self.image_size, self.image_size], device=self.device)
+        xt = torch.randn(
+            [n_samples, self.image_channels, self.image_size, self.image_size],
+            device=self.device,
+        )
 
         # $$x_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|x_t)$$
         x0 = self._sample_x0(xt, self.n_steps)
@@ -234,7 +261,7 @@ class Sampler:
             self.show_image(x0[i])
 
     def p_sample(self, xt: torch.Tensor, t: torch.Tensor, eps_theta: torch.Tensor):
-        """
+        r"""
         #### Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
         \begin{align}
@@ -244,23 +271,23 @@ class Sampler:
           &= \frac{1}{\sqrt{\alpha_t}} \Big(x_t -
             \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)
         \end{align}
-        """
+        r"""
         # [gather](utils.html) $\bar\alpha_t$
         alpha_bar = gather(self.alpha_bar, t)
         # $\alpha_t$
         alpha = gather(self.alpha, t)
         # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
-        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+        eps_coef = (1 - alpha) / (1 - alpha_bar) ** 0.5
         # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
         #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
-        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+        mean = 1 / (alpha**0.5) * (xt - eps_coef * eps_theta)
         # $\sigma^2$
         var = gather(self.sigma2, t)
 
         # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
         eps = torch.randn(xt.shape, device=xt.device)
         # Sample
-        return mean + (var ** .5) * eps
+        return mean + (var**0.5) * eps
 
     def p_x0(self, xt: torch.Tensor, t: torch.Tensor, eps: torch.Tensor):
         """
@@ -268,13 +295,13 @@ class Sampler:
 
         $$x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
          \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
-        """
+        r"""
         # [gather](utils.html) $\bar\alpha_t$
         alpha_bar = gather(self.alpha_bar, t)
 
         # $$x_0 \approx \hat{x}_0 = \frac{1}{\sqrt{\bar\alpha}}
         #  \Big( x_t - \sqrt{1 - \bar\alpha_t} \textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
-        return (xt - (1 - alpha_bar) ** 0.5 * eps) / (alpha_bar ** 0.5)
+        return (xt - (1 - alpha_bar) ** 0.5 * eps) / (alpha_bar**0.5)
 
 
 def main():
@@ -297,16 +324,18 @@ def main():
     configs.init()
 
     # Set PyTorch modules for saving and loading
-    experiment.add_pytorch_models({'eps_model': configs.eps_model})
+    experiment.add_pytorch_models({"eps_model": configs.eps_model})
 
     # Load training experiment
     experiment.load(run_uuid)
 
     # Create sampler
-    sampler = Sampler(diffusion=configs.diffusion,
-                      image_channels=configs.image_channels,
-                      image_size=configs.image_size,
-                      device=configs.device)
+    sampler = Sampler(
+        diffusion=configs.diffusion,
+        image_channels=configs.image_channels,
+        image_size=configs.image_size,
+        device=configs.device,
+    )
 
     # Start evaluation
     with experiment.start():
@@ -324,5 +353,5 @@ def main():
 
 
 #
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

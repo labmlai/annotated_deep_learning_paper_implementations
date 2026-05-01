@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: StyleGAN 2
 summary: >
@@ -156,7 +156,7 @@ from torch import nn
 
 
 class MappingNetwork(nn.Module):
-    """
+    r"""
     <a id="mapping_network"></a>
 
     ## Mapping Network
@@ -212,7 +212,7 @@ class Generator(nn.Module):
     """
 
     def __init__(self, log_resolution: int, d_latent: int, n_features: int = 32, max_features: int = 512):
-        """
+        r"""
         * `log_resolution` is the $\log_2$ of image resolution
         * `d_latent` is the dimensionality of $w$
         * `n_features` number of features in the convolution layer at the highest resolution (final block)
@@ -276,7 +276,7 @@ class Generator(nn.Module):
 
 
 class GeneratorBlock(nn.Module):
-    """
+    r"""
     <a id="generator_block"></a>
 
     ### Generator Block
@@ -379,7 +379,7 @@ class StyleBlock(nn.Module):
 
 
 class ToRGB(nn.Module):
-    """
+    r"""
     <a id="to_rgb"></a>
 
     ### To RGB
@@ -430,7 +430,7 @@ class Conv2dWeightModulate(nn.Module):
 
     def __init__(self, in_features: int, out_features: int, kernel_size: int,
                  demodulate: float = True, eps: float = 1e-8):
-        """
+        r"""
         * `in_features` is the number of features in the input feature map
         * `out_features` is the number of features in the output feature map
         * `kernel_size` is the size of the convolution kernel
@@ -492,7 +492,7 @@ class Conv2dWeightModulate(nn.Module):
 
 
 class Discriminator(nn.Module):
-    """
+    r"""
     <a id="discriminator"></a>
 
     ## StyleGAN 2 Discriminator
@@ -506,7 +506,7 @@ class Discriminator(nn.Module):
     """
 
     def __init__(self, log_resolution: int, n_features: int = 64, max_features: int = 512):
-        """
+        r"""
         * `log_resolution` is the $\log_2$ of image resolution
         * `n_features` number of features in the convolution layer at the highest resolution (first block)
         * `max_features` maximum number of features in any generator block
@@ -561,7 +561,7 @@ class Discriminator(nn.Module):
 
 
 class DiscriminatorBlock(nn.Module):
-    """
+    r"""
     <a id="discriminator_black"></a>
 
     ### Discriminator Block
@@ -653,7 +653,7 @@ class MiniBatchStdDev(nn.Module):
 
 
 class DownSample(nn.Module):
-    """
+    r"""
     <a id="down_sample"></a>
 
     ### Down-sample
@@ -677,7 +677,7 @@ class DownSample(nn.Module):
 
 
 class UpSample(nn.Module):
-    """
+    r"""
     <a id="up_sample"></a>
 
     ### Up-sample
@@ -797,7 +797,7 @@ class EqualizedConv2d(nn.Module):
 
 
 class EqualizedWeight(nn.Module):
-    """
+    r"""
     <a id="equalized_weight"></a>
 
     ## Learning-rate Equalized Weights Parameter
@@ -835,7 +835,7 @@ class EqualizedWeight(nn.Module):
 
 
 class GradientPenalty(nn.Module):
-    """
+    r"""
     <a id="gradient_penalty"></a>
 
     ## Gradient Penalty
@@ -851,7 +851,7 @@ class GradientPenalty(nn.Module):
     """
 
     def forward(self, x: torch.Tensor, d: torch.Tensor):
-        """
+        r"""
         * `x` is $x \sim \mathcal{D}$
         * `d` is $D(x)$
         """
@@ -877,7 +877,7 @@ class GradientPenalty(nn.Module):
 
 
 class PathLengthPenalty(nn.Module):
-    """
+    r"""
     <a id="path_length_penalty"></a>
 
     ## Path Length Penalty
@@ -901,7 +901,7 @@ class PathLengthPenalty(nn.Module):
     """
 
     def __init__(self, beta: float):
-        """
+        r"""
         * `beta` is the constant $\beta$ used to calculate the exponential moving average $a$
         """
         super().__init__()

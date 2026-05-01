@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: "PonderNet: Learning to Ponder"
 summary: >
@@ -106,7 +106,7 @@ class ParityPonderGRU(nn.Module):
         self.is_halt = False
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
+        r"""
         * `x` is the input of shape `[batch_size, n_elems]`
 
         This outputs a tuple of four tensors:
@@ -177,7 +177,7 @@ class ParityPonderGRU(nn.Module):
 
 
 class ReconstructionLoss(nn.Module):
-    """
+    r"""
     ## Reconstruction loss
 
     $$L_{Rec} = \sum_{n=1}^N p_n \mathcal{L}(y, \hat{y}_n)$$
@@ -186,14 +186,14 @@ class ReconstructionLoss(nn.Module):
     """
 
     def __init__(self, loss_func: nn.Module):
-        """
+        r"""
         * `loss_func` is the loss function $\mathcal{L}$
         """
         super().__init__()
         self.loss_func = loss_func
 
     def forward(self, p: torch.Tensor, y_hat: torch.Tensor, y: torch.Tensor):
-        """
+        r"""
         * `p` is $p_1 \dots p_N$ in a tensor of shape `[N, batch_size]`
         * `y_hat` is $\hat{y}_1 \dots \hat{y}_N$ in a tensor of shape `[N, batch_size, ...]`
         * `y` is the target of shape `[batch_size, ...]`
@@ -213,7 +213,7 @@ class ReconstructionLoss(nn.Module):
 
 
 class RegularizationLoss(nn.Module):
-    """
+    r"""
     ## Regularization loss
 
     $$L_{Reg} = \mathop{KL} \Big(p_n \Vert p_G(\lambda_p) \Big)$$
@@ -229,7 +229,7 @@ class RegularizationLoss(nn.Module):
     """
 
     def __init__(self, lambda_p: float, max_steps: int = 1_000):
-        """
+        r"""
         * `lambda_p` is $\lambda_p$ - the success probability of geometric distribution
         * `max_steps` is the highest $N$; we use this to pre-compute $p_G(\lambda_p)$
         """
@@ -253,7 +253,7 @@ class RegularizationLoss(nn.Module):
         self.kl_div = nn.KLDivLoss(reduction='batchmean')
 
     def forward(self, p: torch.Tensor):
-        """
+        r"""
         * `p` is $p_1 \dots p_N$ in a tensor of shape `[N, batch_size]`
         """
         # Transpose `p` to `[batch_size, N]`

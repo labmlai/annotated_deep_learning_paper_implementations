@@ -89,7 +89,7 @@ class Configs(NLPAutoRegressionConfigs):
 
 @option(Configs.deep_norm_alpha)
 def _deep_norm_alpha(c: Configs):
-    """
+    r"""
     #### Calculate $\alpha$
 
     $\alpha = (2M)^{\frac{1}{4}}$
@@ -99,7 +99,7 @@ def _deep_norm_alpha(c: Configs):
 
 @option(Configs.deep_norm_beta)
 def _deep_norm_beta(c: Configs):
-    """
+    r"""
     #### Calculate $\beta$
 
     $\beta = (8M)^{-\frac{1}{4}}$

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Adam Optimizer
 summary: A simple PyTorch implementation/tutorial of Adam optimizer
@@ -60,7 +60,7 @@ class Adam(GenericAdaptiveOptimizer):
                  weight_decay: WeightDecay = WeightDecay(),
                  optimized_update: bool = True,
                  defaults: Optional[Dict[str, Any]] = None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -81,7 +81,7 @@ class Adam(GenericAdaptiveOptimizer):
         self.optimized_update = optimized_update
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
-        """
+        r"""
         ### Initialize a parameter state
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -97,7 +97,7 @@ class Adam(GenericAdaptiveOptimizer):
         state['exp_avg_sq'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def get_mv(self, state: Dict[str, Any], group: Dict[str, Any], grad: torch.Tensor):
-        """
+        r"""
         ### Calculate $m_t$ and and $v_t$
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -121,7 +121,7 @@ class Adam(GenericAdaptiveOptimizer):
         return m, v
 
     def get_lr(self, state: Dict[str, any], group: Dict[str, any]):
-        """
+        r"""
         ### Get learning-rate
 
         This returns the modified learning rate based on the state.
@@ -132,7 +132,7 @@ class Adam(GenericAdaptiveOptimizer):
 
     def adam_update(self, state: Dict[str, any], group: Dict[str, any], param: torch.nn.Parameter,
                     m: torch.Tensor, v: torch.Tensor):
-        """
+        r"""
         ### Do the *Adam* parameter update
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -192,7 +192,7 @@ class Adam(GenericAdaptiveOptimizer):
             param.data.addcdiv_(m, denominator, value=-step_size)
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        """
+        r"""
         ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)

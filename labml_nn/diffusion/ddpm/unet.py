@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: U-Net model for Denoising Diffusion Probabilistic Models (DDPM)
 summary: >
@@ -29,7 +29,7 @@ from torch import nn
 
 
 class Swish(nn.Module):
-    """
+    r"""
     ### Swish activation function
 
     $$x \cdot \sigma(x)$$
@@ -272,7 +272,7 @@ class MiddleBlock(nn.Module):
 
 
 class Upsample(nn.Module):
-    """
+    r"""
     ### Scale up the feature map by $2 \times$
     """
 
@@ -288,7 +288,7 @@ class Upsample(nn.Module):
 
 
 class Downsample(nn.Module):
-    """
+    r"""
     ### Scale down the feature map by $\frac{1}{2} \times$
     """
 

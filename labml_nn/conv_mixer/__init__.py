@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Patches Are All You Need? (ConvMixer)
 summary: >
@@ -96,7 +96,7 @@ class ConvMixerLayer(nn.Module):
 
 
 class PatchEmbeddings(nn.Module):
-    """
+    r"""
     <a id="PatchEmbeddings"></a>
 
     ## Get patch embeddings

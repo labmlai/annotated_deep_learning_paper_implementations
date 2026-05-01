@@ -30,7 +30,7 @@ from torch import nn
 
 
 class DoubleConvolution(nn.Module):
-    """
+    r"""
     ### Two $3 \times 3$ Convolution Layers
 
     Each step in the contraction path and expansive path have two $3 \times 3$
@@ -63,7 +63,7 @@ class DoubleConvolution(nn.Module):
 
 
 class DownSample(nn.Module):
-    """
+    r"""
     ### Down-sample
 
     Each step in the contracting path down-samples the feature map with
@@ -80,7 +80,7 @@ class DownSample(nn.Module):
 
 
 class UpSample(nn.Module):
-    """
+    r"""
     ### Up-sample
 
     Each step in the expansive path up-samples the feature map with

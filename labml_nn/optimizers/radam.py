@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Rectified Adam (RAdam) optimizer
 summary: A simple PyTorch implementation/tutorial of RAdam optimizer.
@@ -157,7 +157,7 @@ class RAdam(AMSGrad):
                  optimized_update: bool = True,
                  amsgrad=False,
                  degenerated_to_sgd=True, defaults=None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -176,7 +176,7 @@ class RAdam(AMSGrad):
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, amsgrad, defaults)
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        """
+        r"""
         ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -221,7 +221,7 @@ class RAdam(AMSGrad):
 
     def r_adam_update(self, state: Dict[str, any], group: Dict[str, any], param: torch.nn.Parameter,
                       m: torch.Tensor, v: torch.Tensor):
-        """
+        r"""
         ### Do the *RAdam* parameter update
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -274,7 +274,7 @@ class RAdam(AMSGrad):
 
 
 def _test_rectification_term():
-    """
+    r"""
     ### Plot $r_t$ against $t$ for various $\beta_2$
 
     ![Plot of r_t](radam_r_t.png)

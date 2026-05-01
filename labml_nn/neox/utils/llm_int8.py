@@ -41,7 +41,7 @@ from torch import nn
 
 
 def make_llm_int8_linear(linear_module: nn.Linear, device: torch.device, threshold: float = 6.0):
-    """
+    r"""
     ## Transform a `nn.Linear` layer to LLM.int8() linear layer
 
     :param linear_module: is the `nn.Linear` layer to transform

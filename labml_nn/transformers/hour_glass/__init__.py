@@ -246,7 +246,7 @@ class LinearPoolingShortening(nn.Module):
 
 
 class AttentionBasedShortening(nn.Module):
-    """
+    r"""
     ### 🚧 Down-sampling with attention
 
     \begin{align}
@@ -263,7 +263,7 @@ class AttentionBasedShortening(nn.Module):
 
 
 class LinearUpSampling(nn.Module):
-    """
+    r"""
     ### 🚧 Linear projection for up-sampling
 
     Make a linear projection of dense token embeddings to a size of $d_{\text{model}} k$.
@@ -275,7 +275,7 @@ class LinearUpSampling(nn.Module):
 
 
 class AttentionBasedUpSampling(nn.Module):
-    """
+    r"""
     ### 🚧 Attention based up-sampling
 
     \begin{align}

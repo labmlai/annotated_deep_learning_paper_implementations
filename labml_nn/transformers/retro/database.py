@@ -26,7 +26,7 @@ from labml_nn.transformers.retro.bert_embeddings import BERTChunkEmbeddings
 
 def build_database(chunk_len: int = 16, batch_size: int = 64, d_emb: int = 768, n_centeroids: int = 256,
                    code_size: int = 64, n_probe: int = 8, n_train: int = 50_000):
-    """
+    r"""
     ## Build Database
 
     * `chunk_len` is the length of a chunk (number of characters)
