@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Transformer for Stable Diffusion U-Net
 summary: >
@@ -291,7 +291,7 @@ class FeedForward(nn.Module):
 
 
 class GeGLU(nn.Module):
-    """
+    r"""
     ### GeGLU Activation
 
     $$\text{GeGLU}(x) = (xW + b) * \text{GELU}(xV + c)$$

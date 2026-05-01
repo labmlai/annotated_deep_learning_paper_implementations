@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Attention with Linear Biases (ALiBi)
 summary: >
@@ -41,7 +41,7 @@ from labml_nn.transformers.mha import MultiHeadAttention
 
 
 def get_slopes(n_heads: int):
-    """
+    r"""
     ## Get head-specific slope $m$ for each head
 
     * `n_heads` is the number of heads in the attention layer $n$

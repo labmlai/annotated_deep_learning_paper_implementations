@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: AdaBelief optimizer
 summary: A simple PyTorch implementation/tutorial of AdaBelief optimizer.
@@ -53,7 +53,7 @@ class AdaBelief(RAdam):
                  weight_decay: WeightDecay = WeightDecay(), amsgrad=False,
                  degenerate_to_sgd=True,
                  rectify=True, defaults=None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -75,7 +75,7 @@ class AdaBelief(RAdam):
         self.rectify = rectify
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
-        """
+        r"""
         ### Initialize a parameter state
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -95,7 +95,7 @@ class AdaBelief(RAdam):
             state['max_exp_avg_var'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def get_ms(self, state: Dict[str, Any], group: Dict[str, Any], grad: torch.Tensor):
-        """
+        r"""
         ### Calculate $m_t$ and $s_t$ or $\max(s_1, s_2, ..., s_{t-1}, s_t)$
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -131,7 +131,7 @@ class AdaBelief(RAdam):
             return m, s
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        """
+        r"""
         ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)

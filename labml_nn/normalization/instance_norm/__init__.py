@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Instance Normalization
 summary: >
@@ -53,7 +53,7 @@ class InstanceNorm(nn.Module):
         * `channels` is the number of features in the input
         * `eps` is $\epsilon$, used in $\sqrt{Var[X] + \epsilon}$ for numerical stability
         * `affine` is whether to scale and shift the normalized value
-        """
+        r"""
         super().__init__()
 
         self.channels = channels
@@ -71,7 +71,7 @@ class InstanceNorm(nn.Module):
         `*` denotes any number of (possibly 0) dimensions.
          For example, in an image (2D) convolution this will be
         `[batch_size, channels, height, width]`
-        """
+        r"""
         # Keep the original shape
         x_shape = x.shape
         # Get the batch size

@@ -23,7 +23,7 @@ class GAE:
         self.n_workers = n_workers
 
     def __call__(self, done: np.ndarray, rewards: np.ndarray, values: np.ndarray) -> np.ndarray:
-        """
+        r"""
         ### Calculate advantages
 
         \begin{align}

@@ -107,7 +107,7 @@ class Trainer:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=2.5e-4)
 
     def _sample_action(self, q_value: torch.Tensor, exploration_coefficient: float):
-        """
+        r"""
         #### $\epsilon$-greedy Sampling
         When sampling actions we use a $\epsilon$-greedy strategy, where we
         take a greedy action with probabiliy $1 - \epsilon$ and

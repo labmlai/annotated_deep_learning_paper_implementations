@@ -20,7 +20,7 @@ from labml_nn.transformers.knn.train_model import Configs
 
 
 def knn(queries: torch.Tensor, index: faiss.IndexFlatL2, keys_store: np.ndarray, vals_store: np.ndarray, n_tokens: int):
-    """
+    r"""
     ## $k$-NN to get $p(w_t, c_t)$
 
     Here we refer to $f(\textcolor{yellowgreen}{c_t})$ as queries,

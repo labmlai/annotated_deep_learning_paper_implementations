@@ -32,7 +32,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     """
 
     def __init__(self, d: int, base: int = 10_000):
-        """
+        r"""
         * `d` is the number of features $d$
         * `base` is the constant used for calculating $\Theta$
         """
@@ -81,7 +81,7 @@ class RotaryPositionalEmbeddings(nn.Module):
 
 
 class SelfAttention(nn.Module):
-    """
+    r"""
     ## Self-Attention Layer $\text{A\small{TTN}}$
 
     This applies causal and non-causal [multi-headed self-attention](../mha.html).
@@ -185,7 +185,7 @@ class SelfAttention(nn.Module):
 
 
 class CrossAttention(nn.Module):
-    """
+    r"""
     ## Cross-Attention Layer $\text{C\small{A}}$
 
     This is similar to the self-attention layer defined above, except that
@@ -272,7 +272,7 @@ class CrossAttention(nn.Module):
 
 
 class ChunkedCrossAttention(nn.Module):
-    """
+    r"""
     ## Chunked Cross-Attention Layer $\text{C\small{CA}}$
 
     This is similar to the cross-attention layer defined above.
@@ -380,7 +380,7 @@ class ChunkedCrossAttention(nn.Module):
 
 
 class FeedForward(nn.Module):
-    """
+    r"""
     ### Position-wise Feed Forward Layer $\text{F\small{FW}}$
 
     This consists of two linear layers and an activation in the middle.
@@ -425,7 +425,7 @@ class FeedForward(nn.Module):
 
 
 class NearestNeighborEncoder(nn.Module):
-    """
+    r"""
     ## Nearest Neighbor Encoder $\text{E\small{NCODER}}(\text{R\small{ET}}(C_u)_{1 \le u \le l}, H)$
 
     This module encodes the retrieved nearest neighbors
@@ -433,7 +433,7 @@ class NearestNeighborEncoder(nn.Module):
 
     def __init__(self, chunk_len: int, n_layers: int, ca_layers: Set[int],
                  d_model: int, n_heads: int, d_k: int, d_ff: int):
-        """
+        r"""
         * `chunk_len` is the length of a chunk
         * `n_layer` is the number of layers in the encoder $L_{\text{enc}}$
         * `ca_layers` are the layers with cross attention $P_{\text{enc}}$
@@ -457,7 +457,7 @@ class NearestNeighborEncoder(nn.Module):
         self.norm_h = nn.LayerNorm(d_model)
 
     def forward(self, e: torch.Tensor, h: torch.Tensor):
-        """
+        r"""
         * `e` are token embeddings of the retrieved nearest neighbors,
          $\text{E\small{MB}}\big(\text{R\small{ET}}(C_u)_{1 \le u \le l}\big)$
          of shape `[batch_size, chunks, neighbors, neighbor_len, d_model]`
@@ -541,7 +541,7 @@ class RetroModel(nn.Module):
         self.norm_e = nn.LayerNorm(d_model)
 
     def forward(self, x: torch.Tensor, ret: torch.Tensor):
-        """
+        r"""
         * `x` is the input sequence, $X$ of shape `[batch_size, seq_len]`
         * `ret` are the retrieved neighbors
          $\text{R\small{ET}}(C_u)_{1 \le u \le l}$

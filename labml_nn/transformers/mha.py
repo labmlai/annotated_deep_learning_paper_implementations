@@ -123,7 +123,7 @@ class MultiHeadAttention(nn.Module):
         ### Calculate scores between queries and keys
 
         This method can be overridden for other variations like relative attention.
-        """
+        r"""
 
         # Calculate $Q K^\top$ or $S_{ijbh} = \sum_d Q_{ibhd} K_{jbhd}$
         return torch.einsum('ibhd,jbhd->ijbh', query, key)
