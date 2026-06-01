@@ -134,7 +134,7 @@ Solving games with incomplete information such as poker with CFR.
 
 * [Fuzzy Tiling Activations](https://nn.labml.ai/activations/fta/index.html)
 
-#### ✨ [Langauge Model Sampling Techniques](https://nn.labml.ai/sampling/index.html)
+#### ✨ [Language Model Sampling Techniques](https://nn.labml.ai/sampling/index.html)
 * [Greedy Sampling](https://nn.labml.ai/sampling/greedy.html)
 * [Temperature Sampling](https://nn.labml.ai/sampling/temperature.html)
 * [Top-k Sampling](https://nn.labml.ai/sampling/top_k.html)
