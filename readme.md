@@ -148,3 +148,7 @@ Solving games with incomplete information such as poker with CFR.
 ```bash
 pip install labml-nn
 ```
+
+---
+
+*[Mukller](https://github.com/Mukller)*
