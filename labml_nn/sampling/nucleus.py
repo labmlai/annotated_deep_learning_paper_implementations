@@ -19,7 +19,7 @@ where $V^{(p)}$ is smallest set of tokens such that
 
 $$\sum_{x_i \in V^{(p)}} P(x_i | x_{1:i-1}) \ge p$$
 
-That is, we pick the highest probable tokens until the sum of their probabilities is less that $p$.
+That is, we pick the highest probable tokens until the sum of their probabilities is not less than $p$.
 
 Then we sample from the selected tokens.
 
@@ -61,7 +61,7 @@ class NucleusSampler(Sampler):
         # Find the cumulative sums less than $p$.
         nucleus = cum_sum_probs < self.p
         # Prepend ones so that we add one token after the minimum number
-        # of tokens with cumulative probability less that $p$.
+        # of tokens with cumulative probability less than $p$.
         nucleus = torch.cat([nucleus.new_ones(nucleus.shape[:-1] + (1,)), nucleus[..., :-1]], dim=-1)
 
         # Get log probabilities and mask out the non-nucleus
