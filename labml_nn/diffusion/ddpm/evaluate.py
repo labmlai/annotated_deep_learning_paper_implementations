@@ -135,7 +135,7 @@ class Sampler:
         We get $x_t \sim q(x_t|x_0)$ and $x'_t \sim q(x'_t|x_0)$.
 
         Then interpolate to
-         $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_0$$
+         $$\bar{x}_t = (1 - \lambda)x_t + \lambda x'_t$$
 
         Then get
          $$\bar{x}_0 \sim \textcolor{lightgreen}{p_\theta}(x_0|\bar{x}_t)$$
