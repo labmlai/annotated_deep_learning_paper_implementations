@@ -35,7 +35,7 @@ def shift_right(x: torch.Tensor):
 
     # Reshape and remove excess elements from the end
     x_padded = x_padded.view(x.shape[1] + 1, x.shape[0], *x.shape[2:])
-    x = x_padded[:-1].view_as(x)
+    x = x_padded[1:].view_as(x)
 
     #
     return x
