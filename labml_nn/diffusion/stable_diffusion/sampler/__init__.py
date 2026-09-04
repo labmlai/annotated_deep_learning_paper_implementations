@@ -47,7 +47,7 @@ class DiffusionSampler:
         :param t: is $t$ of shape `[batch_size]`
         :param c: is the conditional embeddings $c$ of shape `[batch_size, emb_size]`
         :param uncond_scale: is the unconditional guidance scale $s$. This is used for
-            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (s - 1)\epsilon_\text{cond}(x_t, c_u)$
+            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (1 - s)\epsilon_\text{cond}(x_t, c_u)$
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         """
         # When the scale $s = 1$
@@ -63,7 +63,7 @@ class DiffusionSampler:
         # Get $\epsilon_\text{cond}(x_t, c)$ and $\epsilon_\text{cond}(x_t, c_u)$
         e_t_uncond, e_t_cond = self.model(x_in, t_in, c_in).chunk(2)
         # Calculate
-        # $$\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (s - 1)\epsilon_\text{cond}(x_t, c_u)$$
+        # $$\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (1 - s)\epsilon_\text{cond}(x_t, c_u)$$
         e_t = e_t_uncond + uncond_scale * (e_t_cond - e_t_uncond)
 
         #
@@ -88,7 +88,7 @@ class DiffusionSampler:
         :param temperature: is the noise temperature (random noise gets multiplied by this)
         :param x_last: is $x_T$. If not provided random noise will be used.
         :param uncond_scale: is the unconditional guidance scale $s$. This is used for
-            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (s - 1)\epsilon_\text{cond}(x_t, c_u)$
+            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (1 - s)\epsilon_\text{cond}(x_t, c_u)$
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         :param skip_steps: is the number of time steps to skip.
         """
@@ -110,7 +110,7 @@ class DiffusionSampler:
         :param mask: is the mask to keep the original image.
         :param orig_noise: is fixed noise to be added to the original image.
         :param uncond_scale: is the unconditional guidance scale $s$. This is used for
-            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (s - 1)\epsilon_\text{cond}(x_t, c_u)$
+            $\epsilon_\theta(x_t, c) = s\epsilon_\text{cond}(x_t, c) + (1 - s)\epsilon_\text{cond}(x_t, c_u)$
         :param uncond_cond: is the conditional embedding for empty prompt $c_u$
         """
         raise NotImplementedError()
