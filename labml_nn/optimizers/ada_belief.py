@@ -140,14 +140,15 @@ class AdaBelief(RAdam):
         * `param` is the parameter tensor $\theta_{t-1}$
         """
 
-        # Calculate weight decay
-        grad = self.weight_decay(param, grad, group)
+        # Increment before evaluating the current step's learning-rate schedule.
+        state['step'] += 1
+
+        # Decoupled decay follows the same rate as the parameter update.
+        decay_group = dict(group, lr=self.get_lr(state, group))
+        grad = self.weight_decay(param, grad, decay_group)
 
         # Get $m_t$ and $v_t$
         m, s = self.get_ms(state, group, grad)
-
-        # Increment $t$ the number of optimizer steps
-        state['step'] += 1
 
         if not self.rectify:
             # Perform *Adam* update, defined in [`adam.py`](adam.html), with

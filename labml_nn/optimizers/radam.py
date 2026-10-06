@@ -185,14 +185,15 @@ class RAdam(AMSGrad):
         * `param` is the parameter tensor $\theta_{t-1}$
         """
 
-        # Calculate weight decay
-        grad = self.weight_decay(param, grad, group)
+        # Increment before evaluating the current step's learning-rate schedule.
+        state['step'] += 1
+
+        # Decoupled decay follows the same rate as the parameter update.
+        decay_group = dict(group, lr=self.get_lr(state, group))
+        grad = self.weight_decay(param, grad, decay_group)
 
         # Get $m_t$ and $v_t$; i.e. $\sigma(.)$ and $\psi(.)$ without bias correction
         m, v = self.get_mv(state, group, grad)
-
-        # Calculate $t$ the number of optimizer steps
-        state['step'] += 1
 
         # Perform *RAdam* update
         self.r_adam_update(state, group, param, m, v)
