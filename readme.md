@@ -2,6 +2,9 @@
 
 # [labml.ai Deep Learning Paper Implementations](https://nn.labml.ai/index.html)
 
+**Note**: use the [Annotated Implementation Skill](https://github.com/vpj/annotated_implementation_skill) with coding
+agents to implement any paper.
+
 This is a collection of simple PyTorch implementations of
 neural networks and related algorithms.
 These implementations are documented with explanations,
