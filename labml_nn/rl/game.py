@@ -8,6 +8,7 @@ summary: This implements the Atari games with multi-processing.
 """
 import multiprocessing
 import multiprocessing.connection
+from collections.abc import Mapping
 
 import cv2
 import gym
@@ -38,7 +39,10 @@ class Game:
     def __init__(self, seed: int):
         # create environment
         self.env = gym.make('BreakoutNoFrameskip-v4')
-        self.env.seed(seed)
+        self._reset_seed = seed
+        if callable(getattr(self.env, 'seed', None)):
+            self.env.seed(seed)
+            self._reset_seed = None
 
         # tensor for a stack of 4 frames
         self.obs_4 = np.zeros((4, 84, 84))
@@ -69,7 +73,12 @@ class Game:
         # run for 4 steps
         for i in range(4):
             # execute the action in the OpenAI Gym environment
-            obs, r, done, info = self.env.step(action)
+            result = self.env.step(action)
+            if len(result) == 5:
+                obs, r, terminated, truncated, info = result
+                done = terminated or truncated
+            else:
+                obs, r, done, info = result
 
             if i >= 2:
                 self.obs_2_max[i % 2] = self._process_obs(obs)
@@ -78,8 +87,8 @@ class Game:
 
             # get number of lives left
             lives = self.env.unwrapped.ale.lives()
-            # reset if a life is lost
-            if lives < self.lives:
+            # reset if the environment finished or a life is lost
+            if done or lives < self.lives:
                 done = True
                 break
 
@@ -109,7 +118,13 @@ class Game:
         """
 
         # reset OpenAI Gym environment
-        obs = self.env.reset()
+        if self._reset_seed is not None:
+            obs = self.env.reset(seed=self._reset_seed)
+            self._reset_seed = None
+        else:
+            obs = self.env.reset()
+        if isinstance(obs, tuple) and len(obs) == 2 and isinstance(obs[1], Mapping):
+            obs = obs[0]
 
         # reset caches
         obs = self._process_obs(obs)
