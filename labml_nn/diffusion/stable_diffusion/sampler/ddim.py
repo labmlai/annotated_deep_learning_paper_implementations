@@ -64,15 +64,18 @@ class DDIMSampler(DiffusionSampler):
         # Number of steps, $T$
         self.n_steps = model.n_steps
 
-        # Calculate $\tau$ to be uniformly distributed across $[1,2,\dots,T]$
-        if ddim_discretize == 'uniform':
-            c = self.n_steps // n_steps
-            self.time_steps = np.asarray(list(range(0, self.n_steps, c))) + 1
-        # Calculate $\tau$ to be quadratically distributed across $[1,2,\dots,T]$
-        elif ddim_discretize == 'quad':
-            self.time_steps = ((np.linspace(0, np.sqrt(self.n_steps * .8), n_steps)) ** 2).astype(int) + 1
-        else:
+        if not 1 <= n_steps <= self.n_steps:
+            raise ValueError('n_steps must be between 1 and the training schedule length')
+
+        # The stored training schedule uses zero-based indices [0, ..., T - 1].
+        if ddim_discretize not in ('uniform', 'quad'):
             raise NotImplementedError(ddim_discretize)
+        if n_steps == 1:
+            self.time_steps = np.asarray([self.n_steps - 1])
+        elif ddim_discretize == 'uniform':
+            self.time_steps = np.linspace(0, self.n_steps - 1, n_steps).astype(int)
+        else:
+            self.time_steps = ((np.linspace(0, np.sqrt(self.n_steps * .8), n_steps)) ** 2).astype(int)
 
         with torch.no_grad():
             # Get ${\color{lightgreen}\bar\alpha_t}$
@@ -83,7 +86,8 @@ class DDIMSampler(DiffusionSampler):
             # $\sqrt{\alpha_{\tau_i}}$
             self.ddim_alpha_sqrt = torch.sqrt(self.ddim_alpha)
             # $\alpha_{\tau_{i-1}}$
-            self.ddim_alpha_prev = torch.cat([alpha_bar[0:1], alpha_bar[self.time_steps[:-1]]])
+            # The predecessor of the first sampled level is the clean-data boundary.
+            self.ddim_alpha_prev = torch.cat([alpha_bar.new_ones(1), alpha_bar[self.time_steps[:-1]]])
 
             # $$\sigma_{\tau_i} =
             # \eta \sqrt{\frac{1 - \alpha_{\tau_{i-1}}}{1 - \alpha_{\tau_i}}}
