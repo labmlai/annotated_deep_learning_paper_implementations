@@ -181,10 +181,15 @@ class MultiHeadAttention(nn.Module):
         # Apply mask
         if mask is not None:
             scores = scores.masked_fill(mask == 0, float('-inf'))
+            # An empty key set contributes zero attention, with finite gradients.
+            fully_masked = (mask == 0).all(dim=1, keepdim=True)
+            scores = scores.masked_fill(fully_masked, 0.)
 
         # $softmax$ attention along the key sequence dimension
         # $\underset{seq}{softmax}\Bigg(\frac{Q K^\top}{\sqrt{d_k}}\Bigg)$
         attn = self.softmax(scores)
+        if mask is not None:
+            attn = attn.masked_fill(fully_masked, 0.)
 
         # Save attentions if debugging
         tracker.debug('attn', attn)
