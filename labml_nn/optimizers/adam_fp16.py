@@ -35,7 +35,7 @@ class AdamFP16(Adam):
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, defaults)
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
-        """
+        r"""
         ### Initialize a parameter state
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -55,7 +55,7 @@ class AdamFP16(Adam):
         state['fp32_copy'] = param.to(torch.float)
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        """
+        r"""
         ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)

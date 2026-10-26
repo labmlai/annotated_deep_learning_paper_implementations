@@ -108,7 +108,7 @@ class DiscriminatorLoss(nn.Module):
         This returns the a tuple with losses for $f_w(x)$ and $f_w(g_\theta(z))$,
         which are later added.
         They are kept separate for logging.
-        """
+        r"""
 
         # We use ReLUs to clip the loss to keep $f \in [-1, +1]$ range.
         return F.relu(1 - f_real).mean(), F.relu(1 + f_fake).mean()

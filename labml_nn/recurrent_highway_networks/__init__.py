@@ -16,7 +16,7 @@ from torch import nn
 
 
 class RHNCell(nn.Module):
-    """
+    r"""
     ## Recurrent Highway Network Cell
 
     This implements equations $(6) - (9)$.

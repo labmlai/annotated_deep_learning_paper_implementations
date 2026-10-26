@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: DeepNorm
 summary: >
@@ -82,7 +82,7 @@ from labml_nn.transformers.utils import subsequent_mask
 
 
 class DeepNorm(nn.Module):
-    """
+    r"""
     ## DeepNorm Normalization
 
     $$x_{l + 1} = \mathop{LN}\Big( \alpha x_l + \mathop{G}_l \big(x_l, \theta_l \big)\Big)$$
@@ -91,7 +91,7 @@ class DeepNorm(nn.Module):
     def __init__(self, alpha: float, normalized_shape: Union[int, List[int], Size], *,
                  eps: float = 1e-5,
                  elementwise_affine: bool = True):
-        """
+        r"""
         :param alpha: is $\alpha$
         :param normalized_shape: is the shape for LayerNorm $\mathop{LN}$
         :param eps: is $\epsilon$ for LayerNorm
@@ -104,7 +104,7 @@ class DeepNorm(nn.Module):
         self.layer_norm = LayerNorm(normalized_shape, eps=eps, elementwise_affine=elementwise_affine)
 
     def forward(self, x: torch.Tensor, gx: torch.Tensor):
-        """
+        r"""
         :param x: is the output from the previous layer $x_l$
         :param gx: is the output of the current sub-layer $\mathop{G}_l (x_l, \theta_l)$
         """
@@ -126,7 +126,7 @@ class DeepNormTransformerLayer(nn.Module):
                  deep_norm_alpha: float,
                  deep_norm_beta: float,
                  ):
-        """
+        r"""
         :param d_model: is the token embedding size
         :param self_attn: is the self attention module
         :param feed_forward: is the feed forward module

@@ -28,7 +28,7 @@ from labml_nn.transformers.mha import MultiHeadAttention
 
 
 class RotaryPositionalEmbeddings(nn.Module):
-    """
+    r"""
     ## RoPE module
 
     Rotary encoding transforms pairs of features by rotating in the 2D plane.
@@ -116,7 +116,7 @@ class RotaryPositionalEmbeddings(nn.Module):
     """
 
     def __init__(self, d: int, base: int = 10_000):
-        """
+        r"""
         * `d` is the number of features $d$
         * `base` is the constant used for calculating $\Theta$
         """
@@ -128,7 +128,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         self.sin_cached = None
 
     def _build_cache(self, x: torch.Tensor):
-        """
+        r"""
         Cache $\cos$ and $\sin$ values
         """
         # Return if cache is already built

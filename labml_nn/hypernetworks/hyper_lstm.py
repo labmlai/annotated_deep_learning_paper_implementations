@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: HyperNetworks - HyperLSTM
 summary: A PyTorch implementation/tutorial of HyperLSTM introduced in paper HyperNetworks.
@@ -223,7 +223,7 @@ class HyperLSTM(nn.Module):
 
     def forward(self, x: torch.Tensor,
                 state: Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]] = None):
-        """
+        r"""
         * `x` has shape `[n_steps, batch_size, input_size]` and
         * `state` is a tuple of $h, c, \hat{h}, \hat{c}$.
          $h, c$ have shape `[batch_size, hidden_size]` and

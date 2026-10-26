@@ -385,7 +385,7 @@ class LayerNorm(Module):
          $X \in \mathbb{R}^{* \times S[0] \times S[1] \times ... \times S[n]}$
         * `eps` is $\epsilon$, used in $\sqrt{Var[X] + \epsilon}$ for numerical stability
         * `elementwise_affine` is whether to scale and shift the normalized value
-        """
+        r"""
         super().__init__()
 
         self.eps = eps
@@ -487,7 +487,7 @@ class MultiHeadAttention(Module):
 
         `mask` has shape `[seq_len, seq_len]` and
         `mask[i, j]` indicates whether query at position `i` can see key-value at position `j`.
-        """
+        r"""
 
         # Get sequence length
         seq_len = len(query)
@@ -623,7 +623,7 @@ class CrossEntropyLoss(Module):
     <a id="CrossEntropyLoss"></a>
 
     ## Cross Entropy Loss
-    """
+    r"""
 
     def __init__(self):
         super().__init__()
@@ -800,7 +800,7 @@ class Adam:
 
         * `params` is a tree-map of parameters
         * `grads` is a tree-map of gradients
-        """
+        r"""
         # Increment step $t$
         self._n_steps += 1
         # Update states for each parameter
@@ -813,7 +813,7 @@ class Adam:
         ### Update parameters
 
         This performs a Adam update on the given parameter
-        """
+        r"""
 
         # Bias corrections for $\hat{m}_t$: $1 - \beta_1^t$ and for $\hat{v}_t$: $1 - \beta_2^t$
         bias_correction = [1 - beta ** n_steps for beta in self.betas]
@@ -834,7 +834,7 @@ class Adam:
         ### Update state
 
         This updates uncorrected first and second moments $m_t$ and $v_t$
-        """
+        r"""
         # Uncorrected first and second moments $m_{t-1}$ and $v_{t-1}$
         m, v = state
         # Clip gradients

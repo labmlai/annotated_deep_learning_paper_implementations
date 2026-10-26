@@ -124,7 +124,7 @@ def _transformer_configs(c: Configs):
 
 
 def _init_weights(module):
-    """
+    r"""
     ### Initialize weights
 
     Weights of linear layers and embedding layers are initialized

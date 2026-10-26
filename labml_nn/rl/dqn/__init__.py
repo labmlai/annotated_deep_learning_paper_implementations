@@ -31,7 +31,7 @@ from labml_nn.rl.dqn.replay_buffer import ReplayBuffer
 
 
 class QFuncLoss(nn.Module):
-    """
+    r"""
     ## Train the model
 
     We want to find optimal action-value function.
@@ -106,7 +106,7 @@ class QFuncLoss(nn.Module):
     def forward(self, q: torch.Tensor, action: torch.Tensor, double_q: torch.Tensor,
                 target_q: torch.Tensor, done: torch.Tensor, reward: torch.Tensor,
                 weights: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
+        r"""
         * `q` - $Q(s;\theta_i)$
         * `action` - $a$
         * `double_q` - $\textcolor{cyan}Q(s';\textcolor{cyan}{\theta_i})$

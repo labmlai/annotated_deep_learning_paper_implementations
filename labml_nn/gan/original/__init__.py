@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Generative Adversarial Networks (GAN)
 summary: A simple PyTorch implementation/tutorial of Generative Adversarial Networks (GAN) loss functions.
@@ -38,7 +38,7 @@ import torch.utils.data
 
 
 class DiscriminatorLogitsLoss(nn.Module):
-    """
+    r"""
     ## Discriminator Loss
 
     Discriminator should **ascend** on the gradient,
@@ -75,7 +75,7 @@ class DiscriminatorLogitsLoss(nn.Module):
         self.register_buffer('labels_false', _create_labels(256, 0.0, smoothing), False)
 
     def forward(self, logits_true: torch.Tensor, logits_false: torch.Tensor):
-        """
+        r"""
         `logits_true` are logits from $D(\pmb{x}^{(i)})$ and
         `logits_false` are logits from $D(G(\pmb{z}^{(i)}))$
         """
@@ -91,7 +91,7 @@ class DiscriminatorLogitsLoss(nn.Module):
 
 
 class GeneratorLogitsLoss(nn.Module):
-    """
+    r"""
     ## Generator Loss
 
     Generator should **descend** on the gradient,

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Nucleus Sampling
 summary: A PyTorch implementation of nucleus sampling from language models.

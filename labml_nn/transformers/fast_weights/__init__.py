@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Linear Transformers Are Secretly Fast Weight Memory Systems
 summary: >
@@ -101,7 +101,7 @@ from labml_nn.utils import clone_module_list
 
 
 class DPFP(nn.Module):
-    """
+    r"""
     ## Deterministic Parameter Free Project (DPFP)
 
     This is the new projection function $\textcolor{lightgreen}{\phi}$ introduced in the paper.
@@ -135,7 +135,7 @@ class DPFP(nn.Module):
     """
 
     def __init__(self, nu: int = 1, eps: float = 1e-6):
-        """
+        r"""
         * `nu` is the hyper-parameter $\nu$.
         * `eps` is the small value used to make sure there is no division-by-zero when normalizing.
         """
@@ -151,7 +151,7 @@ class DPFP(nn.Module):
         return k / (torch.sum(k, dim=-1, keepdim=True) + self.eps)
 
     def dpfp(self, k: torch.Tensor):
-        """
+        r"""
         $$\textcolor{lightgreen}{\phi(k)}$$
         """
         # $x = \text{ReLU}\Big(\big[k, -k\big]\Big)$
@@ -173,7 +173,7 @@ class DPFP(nn.Module):
 
 
 class FastWeightsAttention(nn.Module):
-    """
+    r"""
     ## Fast Weights Attention
 
     The paper introduces a new update rule for calculating $\textcolor{cyan}{W^{(i)}}$.

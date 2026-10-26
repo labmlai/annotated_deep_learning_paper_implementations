@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Weight Standardization
 summary: >

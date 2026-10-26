@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Deep Residual Learning for Image Recognition (ResNet)
 summary: >
@@ -67,7 +67,7 @@ class ShortcutProjection(nn.Module):
     """
 
     def __init__(self, in_channels: int, out_channels: int, stride: int):
-        """
+        r"""
         * `in_channels` is the number of channels in $x$
         * `out_channels` is the number of channels in $\mathcal{F}(x, \{W_i\})$
         * `stride` is the stride length in the convolution operation for $F$.
@@ -86,7 +86,7 @@ class ShortcutProjection(nn.Module):
 
 
 class ResidualBlock(nn.Module):
-    """
+    r"""
     <a id="residual_block"></a>
 
     ## Residual Block
@@ -153,7 +153,7 @@ class ResidualBlock(nn.Module):
 
 
 class BottleneckResidualBlock(nn.Module):
-    """
+    r"""
     <a id="bottleneck_residual_block"></a>
 
     ## Bottleneck Residual Block
@@ -181,7 +181,7 @@ class BottleneckResidualBlock(nn.Module):
     """
 
     def __init__(self, in_channels: int, bottleneck_channels: int, out_channels: int, stride: int):
-        """
+        r"""
         * `in_channels` is the number of channels in $x$
         * `bottleneck_channels` is the number of channels for the $3 \times 3$ convlution
         * `out_channels` is the number of output channels

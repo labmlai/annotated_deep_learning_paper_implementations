@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Latent Diffusion Models
 summary: >
@@ -70,7 +70,7 @@ class LatentDiffusion(nn.Module):
                  linear_start: float,
                  linear_end: float,
                  ):
-        """
+        r"""
         :param unet_model: is the [U-Net](model/unet.html) that predicts noise
          $\epsilon_\text{cond}(x_t, c)$, in latent space
         :param autoencoder: is the [AutoEncoder](model/autoencoder.html)
@@ -134,7 +134,7 @@ class LatentDiffusion(nn.Module):
         return self.first_stage_model.decode(z / self.latent_scaling_factor)
 
     def forward(self, x: torch.Tensor, t: torch.Tensor, context: torch.Tensor):
-        """
+        r"""
         ### Predict noise
 
         Predict noise given the latent representation $x_t$, time step $t$, and the

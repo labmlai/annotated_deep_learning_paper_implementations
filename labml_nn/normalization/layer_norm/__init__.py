@@ -79,7 +79,7 @@ class LayerNorm(nn.Module):
         * `elementwise_affine` is whether to scale and shift the normalized value
 
         We've tried to use the same names for arguments as PyTorch `LayerNorm` implementation.
-        """
+        r"""
         super().__init__()
 
         # Convert `normalized_shape` to `torch.Size`
@@ -104,7 +104,7 @@ class LayerNorm(nn.Module):
         `*` could be any number of dimensions.
          For example, in an NLP task this will be
         `[seq_len, batch_size, features]`
-        """
+        r"""
         # Sanity check to make sure the shapes match
         assert self.normalized_shape == x.shape[-len(self.normalized_shape):]
 

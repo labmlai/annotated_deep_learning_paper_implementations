@@ -17,7 +17,7 @@ from torch import nn
 
 
 class LSTMCell(nn.Module):
-    """
+    r"""
     ## Long Short-Term Memory Cell
 
     LSTM Cell computes $c$, and $h$. $c$ is like the long-term memory,

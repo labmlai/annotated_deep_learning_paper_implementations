@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Build FAISS index for k-NN search
 summary: This builds the FAISS index with the transformer embeddings.
@@ -51,7 +51,7 @@ def load_experiment(run_uuid: str, checkpoint: Optional[int] = None):
 
 
 def gather_keys(conf: Configs):
-    """
+    r"""
     ## Gather $\big(f(c_i), w_i\big)$ and save them in numpy arrays
 
     *Note that these numpy arrays will take up a lot of space (even few hundred gigabytes)

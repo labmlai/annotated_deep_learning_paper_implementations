@@ -48,7 +48,7 @@ class MLPMixer(nn.Module):
         self.mlp = mlp
 
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: Optional[torch.Tensor] = None):
-        """
+        r"""
         The [normal attention module](../mha.html) can be fed with different token embeddings for
         $\text{query}$,$\text{key}$, and $\text{value}$ and a mask.
 

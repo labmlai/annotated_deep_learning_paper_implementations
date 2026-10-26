@@ -18,7 +18,7 @@ import numpy as np
 
 
 class ReplayBuffer:
-    """
+    r"""
     ## Buffer for Prioritized Experience Replay
 
     [Prioritized experience replay](https://arxiv.org/abs/1511.05952)
@@ -180,7 +180,7 @@ class ReplayBuffer:
             self.priority_sum[idx] = self.priority_sum[2 * idx] + self.priority_sum[2 * idx + 1]
 
     def _sum(self):
-        """
+        r"""
         #### $\sum_k p_k^\alpha$
         """
 
@@ -188,7 +188,7 @@ class ReplayBuffer:
         return self.priority_sum[1]
 
     def _min(self):
-        """
+        r"""
         #### $\min_k p_k^\alpha$
         """
 
@@ -196,7 +196,7 @@ class ReplayBuffer:
         return self.priority_min[1]
 
     def find_prefix_sum_idx(self, prefix_sum):
-        """
+        r"""
         #### Find largest $i$ such that $\sum_{k=1}^{i} p_k^\alpha  \le P$
         """
 

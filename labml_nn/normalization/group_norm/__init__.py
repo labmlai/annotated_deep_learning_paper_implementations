@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Group Normalization
 summary: >
@@ -98,7 +98,7 @@ class GroupNorm(nn.Module):
         * `channels` is the number of features in the input
         * `eps` is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability
         * `affine` is whether to scale and shift the normalized value
-        """
+        r"""
         super().__init__()
 
         assert channels % groups == 0, "Number of channels should be evenly divisible by the number of groups"
@@ -118,7 +118,7 @@ class GroupNorm(nn.Module):
         `*` denotes any number of (possibly 0) dimensions.
          For example, in an image (2D) convolution this will be
         `[batch_size, channels, height, width]`
-        """
+        r"""
         # Keep the original shape
         x_shape = x.shape
         # Get the batch size

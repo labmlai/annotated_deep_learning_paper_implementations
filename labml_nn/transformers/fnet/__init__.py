@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: "FNet: Mixing Tokens with Fourier Transforms"
 summary: >
@@ -45,7 +45,7 @@ from torch import nn
 
 
 class FNetMix(nn.Module):
-    """
+    r"""
     ## FNet - Mix tokens
 
     This module simply implements
@@ -58,7 +58,7 @@ class FNetMix(nn.Module):
     """
 
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: Optional[torch.Tensor] = None):
-        """
+        r"""
         The [normal attention module](../mha.html) can be fed with different token embeddings for
         $\text{query}$,$\text{key}$, and $\text{value}$ and a mask.
 

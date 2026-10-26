@@ -15,7 +15,7 @@ from torch import nn
 
 
 class Model(nn.Module):
-    """
+    r"""
     ## Dueling Network ⚔️ Model for $Q$ Values
 
     We are using a [dueling network](https://arxiv.org/abs/1511.06581)

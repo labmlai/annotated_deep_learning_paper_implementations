@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: "Evidential Deep Learning to Quantify Classification Uncertainty"
 summary: >
@@ -55,7 +55,7 @@ from torch import nn
 
 
 class MaximumLikelihoodLoss(nn.Module):
-    """
+    r"""
     <a id="MaximumLikelihoodLoss"></a>
 
     ## Type II Maximum Likelihood Loss
@@ -81,7 +81,7 @@ class MaximumLikelihoodLoss(nn.Module):
     """
 
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
-        """
+        r"""
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
@@ -98,7 +98,7 @@ class MaximumLikelihoodLoss(nn.Module):
 
 
 class CrossEntropyBayesRisk(nn.Module):
-    """
+    r"""
     <a id="CrossEntropyBayesRisk"></a>
 
     ## Bayes Risk with Cross Entropy Loss
@@ -128,7 +128,7 @@ class CrossEntropyBayesRisk(nn.Module):
     """
 
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
-        """
+        r"""
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
@@ -145,7 +145,7 @@ class CrossEntropyBayesRisk(nn.Module):
 
 
 class SquaredErrorBayesRisk(nn.Module):
-    """
+    r"""
     <a id="SquaredErrorBayesRisk"></a>
 
     ## Bayes Risk with Squared Error Loss
@@ -191,7 +191,7 @@ class SquaredErrorBayesRisk(nn.Module):
     """
 
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
-        """
+        r"""
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
@@ -215,7 +215,7 @@ class SquaredErrorBayesRisk(nn.Module):
 
 
 class KLDivergenceLoss(nn.Module):
-    """
+    r"""
     <a id="KLDivergenceLoss"></a>
 
     ## KL Divergence Regularization Loss
@@ -240,7 +240,7 @@ class KLDivergenceLoss(nn.Module):
     """
 
     def forward(self, evidence: torch.Tensor, target: torch.Tensor):
-        """
+        r"""
         * `evidence` is $\mathbf{e} \ge 0$ with shape `[batch_size, n_classes]`
         * `target` is $\mathbf{y}$ with shape `[batch_size, n_classes]`
         """
