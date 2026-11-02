@@ -179,10 +179,12 @@ class AttentionBlock(nn.Module):
         _ = t
         # Get shape
         batch_size, n_channels, height, width = x.shape
-        # Change `x` to shape `[batch_size, seq, n_channels]`
-        x = x.view(batch_size, n_channels, -1).permute(0, 2, 1)
+        # Normalize the features for attention, keeping the original residual.
+        x_norm = self.norm(x)
+        # Change normalized features to shape `[batch_size, seq, n_channels]`
+        x_norm = x_norm.view(batch_size, n_channels, -1).permute(0, 2, 1)
         # Get query, key, and values (concatenated) and shape it to `[batch_size, seq, n_heads, 3 * d_k]`
-        qkv = self.projection(x).view(batch_size, -1, self.n_heads, 3 * self.d_k)
+        qkv = self.projection(x_norm).view(batch_size, -1, self.n_heads, 3 * self.d_k)
         # Split query, key, and values. Each of them will have shape `[batch_size, seq, n_heads, d_k]`
         q, k, v = torch.chunk(qkv, 3, dim=-1)
         # Calculate scaled dot-product $\frac{Q K^\top}{\sqrt{d_k}}$
@@ -196,14 +198,11 @@ class AttentionBlock(nn.Module):
         # Transform to `[batch_size, seq, n_channels]`
         res = self.output(res)
 
-        # Add skip connection
-        res += x
-
         # Change to shape `[batch_size, in_channels, height, width]`
         res = res.permute(0, 2, 1).view(batch_size, n_channels, height, width)
 
-        #
-        return res
+        # Add the original, unnormalized skip connection
+        return res + x
 
 
 class DownBlock(nn.Module):
