@@ -132,7 +132,8 @@ class RotaryPositionalEmbeddings(nn.Module):
         Cache $\cos$ and $\sin$ values
         """
         # Return if cache is already built
-        if self.cos_cached is not None and x.shape[0] <= self.cos_cached.shape[0]:
+        if (self.cos_cached is not None and x.shape[0] <= self.cos_cached.shape[0]
+                and self.cos_cached.device == x.device):
             return
 
         # Get sequence length
@@ -189,7 +190,12 @@ class RotaryPositionalEmbeddings(nn.Module):
         # \end{align}
         #
         # for $i \in {1, 2, ..., \frac{d}{2}}$
-        x_rope = (x_rope * self.cos_cached[:seq_len]) + (neg_half_x * self.sin_cached[:seq_len])
+        # Keep the cached angles in FP32, but apply the rotation in the input
+        # dtype. Otherwise FP16/BF16 queries and keys become FP32 while the
+        # attention values remain half precision.
+        cos = self.cos_cached[:seq_len].to(dtype=x.dtype)
+        sin = self.sin_cached[:seq_len].to(dtype=x.dtype)
+        x_rope = (x_rope * cos) + (neg_half_x * sin)
 
         #
         return torch.cat((x_rope, x_pass), dim=-1)

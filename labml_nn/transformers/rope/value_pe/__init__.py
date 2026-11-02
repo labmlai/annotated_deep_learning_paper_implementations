@@ -157,7 +157,11 @@ class ReverseRotaryPositionalEmbeddings(RotaryPositionalEmbeddings):
         # \end{align}
         #
         # for $i \in {1, 2, ..., \frac{d}{2}}$
-        x_rope = (x_rope * self.cos_cached[:x.shape[0]]) - (neg_half_x * self.sin_cached[:x.shape[0]])
+        # Apply the inverse rotation in the input dtype, just like the
+        # forward rotation, while retaining FP32 angles in the cache.
+        cos = self.cos_cached[:x.shape[0]].to(dtype=x.dtype)
+        sin = self.sin_cached[:x.shape[0]].to(dtype=x.dtype)
+        x_rope = (x_rope * cos) - (neg_half_x * sin)
 
         #
         return torch.cat((x_rope, x_pass), dim=-1)
