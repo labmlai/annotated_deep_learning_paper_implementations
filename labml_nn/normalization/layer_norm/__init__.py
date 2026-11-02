@@ -111,17 +111,16 @@ class LayerNorm(nn.Module):
         # The dimensions to calculate the mean and variance on
         dims = [-(i + 1) for i in range(len(self.normalized_shape))]
 
-        # Calculate the mean of all elements;
-        # i.e. the means for each element $\mathbb{E}[X]$
-        mean = x.mean(dim=dims, keepdim=True)
-        # Calculate the squared mean of all elements;
-        # i.e. the means for each element $\mathbb{E}[X^2]$
-        mean_x2 = (x ** 2).mean(dim=dims, keepdim=True)
-        # Variance of all element $Var[X] = \mathbb{E}[X^2] - \mathbb{E}[X]^2$
-        var = mean_x2 - mean ** 2
+        # Accumulate half-precision statistics in FP32 to avoid overflow in
+        # the variance calculation. Preserve FP64 inputs for higher precision.
+        stats = x.float() if x.dtype in (torch.float16, torch.bfloat16) else x
+        # Calculate population variance and mean together. Unlike
+        # $\mathbb{E}[X^2] - \mathbb{E}[X]^2$, this does not subtract two large,
+        # nearly equal quantities when the features have a large common offset.
+        var, mean = torch.var_mean(stats, dim=dims, keepdim=True, unbiased=False)
 
         # Normalize $$\hat{X} = \frac{X - \mathbb{E}[X]}{\sqrt{Var[X] + \epsilon}}$$
-        x_norm = (x - mean) / torch.sqrt(var + self.eps)
+        x_norm = ((stats - mean) / torch.sqrt(var + self.eps)).to(x.dtype)
         # Scale and shift $$\text{LN}(x) = \gamma \hat{X} + \beta$$
         if self.elementwise_affine:
             x_norm = self.gain * x_norm + self.bias
