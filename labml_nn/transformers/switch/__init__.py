@@ -136,10 +136,10 @@ class SwitchFeedForward(nn.Module):
         for i in range(self.n_experts):
             final_output[indexes_list[i], :] = expert_output[i]
 
-        # Pass through the dropped tokens
-        if dropped:
-            dropped = torch.cat(dropped)
-            final_output[dropped, :] = x[dropped, :]
+        # Dropped tokens contribute zero to the FFN branch. Their original
+        # representations already pass through SwitchTransformerLayer's
+        # residual connection; adding them here would count them twice.
+        n_dropped = sum(len(indexes) for indexes in dropped)
 
         if self.is_scale_prob:
             # Multiply by the expert outputs by the probabilities $y = p_i(x) E_i(x)$
@@ -161,7 +161,7 @@ class SwitchFeedForward(nn.Module):
         # * routing probabilities of the selected experts
         #
         # These are used for the load balancing loss and logging
-        return final_output, counts, route_prob.sum(0), len(dropped), route_prob_max
+        return final_output, counts, route_prob.sum(0), n_dropped, route_prob_max
 
 
 class SwitchTransformerLayer(nn.Module):
