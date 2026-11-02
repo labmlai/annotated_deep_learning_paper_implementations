@@ -59,10 +59,8 @@ class AdaBelief(RAdam):
         * `params` is the list of parameters
         * `lr` is the learning rate $\alpha$
         * `betas` is a tuple of ($\beta_1$, $\beta_2$)
-        * `eps` is $\hat{\epsilon}$ or $\epsilon$ based on `optimized_update`
+        * `eps` is $\epsilon$, added to the variance and the bias-corrected denominator
         * `weight_decay` is an instance of class `WeightDecay` defined in [`__init__.py`](index.html)
-        * `optimized_update` is a flag whether to optimize the bias correction of the second moment
-          by doing it after adding $\epsilon$
         * `amsgrad` is a flag indicating whether to use AMSGrad or fallback to plain Adam
         * `degenerate_to_sgd` whether to use sgd when the rectification term $r_t$ is intractable
         * `rectify` is whether to use RAdam update
@@ -71,7 +69,11 @@ class AdaBelief(RAdam):
         """
 
         defaults = {} if defaults is None else defaults
-        super().__init__(params, lr, betas, eps, weight_decay, amsgrad, degenerate_to_sgd, defaults)
+        super().__init__(params, lr, betas, eps, weight_decay,
+                         optimized_update=False,
+                         amsgrad=amsgrad,
+                         degenerated_to_sgd=degenerate_to_sgd,
+                         defaults=defaults)
         self.rectify = rectify
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
