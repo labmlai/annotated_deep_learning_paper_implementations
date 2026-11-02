@@ -188,8 +188,11 @@ class BatchNorm(nn.Module):
 
             # Update exponential moving averages
             if self.training and self.track_running_stats:
-                self.exp_mean = (1 - self.momentum) * self.exp_mean + self.momentum * mean
-                self.exp_var = (1 - self.momentum) * self.exp_var + self.momentum * var
+                # Running statistics are inference state, not a graph across batches.
+                # Keep the current batch statistics differentiable for normalization.
+                with torch.no_grad():
+                    self.exp_mean.mul_(1 - self.momentum).add_(mean, alpha=self.momentum)
+                    self.exp_var.mul_(1 - self.momentum).add_(var, alpha=self.momentum)
         # Use exponential moving averages as estimates
         else:
             mean = self.exp_mean
