@@ -75,14 +75,15 @@ class AdamFP16(Adam):
             # Otherwise, convert the gradients to FP32
             grad = grad.to(torch.float)
 
-        # Calculate weight decay
-        grad = self.weight_decay(param_fp32, grad, group)
+        # Increment before evaluating the current step's learning-rate schedule.
+        state['step'] += 1
+
+        # Decoupled decay follows the same rate as the parameter update.
+        decay_group = dict(group, lr=self.get_lr(state, group))
+        grad = self.weight_decay(param_fp32, grad, decay_group)
 
         # Get $m_t$ and $v_t$
         m, v = self.get_mv(state, group, grad)
-
-        # Increment $t$ the number of optimizer steps
-        state['step'] += 1
 
         # Perform *Adam* update
         self.adam_update(state, group, param_fp32, m, v)
