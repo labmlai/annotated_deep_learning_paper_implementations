@@ -12,7 +12,6 @@ This is an implementation of a 2 dimensional convolution layer with [Weight Stan
 
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
 
 from labml_nn.normalization.weight_standardization import weight_standardization
 
@@ -41,8 +40,7 @@ class Conv2d(nn.Conv2d):
         self.eps = eps
 
     def forward(self, x: torch.Tensor):
-        return F.conv2d(x, weight_standardization(self.weight, self.eps), self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)
+        return self._conv_forward(x, weight_standardization(self.weight, self.eps), self.bias)
 
 
 def _test():
