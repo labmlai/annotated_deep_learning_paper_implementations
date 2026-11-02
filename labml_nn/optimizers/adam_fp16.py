@@ -34,6 +34,46 @@ class AdamFP16(Adam):
         # Call the [Adam Optimizer](adam.html) initializer
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, defaults)
 
+    def _restore_fp32_state(self, state_dict):
+        # The inherited loader casts floating-point state to each parameter's
+        # dtype. Restore these tensors from the checkpoint itself, before any
+        # FP16/BF16 rounding, rather than converting the rounded state back.
+        for saved_group, group in zip(state_dict['param_groups'], self.param_groups):
+            for param_id, param in zip(saved_group['params'], group['params']):
+                saved_state = state_dict['state'].get(param_id, {})
+                for key in ('exp_avg', 'exp_avg_sq', 'fp32_copy'):
+                    if key in saved_state:
+                        self.state[param][key] = saved_state[key].detach().to(
+                            device=param.device, dtype=torch.float32).clone()
+
+    def load_state_dict(self, state_dict):
+        """Load a checkpoint without losing the FP32 master weights or moments."""
+        # Older supported PyTorch versions do not have optimizer load hooks.
+        if not hasattr(self, 'register_load_state_dict_pre_hook'):
+            result = super().load_state_dict(state_dict)
+            self._restore_fp32_state(state_dict)
+            return result
+
+        # Capture after user pre-hooks have adapted the checkpoint, and restore
+        # before user post-hooks inspect the loaded state. The inherited loader
+        # still validates groups and preserves all other checkpoint fields.
+        loaded_state = None
+
+        def capture(optimizer, incoming):
+            nonlocal loaded_state
+            loaded_state = incoming
+
+        def restore(optimizer):
+            self._restore_fp32_state(loaded_state)
+
+        pre_hook = self.register_load_state_dict_pre_hook(capture)
+        post_hook = self.register_load_state_dict_post_hook(restore, prepend=True)
+        try:
+            return super().load_state_dict(state_dict)
+        finally:
+            pre_hook.remove()
+            post_hook.remove()
+
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
         """
         ### Initialize a parameter state
