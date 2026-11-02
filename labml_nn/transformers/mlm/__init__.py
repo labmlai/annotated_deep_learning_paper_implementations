@@ -87,9 +87,16 @@ class MLM:
         and we have tokens such as `[CLS]` that shouldn't be masked.
         * `n_tokens` total number of tokens (used for generating random tokens)
         * `masking_prob` is the masking probability
-        * `randomize_prob` is the probability of replacing with a random token
-        * `no_change_prob` is the probability of replacing with original token
+        * `randomize_prob` is the probability of replacing a selected token with a random token
+        * `no_change_prob` is the probability of leaving a selected token unchanged
         """
+        for name, probability in [('masking_prob', masking_prob),
+                                  ('randomize_prob', randomize_prob),
+                                  ('no_change_prob', no_change_prob)]:
+            if not 0 <= probability <= 1:
+                raise ValueError(f'{name} must be between 0 and 1')
+        if randomize_prob + no_change_prob > 1:
+            raise ValueError('randomize_prob + no_change_prob must not exceed 1')
         self.n_tokens = n_tokens
         self.no_change_prob = no_change_prob
         self.randomize_prob = randomize_prob
@@ -110,10 +117,13 @@ class MLM:
         for t in self.no_mask_tokens:
             full_mask &= x != t
 
-        # A mask for tokens to be replaced with original tokens
-        unchanged = full_mask & (torch.rand(x.shape, device=x.device) < self.no_change_prob)
-        # A mask for tokens to be replaced with a random token
-        random_token_mask = full_mask & (torch.rand(x.shape, device=x.device) < self.randomize_prob)
+        # Draw mutually exclusive outcomes for each selected token. Independent
+        # draws would let random replacement overwrite unchanged tokens, giving
+        # 81% mask / 10% random / 9% unchanged instead of BERT's 80% / 10% / 10%.
+        replacement_prob = torch.rand(x.shape, device=x.device)
+        unchanged = full_mask & (replacement_prob < self.no_change_prob)
+        random_token_mask = (full_mask & ~unchanged
+                             & (replacement_prob < self.no_change_prob + self.randomize_prob))
         # Indexes of tokens to be replaced with random tokens
         random_token_idx = torch.nonzero(random_token_mask, as_tuple=True)
         # Random tokens for each of the locations
