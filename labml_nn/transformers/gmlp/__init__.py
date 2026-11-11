@@ -23,7 +23,7 @@ from torch import nn
 
 
 class GMLPBlock(nn.Module):
-    """
+    r"""
     ## gMLP Block
 
     Each block does the following transformations to input embeddings
@@ -87,7 +87,7 @@ class GMLPBlock(nn.Module):
 
 
 class SpacialGatingUnit(nn.Module):
-    """
+    r"""
     ## Spatial Gating Unit
 
     $$s(Z) = Z_1 \odot f_{W,b}(Z_2)$$

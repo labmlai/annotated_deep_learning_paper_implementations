@@ -73,7 +73,7 @@ class RoPE(nn.Module):
     """
 
     def __init__(self, d_rope: int, base: float = 10_000.):
-        """
+        r"""
         :param d_rope: is the number of features for RoPE embeddings
         :param base: is the base for $\theta_i = 10000^{\frac{2(i-1)}{d}}$, which defaults to $10000$
         """
@@ -92,7 +92,7 @@ class RoPE(nn.Module):
 
     @staticmethod
     def rotate_half(x: torch.Tensor):
-        """
+        r"""
         ### Rotate the features
 
         $[-x^{(\frac{d}{2} + 1)}, -x^{(\frac{d}{2} + 2)}, ..., -x^{(d)}, x^{(1)}, x^{(2)}, ..., -x^{(\frac{d}{2})}]$
@@ -101,7 +101,7 @@ class RoPE(nn.Module):
         return torch.cat((-x2, x1), dim=-1)
 
     def forward(self, x: torch.Tensor, offset: int = 0):
-        """
+        r"""
         :param x: has shape `[..., seq, n_heads, d_k]`
         :param offset: is the starting position of `x`. This is $\gt 0$ when we have
         cached the keys and queries of previous positions
@@ -513,7 +513,7 @@ class LayerGenerator:
                  llm_int8_threshold: float = 6.0,
                  is_flash_attention: bool = False
                  ):
-        """
+        r"""
         ### Generator to create layers
 
         The layers are generated in the same order as checkpoints.
@@ -571,7 +571,7 @@ class LayerGenerator:
                           device: torch.device = None,
                           llm_int8_threshold: float = None,
                           ):
-        """
+        r"""
         <a id="post_load_prepare"></a>
 
         ### Layer transformations after loading the checkpoint

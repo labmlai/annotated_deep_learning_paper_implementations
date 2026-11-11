@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Regret Minimization in Games with Incomplete Information (CFR)
 summary: >
@@ -337,7 +337,7 @@ Action = NewType('Action', str)
 
 
 class History:
-    """
+    r"""
     <a id="History"></a>
 
     ## History
@@ -349,14 +349,14 @@ class History:
     """
 
     def is_terminal(self):
-        """
+        r"""
         Whether it's a terminal history; i.e. game over.
         $h \in Z$
         """
         raise NotImplementedError()
 
     def terminal_utility(self, i: Player) -> float:
-        """
+        r"""
         <a id="terminal_utility"></a>
         Utility of player $i$ for a terminal history.
         $u_i(h)$ where $h \in Z$
@@ -485,7 +485,7 @@ class InfoSet:
         self.calculate_strategy()
 
     def calculate_strategy(self):
-        """
+        r"""
         ## Calculate strategy
 
         Calculate current strategy using [regret matching](#RegretMatching).
@@ -520,7 +520,7 @@ class InfoSet:
             self.strategy = {a: 1 / count for a, r in regret.items()}
 
     def get_average_strategy(self):
-        """
+        r"""
         ## Get average strategy
 
         $$\textcolor{cyan}{\bar{\sigma}^T_i(I)(a)} =
@@ -596,7 +596,7 @@ class CFR:
         return self.info_sets[info_set_key]
 
     def walk_tree(self, h: History, i: Player, pi_i: float, pi_neg_i: float) -> float:
-        """
+        r"""
         ### Walk Tree
 
         This function walks the game tree.
@@ -686,7 +686,7 @@ class CFR:
         return v
 
     def iterate(self):
-        """
+        r"""
         ### Iteratively update $\textcolor{lightgreen}{\sigma^t(I)(a)}$
 
         This updates the strategies for $T$ iterations.

@@ -40,7 +40,7 @@ class BatchChannelNorm(nn.Module):
 
     def __init__(self, channels: int, groups: int,
                  eps: float = 1e-5, momentum: float = 0.1, estimate: bool = True):
-        """
+        r"""
         * `channels` is the number of features in the input
         * `groups` is the number of groups the features are divided into
         * `eps` is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability
@@ -66,7 +66,7 @@ class BatchChannelNorm(nn.Module):
 
 
 class EstimatedBatchNorm(nn.Module):
-    """
+    r"""
     ## Estimated Batch Normalization
 
     When input $X \in \mathbb{R}^{B \times C \times H \times W}$ is a batch of image representations,
@@ -88,7 +88,7 @@ class EstimatedBatchNorm(nn.Module):
     """
     def __init__(self, channels: int,
                  eps: float = 1e-5, momentum: float = 0.1, affine: bool = True):
-        """
+        r"""
         * `channels` is the number of features in the input
         * `eps` is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability
         * `momentum` is the momentum in taking the exponential moving average
@@ -174,7 +174,7 @@ class ChannelNorm(nn.Module):
 
     def __init__(self, channels, groups,
                  eps: float = 1e-5, affine: bool = True):
-        """
+        r"""
         * `groups` is the number of groups the features are divided into
         * `channels` is the number of features in the input
         * `eps` is $\epsilon$, used in $\sqrt{Var[x^{(k)}] + \epsilon}$ for numerical stability

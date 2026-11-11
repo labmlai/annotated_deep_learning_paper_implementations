@@ -115,7 +115,7 @@ class Configs(MNISTConfigs, TrainValidConfigs):
         tracker.set_image("generated", True, 1 / 100)
 
     def sample_z(self, batch_size: int):
-        """
+        r"""
         $$z \sim p(z)$$
         """
         return torch.randn(batch_size, 100, device=self.device)

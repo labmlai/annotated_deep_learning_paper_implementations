@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: "Primer: Searching for Efficient Transformers for Language Modeling"
 summary: >
@@ -42,7 +42,7 @@ from labml_nn.transformers import MultiHeadAttention
 
 
 class SquaredReLU(nn.Module):
-    """
+    r"""
     ## Squared ReLU activation
 
     $$y = {\max(x, 0)}^2$$

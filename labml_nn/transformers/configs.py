@@ -50,7 +50,7 @@ class FeedForwardConfigs(BaseConfigs):
 
 @option(FeedForwardConfigs.activation, 'ReLU')
 def _ffn_activation_relu():
-    """
+    r"""
     ### ReLU activation
 
     $$\max(0, x)$$
@@ -60,7 +60,7 @@ def _ffn_activation_relu():
 
 @option(FeedForwardConfigs.activation, 'GELU')
 def _ffn_activation_gelu():
-    """
+    r"""
     ### GELU activation
 
     $$x \Phi(x)$$ where $\Phi(x) = P(X \le x), X \sim \mathcal{N}(0,1)$

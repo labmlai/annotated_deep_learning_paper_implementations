@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Flash Attention
 summary: >
@@ -160,7 +160,7 @@ class AttentionFunc(torch.autograd.Function):
     def forward(ctx: Any,
                 q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
                 causal: bool, sm_scale: float) -> torch.Tensor:
-        """
+        r"""
         ### Forward pass
 
         Group query attention forward pass. Returns the output in shape `[batch_size, n_heads, q_seq_len, d_head]`.
@@ -352,7 +352,7 @@ def _attn_fwd(t_q, t_k, t_v, sm_scale_log2e, t_lse, t_o,
               BLOCK_Q: tl.constexpr,
               BLOCK_K: tl.constexpr,
               ):
-    """
+    r"""
     ### Triton kernel for Flash attention forward pass
 
     :param t_q: queries $Q_i$

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Sampling from Language Models with Temperature
 summary: A PyTorch implementation of sampling from language models with temperature.

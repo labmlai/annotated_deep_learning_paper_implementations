@@ -29,7 +29,7 @@ class DiffusionSampler:
     model: LatentDiffusion
 
     def __init__(self, model: LatentDiffusion):
-        """
+        r"""
         :param model: is the model to predict noise $\epsilon_\text{cond}(x_t, c)$
         """
         super().__init__()
@@ -40,7 +40,7 @@ class DiffusionSampler:
 
     def get_eps(self, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor, *,
                 uncond_scale: float, uncond_cond: Optional[torch.Tensor]):
-        """
+        r"""
         ## Get $\epsilon(x_t, c)$
 
         :param x: is $x_t$ of shape `[batch_size, channels, height, width]`
@@ -79,7 +79,7 @@ class DiffusionSampler:
                uncond_cond: Optional[torch.Tensor] = None,
                skip_steps: int = 0,
                ):
-        """
+        r"""
         ### Sampling Loop
 
         :param shape: is the shape of the generated images in the
@@ -100,7 +100,7 @@ class DiffusionSampler:
               uncond_scale: float = 1.,
               uncond_cond: Optional[torch.Tensor] = None,
               ):
-        """
+        r"""
         ### Painting Loop
 
         :param x: is $x_{T'}$ of shape `[batch_size, channels, height, width]`
@@ -116,7 +116,7 @@ class DiffusionSampler:
         raise NotImplementedError()
 
     def q_sample(self, x0: torch.Tensor, index: int, noise: Optional[torch.Tensor] = None):
-        """
+        r"""
         ### Sample from $q(x_t|x_0)$
 
         :param x0: is $x_0$ of shape `[batch_size, channels, height, width]`

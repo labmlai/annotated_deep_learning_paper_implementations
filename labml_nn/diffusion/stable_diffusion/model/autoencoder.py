@@ -416,7 +416,7 @@ class ResnetBlock(nn.Module):
 
 
 def swish(x: torch.Tensor):
-    """
+    r"""
     ### Swish activation
 
     $$x \cdot \sigma(x)$$

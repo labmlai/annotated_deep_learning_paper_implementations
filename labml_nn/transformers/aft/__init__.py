@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: An Attention Free Transformer
 summary: >
@@ -64,7 +64,7 @@ from torch import nn
 
 
 class AFTLocal(nn.Module):
-    """
+    r"""
     ### AFT Local Operation
 
     $$Y_t = \sigma(Q_t) \odot
@@ -109,7 +109,7 @@ class AFTLocal(nn.Module):
 
     @staticmethod
     def create_local_mask(seq_len, local_window_size):
-        """
+        r"""
         #### Create local mask
 
         This creates a mask for

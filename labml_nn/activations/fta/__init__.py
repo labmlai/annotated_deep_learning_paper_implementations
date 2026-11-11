@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Fuzzy Tiling Activations
 summary: >
@@ -68,7 +68,7 @@ class FTA(nn.Module):
     """
 
     def __init__(self, lower_limit: float, upper_limit: float, delta: float, eta: float):
-        """
+        r"""
         :param lower_limit: is the lower limit $l$
         :param upper_limit: is the upper limit $u$
         :param delta: is the bin size $\delta$
@@ -86,7 +86,7 @@ class FTA(nn.Module):
         self.eta = eta
 
     def fuzzy_i_plus(self, x: torch.Tensor):
-        """
+        r"""
         #### Fuzzy indicator function
 
         $$I_{\eta,+}(x) = I_+(\eta - x) x + I_+ (x - \eta)$$

@@ -31,7 +31,7 @@ class InPaint:
     def __init__(self, *, checkpoint_path: Path,
                  ddim_steps: int = 50,
                  ddim_eta: float = 0.0):
-        """
+        r"""
         :param checkpoint_path: is the path of the checkpoint
         :param ddim_steps: is the number of sampling steps
         :param ddim_eta: is the [DDIM sampling](../sampler/ddim.html) $\eta$ constant
@@ -60,7 +60,7 @@ class InPaint:
                  uncond_scale: float = 5.0,
                  mask: Optional[torch.Tensor] = None,
                  ):
-        """
+        r"""
         :param dest_path: is the path to store the generated images
         :param orig_img: is the image to transform
         :param strength: specifies how much of the original image should not be preserved

@@ -36,7 +36,7 @@ class AMSGrad(Adam):
                  weight_decay: WeightDecay = WeightDecay(),
                  optimized_update: bool = True,
                  amsgrad=True, defaults=None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -56,7 +56,7 @@ class AMSGrad(Adam):
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, defaults)
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
-        """
+        r"""
         ### Initialize a parameter state
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -73,7 +73,7 @@ class AMSGrad(Adam):
             state['max_exp_avg_sq'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def get_mv(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor):
-        """
+        r"""
         ### Calculate $m_t$ and and $v_t$ or $\max(v_1, v_2, ..., v_{t-1}, v_t)$
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -109,7 +109,7 @@ class AMSGrad(Adam):
 
 
 def _synthetic_experiment(is_adam: bool):
-    """
+    r"""
     ## Synthetic Experiment
 
     This is the synthetic experiment described in the paper,

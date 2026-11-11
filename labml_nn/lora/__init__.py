@@ -26,7 +26,7 @@ import torch.nn as nn
 
 
 class Linear(nn.Module):
-    """
+    r"""
     ## LoRA Linear Layer
 
     LoRA linear layer adds a low-rank decomposition to the pre-trained
@@ -48,7 +48,7 @@ class Linear(nn.Module):
 
     def __init__(self, in_features: int, out_features: int, bias: bool,
                  r: int, alpha: int = None):
-        """
+        r"""
         :param in_features: is the number of input features of the linear layer
         :param out_features: is the number of output features of the linear layer
         :param bias: is a flag indicating if there is a bias parameter
@@ -99,7 +99,7 @@ class Linear(nn.Module):
 
 
 class Embedding(nn.Module):
-    """
+    r"""
     ## LoRA Embedding Layer
 
     Similar to LoRA linear layer this adds a low-rank decomposition to the pre-trained
@@ -110,7 +110,7 @@ class Embedding(nn.Module):
 
     def __init__(self, num_embeddings: int, embedding_dim: int,
                  r: int, alpha: int = None):
-        """
+        r"""
 
         :param num_embeddings: is the number of embeddings
         :param embedding_dim: is the number embedding dimensions

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Batch Normalization
 summary: >
@@ -138,7 +138,7 @@ class BatchNorm(nn.Module):
         * `track_running_stats` is whether to calculate the moving averages or mean and variance
 
         We've tried to use the same names for arguments as PyTorch `BatchNorm` implementation.
-        """
+        r"""
         super().__init__()
 
         self.channels = channels
@@ -163,7 +163,7 @@ class BatchNorm(nn.Module):
         `*` denotes any number of (possibly 0) dimensions.
          For example, in an image (2D) convolution this will be
         `[batch_size, channels, height, width]`
-        """
+        r"""
         # Keep the original shape
         x_shape = x.shape
         # Get the batch size

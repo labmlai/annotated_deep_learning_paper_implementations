@@ -25,7 +25,7 @@ class AdamWarmup(AMSGrad):
                  weight_decay: WeightDecay = WeightDecay(),
                  optimized_update: bool = True,
                  amsgrad=False, warmup=0, defaults=None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -46,7 +46,7 @@ class AdamWarmup(AMSGrad):
         super().__init__(params, lr, betas, eps, weight_decay, optimized_update, amsgrad, defaults)
 
     def get_lr(self, state: Dict[str, any], group: Dict[str, any]):
-        """
+        r"""
         ### Get learning-rate
 
         $$\alpha \min \bigg(1, \frac{t}{w}\bigg)$$

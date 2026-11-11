@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Denoising Diffusion Probabilistic Models (DDPM) Sampling
 summary: >
@@ -24,7 +24,7 @@ from labml_nn.diffusion.stable_diffusion.sampler import DiffusionSampler
 
 
 class DDPMSampler(DiffusionSampler):
-    """
+    r"""
     ## DDPM Sampler
 
     This extends the [`DiffusionSampler` base class](index.html).
@@ -49,7 +49,7 @@ class DDPMSampler(DiffusionSampler):
     model: LatentDiffusion
 
     def __init__(self, model: LatentDiffusion):
-        """
+        r"""
         :param model: is the model to predict noise $\epsilon_\text{cond}(x_t, c)$
         """
         super().__init__(model)
@@ -94,7 +94,7 @@ class DDPMSampler(DiffusionSampler):
                uncond_cond: Optional[torch.Tensor] = None,
                skip_steps: int = 0,
                ):
-        """
+        r"""
         ### Sampling Loop
 
         :param shape: is the shape of the generated images in the
@@ -139,7 +139,7 @@ class DDPMSampler(DiffusionSampler):
                  repeat_noise: bool = False,
                  temperature: float = 1.,
                  uncond_scale: float = 1., uncond_cond: Optional[torch.Tensor] = None):
-        """
+        r"""
         ### Sample $x_{t-1}$ from $p_\theta(x_{t-1} | x_t)$
 
         :param x: is $x_t$ of shape `[batch_size, channels, height, width]`
@@ -208,7 +208,7 @@ class DDPMSampler(DiffusionSampler):
 
     @torch.no_grad()
     def q_sample(self, x0: torch.Tensor, index: int, noise: Optional[torch.Tensor] = None):
-        """
+        r"""
         ### Sample from $q(x_t|x_0)$
 
         $$q(x_t|x_0) = \mathcal{N} \Big(x_t; \sqrt{\bar\alpha_t} x_0, (1-\bar\alpha_t) \mathbf{I} \Big)$$

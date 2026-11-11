@@ -33,7 +33,7 @@ class Txt2Img:
                  n_steps: int = 50,
                  ddim_eta: float = 0.0,
                  ):
-        """
+        r"""
         :param checkpoint_path: is the path of the checkpoint
         :param sampler_name: is the name of the [sampler](../sampler/index.html)
         :param n_steps: is the number of sampling steps
@@ -62,7 +62,7 @@ class Txt2Img:
                  h: int = 512, w: int = 512,
                  uncond_scale: float = 7.5,
                  ):
-        """
+        r"""
         :param dest_path: is the path to store the generated images
         :param batch_size: is the number of images to generate in a batch
         :param prompt: is the prompt to generate images with

@@ -35,7 +35,7 @@ import torch.utils.data
 
 
 class Squash(nn.Module):
-    """
+    r"""
     ## Squash
 
     This is **squashing** function from paper, given by equation $(1)$.
@@ -69,7 +69,7 @@ class Squash(nn.Module):
 
 
 class Router(nn.Module):
-    """
+    r"""
     ## Routing Algorithm
 
     This is the routing mechanism described in the paper.
@@ -132,7 +132,7 @@ class Router(nn.Module):
 
 
 class MarginLoss(nn.Module):
-    """
+    r"""
     ## Margin loss for class existence
 
     A separate margin loss is used for each output capsule and the total loss is the sum of them.
@@ -161,7 +161,7 @@ class MarginLoss(nn.Module):
         self.n_labels = n_labels
 
     def forward(self, v: torch.Tensor, labels: torch.Tensor):
-        """
+        r"""
         `v`, $\mathbf{v}_j$ are the squashed output capsules.
         This has shape `[batch_size, n_labels, n_features]`; that is, there is a capsule for each label.
 

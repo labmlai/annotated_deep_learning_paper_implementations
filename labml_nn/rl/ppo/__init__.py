@@ -31,7 +31,7 @@ from torch import nn
 
 
 class ClippedPPOLoss(nn.Module):
-    """
+    r"""
     ## PPO Loss
 
     Here's how the PPO update rule is derived.
@@ -179,7 +179,7 @@ class ClippedPPOLoss(nn.Module):
 
 
 class ClippedValueFunctionLoss(nn.Module):
-    """
+    r"""
     ## Clipped Value Function Loss
 
     Similarly we clip the value function update also.

@@ -188,7 +188,7 @@ class DiscriminatorBlock(nn.Module):
 
 
 def weights_init_normal(m):
-    """
+    r"""
     Initialize convolution layer weights to $\mathcal{N}(0, 0.2)$
     """
     classname = m.__class__.__name__
@@ -436,7 +436,7 @@ class Configs(BaseConfigs):
         )
 
     def run(self):
-        """
+        r"""
         ## Training
 
         We aim to solve:

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Sophia Optimizer
 summary: A simple PyTorch implementation/tutorial of Sophia optimizer
@@ -72,7 +72,7 @@ class Sophia(GenericAdaptiveOptimizer):
                  rho: float = 0.03,
                  weight_decay: WeightDecay = WeightDecay(),
                  defaults: Optional[Dict[str, Any]] = None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -92,7 +92,7 @@ class Sophia(GenericAdaptiveOptimizer):
         self.weight_decay = weight_decay
 
     def init_state(self, state: Dict[str, any], group: Dict[str, any], param: nn.Parameter):
-        """
+        r"""
         ### Initialize a parameter state
 
         * `state` is the optimizer state of the parameter (tensor)
@@ -108,7 +108,7 @@ class Sophia(GenericAdaptiveOptimizer):
         state['hessian'] = torch.zeros_like(param, memory_format=torch.preserve_format)
 
     def update_hessian(self, n_tokens_training_batch):
-        """
+        r"""
         ### Update the EMA of Hessian diagonal $h_t$
 
         * `n_tokens_training_batch` is the number of tokens/inputs in the batch $B$
@@ -145,7 +145,7 @@ class Sophia(GenericAdaptiveOptimizer):
                 state['hessian'].mul_(beta2).addcmul_(p.grad, p.grad, value=(1 - beta2) * n_tokens_training_batch)
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.nn.Parameter):
-        """
+        r"""
         ### Take an update step for a given parameter tensor
 
         * `state` is the optimizer state of the parameter (tensor)

@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Graph Attention Networks v2 (GATv2)
 summary: >
@@ -60,7 +60,7 @@ from torch import nn
 
 
 class GraphAttentionV2Layer(nn.Module):
-    """
+    r"""
     ## Graph attention v2 layer
     This is a single graph attention v2 layer.
     A GATv2 is made up of multiple such layers.
@@ -119,7 +119,7 @@ class GraphAttentionV2Layer(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, h: torch.Tensor, adj_mat: torch.Tensor):
-        """
+        r"""
         * `h`, $\mathbf{h}$ is the input node embeddings of shape `[n_nodes, in_features]`.
         * `adj_mat` is the adjacency matrix of shape `[n_nodes, n_nodes, n_heads]`.
         We use shape `[n_nodes, n_nodes, 1]` since the adjacency is the same for each head.

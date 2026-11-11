@@ -29,7 +29,7 @@ class Noam(AMSGrad):
                  optimized_update: bool = True,
                  amsgrad=False,
                  warmup=0, d_model=512, defaults=None):
-        """
+        r"""
         ### Initialize the optimizer
 
         * `params` is the list of parameters
@@ -52,7 +52,7 @@ class Noam(AMSGrad):
         self.d_model = d_model
 
     def get_lr(self, state: Dict[str, any], group: Dict[str, any]):
-        """
+        r"""
         ### Get learning-rate
 
         $$\alpha \frac{1}{\sqrt{d_{model}}} \min \bigg(\frac{1}{\sqrt{t}}, \frac{t}{w^{3/2}}\bigg)$$

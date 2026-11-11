@@ -54,7 +54,7 @@ class StrokesDataset(Dataset):
     """
 
     def __init__(self, dataset: np.array, max_seq_length: int, scale: Optional[float] = None):
-        """
+        r"""
         `dataset` is a list of numpy arrays of shape [seq_len, 3].
         It is a sequence of strokes, and each stroke is represented by
         3 integers.
@@ -126,7 +126,7 @@ class StrokesDataset(Dataset):
 
 
 class BivariateGaussianMixture:
-    """
+    r"""
     ## Bi-variate Gaussian mixture
 
     The mixture is represented by $\Pi$ and
@@ -150,7 +150,7 @@ class BivariateGaussianMixture:
         return self.pi_logits.shape[-1]
 
     def set_temperature(self, temperature: float):
-        """
+        r"""
         Adjust by temperature $\tau$
         """
         # $$\hat{\Pi_k} \leftarrow \frac{\hat{\Pi_k}}{\tau}$$
@@ -348,7 +348,7 @@ class ReconstructionLoss(nn.Module):
 
 
 class KLDivLoss(nn.Module):
-    """
+    r"""
     ## KL-Divergence loss
 
     This calculates the KL divergence between a given normal distribution and $\mathcal{N}(0, 1)$

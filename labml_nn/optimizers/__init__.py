@@ -73,7 +73,7 @@ class GenericAdaptiveOptimizer(Optimizer):
     """
 
     def __init__(self, params, defaults: Dict[str, Any], lr: float, betas: Tuple[float, float], eps: float):
-        """
+        r"""
         ### Initialize
 
         * `params` is the collection of parameters or set of parameter groups.
@@ -109,7 +109,7 @@ class GenericAdaptiveOptimizer(Optimizer):
         pass
 
     def step_param(self, state: Dict[str, any], group: Dict[str, any], grad: torch.Tensor, param: torch.Tensor):
-        """
+        r"""
         ### Take optimizer step on a parameter tensor
 
         This should be overridden and take the optimization step on `param` tensor $\theta$,

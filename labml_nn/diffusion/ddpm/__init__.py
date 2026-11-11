@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Denoising Diffusion Probabilistic Models (DDPM)
 summary: >
@@ -175,7 +175,7 @@ class DenoiseDiffusion:
     """
 
     def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
-        """
+        r"""
         * `eps_model` is $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$ model
         * `n_steps` is $t$
         * `device` is the device to place constants on
@@ -196,7 +196,7 @@ class DenoiseDiffusion:
         self.sigma2 = self.beta
 
     def q_xt_x0(self, x0: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
+        r"""
         #### Get $q(x_t|x_0)$ distribution
 
         \begin{align}
@@ -212,7 +212,7 @@ class DenoiseDiffusion:
         return mean, var
 
     def q_sample(self, x0: torch.Tensor, t: torch.Tensor, eps: Optional[torch.Tensor] = None):
-        """
+        r"""
         #### Sample from $q(x_t|x_0)$
 
         \begin{align}
@@ -230,7 +230,7 @@ class DenoiseDiffusion:
         return mean + (var ** 0.5) * eps
 
     def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
-        """
+        r"""
         #### Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
 
         \begin{align}
@@ -262,7 +262,7 @@ class DenoiseDiffusion:
         return mean + (var ** .5) * eps
 
     def loss(self, x0: torch.Tensor, noise: Optional[torch.Tensor] = None):
-        """
+        r"""
         #### Simplified Loss
 
         $$L_{\text{simple}}(\theta) = \mathbb{E}_{t,x_0, \epsilon} \Bigg[ \bigg\Vert

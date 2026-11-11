@@ -19,7 +19,7 @@ from labml import lab, monit
 
 
 class BERTChunkEmbeddings:
-    """
+    r"""
     ## BERT Embeddings
 
     For a given chunk of text $N$ this class generates BERT embeddings $\text{B\small{ERT}}(N)$.
@@ -75,7 +75,7 @@ class BERTChunkEmbeddings:
             return stripped
 
     def __call__(self, chunks: List[str]):
-        """
+        r"""
         ### Get $\text{B\small{ERT}}(N)$ for a list of chunks.
         """
 

@@ -136,7 +136,7 @@ class FeedbackAttention(nn.Module):
          positional encodings $P_q, P_j$.
 
         We replace term $\textcolor{lightgreen}{D}$ with $S_j$.
-        """
+        r"""
 
         # $U^K_j$
         key_pos_emb = self.key_pos_embeddings[-key.shape[0]:]
@@ -160,7 +160,7 @@ class FeedbackAttention(nn.Module):
         """
         * `query` has shape `[batch_size, d_model]`
         * `key` and `value` has shape `[seq_len, batch_size, d_model]`
-        """
+        r"""
 
         # Prepare `query`, `key` and `value` for attention computation
         # `key` and `value`  will then have shape `[seq_len, batch_size, heads, d_k]`

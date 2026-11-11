@@ -1,4 +1,4 @@
-"""
+r"""
 ---
 title: Position-wise Feed-Forward Network (FFN)
 summary: Documented reusable implementation of the position wise feedforward network.
