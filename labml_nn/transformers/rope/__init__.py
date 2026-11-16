@@ -92,7 +92,7 @@ class RotaryPositionalEmbeddings(nn.Module):
 
     The features are grouped into pairs and handled as above. They use a different $\theta$ for each pair.
 
-    The paper suggests using $\Theta = {\theta_i = 10000^{\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
+    The paper suggests using $\Theta = {\theta_i = 10000^{-\frac{2(i-1)}{d}}, i \in [1, 2, ..., \frac{d}{2}]}$
     for the $\frac{d}{2}$ pairs of features.
 
     The original implementation of RoPE divide the $d$-dimension features into $\frac{d}{2}$ pairs of features ($i$, $i + 1$).
